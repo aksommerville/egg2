@@ -7,10 +7,22 @@ ifneq (,$(strip $(filter clean,$(MAKECMDGOALS))))
   clean:;rm -rf mid out
 else
 
-#TODO build config
+local/config.mk:;etc/tool/genbuildconfig.sh $@
+include local/config.mk
 
-#TODO load targets
+SRCFILES:=$(shell find src -type f)
 
-#TODO test, eggdev, eggrt...
+include etc/make/eggdev.mk
+all:eggdev-all
+
+define TARGET_RULES
+  include etc/make/$1.mk
+  all:$1-all
+endef
+$(foreach T,$(EGG_TARGETS),$(eval $(call TARGET_RULES,$T)))
+
+include etc/make/test.mk
+
+#TODO eggrt, demo,...
 
 endif

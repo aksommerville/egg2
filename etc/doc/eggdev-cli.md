@@ -30,6 +30,7 @@ Usage: `eggdev convert -oDSTPATH SRCPATH [--dstfmt=FORMAT] [--srcfmt=FORMAT]`
 Convert anything to anything.
 Omit paths to use stdout and stdin.
 We can usually infer `srcfmt` from the content and `dstfmt` from the path.
+Use the special dstfmt "rommable" or "portable" for conversions to or from our standard resource formats.
 
 ## config
 

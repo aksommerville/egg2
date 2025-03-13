@@ -1,0 +1,2 @@
+# linux.mk
+linux-all:

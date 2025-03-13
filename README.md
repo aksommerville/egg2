@@ -28,7 +28,7 @@ Planned differences from Egg v1:
 - [x] Define data formats.
 - - [x] EAU
 - [ ] Build config.
-- [ ] Test harness.
+- [x] Test harness.
 - [ ] eggdev
 - - [ ] build
 - - [ ] minify

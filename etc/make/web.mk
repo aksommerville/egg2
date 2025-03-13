@@ -1,0 +1,2 @@
+# web.mk
+web-all:
