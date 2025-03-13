@@ -1,306 +1,463 @@
 #include "eggdev/eggdev_internal.h"
 #include "eggdev_convert.h"
-
-/* Registry of formats.
- */
- 
-const struct eggdev_fmt eggdev_fmtv[]={
-  [EGGDEV_FMT_ROM]={
-    EGGDEV_FMT_ROM,
-    "egg,rom",
-    "\0ERM",4,
-    0,
-  },
-  [EGGDEV_FMT_WEB_ZIP]={
-    EGGDEV_FMT_WEB_ZIP,
-    "zip",
-    "PK",2,
-    EGGDEV_FMT_FLAG_PORTABLE,
-  },
-  [EGGDEV_FMT_EXE]={
-    EGGDEV_FMT_EXE,
-    "exe",
-    0,0,
-    0,
-  },
-  [EGGDEV_FMT_HTML]={
-    EGGDEV_FMT_HTML,
-    "html,htm",
-    "<!DOCTYPE html",14,
-    EGGDEV_FMT_FLAG_TEXT|EGGDEV_FMT_FLAG_PORTABLE,
-  },
-  [EGGDEV_FMT_CSS]={
-    EGGDEV_FMT_CSS,
-    "css",
-    0,0,
-    EGGDEV_FMT_FLAG_TEXT|EGGDEV_FMT_FLAG_PORTABLE,
-  },
-  [EGGDEV_FMT_JS]={
-    EGGDEV_FMT_JS,
-    "js",
-    0,0,
-    EGGDEV_FMT_FLAG_TEXT|EGGDEV_FMT_FLAG_PORTABLE,
-  },
-  [EGGDEV_FMT_PNG]={
-    EGGDEV_FMT_PNG,
-    "png",
-    "\x89PNG\r\n\x1a\n",8,
-    EGGDEV_FMT_FLAG_PORTABLE|EGGDEV_FMT_FLAG_ROMMABLE,
-  },
-  [EGGDEV_FMT_GIF]={
-    EGGDEV_FMT_GIF,
-    "gif",
-    "GIF",3,
-    EGGDEV_FMT_FLAG_PORTABLE,
-  },
-  [EGGDEV_FMT_JPEG]={
-    EGGDEV_FMT_JPEG,
-    "jpeg,jpg",
-    0,0,
-    EGGDEV_FMT_FLAG_PORTABLE,
-  },
-  [EGGDEV_FMT_ICO]={
-    EGGDEV_FMT_ICO,
-    "ico",
-    0,0,
-    EGGDEV_FMT_FLAG_PORTABLE,
-  },
-  [EGGDEV_FMT_WAV]={
-    EGGDEV_FMT_WAV,
-    "wav",
-    "RIFF",4,
-    EGGDEV_FMT_FLAG_PORTABLE,
-  },
-  [EGGDEV_FMT_MIDI]={
-    EGGDEV_FMT_MIDI,
-    "mid",
-    "MThd\0\0\0\6",8,
-    EGGDEV_FMT_FLAG_PORTABLE,
-  },
-  [EGGDEV_FMT_EAU]={
-    EGGDEV_FMT_EAU,
-    "eau",
-    "\0EAU",4,
-    EGGDEV_FMT_FLAG_ROMMABLE,
-  },
-  [EGGDEV_FMT_EAU_TEXT]={
-    EGGDEV_FMT_EAU_TEXT,
-    "eaut",
-    0,0,
-    EGGDEV_FMT_FLAG_TEXT,
-  },
-  [EGGDEV_FMT_METADATA]={
-    EGGDEV_FMT_METADATA,
-    "metadata",
-    "\0EMD",4,
-    EGGDEV_FMT_FLAG_ROMMABLE,
-  },
-  [EGGDEV_FMT_METADATA_TEXT]={
-    EGGDEV_FMT_METADATA_TEXT,
-    "metadata_text",
-    0,0,
-    EGGDEV_FMT_FLAG_TEXT,
-  },
-  [EGGDEV_FMT_WASM]={
-    EGGDEV_FMT_WASM,
-    "wasm",
-    "\0asm",4,
-    EGGDEV_FMT_FLAG_PORTABLE|EGGDEV_FMT_FLAG_ROMMABLE,
-  },
-  [EGGDEV_FMT_STRINGS]={
-    EGGDEV_FMT_STRINGS,
-    "strings",
-    "\0EST",4,
-    EGGDEV_FMT_FLAG_ROMMABLE,
-  },
-  [EGGDEV_FMT_STRINGS_TEXT]={
-    EGGDEV_FMT_STRINGS_TEXT,
-    "strings_text",
-    0,0,
-    EGGDEV_FMT_FLAG_TEXT,
-  },
-  [EGGDEV_FMT_TILESHEET]={
-    EGGDEV_FMT_TILESHEET,
-    "tilesheet",
-    "\0ETS",4,
-    EGGDEV_FMT_FLAG_ROMMABLE,
-  },
-  [EGGDEV_FMT_TILESHEET_TEXT]={
-    EGGDEV_FMT_TILESHEET_TEXT,
-    "tilesheet_text",
-    0,0,
-    EGGDEV_FMT_FLAG_TEXT,
-  },
-  [EGGDEV_FMT_DECALSHEET]={
-    EGGDEV_FMT_DECALSHEET,
-    "decalsheet",
-    "\0EDS",4,
-    EGGDEV_FMT_FLAG_ROMMABLE,
-  },
-  [EGGDEV_FMT_DECALSHEET_TEXT]={
-    EGGDEV_FMT_DECALSHEET_TEXT,
-    "decalsheet_text",
-    0,0,
-    EGGDEV_FMT_FLAG_TEXT,
-  },
-  [EGGDEV_FMT_MAP]={
-    EGGDEV_FMT_MAP,
-    "map",
-    "\0EMP",4,
-    EGGDEV_FMT_FLAG_ROMMABLE,
-  },
-  [EGGDEV_FMT_MAP_TEXT]={
-    EGGDEV_FMT_MAP_TEXT,
-    "map_text",
-    0,0,
-    EGGDEV_FMT_FLAG_TEXT,
-  },
-  [EGGDEV_FMT_SPRITE]={
-    EGGDEV_FMT_SPRITE,
-    "sprite",
-    "\0ESP",4,
-    EGGDEV_FMT_FLAG_ROMMABLE,
-  },
-  [EGGDEV_FMT_SPRITE_TEXT]={
-    EGGDEV_FMT_SPRITE_TEXT,
-    "sprite_text",
-    0,0,
-    EGGDEV_FMT_FLAG_TEXT,
-  },
-  [EGGDEV_FMT_CMDLIST]={
-    EGGDEV_FMT_CMDLIST,
-    "cmdlist",
-    0,0,
-    EGGDEV_FMT_FLAG_ROMMABLE,
-  },
-  [EGGDEV_FMT_CMDLIST_TEXT]={
-    EGGDEV_FMT_CMDLIST_TEXT,
-    "cmdlist_text",
-    0,0,
-    EGGDEV_FMT_FLAG_TEXT,
-  },
-{0}};
-
-/* Registry of converters.
- */
-
-const struct eggdev_converter eggdev_converterv[]={
-  {eggdev_cvt_rom_webzip,EGGDEV_FMT_ROM,EGGDEV_FMT_WEB_ZIP},
-  {eggdev_cvt_rom_exe,EGGDEV_FMT_ROM,EGGDEV_FMT_EXE},
-  {eggdev_cvt_rom_html,EGGDEV_FMT_ROM,EGGDEV_FMT_HTML},
-  {eggdev_cvt_webzip_rom,EGGDEV_FMT_WEB_ZIP,EGGDEV_FMT_ROM},
-  //{eggdev_cvt_exe_rom,EGGDEV_FMT_EXE,EGGDEV_FMT_ROM}, // This would require game code, which can't be delivered generically. Unless we start using a Wasm runtime for native.
-  {eggdev_cvt_html_rom,EGGDEV_FMT_HTML,EGGDEV_FMT_ROM},
-  {eggdev_cvt_png_gif,EGGDEV_FMT_PNG,EGGDEV_FMT_GIF},
-  {eggdev_cvt_png_jpeg,EGGDEV_FMT_PNG,EGGDEV_FMT_JPEG},
-  {eggdev_cvt_png_ico,EGGDEV_FMT_PNG,EGGDEV_FMT_ICO},
-  {eggdev_cvt_gif_png,EGGDEV_FMT_GIF,EGGDEV_FMT_PNG},
-  {eggdev_cvt_jpeg_png,EGGDEV_FMT_JPEG,EGGDEV_FMT_PNG},
-  {eggdev_cvt_ico_png,EGGDEV_FMT_ICO,EGGDEV_FMT_PNG},
-  {eggdev_cvt_wav_eau,EGGDEV_FMT_WAV,EGGDEV_FMT_EAU},
-  {eggdev_cvt_midi_eau,EGGDEV_FMT_MIDI,EGGDEV_FMT_EAU},
-  {eggdev_cvt_eau_midi,EGGDEV_FMT_EAU,EGGDEV_FMT_MIDI},
-  {eggdev_cvt_eau_eautext,EGGDEV_FMT_EAU,EGGDEV_FMT_EAU_TEXT},
-  {eggdev_cvt_eautext_eau,EGGDEV_FMT_EAU_TEXT,EGGDEV_FMT_EAU},
-  {eggdev_compile_metadata,EGGDEV_FMT_METADATA,EGGDEV_FMT_METADATA_TEXT},
-  {eggdev_uncompile_metadata,EGGDEV_FMT_METADATA_TEXT,EGGDEV_FMT_METADATA},
-  {eggdev_compile_strings,EGGDEV_FMT_STRINGS,EGGDEV_FMT_STRINGS_TEXT},
-  {eggdev_uncompile_strings,EGGDEV_FMT_STRINGS_TEXT,EGGDEV_FMT_STRINGS},
-  {eggdev_compile_tilesheet,EGGDEV_FMT_TILESHEET,EGGDEV_FMT_TILESHEET_TEXT},
-  {eggdev_uncompile_tilesheet,EGGDEV_FMT_TILESHEET_TEXT,EGGDEV_FMT_TILESHEET},
-  {eggdev_compile_decalsheet,EGGDEV_FMT_DECALSHEET,EGGDEV_FMT_DECALSHEET_TEXT},
-  {eggdev_uncompile_decalsheet,EGGDEV_FMT_DECALSHEET_TEXT,EGGDEV_FMT_DECALSHEET},
-  {eggdev_compile_map,EGGDEV_FMT_MAP,EGGDEV_FMT_MAP_TEXT},
-  {eggdev_uncompile_map,EGGDEV_FMT_MAP_TEXT,EGGDEV_FMT_MAP},
-  {eggdev_compile_sprite,EGGDEV_FMT_SPRITE,EGGDEV_FMT_SPRITE_TEXT},
-  {eggdev_uncompile_sprite,EGGDEV_FMT_SPRITE_TEXT,EGGDEV_FMT_SPRITE},
-  {eggdev_compile_cmdlist,EGGDEV_FMT_CMDLIST,EGGDEV_FMT_CMDLIST_TEXT},
-  {eggdev_uncompile_cmdlist,EGGDEV_FMT_CMDLIST_TEXT,EGGDEV_FMT_CMDLIST},
-{0}};
-
-/* Evaluate format name.
- */
-
-int eggdev_fmt_eval(const char *src,int srcc) {
-//TODO
-}
+#include <stdarg.h>
 
 /* Represent format name.
  */
  
 int eggdev_fmt_repr(char *dst,int dsta,int fmt) {
-//TODO
+  if (!dst||(dsta<0)) dsta=0;
+  const char *src;
+  int srcc=0;
+  switch (fmt) {
+    #define _(tag) case EGGDEV_FMT_##tag: src=#tag; srcc=sizeof(#tag)-1; break;
+    EGGDEV_FMT_FOR_EACH
+    #undef _
+  }
+  if (srcc>0) {
+    if (srcc<=dsta) {
+      memcpy(dst,src,srcc);
+      if (srcc<dsta) dst[srcc]=0;
+    }
+    return srcc;
+  }
+  return sr_decsint_repr(dst,dsta,fmt);
 }
 
-/* Guess format from content and path.
+/* Evaluate format name.
  */
  
-int eggdev_fmt_guess_file(const void *src,int srcc,const char *path,int pathc) {
-//TODO
+int eggdev_fmt_eval(const char *src,int srcc) {
+  if (!src) return 0;
+  if (srcc<0) { srcc=0; while (src[srcc]) srcc++; }
+  // Force to lowercase and check symbols.
+  char norm[16];
+  if (srcc<=sizeof(norm)) {
+    int i=srcc; while (i-->0) {
+      if ((src[i]>='A')&&(src[i]<='Z')) norm[i]=src[i]+0x20;
+      else norm[i]=src[i];
+    }
+    #define _(tag) if ((srcc==sizeof(#tag)-1)&&!memcmp(norm,#tag,srcc)) return EGGDEV_FMT_##tag;
+    EGGDEV_FMT_FOR_EACH
+    #undef _
+    // Check a few aliases.
+    switch (srcc) {
+      case 3: {
+          if (!memcmp(norm,"jar",3)) return EGGDEV_FMT_zip;
+          if (!memcmp(norm,"htm",3)) return EGGDEV_FMT_html;
+          if (!memcmp(norm,"jpg",3)) return EGGDEV_FMT_jpeg;
+        } break;
+      case 4: {
+          if (!memcmp(norm,"midi",4)) return EGGDEV_FMT_mid;
+        } break;
+    }
+  }
+  int v;
+  if ((sr_int_eval(&v,src,srcc)>=2)&&(v>0)) return v;
+  return 0;
 }
 
-/* Guess format from content and resource type.
+/* Format from path.
  */
  
-int eggdev_fmt_guess_res(const void *src,int srcc,int tid) {
-//TODO
+int eggdev_fmt_by_path(const char *path,int pathc) {
+  if (!path) return 0;
+  if (pathc<0) { pathc=0; while (path[pathc]) pathc++; }
+  // Usually we want to determine from the suffix.
+  const char *sfx=path+pathc;
+  int sfxc=0;
+  while (sfxc<pathc) {
+    if (sfx[-1]=='.') {
+      int fmt=eggdev_fmt_eval(sfx,sfxc);
+      if (fmt>0) return fmt;
+      break;
+    }
+    if (sfx[-1]=='/') {
+      // No suffix. We do recognize a special file "metadata".
+      if ((sfxc==8)&&!memcmp(sfx,"metadata",8)) return EGGDEV_FMT_metatxt;
+      break;
+    }
+    sfx--;
+    sfxc++;
+  }
+  // If there's a directory called "data", the directory below it is the resource type.
+  int pathp=0,underdata=0;
+  while (pathp<pathc) {
+    if (path[pathp]=='/') { pathp++; continue; }
+    const char *dir=path+pathp;
+    int dirc=0;
+    while ((pathp<pathc)&&(path[pathp++]!='/')) dirc++;
+    if (underdata) {
+      int tid=eggdev_tid_eval(dir,dirc);
+      if (tid>0) {
+        int fmt=eggdev_fmt_by_tid(tid);
+        if (fmt>0) return fmt;
+      }
+      break;
+    } else if ((dirc==4)&&!memcmp(dir,"data",4)) {
+      underdata=1;
+    }
+  }
+  // Welp I got nothing.
+  return 0;
 }
 
-/* Preferred ROMMABLE format for a given source format.
+/* Preferred format in ROM.
  */
  
-int eggdev_fmt_for_rom(int srcfmt) {
-//TODO
-}
-
-/* Preferred PORTABLE format for a given source format.
- */
- 
-int eggdev_fmt_from_rom(int srcfmt) {
-//TODO
-}
-
-/* Get converter, given two formats.
- */
-
-const struct eggdev_converter *eggdev_converter_get(int dstfmt,int srcfmt) {
-  const struct eggdev_converter *converter=eggdev_converterv;
-  for (;converter->fn;converter++) {
-    if (converter->dstfmt!=dstfmt) continue;
-    if (converter->srcfmt!=srcfmt) continue;
-    return converter;
+int eggdev_fmt_by_tid(int tid) {
+  switch (tid) {
+    case EGG_TID_metadata: return EGGDEV_FMT_metadata;
+    case EGG_TID_code: return EGGDEV_FMT_wasm;
+    case EGG_TID_strings: return EGGDEV_FMT_strings;
+    case EGG_TID_image: return EGGDEV_FMT_png;
+    case EGG_TID_song: return EGGDEV_FMT_eau;
+    case EGG_TID_sound: return EGGDEV_FMT_eau;
+    case EGG_TID_tilesheet: return EGGDEV_FMT_tilesheet;
+    case EGG_TID_decalsheet: return EGGDEV_FMT_decalsheet;
+    case EGG_TID_map: return EGGDEV_FMT_map;
+    case EGG_TID_sprite: return EGGDEV_FMT_sprite;
   }
   return 0;
 }
 
-//XXX TEMPORARY: Primitive converter stubs.
-int eggdev_cvt_rom_webzip(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_rom_exe(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_rom_html(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_webzip_rom(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_html_rom(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_png_gif(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_png_jpeg(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_png_ico(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_gif_png(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_jpeg_png(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_ico_png(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_wav_eau(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_midi_eau(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_eau_midi(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_eau_eautext(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_cvt_eautext_eau(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_compile_metadata(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_uncompile_metadata(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_compile_strings(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_uncompile_strings(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_compile_tilesheet(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_uncompile_tilesheet(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_compile_decalsheet(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_uncompile_decalsheet(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_compile_map(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_uncompile_map(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_compile_sprite(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_uncompile_sprite(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_compile_cmdlist(struct eggdev_convert_context *ctx) { return -1; }
-int eggdev_uncompile_cmdlist(struct eggdev_convert_context *ctx) { return -1; }
+/* Preferred format for extraction.
+ */
+ 
+int eggdev_fmt_portable(int fmt) {
+  switch (fmt) {
+    case EGGDEV_FMT_eau: return EGGDEV_FMT_mid;
+    case EGGDEV_FMT_metadata: return EGGDEV_FMT_metatxt;
+    case EGGDEV_FMT_strings: return EGGDEV_FMT_strtxt;
+    case EGGDEV_FMT_tilesheet: return EGGDEV_FMT_tstxt;
+    case EGGDEV_FMT_decalsheet: return EGGDEV_FMT_dstxt;
+    case EGGDEV_FMT_map: return EGGDEV_FMT_maptxt;
+    case EGGDEV_FMT_sprite: return EGGDEV_FMT_sprtxt;
+    case EGGDEV_FMT_cmdlist: return EGGDEV_FMT_cmdltxt;
+  }
+  return fmt; // Preserving the original format is always a sensible option.
+}
+
+/* Resource type by path if concrete, or data format if necessary.
+ */
+ 
+int eggdev_tid_by_path_or_fmt(const char *path,int pathc,int fmt) {
+  if (path) {
+    if (pathc<0) { pathc=0; while (path[pathc]) pathc++; }
+    if ((pathc>=8)&&!memcmp(path+pathc-8,"metadata",8)) return EGG_TID_metadata;
+    if ((pathc>=9)&&!memcmp(path+pathc-9,"code.wasm",9)) return EGG_TID_code;
+    int pathp=0,underdata=0;
+    while (pathp<pathc) {
+      if (path[pathp]=='/') { pathp++; continue; }
+      const char *dir=path+pathp;
+      int dirc=0;
+      while ((pathp<pathc)&&(path[pathp++]!='/')) dirc++;
+      if (underdata) {
+        int tid=eggdev_tid_eval(dir,dirc);
+        if (tid>0) return tid;
+        break;
+      } else if ((dirc==4)&&!memcmp(dir,"data",4)) {
+        underdata=1;
+      }
+    }
+  }
+  switch (fmt) {
+    case EGGDEV_FMT_png:
+    case EGGDEV_FMT_gif:
+    case EGGDEV_FMT_jpeg:
+      return EGG_TID_image;
+    case EGGDEV_FMT_wav:
+    case EGGDEV_FMT_mid:
+    case EGGDEV_FMT_eau:
+    case EGGDEV_FMT_eaut:
+      return EGG_TID_sound;
+    case EGGDEV_FMT_wasm:
+      return EGG_TID_code;
+    case EGGDEV_FMT_metadata:
+    case EGGDEV_FMT_metatxt:
+      return EGG_TID_metadata;
+    case EGGDEV_FMT_strings:
+    case EGGDEV_FMT_strtxt:
+      return EGG_TID_strings;
+    case EGGDEV_FMT_tilesheet:
+    case EGGDEV_FMT_tstxt:
+      return EGG_TID_tilesheet;
+    case EGGDEV_FMT_decalsheet:
+    case EGGDEV_FMT_dstxt:
+      return EGG_TID_decalsheet;
+    case EGGDEV_FMT_map:
+    case EGGDEV_FMT_maptxt:
+      return EGG_TID_map;
+    case EGGDEV_FMT_sprite:
+    case EGGDEV_FMT_sprtxt:
+      return EGG_TID_sprite;
+  }
+  return 0;
+}
+
+/* Format by signature.
+ */
+ 
+int eggdev_fmt_by_signature(const void *src,int srcc) {
+  if (!src) return 0;
+  if (srcc<1) return 0;
+  
+  /* Start with unambiguous binary signatures.
+   * Egg's own formats always have these, and well-behaved portable formats too.
+   */
+  if (srcc>=4) {
+    if (!memcmp(src,"\0ERM",4)) return EGGDEV_FMT_egg;
+    if (!memcmp(src,"\0EAU",4)) return EGGDEV_FMT_eau;
+    if (!memcmp(src,"\0asm",4)) return EGGDEV_FMT_wasm;
+    if (!memcmp(src,"\0EMD",4)) return EGGDEV_FMT_metadata;
+    if (!memcmp(src,"\0EST",4)) return EGGDEV_FMT_strings;
+    if (!memcmp(src,"\0ETS",4)) return EGGDEV_FMT_tilesheet;
+    if (!memcmp(src,"\0EDS",4)) return EGGDEV_FMT_decalsheet;
+    if (!memcmp(src,"\0EMP",4)) return EGGDEV_FMT_map;
+    if (!memcmp(src,"\0ESP",4)) return EGGDEV_FMT_sprite;
+    if (!memcmp(src,"\x7f""ELF",4)) return EGGDEV_FMT_exe;
+    // Do other executable formats have unambiguous signatures? I'd expect so. Find them. They can all be called "exe".
+  }
+  if (srcc>=8) {
+    if (!memcmp(src,"\x89PNG\r\n\x1a\n",8)) return EGGDEV_FMT_png;
+    if (!memcmp(src,"MThd\0\0\0\6",8)) return EGGDEV_FMT_mid;
+  }
+  
+  /* WAV, GIF, and ZIP are binary formats with text signatures.
+   * What a stupid thing to do.
+   * Nevertheless, we'll trust the signature. And if you have a text file that begins "PK", well, bad luck.
+   */
+  if ((srcc>=12)&&!memcmp(src,"RIFF",4)&&!memcmp((char*)src+8,"WAVE",4)) return EGGDEV_FMT_wav;
+  if ((srcc>=6)&&(!memcmp(src,"GIF87a",6)||!memcmp(src,"GIF89a",6))) return EGGDEV_FMT_gif;
+  if ((srcc>=2)&&!memcmp(src,"PK",2)) return EGGDEV_FMT_zip;
+  
+  /* HTML files, ones I write at least, will always begin with the HTML 5 DOCTYPE.
+   */
+  if ((srcc>=14)&&!memcmp(src,"<!DOCTYPE html",14)) return EGGDEV_FMT_html;
+  
+  /* And anything else is ambiguous.
+   */
+  return 0;
+}
+
+/* Get converter.
+ */
+ 
+eggdev_convert_fn eggdev_get_converter(int dstfmt,int srcfmt) {
+
+  /* Either format unspecified, or same to same, use the "noop" converter.
+   * We fail only if two concrete formats are provided, and we can't do it.
+   */
+  if (!dstfmt||!srcfmt||(dstfmt==srcfmt)) return eggdev_convert_noop;
+  
+  switch (dstfmt) {
+    case EGGDEV_FMT_egg: switch (srcfmt) {
+        case EGGDEV_FMT_exe: return eggdev_egg_from_exe;
+        case EGGDEV_FMT_zip: return eggdev_egg_from_zip;
+        case EGGDEV_FMT_html: return eggdev_egg_from_html;
+      } break;
+    case EGGDEV_FMT_zip: switch (srcfmt) {
+        case EGGDEV_FMT_egg: return eggdev_zip_from_egg;
+        case EGGDEV_FMT_html: return eggdev_zip_from_html;
+        case EGGDEV_FMT_exe: return eggdev_zip_from_exe;
+      } break;
+    case EGGDEV_FMT_html: switch (srcfmt) {
+        case EGGDEV_FMT_egg: return eggdev_html_from_egg;
+        case EGGDEV_FMT_zip: return eggdev_html_from_zip;
+        case EGGDEV_FMT_exe: return eggdev_html_from_exe;
+      } break;
+    case EGGDEV_FMT_wav: switch (srcfmt) {
+        case EGGDEV_FMT_eau: return eggdev_wav_from_eau;
+        case EGGDEV_FMT_eaut: return eggdev_wav_from_eaut;
+        case EGGDEV_FMT_mid: return eggdev_wav_from_mid;
+      } break;
+    case EGGDEV_FMT_mid: switch (srcfmt) {
+        case EGGDEV_FMT_eau: return eggdev_mid_from_eau;
+        case EGGDEV_FMT_eaut: return eggdev_mid_from_eaut;
+      } break;
+    case EGGDEV_FMT_eau: switch (srcfmt) {
+        case EGGDEV_FMT_eaut: return eggdev_eau_from_eaut;
+        case EGGDEV_FMT_mid: return eggdev_eau_from_mid;
+      } break;
+    case EGGDEV_FMT_eaut: switch (srcfmt) {
+        case EGGDEV_FMT_eau: return eggdev_eaut_from_eau;
+        case EGGDEV_FMT_mid: return eggdev_eaut_from_mid;
+      } break;
+    case EGGDEV_FMT_metadata: switch (srcfmt) {
+        case EGGDEV_FMT_metatxt: return eggdev_metadata_from_metatxt;
+      } break;
+    case EGGDEV_FMT_metatxt: switch (srcfmt) {
+        case EGGDEV_FMT_metadata: return eggdev_metatxt_from_metadata;
+      } break;
+    case EGGDEV_FMT_strings: switch (srcfmt) {
+        case EGGDEV_FMT_strtxt: return eggdev_strings_from_strtxt;
+      } break;
+    case EGGDEV_FMT_strtxt: switch (srcfmt) {
+        case EGGDEV_FMT_strings: return eggdev_strtxt_from_strings;
+      } break;
+    case EGGDEV_FMT_tilesheet: switch (srcfmt) {
+        case EGGDEV_FMT_tstxt: return eggdev_tilesheet_from_tstxt;
+      } break;
+    case EGGDEV_FMT_tstxt: switch (srcfmt) {
+        case EGGDEV_FMT_tilesheet: return eggdev_tstxt_from_tilesheet;
+      } break;
+    case EGGDEV_FMT_decalsheet: switch (srcfmt) {
+        case EGGDEV_FMT_dstxt: return eggdev_decalsheet_from_dstxt;
+      } break;
+    case EGGDEV_FMT_dstxt: switch (srcfmt) {
+        case EGGDEV_FMT_decalsheet: return eggdev_dstxt_from_decalsheet;
+      } break;
+    case EGGDEV_FMT_map: switch (srcfmt) {
+        case EGGDEV_FMT_maptxt: return eggdev_map_from_maptxt;
+      } break;
+    case EGGDEV_FMT_maptxt: switch (srcfmt) {
+        case EGGDEV_FMT_map: return eggdev_maptxt_from_map;
+      } break;
+    case EGGDEV_FMT_sprite: switch (srcfmt) {
+        case EGGDEV_FMT_sprtxt: return eggdev_sprite_from_sprtxt;
+      } break;
+    case EGGDEV_FMT_sprtxt: switch (srcfmt) {
+        case EGGDEV_FMT_sprite: return eggdev_sprtxt_from_sprite;
+      } break;
+    case EGGDEV_FMT_cmdlist: switch (srcfmt) {
+        case EGGDEV_FMT_cmdltxt: return eggdev_cmdlist_from_cmdltxt;
+      } break;
+    case EGGDEV_FMT_cmdltxt: switch (srcfmt) {
+        case EGGDEV_FMT_cmdlist: return eggdev_cmdltxt_from_cmdlist;
+      } break;
+  }
+  return 0;
+}
+
+/* One-shot conversion for compiling ROM.
+ */
+ 
+int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,const char *path) {
+  int srcfmt=eggdev_fmt_by_path(path,-1);
+  if (srcfmt<1) {
+    srcfmt=eggdev_fmt_by_signature(src,srcc);
+  }
+  int tid=eggdev_tid_by_path_or_fmt(path,-1,srcfmt);
+  int dstfmt=eggdev_fmt_by_tid(tid);
+  eggdev_convert_fn cvt=eggdev_get_converter(dstfmt,srcfmt);
+  if (!cvt) {
+    if (!path) return -1;
+    fprintf(stderr,"%s: Failed to select data conversion.\n",path);
+    return -2;
+  }
+  char tname[32];
+  int tnamec=eggdev_tid_repr(tname,sizeof(tname),tid);
+  if ((tnamec<0)||(tnamec>sizeof(tname))) tnamec=0;
+  struct eggdev_convert_context ctx={
+    .dst=dst,
+    .src=src,
+    .srcc=srcc,
+    .ns=tname,
+    .nsc=tnamec,
+    .refname=path,
+    .lineno0=0,
+  };
+  return cvt(&ctx);
+}
+
+/* One-shot conversion for extracting from ROM.
+ */
+ 
+int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int srcc,int tid) {
+  int srcfmt=eggdev_fmt_by_signature(src,srcc);
+  if (srcfmt<1) {
+    srcfmt=eggdev_fmt_by_tid(tid);
+  }
+  int dstfmt=eggdev_fmt_portable(srcfmt);
+  eggdev_convert_fn cvt=eggdev_get_converter(dstfmt,srcfmt);
+  if (!cvt) return -1;
+  char tname[32];
+  int tnamec=eggdev_tid_repr(tname,sizeof(tname),tid);
+  if ((tnamec<0)||(tnamec>sizeof(tname))) tnamec=0;
+  struct eggdev_convert_context ctx={
+    .dst=dst,
+    .src=src,
+    .srcc=srcc,
+    .ns=tname,
+    .nsc=tnamec,
+    .refname=0,
+    .lineno0=0,
+  };
+  return cvt(&ctx);
+}
+
+/* One-shot anything-to-anything conversion.
+ */
+ 
+int eggdev_convert_auto(
+  struct sr_encoder *dst, // Required.
+  const void *src,int srcc, // Required.
+  int dstfmt,int srcfmt, // Provide as much as you know...
+  const char *dstpath,
+  const char *srcpath,
+  int tid
+) {
+  if (srcfmt<1) {
+    srcfmt=eggdev_fmt_by_path(srcpath,-1);
+    if (srcfmt<1) {
+      srcfmt=eggdev_fmt_by_signature(src,srcc);
+    }
+  }
+  if (dstfmt<1) {
+    dstfmt=eggdev_fmt_by_path(dstpath,-1);
+  }
+  eggdev_convert_fn cvt=eggdev_get_converter(dstfmt,srcfmt);
+  if (!cvt) {
+    if (!srcpath) return -1;
+    fprintf(stderr,"%s: Failed to determine data conversion.\n",srcpath);
+    return -2;
+  }
+  if (tid<1) {
+    tid=eggdev_tid_by_path_or_fmt(srcpath,-1,srcfmt);
+    if (tid<1) {
+      tid=eggdev_tid_by_path_or_fmt(dstpath,-1,dstfmt);
+    }
+  }
+  char tname[32];
+  int tnamec=eggdev_tid_repr(tname,sizeof(tname),tid);
+  if ((tnamec<0)||(tnamec>sizeof(tname))) tnamec=0;
+  struct eggdev_convert_context ctx={
+    .dst=dst,
+    .src=src,
+    .srcc=srcc,
+    .ns=tname,
+    .nsc=tnamec,
+    .refname=srcpath,
+    .lineno0=0,
+  };
+  return cvt(&ctx);
+}
+
+/* Log error in context.
+ */
+ 
+int eggdev_convert_error(struct eggdev_convert_context *ctx,const char *fmt,...) {
+  if (!ctx->refname) return -1;
+  if (!fmt) fmt="";
+  char msg[256];
+  va_list vargs;
+  va_start(vargs,fmt);
+  int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
+  if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
+  while (msgc&&((unsigned char)msg[msgc-1]<=0x20)) msgc--; // Trim trailing space, in particular accidental linefeeds.
+  fprintf(stderr,"%s: %.*s\n",ctx->refname,msgc,msg);
+  return -2;
+}
+
+int eggdev_convert_error_at(struct eggdev_convert_context *ctx,int lineno,const char *fmt,...) {
+  if (!ctx->refname) return -1;
+  if (!fmt) fmt="";
+  char msg[256];
+  va_list vargs;
+  va_start(vargs,fmt);
+  int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
+  if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
+  while (msgc&&((unsigned char)msg[msgc-1]<=0x20)) msgc--; // Trim trailing space, in particular accidental linefeeds.
+  fprintf(stderr,"%s:%d: %.*s\n",ctx->refname,ctx->lineno0+lineno,msgc,msg);
+  return -2;
+}
