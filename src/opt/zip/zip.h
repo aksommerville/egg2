@@ -52,6 +52,7 @@ int zip_reader_next(struct zip_file *file,struct zip_reader *reader);
 struct zip_writer {
   struct sr_encoder lft;
   struct sr_encoder cd;
+  int filec;
 };
 
 void zip_writer_cleanup(struct zip_writer *writer);
@@ -61,9 +62,6 @@ void zip_writer_cleanup(struct zip_writer *writer);
  */
 int zip_writer_add(struct zip_writer *writer,const struct zip_file *file);
 
-/* Returns a private image that you must NOT free.
- * Further adds will fail.
- */
-int zip_writer_finish(void *dstpp,struct zip_writer *writer);
+int zip_writer_finish(struct sr_encoder *dst,struct zip_writer *writer);
 
 #endif

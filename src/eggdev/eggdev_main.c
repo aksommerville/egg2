@@ -18,7 +18,7 @@ static int cb_write_zip(const char *path,const char *base,char ftype,void *userd
   }
   int basec=0; while (base[basec]) basec++;
   struct zip_file file={
-    .zip_version=20,
+    .zip_version=20|(3<<8),
     .flags=0,
     .compression=0,
     .mtime=0,
@@ -33,6 +33,8 @@ static int cb_write_zip(const char *path,const char *base,char ftype,void *userd
     .cdata=0,
     .udata=src,
   };
+  file.extra="\x75\x78\x0b\x00\x01\x04\xe8\x03\x00\x00\x04\xe8\x03\x00\x00";
+  file.extrac=15;
   if (zip_writer_add(writer,&file)<0) {
     fprintf(stderr,"%s: zip_writer_add failed\n",path);
     free(src);
@@ -47,7 +49,7 @@ int main(int argc,char **argv) {
   fprintf(stderr,"eggdev main\n");
   
   /* looking good *
-  const char *path="testing.zip";
+  const char *path="scrambled_by_egg.zip";
   fprintf(stderr,"Trying to read Zip file '%s'...\n",path);
   void *src=0;
   int srcc=file_read(&src,path);
@@ -70,6 +72,7 @@ int main(int argc,char **argv) {
   else fprintf(stderr,"...ok\n");
   /**/
   
+  /* looking good *
   struct zip_writer writer={0};
   int err=dir_read("src/eggdev",cb_write_zip,&writer);
   if (err<0) {
@@ -87,6 +90,7 @@ int main(int argc,char **argv) {
     return 1;
   }
   zip_writer_cleanup(&writer);
+  /**/
   
   return 0;
 }

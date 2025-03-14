@@ -24,4 +24,8 @@ static inline int eggdev_symbol_repr(char *dst,int dsta,int src,int nstype,const
 #define EGGDEV_NSTYPE_NS 2
 #define EGGDEV_NSTYPE_RES 3 /* (ns) is type name */
 
+// Load an HTML template and return it WEAK.
+static inline int eggdev_get_separate_html_template(void *dstpp) { return -1; }
+static inline int eggdev_get_standalone_html_template(void *dstpp) { return -1; }
+
 #endif
