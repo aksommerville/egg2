@@ -10,18 +10,19 @@ The tilesheet rid should be the same as the image rid it describes.
  ...  Runs:
          1  Table ID, >0.
          1  Tile ID.
-         1  Tile count.
+         1  Tile count - 1.
        ...  Content, one byte per tile.
 ```
 
 It is an error if any (Tile ID + Tile count) exceeds 256.
 Any unspecified tiles are zero.
 
+No order, overlap, or adjacency constraints on runs.
+
 ## Text
 
 Line-oriented text.
-No comments.
-Empty lines are ignored.
+Comments and empty lines are permitted only between tables.
 
 Each table begins with a line containing the integer table id, or a name in `shared_symbols:NS_tilesheet_*`.
 Followed by 16 lines of 32 hex digits each.

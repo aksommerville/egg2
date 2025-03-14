@@ -55,7 +55,7 @@ int eggdev_tid_by_path_or_fmt(const char *path,int pathc,int fmt);
 struct eggdev_convert_context {
   struct sr_encoder *dst; // REQUIRED
   const void *src; int srcc; // REQUIRED
-  const char *ns; int nsc;
+  const char *ns; int nsc; // "CMD" namespace identifier.
   const char *refname;
   int lineno0;
 };

@@ -32,8 +32,9 @@ Followed by space-delimited arguments:
 - `(u8[:NAMESPACE])VALUE` to evaluate `VALUE` in the context of `NAMESPACE` and emit the given size (8, 16, 24, 32) big-endianly.
 - `(b8[:NAMESPACE])VALUE[,VALUE,...]` to combine multiple `(1<<VALUE)` bitfields.
 - `TYPE:NAME` for a 16-bit resource ID. Note that the type id is not recorded, only for lookup.
-- JSON strings emit as verbatim UTF-8.
+- JSON strings emit as verbatim UTF-8. **BEWARE** Our tokenization rules forbid whitespace inside strings. Use `\u0020` if you need a space.
 - `@N,N[,N,N,...]` emits each `N` as u8. This format is a marker for our map editor.
+- `*`, final argument only, pads with zeroes to the opcode's expected length.
 
 ## Map
 
@@ -50,6 +51,15 @@ TODO Consider trivial compression for the cells, they tend to get big. RLE or a 
 Followed by cmdlist.
 
 Text begins with the cells image as a rectangular hex dump terminated by an empty line.
+
+You're free to define whatever commands you like for maps.
+If present, the editor will use:
+- `image`: imageid (tilesheet)
+- `sprite`: position, spriteid
+- `door`: position, mapid, dstposition
+
+Also, any command with an `@` argument, the editor will display it on top of the cells.
+Note that the editor doesn't care about the binary format of commands, only the text.
 
 ## Sprite
 

@@ -29,3 +29,6 @@ Line-oriented text.
 
 Decals do not need to be sorted but must be unique.
 All comments pad with zeroes to the longest length.
+
+DECALID is an integer 1..255 or symbol from `NS_decal_`.
+Note that all decalsheets share one namespace.
