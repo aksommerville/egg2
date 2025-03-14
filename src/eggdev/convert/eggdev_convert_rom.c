@@ -3,6 +3,7 @@
  */
 
 #include "eggdev/eggdev_internal.h"
+#include "opt/zip/zip.h"
 
 /* Validate and measure ROM.
  * We don't validate that tid and rid stay in range, only what's necessary to measure it.
@@ -63,7 +64,7 @@ int eggdev_egg_from_exe(struct eggdev_convert_context *ctx) {
  */
 
 int eggdev_egg_from_zip(struct eggdev_convert_context *ctx) {
-  fprintf(stderr,"TODO %s %s:%d\n",__func__,__FILE__,__LINE__);//TODO
+  fprintf(stderr,"TODO %s %s:%d\n",__func__,__FILE__,__LINE__);//TODO zip utils
   return -2;
 }
 
@@ -104,7 +105,7 @@ int eggdev_egg_from_html(struct eggdev_convert_context *ctx) {
  */
  
 int eggdev_zip_from_egg(struct eggdev_convert_context *ctx) {
-  fprintf(stderr,"TODO %s %s:%d\n",__func__,__FILE__,__LINE__);//TODO
+  fprintf(stderr,"TODO %s %s:%d\n",__func__,__FILE__,__LINE__);//TODO zip utils and Separate HTML runtime
   return -2;
 }
 
@@ -112,6 +113,6 @@ int eggdev_zip_from_egg(struct eggdev_convert_context *ctx) {
  */
  
 int eggdev_html_from_egg(struct eggdev_convert_context *ctx) {
-  fprintf(stderr,"TODO %s %s:%d\n",__func__,__FILE__,__LINE__);//TODO
+  fprintf(stderr,"TODO %s %s:%d\n",__func__,__FILE__,__LINE__);//TODO Standalone HTML runtime
   return -2;
 }
