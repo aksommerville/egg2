@@ -2,7 +2,7 @@
 #define EGG_GAME_MAIN_H
 
 #include "egg/egg.h"
-#include "opt/stdlib/egg-stdlib.h"
+//#include "opt/stdlib/egg-stdlib.h"
 #include "opt/graf/graf.h"
 #include "shared_symbols.h"
 

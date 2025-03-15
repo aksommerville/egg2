@@ -5,10 +5,11 @@
 #ifndef EGG_STDLIB_H
 #define EGG_STDLIB_H
 
+typedef void FILE;
 #define stdout 0
 #define stderr 0
 #define stdin 0
 static inline int fprintf(FILE *f,const char *fmt,...) { return 0; }
-static inline void *malloc(int c) { return 0; }
+static inline void *malloc(long unsigned int c) { return 0; }
 
 #endif

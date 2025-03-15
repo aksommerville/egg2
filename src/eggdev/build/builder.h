@@ -16,6 +16,7 @@ struct builder {
   struct builder_file **filev;
   int filec,filea;
   int fileid_next;
+  int job_limit;
   
   // Target strings come from the build config. They are constants.
   struct builder_target {
@@ -36,6 +37,16 @@ struct builder {
     struct builder_file *file; // WEAK, the file being produced.
   } *stepv;
   int stepc,stepa;
+  
+  struct builder_process {
+    int pid;
+    int running;
+    int fd;
+    struct builder_step *step; // WEAK
+    char *cmd; // for diagnostics only
+    int cmdc;
+  } *processv;
+  int processc,processa;
 };
 
 void builder_cleanup(struct builder *builder);
@@ -61,5 +72,29 @@ int builder_infer_outputs(struct builder *builder);
 int builder_make_directories(struct builder *builder);
 int builder_generate_plan(struct builder *builder);
 int builder_execute_plan(struct builder *builder);
+
+/* Fine steps, per file.
+ */
+int build_datarom(struct builder *builder,struct builder_file *file);
+int build_fullrom(struct builder *builder,struct builder_file *file);
+int build_standalone(struct builder *builder,struct builder_file *file);
+int build_separate(struct builder *builder,struct builder_file *file);
+int builder_schedule_link(struct builder *builder,struct builder_step *step);
+int builder_schedule_compile(struct builder *builder,struct builder_step *step);
+int builder_schedule_datao(struct builder *builder,struct builder_step *step);
+
+void builder_process_cleanup(struct builder_process *process);
+int builder_begin_command(struct builder *builder,struct builder_step *step,const char *cmd,int cmdc,const void *in,int inc);
+
+struct strlist {
+  struct strlist_entry {
+    char *v;
+    int c;
+  } *v;
+  int c,a;
+};
+void strlist_cleanup(struct strlist *strlist);
+int strlist_has(const struct strlist *strlist,const char *src,int srcc);
+char *strlist_add(struct strlist *strlist,const char *src,int srcc);
 
 #endif

@@ -205,3 +205,20 @@ int eggdev_html_from_egg(struct eggdev_convert_context *ctx) {
   }
   return eggdev_convert_error(ctx,"Standalone HTML template does not contain a ROM insertion point (%s)",marker);
 }
+
+/* Fetch the HTML templates.
+ */
+ 
+int eggdev_get_separate_html_template(void *dstpp) {
+  char path[1024];
+  int pathc=snprintf(path,sizeof(path),"%s/out/separate.html",g.sdkpath);
+  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+  return file_read(dstpp,path);
+}
+
+int eggdev_get_standalone_html_template(void *dstpp) {
+  char path[1024];
+  int pathc=snprintf(path,sizeof(path),"%s/out/standalone.html",g.sdkpath);
+  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+  return file_read(dstpp,path);
+}

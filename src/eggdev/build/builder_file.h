@@ -42,4 +42,6 @@ int builder_file_add_req(struct builder_file *file,struct builder_file *req);
 int builder_file_has_req(const struct builder_file *file,const struct builder_file *req);
 int builder_file_depends_on(const struct builder_file *product,const struct builder_file *input);
 
+struct builder_file *builder_file_req_with_hint(struct builder_file *file,int hint);
+
 #endif

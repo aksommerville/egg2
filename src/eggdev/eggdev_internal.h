@@ -95,8 +95,8 @@ int eggdev_symbol_repr(char *dst,int dsta,int src,int nstype,const char *ns,int 
 #define EGGDEV_NSTYPE_RESTYPE 4 /* (ns) unused */
 
 // Load an HTML template and return it WEAK.
-static inline int eggdev_get_separate_html_template(void *dstpp) { return -1; }
-static inline int eggdev_get_standalone_html_template(void *dstpp) { return -1; }
+int eggdev_get_separate_html_template(void *dstpp);
+int eggdev_get_standalone_html_template(void *dstpp);
 
 /* Helpers for regular file input and output.
  * Empty paths, "-", "<stdin>", and "<stdout>" automatically use stdin/stdout instead.

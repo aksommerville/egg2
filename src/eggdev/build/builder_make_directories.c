@@ -3,23 +3,15 @@
 
 /* Trivial list of strings, ones we've done so far.
  */
- 
-struct strlist {
-  struct strlist_entry {
-    char *v;
-    int c;
-  } *v;
-  int c,a;
-};
 
-static void strlist_cleanup(struct strlist *strlist) {
+void strlist_cleanup(struct strlist *strlist) {
   if (strlist->v) {
     while (strlist->c-->0) free(strlist->v[strlist->c].v);
     free(strlist->v);
   }
 }
 
-static int strlist_has(const struct strlist *strlist,const char *src,int srcc) {
+int strlist_has(const struct strlist *strlist,const char *src,int srcc) {
   const struct strlist_entry *entry=strlist->v;
   int i=strlist->c;
   for (;i-->0;entry++) {
@@ -30,7 +22,7 @@ static int strlist_has(const struct strlist *strlist,const char *src,int srcc) {
   return 0;
 }
 
-static char *strlist_add(struct strlist *strlist,const char *src,int srcc) {
+char *strlist_add(struct strlist *strlist,const char *src,int srcc) {
   if (strlist->c>=strlist->a) {
     int na=strlist->a+32;
     if (na>INT_MAX/sizeof(struct strlist_entry)) return 0;

@@ -89,3 +89,14 @@ int builder_file_depends_on(const struct builder_file *product,const struct buil
   while (i-->0) if (builder_file_depends_on(product->reqv[i],input)) return 1;
   return 0;
 }
+
+/* Find a req with the given hint.
+ */
+ 
+struct builder_file *builder_file_req_with_hint(struct builder_file *file,int hint) {
+  int i=0; for (;i<file->reqc;i++) {
+    struct builder_file *req=file->reqv[i];
+    if (req->hint==hint) return req;
+  }
+  return 0;
+}

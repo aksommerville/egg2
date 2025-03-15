@@ -5,6 +5,8 @@
 #ifndef EGG_H
 #define EGG_H
 
+#include <stdint.h>
+
 //TODO
 
 #define EGG_TID_metadata 1

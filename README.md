@@ -32,7 +32,7 @@ Planned differences from Egg v1:
 - [x] Zip utility unit.
 - [ ] eggdev
 - - [x] Generic outer layers.
-- - [ ] build
+- - [x] build
 - - [ ] minify
 - - [ ] serve
 - - [x] convert

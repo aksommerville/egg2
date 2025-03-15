@@ -14,6 +14,14 @@ static void builder_step_cleanup(struct builder_step *step) {
 void builder_cleanup(struct builder *builder) {
   if (builder->root) free(builder->root);
   if (builder->projname) free(builder->projname);
+  if (builder->processv) {
+    while (builder->processc-->0) builder_process_cleanup(builder->processv+builder->processc);
+    free(builder->processv);
+  }
+  if (builder->stepv) {
+    while (builder->stepc-->0) builder_step_cleanup(builder->stepv+builder->stepc);
+    free(builder->stepv);
+  }
   if (builder->filev) {
     while (builder->filec-->0) builder_file_del(builder->filev[builder->filec]);
     free(builder->filev);
@@ -21,10 +29,6 @@ void builder_cleanup(struct builder *builder) {
   if (builder->targetv) {
     while (builder->targetc-->0) builder_target_cleanup(builder->targetv+builder->targetc);
     free(builder->targetv);
-  }
-  if (builder->stepv) {
-    while (builder->stepc-->0) builder_step_cleanup(builder->stepv+builder->stepc);
-    free(builder->stepv);
   }
 }
 
@@ -130,6 +134,7 @@ int builder_main(struct builder *builder) {
   if (builder->targetc) return -1;
   if (builder->stepc) return -1;
   builder->fileid_next=1;
+  if (builder->job_limit<1) builder->job_limit=4;
   
   if ((err=builder_populate_targets(builder))<0) return err;
   if ((err=builder_discover_inputs(builder))<0) return err;

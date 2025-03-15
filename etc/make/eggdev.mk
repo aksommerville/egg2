@@ -11,3 +11,11 @@ $(eggdev_MIDDIR)/eggdev/eggdev_configure.o:src/eggdev/eggdev_configure.c;$(PRECM
 
 eggdev-all:$(eggdev_EXE)
 $(eggdev_EXE):$(eggdev_OFILES);$(PRECMD) $(eggdev_LD) -o$@ $^ $(eggdev_LDPOST)
+
+# TODO We might want these templates to be target-specific. Maybe should build from 'web.mk' instead of here.
+# Will require some complex eggdev changes, because right now it's not target-specific looking the templates up.
+eggdev_SEPARATE_TEMPLATE:=out/separate.html
+eggdev_STANDALONE_TEMPLATE:=out/standalone.html
+eggdev-all:$(eggdev_SEPARATE_TEMPLATE) $(eggdev_STANDALONE_TEMPLATE)
+$(eggdev_SEPARATE_TEMPLATE):;echo -e '<!DOCTYPE html>\n<html><p>This is the Separate template.</p></html>' >$@
+$(eggdev_STANDALONE_TEMPLATE):;echo -e '<!DOCTYPE html>\n<html><p>This is the Standalone template.</p><egg-rom></egg-rom></html>' >$@
