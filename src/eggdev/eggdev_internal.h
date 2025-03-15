@@ -23,6 +23,13 @@ extern struct g {
   char *dstfmt,*srcfmt; // convert
   int terminate;
   
+// Populated the first time you ask for eggdev_config_key_by_index() or eggdev_config_get():
+  struct eggdev_bcfg {
+    char *k,*v;
+    int kc,vc;
+  } *bcfgv;
+  int bcfgc,bcfga;
+  
 } g;
 
 #define EGGDEV_COMMAND_build 1
@@ -49,6 +56,10 @@ int eggdev_command_eval(const char *src,int srcc);
 const char *eggdev_command_repr(int command);
 
 int eggdev_configure(int argc,char **argv);
+
+int eggdev_config_key_by_index(void *dstpp,int p);
+int eggdev_config_get(void *dstpp,const char *k,int kc);
+int eggdev_config_get_sub(void *dstpp,const char *target,int targetc,const char *k,int kc);
 
 //TODO This is a tricky one. It needs to access the project's resource TOC, if there is one.
 static inline int eggdev_tid_eval(const char *src,int srcc) { return -1; }

@@ -17,6 +17,7 @@ all:eggdev-all
 
 define TARGET_RULES
   include etc/make/$1.mk
+  $1_CC:=$($1_CC) $(foreach U,$($1_OPT_ENABLE),-DUSE_$U=1)
   all:$1-all
 endef
 $(foreach T,$(EGG_TARGETS),$(eval $(call TARGET_RULES,$T)))

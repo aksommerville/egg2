@@ -35,8 +35,8 @@ Planned differences from Egg v1:
 - - [ ] build
 - - [ ] minify
 - - [ ] serve
-- - [ ] convert
-- - [ ] config
+- - [x] convert
+- - [x] config
 - [ ] Native runtime.
 - - [ ] Load.
 - - [ ] Synth.

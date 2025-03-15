@@ -45,6 +45,7 @@ Line-oriented text.
 | freedom     | License summary. See below. |
 | iconImage   | image rid, recommend 16x16. |
 | posterImage | image rid, recommend 2:1 aspect, opaque, with no text. |
+| lang        | Comma-delimited ISO 631 language codes, in order of preference. |
 | desc        | Loose description for human consumption. |
 | advisory    | Freeform warning of gore, obscenity, etc. |
 | rating      | Machine-readable ratings from official agencies. See below. |
