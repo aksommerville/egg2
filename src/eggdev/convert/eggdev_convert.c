@@ -332,10 +332,12 @@ eggdev_convert_fn eggdev_get_converter(int dstfmt,int srcfmt) {
 /* One-shot conversion for compiling ROM.
  */
  
-int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,const char *path) {
-  int srcfmt=eggdev_fmt_by_path(path,-1);
+int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,const char *path) {
   if (srcfmt<1) {
-    srcfmt=eggdev_fmt_by_signature(src,srcc);
+    srcfmt=eggdev_fmt_by_path(path,-1);
+    if (srcfmt<1) {
+      srcfmt=eggdev_fmt_by_signature(src,srcc);
+    }
   }
   int tid=eggdev_tid_by_path_or_fmt(path,-1,srcfmt);
   int dstfmt=eggdev_fmt_by_tid(tid);
@@ -363,10 +365,12 @@ int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,const
 /* One-shot conversion for extracting from ROM.
  */
  
-int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int srcc,int tid) {
-  int srcfmt=eggdev_fmt_by_signature(src,srcc);
+int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,int tid) {
   if (srcfmt<1) {
-    srcfmt=eggdev_fmt_by_tid(tid);
+    srcfmt=eggdev_fmt_by_signature(src,srcc);
+    if (srcfmt<1) {
+      srcfmt=eggdev_fmt_by_tid(tid);
+    }
   }
   int dstfmt=eggdev_fmt_portable(srcfmt);
   eggdev_convert_fn cvt=eggdev_get_converter(dstfmt,srcfmt);

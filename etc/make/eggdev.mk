@@ -7,6 +7,7 @@ eggdev_CFILES:=$(filter src/eggdev/%.c $(addprefix src/opt/,$(addsuffix /%.c,$(e
 eggdev_OFILES:=$(patsubst src/%.c,$(eggdev_MIDDIR)/%.o,$(eggdev_CFILES))
 -include $(eggdev_OFILES:.o=.d)
 $(eggdev_MIDDIR)/%.o:src/%.c;$(PRECMD) $(eggdev_CC) -o$@ $<
+$(eggdev_MIDDIR)/eggdev/eggdev_configure.o:src/eggdev/eggdev_configure.c;$(PRECMD) $(eggdev_CC) -o$@ $< -DEGG_SDK="\"$(EGG_SDK)\""
 
 eggdev-all:$(eggdev_EXE)
 $(eggdev_EXE):$(eggdev_OFILES);$(PRECMD) $(eggdev_LD) -o$@ $^ $(eggdev_LDPOST)

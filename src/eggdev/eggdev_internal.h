@@ -12,8 +12,43 @@
 #include "opt/fs/fs.h"
 
 extern struct g {
+
+// Populated at eggdev_configure():
   const char *exename;
+  const char *sdkpath;
+  int command;
+  char *dstpath;
+  char **srcpathv;
+  int srcpathc,srcpatha;
+  char *dstfmt,*srcfmt; // convert
+  int terminate;
+  
 } g;
+
+#define EGGDEV_COMMAND_build 1
+#define EGGDEV_COMMAND_serve 2
+#define EGGDEV_COMMAND_minify 3
+#define EGGDEV_COMMAND_convert 4
+#define EGGDEV_COMMAND_config 5
+#define EGGDEV_COMMAND_project 6
+#define EGGDEV_COMMAND_FOR_EACH \
+  _(build) \
+  _(serve) \
+  _(minify) \
+  _(convert) \
+  _(config) \
+  _(project)
+  
+#define _(tag) int eggdev_main_##tag();
+EGGDEV_COMMAND_FOR_EACH
+#undef _
+
+void eggdev_print_help(const char *topic,int topicc);
+
+int eggdev_command_eval(const char *src,int srcc);
+const char *eggdev_command_repr(int command);
+
+int eggdev_configure(int argc,char **argv);
 
 //TODO This is a tricky one. It needs to access the project's resource TOC, if there is one.
 static inline int eggdev_tid_eval(const char *src,int srcc) { return -1; }
@@ -27,5 +62,13 @@ static inline int eggdev_symbol_repr(char *dst,int dsta,int src,int nstype,const
 // Load an HTML template and return it WEAK.
 static inline int eggdev_get_separate_html_template(void *dstpp) { return -1; }
 static inline int eggdev_get_standalone_html_template(void *dstpp) { return -1; }
+
+/* Helpers for regular file input and output.
+ * Empty paths, "-", "<stdin>", and "<stdout>" automatically use stdin/stdout instead.
+ */
+int eggdev_read_input(void *dstpp,const char *path);
+int eggdev_write_output(const char *path,const void *src,int srcc);
+int eggdev_read_stdin(void *dstpp);
+int eggdev_write_stdout(const void *src,int srcc);
 
 #endif

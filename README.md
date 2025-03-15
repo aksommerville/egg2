@@ -29,8 +29,9 @@ Planned differences from Egg v1:
 - - [x] EAU
 - [ ] Build config.
 - [x] Test harness.
-- [ ] Zip utility unit.
+- [x] Zip utility unit.
 - [ ] eggdev
+- - [ ] Generic outer layers.
 - - [ ] build
 - - [ ] minify
 - - [ ] serve

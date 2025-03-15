@@ -97,8 +97,8 @@ int eggdev_cmdltxt_from_cmdlist(struct eggdev_convert_context *ctx);
  */
 typedef int (*eggdev_convert_fn)(struct eggdev_convert_context *ctx);
 eggdev_convert_fn eggdev_get_converter(int dstfmt,int srcfmt);
-int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,const char *path);
-int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int srcc,int tid);
+int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,const char *path);
+int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,int tid);
 int eggdev_convert_auto(
   struct sr_encoder *dst, // Required.
   const void *src,int srcc, // Required.
