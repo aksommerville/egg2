@@ -4,7 +4,7 @@ all:
 PRECMD=echo "  $@" ; mkdir -p $(@D) ;
 
 ifneq (,$(strip $(filter clean,$(MAKECMDGOALS))))
-  clean:;rm -rf mid out
+  clean:;rm -rf mid out src/demo/mid src/demo/out
 else
 
 local/config.mk:;etc/tool/genbuildconfig.sh $@

@@ -82,6 +82,7 @@ int eggdev_config_get_sub(void *dstpp,const char *target,int targetc,const char 
 
 // client/eggdev_client_public.c
 void eggdev_client_dirty();
+int eggdev_client_require();
 int eggdev_client_set_root(const char *path,int pathc);
 int eggdev_tid_eval(const char *src,int srcc);
 int eggdev_tid_eval_standard(const char *src,int srcc); // Standard types only. No integers, no custom.
