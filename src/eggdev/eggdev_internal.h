@@ -30,6 +30,25 @@ extern struct g {
   } *bcfgv;
   int bcfgc,bcfga;
   
+// May be populated when you resolve tid or symbols.
+  struct eggdev_client {
+    char *root;
+    int rootc;
+    int ready;
+    struct eggdev_ns {
+      int nstype;
+      char *name;
+      int namec;
+      struct eggdev_sym {
+        int v;
+        char *k;
+        int kc;
+      } *symv;
+      int symc,syma;
+    } *nsv;
+    int nsc,nsa;
+  } client;
+  
 } g;
 
 #define EGGDEV_COMMAND_build 1
@@ -61,14 +80,18 @@ int eggdev_config_key_by_index(void *dstpp,int p);
 int eggdev_config_get(void *dstpp,const char *k,int kc);
 int eggdev_config_get_sub(void *dstpp,const char *target,int targetc,const char *k,int kc);
 
-//TODO This is a tricky one. It needs to access the project's resource TOC, if there is one.
-static inline int eggdev_tid_eval(const char *src,int srcc) { return -1; }
-static inline int eggdev_tid_repr(char *dst,int dsta,int tid) { return -1; }
-static inline int eggdev_symbol_eval(int *dst,const char *src,int srcc,int nstype,const char *ns,int nsc) { return sr_int_eval(dst,src,srcc); }
-static inline int eggdev_symbol_repr(char *dst,int dsta,int src,int nstype,const char *ns,int nsc) { return sr_decsint_repr(dst,dsta,src); } // Force to fit. If (dsta) can hold INT_MIN, it never fails.
+// client/eggdev_client_public.c
+void eggdev_client_dirty();
+int eggdev_client_set_root(const char *path,int pathc);
+int eggdev_tid_eval(const char *src,int srcc);
+int eggdev_tid_eval_standard(const char *src,int srcc); // Standard types only. No integers, no custom.
+int eggdev_tid_repr(char *dst,int dsta,int tid);
+int eggdev_symbol_eval(int *dst,const char *src,int srcc,int nstype,const char *ns,int nsc);
+int eggdev_symbol_repr(char *dst,int dsta,int src,int nstype,const char *ns,int nsc);
 #define EGGDEV_NSTYPE_CMD 1
 #define EGGDEV_NSTYPE_NS 2
 #define EGGDEV_NSTYPE_RES 3 /* (ns) is type name */
+#define EGGDEV_NSTYPE_RESTYPE 4 /* (ns) unused */
 
 // Load an HTML template and return it WEAK.
 static inline int eggdev_get_separate_html_template(void *dstpp) { return -1; }

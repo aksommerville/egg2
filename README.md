@@ -31,7 +31,7 @@ Planned differences from Egg v1:
 - [x] Test harness.
 - [x] Zip utility unit.
 - [ ] eggdev
-- - [ ] Generic outer layers.
+- - [x] Generic outer layers.
 - - [ ] build
 - - [ ] minify
 - - [ ] serve
