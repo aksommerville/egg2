@@ -22,6 +22,8 @@ int eggdev_rw_res_handoff_serial(struct eggdev_rw_res *res,void *src,int srcc);
 
 int eggdev_rom_writer_encode(struct sr_encoder *dst,const struct eggdev_rom_writer *writer);
 
+//int eggdev_rom_writer_from_path(struct eggdev_rom_writer *writer,const char *path);
+
 struct eggdev_rom_reader {
   const uint8_t *v;
   int c,p;

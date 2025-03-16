@@ -91,7 +91,7 @@ int eggdev_fmt_by_path(const char *path,int pathc) {
       int tid=eggdev_tid_eval(dir,dirc);
       if (tid>0) {
         int fmt=eggdev_fmt_by_tid(tid);
-        if (fmt>0) return fmt;
+        if (fmt>0) return eggdev_fmt_portable(fmt);
       }
       break;
     } else if ((dirc==4)&&!memcmp(dir,"data",4)) {

@@ -90,6 +90,7 @@ static int eggdev_strings_requires_quote(const char *src,int srcc) {
  */
  
 int eggdev_strings_from_strtxt(struct eggdev_convert_context *ctx) {
+  if (sr_encode_raw(ctx->dst,"\0EST",4)<0) return -1;
   struct sr_decoder decoder={.v=ctx->src,.c=ctx->srcc};
   const char *line;
   int linec,lineno=1,pvindex=0;
@@ -151,7 +152,7 @@ int eggdev_strtxt_from_strings(struct eggdev_convert_context *ctx) {
     if (srcp>ctx->srcc-2) return eggdev_convert_error(ctx,"Strings overrun.");
     int len=(SRC[srcp]<<8)|SRC[srcp+1];
     srcp+=2;
-    if (srcp<ctx->srcc-len) return eggdev_convert_error(ctx,"Strings overrun.");
+    if (srcp>ctx->srcc-len) return eggdev_convert_error(ctx,"Strings overrun.");
     if (len) {
       const char *string=(char*)(SRC+srcp);
       srcp+=len;

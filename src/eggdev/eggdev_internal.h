@@ -29,6 +29,9 @@ extern struct g {
   int unsafe_external;
   char *writeable;
   char *project;
+  char *lang;
+  char *format;
+  int verbatim;
   int terminate;
   
 // Populated the first time you ask for eggdev_config_key_by_index() or eggdev_config_get():
@@ -68,13 +71,19 @@ extern struct g {
 #define EGGDEV_COMMAND_convert 4
 #define EGGDEV_COMMAND_config 5
 #define EGGDEV_COMMAND_project 6
+#define EGGDEV_COMMAND_metadata 7
+#define EGGDEV_COMMAND_pack 8
+#define EGGDEV_COMMAND_unpack 9
 #define EGGDEV_COMMAND_FOR_EACH \
   _(build) \
   _(serve) \
   _(minify) \
   _(convert) \
   _(config) \
-  _(project)
+  _(project) \
+  _(metadata) \
+  _(pack) \
+  _(unpack)
   
 #define _(tag) int eggdev_main_##tag();
 EGGDEV_COMMAND_FOR_EACH
@@ -119,5 +128,6 @@ int eggdev_write_stdout(const void *src,int srcc);
 
 int eggdev_lineno(const char *src,int srcc);
 int eggdev_relative_path(char *dst,int dsta,const char *ref,int refc,const char *sub,int subc);
+int eggdev_res_ids_from_path(int *tid,int *rid,const char *path);
 
 #endif

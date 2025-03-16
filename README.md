@@ -30,16 +30,16 @@ Planned differences from Egg v1:
 - [ ] Build config.
 - [x] Test harness.
 - [x] Zip utility unit.
-- [ ] eggdev
+- [x] eggdev
 - - [x] Generic outer layers.
 - - [x] build
 - - [x] minify
 - - [x] serve
 - - [x] convert
 - - [x] config
-- - [ ] metadata
-- - [ ] unpack
-- - [ ] pack
+- - [x] metadata
+- - [x] unpack
+- - [x] pack
 - [ ] Native runtime.
 - - [ ] Load.
 - - [ ] Synth.

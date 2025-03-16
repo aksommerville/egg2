@@ -192,6 +192,9 @@ static int eggdev_argv_kv(const char *k,int kc,const char *v,int vc) {
   if ((kc==9)&&!memcmp(k,"writeable",9)) return eggdev_set_string(&g.writeable,v,vc,k,kc);
   if ((kc==7)&&!memcmp(k,"project",7)) return eggdev_set_string(&g.project,v,vc,k,kc);
   if ((kc==6)&&!memcmp(k,"htdocs",6)) return eggdev_append_htdocs(v,vc);
+  if ((kc==4)&&!memcmp(k,"lang",4)) return eggdev_set_string(&g.lang,v,vc,k,kc);
+  if ((kc==8)&&!memcmp(k,"verbatim",8)) { g.verbatim=vn; return 0; }
+  if ((kc==6)&&!memcmp(k,"format",6)) return eggdev_set_string(&g.format,v,vc,k,kc);
   
   fprintf(stderr,"%s: Unexpected option '%.*s' = '%.*s'\n",g.exename,kc,k,vc,v);
   return -2;
