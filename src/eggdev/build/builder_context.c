@@ -1,6 +1,7 @@
 #include "eggdev/eggdev_internal.h"
 #include "builder.h"
 #include <unistd.h>
+#include <stdarg.h>
 
 /* Cleanup.
  */
@@ -63,7 +64,6 @@ int builder_set_root(struct builder *builder,const char *path,int pathc) {
   int err;
   if (!path) pathc=0; else if (pathc<0) { pathc=0; while (path[pathc]) pathc++; }
   while ((pathc>1)&&(path[pathc-1]=='/')) pathc--;
-  if ((err=eggdev_client_set_root(path,pathc))<0) return err;
   builder->rootc=0;
   if (builder->root) free(builder->root);
   if (!(builder->root=malloc(pathc+1))) return -1;
@@ -145,4 +145,23 @@ int builder_main(struct builder *builder) {
   if ((err=builder_execute_plan(builder))<0) return err;
 
   return 0;
+}
+
+/* Log error.
+ */
+ 
+int builder_error(struct builder *builder,const char *fmt,...) {
+  if (!fmt||!fmt[0]) return -1;
+  va_list vargs;
+  va_start(vargs,fmt);
+  char msg[1024];
+  int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
+  if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
+  while ((msgc>0)&&(msg[msgc-1]==0x0a)) msgc--;
+  if (builder->log) {
+    sr_encode_fmt(builder->log,"%.*s\n",msgc,msg);
+  } else {
+    fprintf(stderr,"%.*s\n",msgc,msg);
+  }
+  return -2;
 }

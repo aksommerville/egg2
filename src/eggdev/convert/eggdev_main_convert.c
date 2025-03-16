@@ -19,10 +19,10 @@ int eggdev_main_convert() {
   struct sr_encoder dst={0};
   int srcfmt=eggdev_fmt_eval(g.srcfmt,-1);
   if (g.dstfmt&&!strcmp(g.dstfmt,"rommable")) {
-    err=eggdev_convert_for_rom(&dst,src,srcc,srcfmt,srcpath);
+    err=eggdev_convert_for_rom(&dst,src,srcc,srcfmt,srcpath,0);
   } else if (g.dstfmt&&!strcmp(g.dstfmt,"portable")) {
     int tid=eggdev_tid_by_path_or_fmt(srcpath,-1,srcfmt);
-    err=eggdev_convert_for_extraction(&dst,src,srcc,srcfmt,tid);
+    err=eggdev_convert_for_extraction(&dst,src,srcc,srcfmt,tid,0);
   } else {
     int dstfmt=eggdev_fmt_eval(g.dstfmt,-1);
     err=eggdev_convert_auto(&dst,src,srcc,dstfmt,srcfmt,dstpath,srcpath,0);

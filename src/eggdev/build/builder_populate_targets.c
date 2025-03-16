@@ -55,10 +55,7 @@ int builder_populate_targets(struct builder *builder) {
       if (builder_add_target(builder,token,tokenc)<0) return -1;
     }
   }
-  if (builder->targetc<1) {
-    fprintf(stderr,"%s: No build targets configured.\n",g.exename);
-    return -2;
-  }
+  if (builder->targetc<1) return builder_error(builder,"%s: No build targets configured.\n",g.exename);
   
   /**
   {

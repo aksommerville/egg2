@@ -18,6 +18,7 @@ struct zip_reader {
   int srcc,srcp;
   void *tmp;
   int tmpa;
+  int udata_on_demand_only; // Manually set nonzero to skip decompression until requested.
 };
 
 struct zip_file {
@@ -45,6 +46,11 @@ struct zip_file {
 void zip_reader_cleanup(struct zip_reader *reader);
 int zip_reader_init(struct zip_reader *reader,const void *src,int srcc);
 int zip_reader_next(struct zip_file *file,struct zip_reader *reader);
+
+/* If you're not extracting every file, set (reader->udata_on_demand_only) nonzero,
+ * then after deciding that a file is worth uncompressing, call this.
+ */
+int zip_file_uncompress(struct zip_file *file,struct zip_reader *reader);
 
 /* Compose Zip file.
  *************************************************************************************/

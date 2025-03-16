@@ -240,6 +240,67 @@ int eggdev_fmt_by_signature(const void *src,int srcc) {
   return 0;
 }
 
+/* MIME type from egg format.
+ * Egg-specific formats are "text/x-egg-*" for text or "application/x-egg-*" for binary.
+ */
+
+const char *eggdev_mime_type_by_fmt(int fmt) {
+  switch (fmt) {
+    case EGGDEV_FMT_egg: return "application/x-egg-rom";
+    case EGGDEV_FMT_exe: return "application/x-executable";
+    case EGGDEV_FMT_zip: return "application/zip";
+    case EGGDEV_FMT_html: return "text/html";
+    case EGGDEV_FMT_css: return "text/css";
+    case EGGDEV_FMT_js: return "application/javascript";
+    case EGGDEV_FMT_png: return "image/png";
+    case EGGDEV_FMT_gif: return "image/gif";
+    case EGGDEV_FMT_jpeg: return "image/jpeg";
+    case EGGDEV_FMT_wav: return "audio/wav"; // not standard
+    case EGGDEV_FMT_mid: return "audio/midi";
+    case EGGDEV_FMT_eau: return "application/x-egg-eau";
+    case EGGDEV_FMT_eaut: return "text/x-egg-eau";
+    case EGGDEV_FMT_wasm: return "application/wasm";
+    case EGGDEV_FMT_metadata: return "application/x-egg-metadata";
+    case EGGDEV_FMT_metatxt: return "text/x-egg-metadata";
+    case EGGDEV_FMT_strings: return "application/x-egg-strings";
+    case EGGDEV_FMT_strtxt: return "text/x-egg-strings";
+    case EGGDEV_FMT_tilesheet: return "application/x-egg-tilesheet";
+    case EGGDEV_FMT_tstxt: return "text/x-egg-tilesheet";
+    case EGGDEV_FMT_decalsheet: return "application/x-egg-decalsheet";
+    case EGGDEV_FMT_dstxt: return "text/x-egg-decalsheet";
+    case EGGDEV_FMT_map: return "application/x-egg-map";
+    case EGGDEV_FMT_maptxt: return "text/x-egg-map";
+    case EGGDEV_FMT_sprite: return "application/x-egg-sprite";
+    case EGGDEV_FMT_sprtxt: return "text/x-egg-sprite";
+    case EGGDEV_FMT_cmdlist: return "application/x-egg-cmdlist";
+    case EGGDEV_FMT_cmdltxt: return "text/x-egg-cmdlist";
+    case EGGDEV_FMT_ico: return "image/vnd.microsoft.icon";
+  }
+  return "application/octet-stream";
+}
+
+/* MIME type from content, path, or egg format.
+ */
+ 
+const char *eggdev_guess_mime_type(const void *src,int srcc,const char *path,int fmt) {
+  if (fmt) return eggdev_mime_type_by_fmt(fmt);
+  if (fmt=eggdev_fmt_by_path(path,-1)) return eggdev_mime_type_by_fmt(fmt);
+  if (fmt=eggdev_fmt_by_signature(src,srcc)) return eggdev_mime_type_by_fmt(fmt);
+  // Empty (or not provided), call it "application/octet-stream" because that's the most generic.
+  if (srcc<1) return "application/octet-stream";
+  // Finally, it's "text/plain" if UTF-8 and 'application/octet-stream" otherwise.
+  const uint8_t *SRC=src;
+  int srcp=0,codepoint,seqlen;
+  while (srcp<srcc) {
+    if (!SRC[srcp]) return "application/octet-stream"; // NUL is technically valid UTF-8 but very unlikely.
+    if (!(SRC[srcp]&0x80)) { srcp++; continue; }
+    if ((seqlen=sr_utf8_decode(&codepoint,SRC+srcp,srcc-srcp))<1) return "application/octet-stream";
+    srcp+=seqlen;
+    if (srcp>=1024) break; // Stop reading after a kilobyte (but do it here, not above, to ensure we don't break a UTF-8 sequence).
+  }
+  return "text/plain";
+}
+
 /* Get converter.
  */
  
@@ -332,7 +393,7 @@ eggdev_convert_fn eggdev_get_converter(int dstfmt,int srcfmt) {
 /* One-shot conversion for compiling ROM.
  */
  
-int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,const char *path) {
+int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,const char *path,struct sr_encoder *errmsg) {
   if (srcfmt<1) {
     srcfmt=eggdev_fmt_by_path(path,-1);
     if (srcfmt<1) {
@@ -358,6 +419,7 @@ int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,int s
     .nsc=tnamec,
     .refname=path,
     .lineno0=0,
+    .errmsg=errmsg,
   };
   return cvt(&ctx);
 }
@@ -365,7 +427,7 @@ int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,int s
 /* One-shot conversion for extracting from ROM.
  */
  
-int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,int tid) {
+int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,int tid,struct sr_encoder *errmsg) {
   if (srcfmt<1) {
     srcfmt=eggdev_fmt_by_signature(src,srcc);
     if (srcfmt<1) {
@@ -386,6 +448,7 @@ int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int src
     .nsc=tnamec,
     .refname=0,
     .lineno0=0,
+    .errmsg=errmsg,
   };
   return cvt(&ctx);
 }
@@ -441,6 +504,16 @@ int eggdev_convert_auto(
  */
  
 int eggdev_convert_error(struct eggdev_convert_context *ctx,const char *fmt,...) {
+  if (ctx->errmsg) {
+    if (!fmt) fmt="";
+    char msg[256];
+    va_list vargs;
+    va_start(vargs,fmt);
+    int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
+    if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
+    sr_encode_fmt(ctx->errmsg,"%s: %.*s\n",ctx->refname?ctx->refname:"<input>",msgc,msg);
+    return -2;
+  }
   if (!ctx->refname) return -1;
   if (!fmt) fmt="";
   char msg[256];
@@ -454,6 +527,16 @@ int eggdev_convert_error(struct eggdev_convert_context *ctx,const char *fmt,...)
 }
 
 int eggdev_convert_error_at(struct eggdev_convert_context *ctx,int lineno,const char *fmt,...) {
+  if (ctx->errmsg) {
+    if (!fmt) fmt="";
+    char msg[256];
+    va_list vargs;
+    va_start(vargs,fmt);
+    int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
+    if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
+    sr_encode_fmt(ctx->errmsg,"%s:%d: %.*s\n",ctx->refname?ctx->refname:"<input>",ctx->lineno0+lineno,msgc,msg);
+    return -2;
+  }
   if (!ctx->refname) return -1;
   if (!fmt) fmt="";
   char msg[256];

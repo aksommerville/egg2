@@ -33,12 +33,14 @@
 #define EGGDEV_FMT_sprtxt     26
 #define EGGDEV_FMT_cmdlist    27
 #define EGGDEV_FMT_cmdltxt    28
+#define EGGDEV_FMT_ico        29
 #define EGGDEV_FMT_FOR_EACH \
   _(egg) _(exe) _(zip) _(html) _(css) _(js) \
   _(png) _(gif) _(jpeg) _(wav) _(mid) _(eau) _(eaut) \
   _(wasm) _(metadata) _(metatxt) _(strings) _(strtxt) \
   _(tilesheet) _(tstxt) _(decalsheet) _(dstxt) \
-  _(map) _(maptxt) _(sprite) _(sprtxt) _(cmdlist) _(cmdltxt)
+  _(map) _(maptxt) _(sprite) _(sprtxt) _(cmdlist) _(cmdltxt) \
+  _(ico)
 
 /* Format properties and detection.
  */
@@ -49,6 +51,8 @@ int eggdev_fmt_by_tid(int tid); // Preferred format for resources of a given sta
 int eggdev_fmt_portable(int fmt); // Preferred format to convert to when extracting from ROM.
 int eggdev_fmt_by_signature(const void *src,int srcc);
 int eggdev_tid_by_path_or_fmt(const char *path,int pathc,int fmt);
+const char *eggdev_mime_type_by_fmt(int fmt);
+const char *eggdev_guess_mime_type(const void *src,int srcc,const char *path,int fmt);
 
 /* Primitive converters.
  */
@@ -58,6 +62,7 @@ struct eggdev_convert_context {
   const char *ns; int nsc; // "CMD" namespace identifier.
   const char *refname;
   int lineno0;
+  struct sr_encoder *errmsg; // OPTIONAL. If present, errors log here instead of stderr, and even if no (refname).
 };
 int eggdev_convert_noop(struct eggdev_convert_context *ctx); // Just copy (src) to (dst), no conversion.
 int eggdev_egg_from_exe(struct eggdev_convert_context *ctx); // ie extract ROM.
@@ -97,8 +102,8 @@ int eggdev_cmdltxt_from_cmdlist(struct eggdev_convert_context *ctx);
  */
 typedef int (*eggdev_convert_fn)(struct eggdev_convert_context *ctx);
 eggdev_convert_fn eggdev_get_converter(int dstfmt,int srcfmt);
-int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,const char *path);
-int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,int tid);
+int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,const char *path,struct sr_encoder *errmsg);
+int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,int tid,struct sr_encoder *errmsg);
 int eggdev_convert_auto(
   struct sr_encoder *dst, // Required.
   const void *src,int srcc, // Required.

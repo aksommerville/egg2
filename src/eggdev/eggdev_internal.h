@@ -11,6 +11,8 @@
 #include "opt/serial/serial.h"
 #include "opt/fs/fs.h"
 
+struct http_context;
+
 extern struct g {
 
 // Populated at eggdev_configure():
@@ -21,6 +23,12 @@ extern struct g {
   char **srcpathv;
   int srcpathc,srcpatha;
   char *dstfmt,*srcfmt; // convert
+  char **htdocsv;
+  int htdocsc,htdocsa;
+  int port;
+  int unsafe_external;
+  char *writeable;
+  char *project;
   int terminate;
   
 // Populated the first time you ask for eggdev_config_key_by_index() or eggdev_config_get():
@@ -48,6 +56,9 @@ extern struct g {
     } *nsv;
     int nsc,nsa;
   } client;
+  
+  struct http_context *http;
+  volatile int sigc;
   
 } g;
 

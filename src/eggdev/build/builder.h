@@ -9,6 +9,12 @@
 #include "builder_file.h"
 
 struct builder {
+
+  /* WEAK.
+   * Owner may assign directly to capture messages here instead of stderr.
+   */
+  struct sr_encoder *log;
+
   char *root;
   int rootc;
   char *projname;
@@ -51,7 +57,9 @@ struct builder {
 
 void builder_cleanup(struct builder *builder);
 
-/* Changes the global project root.
+/* You should also change the global project root.
+ * We don't because in the HTTP case, that would mean flushing project every time, and
+ * then it would be out of scope for /api/convert calls.
  */
 int builder_set_root(struct builder *builder,const char *path,int pathc);
 
@@ -96,5 +104,8 @@ struct strlist {
 void strlist_cleanup(struct strlist *strlist);
 int strlist_has(const struct strlist *strlist,const char *src,int srcc);
 char *strlist_add(struct strlist *strlist,const char *src,int srcc);
+
+int builder_error(struct builder *builder,const char *fmt,...);
+#define builder_log(builder,fmt,...) builder_error(builder,fmt,##__VA_ARGS__)
 
 #endif

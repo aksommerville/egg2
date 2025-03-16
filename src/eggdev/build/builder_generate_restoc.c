@@ -60,9 +60,6 @@ int builder_generate_restoc(struct builder *builder) {
   }
   err=file_write(path,text.v,text.c);
   sr_encoder_cleanup(&text);
-  if (err<0) {
-    fprintf(stderr,"%s: Failed to write file.\n",path);
-    return -2;
-  }
+  if (err<0) return builder_error(builder,"%s: Failed to write file.\n",path);
   return 0;
 }

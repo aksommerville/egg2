@@ -177,7 +177,7 @@ static int builder_begin_step(struct builder *builder,struct builder_step *step)
   switch (step->file->hint) {
   
     // sync...
-    #define SYNC fprintf(stderr,"  %s\n",step->file->path);
+    #define SYNC builder_log(builder,"  %s\n",step->file->path);
     case BUILDER_FILE_HINT_DATAROM: SYNC return build_datarom(builder,step->file);
     case BUILDER_FILE_HINT_FULLROM: SYNC return build_fullrom(builder,step->file);
     case BUILDER_FILE_HINT_STANDALONE: SYNC return build_standalone(builder,step->file);
@@ -185,17 +185,14 @@ static int builder_begin_step(struct builder *builder,struct builder_step *step)
     #undef SYNC
 
     // async...
-    #define CKASYNC if (builder->processc>=builder->job_limit) return -3; fprintf(stderr,"  %s\n",step->file->path);
+    #define CKASYNC if (builder->processc>=builder->job_limit) return -3; builder_log(builder,"  %s\n",step->file->path);
     case BUILDER_FILE_HINT_CODE1: CKASYNC return builder_schedule_link(builder,step);
     case BUILDER_FILE_HINT_OBJ: CKASYNC return builder_schedule_compile(builder,step);
     case BUILDER_FILE_HINT_EXE: CKASYNC return builder_schedule_link(builder,step);
     case BUILDER_FILE_HINT_DATAO: CKASYNC return builder_schedule_datao(builder,step);
     #undef CKASYNC
     
-    default: {
-        fprintf(stderr,"%s: No rule to build file. (hint=%d)\n",step->file->path,step->file->hint);
-        return -2;
-      }
+    default: return builder_error(builder,"%s: No rule to build file. (hint=%d)\n",step->file->path,step->file->hint);
   }
   return -1;
 }
@@ -212,14 +209,19 @@ static void builder_dump_process_log(struct builder *builder,struct builder_proc
       int msgc=read(process->fd,msg,sizeof(msg));
       if (msgc<1) break;
       ok=1;
-      while (msgc&&(msg[msgc-1]==0x0a)) msgc--;
-      fprintf(stderr,"%.*s\n",msgc,msg);
+      int msgp=0;
+      while (msgp<msgc) {
+        const char *line=msg+msgp;
+        int linec=0;
+        while ((msgp<msgc)&&(msg[msgp++]!=0x0a)) linec++;
+        builder_error(builder,line,linec);
+      }
     }
   }
   if (!ok) {
-    fprintf(stderr,"%s: Child process exitted abnormally.\n",process->step->file->path);
+    builder_error(builder,"%s: Child process exitted abnormally.\n",process->step->file->path);
   }
-  fprintf(stderr,"%s: Failed command:\n%.*s\n",process->step->file->path,process->cmdc,process->cmd);
+  builder_error(builder,"%s: Failed command:\n%.*s\n",process->step->file->path,process->cmdc,process->cmd);
 }
 
 /* No steps are ready to build.
@@ -229,10 +231,7 @@ static void builder_dump_process_log(struct builder *builder,struct builder_proc
  
 static int builder_wait(struct builder *builder) {
   for (;;) {
-    if (builder->processc<1) {
-      fprintf(stderr,"%s: PANIC! Entered %s with no jobs running.\n",g.exename,__func__);
-      return -2;
-    }
+    if (builder->processc<1) return builder_error(builder,"%s: PANIC! Entered %s with no jobs running.\n",g.exename,__func__);
     int wstatus=0;
     int pid=wait(&wstatus);
     if (pid<=0) return -1;
@@ -278,9 +277,6 @@ int builder_execute_plan(struct builder *builder) {
     while ((stepplo<stepphi)&&builder->stepv[stepplo].file->ready) stepplo++;
     while ((stepplo<stepphi)&&builder->stepv[stepphi-1].file->ready) stepphi--;
   }
-  if (builder->processc) {
-    fprintf(stderr,"%s: Finished %s with %d processes still running.\n",g.exename,__func__,builder->processc);
-    return -2;
-  }
+  if (builder->processc) return builder_error(builder,"%s: Finished %s with %d processes still running.\n",g.exename,__func__,builder->processc);
   return 0;
 }

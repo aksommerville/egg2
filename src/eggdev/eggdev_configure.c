@@ -116,6 +116,27 @@ static int eggdev_append_srcpathv(const char *src,int srcc) {
   return 0;
 }
 
+/* Append to htdocsv.
+ */
+ 
+static int eggdev_append_htdocs(const char *src,int srcc) {
+  if (!src) srcc=0; else if (srcc<0) { srcc=0; while (src[srcc]) srcc++; }
+  if (g.htdocsc>=g.htdocsa) {
+    int na=g.htdocsa+8;
+    if (na>INT_MAX/sizeof(void*)) return -1;
+    void *nv=realloc(g.htdocsv,sizeof(void*)*na);
+    if (!nv) return -1;
+    g.htdocsv=nv;
+    g.htdocsa=na;
+  }
+  char *nv=malloc(srcc+1);
+  if (!nv) return -1;
+  memcpy(nv,src,srcc);
+  nv[srcc]=0;
+  g.htdocsv[g.htdocsc++]=nv;
+  return 0;
+}
+
 /* Set string argument.
  */
  
@@ -166,8 +187,11 @@ static int eggdev_argv_kv(const char *k,int kc,const char *v,int vc) {
   
   if ((kc==6)&&!memcmp(k,"dstfmt",6)) return eggdev_set_string(&g.dstfmt,v,vc,k,kc);
   if ((kc==6)&&!memcmp(k,"srcfmt",6)) return eggdev_set_string(&g.srcfmt,v,vc,k,kc);
-  
-  //TODO argv
+  if ((kc==4)&&!memcmp(k,"port",4)) { g.port=vn; return 0; }
+  if ((kc==15)&&!memcmp(k,"unsafe-external",15)) { g.unsafe_external=vn; return 0; }
+  if ((kc==9)&&!memcmp(k,"writeable",9)) return eggdev_set_string(&g.writeable,v,vc,k,kc);
+  if ((kc==7)&&!memcmp(k,"project",7)) return eggdev_set_string(&g.project,v,vc,k,kc);
+  if ((kc==6)&&!memcmp(k,"htdocs",6)) return eggdev_append_htdocs(v,vc);
   
   fprintf(stderr,"%s: Unexpected option '%.*s' = '%.*s'\n",g.exename,kc,k,vc,v);
   return -2;

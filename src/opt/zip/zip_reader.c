@@ -94,6 +94,8 @@ int zip_reader_next(struct zip_file *file,struct zip_reader *reader) {
   file->cdata=SRC+file->namec+file->extrac;
   if ((file->compression==0)||(file->usize==0)) { // Uncompressed.
     file->udata=file->cdata;
+  } else if (reader->udata_on_demand_only) {
+    file->udata=0;
   } else {
     if (zip_reader_uncompress(reader,file->cdata,file->csize,file->usize,file->compression)<0) return -1;
     file->udata=reader->tmp;
@@ -101,4 +103,15 @@ int zip_reader_next(struct zip_file *file,struct zip_reader *reader) {
   reader->srcp+=file->namec+file->extrac+file->csize;
   
   return 1;
+}
+
+/* Uncompress file per user request.
+ */
+ 
+int zip_file_uncompress(struct zip_file *file,struct zip_reader *reader) {
+  if (!file||!reader) return -1;
+  if (file->udata) return 0;
+  if (zip_reader_uncompress(reader,file->cdata,file->csize,file->usize,file->compression)<0) return -1;
+  file->udata=reader->tmp;
+  return 0;
 }

@@ -23,6 +23,8 @@ Usage: `eggdev serve [--port=8080] [--unsafe-external] [--htdocs=[REMOTE:]LOCAL 
 HTTP server for serving our editor or the game.
 **This is not suitable for use on the internet.**
 
+Detailed documentation is at EGG_SDK/etc/doc/eggdev-http.md.
+
 ## convert
 
 Usage: `eggdev convert -oDSTPATH SRCPATH [--dstfmt=FORMAT] [--srcfmt=FORMAT]`

@@ -34,9 +34,12 @@ Planned differences from Egg v1:
 - - [x] Generic outer layers.
 - - [x] build
 - - [x] minify
-- - [ ] serve
+- - [x] serve
 - - [x] convert
 - - [x] config
+- - [ ] metadata
+- - [ ] unpack
+- - [ ] pack
 - [ ] Native runtime.
 - - [ ] Load.
 - - [ ] Synth.

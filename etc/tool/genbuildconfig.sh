@@ -22,7 +22,7 @@ export EGG_SDK:=/home/andy/proj/egg
 export EGG_TARGETS:=linux web
 export EGG_NATIVE_TARGET:=linux
 
-export eggdev_OPT_ENABLE:=serial fs midi synth zip
+export eggdev_OPT_ENABLE:=serial fs midi synth zip http
 export eggdev_CC:=gcc -c -MMD -O3 -Isrc -Werror -Wimplicit
 export eggdev_LD:=gcc -z noexecstack
 export eggdev_LDPOST:=-lm -lz

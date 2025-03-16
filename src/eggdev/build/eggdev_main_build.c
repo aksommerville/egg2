@@ -13,6 +13,7 @@ int eggdev_main_build() {
     fprintf(stderr,"%s: Too many inputs.\n",g.exename);
     return -2;
   }
+  if ((err=eggdev_client_set_root(root,-1))<0) return err;
   struct builder builder={0};
   if ((err=builder_set_root(&builder,root,-1))<0) {
     builder_cleanup(&builder);
