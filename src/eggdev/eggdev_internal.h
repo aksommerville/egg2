@@ -106,4 +106,7 @@ int eggdev_write_output(const char *path,const void *src,int srcc);
 int eggdev_read_stdin(void *dstpp);
 int eggdev_write_stdout(const void *src,int srcc);
 
+int eggdev_lineno(const char *src,int srcc);
+int eggdev_relative_path(char *dst,int dsta,const char *ref,int refc,const char *sub,int subc);
+
 #endif

@@ -33,7 +33,7 @@ Planned differences from Egg v1:
 - [ ] eggdev
 - - [x] Generic outer layers.
 - - [x] build
-- - [ ] minify
+- - [x] minify
 - - [ ] serve
 - - [x] convert
 - - [x] config
