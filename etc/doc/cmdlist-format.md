@@ -41,8 +41,8 @@ Followed by space-delimited arguments:
 Binary has a preamble:
 ```
    4  Signature: "\0EMP"
-   1  Width
-   1  Height
+   1  Width 1..255
+   1  Height 1..255
  ...  Cells (Width*Height)
 ```
 

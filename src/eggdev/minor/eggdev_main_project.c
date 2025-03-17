@@ -353,7 +353,7 @@ static int gen_main(struct eggdev_project_context *ctx) {
     "\n"
     "  int fbw=0,fbh=0;\n"
     "  egg_texture_get_size(&fbw,&fbh,1);\n"
-    "  if ((fbw!=FBH)||(fbh!=FBH)) {\n"
+    "  if ((fbw!=FBW)||(fbh!=FBH)) {\n"
     "    fprintf(stderr,\"Framebuffer size mismatch! metadata=%dx%d header=%dx%d\\n\",fbw,fbh,FBW,FBH);\n"
     "    return -1;\n"
     "  }\n"

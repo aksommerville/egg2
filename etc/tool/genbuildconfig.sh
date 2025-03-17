@@ -27,7 +27,7 @@ export eggdev_CC:=gcc -c -MMD -O3 -Isrc -Werror -Wimplicit
 export eggdev_LD:=gcc -z noexecstack
 export eggdev_LDPOST:=-lm -lz
 
-export linux_OPT_ENABLE:=alsafd asound pulse xegl drm evdev fs serial synth
+export linux_OPT_ENABLE:=alsafd asound pulse xegl drm evdev fs serial synth res
 export linux_CC:=gcc -c -MMD -O3 -Isrc -Werror -Wimplicit -I/usr/include/libdrm
 export linux_LD:=gcc -z noexecstack
 export linux_AR:=ar

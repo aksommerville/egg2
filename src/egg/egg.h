@@ -72,7 +72,7 @@ void egg_time_local(int *dst,int dsta);
   (dst)[1]='a'+((lang)&0x1f)-1; \
 }
 #define EGG_STRING_IS_LANG(str) ( \
-  ((str)[0]>='a')&&((str)[0]<='z')&&((str)[1]>='a')&&((str)[1]<='z')) \
+  ((str)[0]>='a')&&((str)[0]<='z')&&((str)[1]>='a')&&((str)[1]<='z') \
 )
 
 /* Read or write a global preference.

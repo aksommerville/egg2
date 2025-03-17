@@ -17,6 +17,8 @@ void eggrt_quit(int status) {
   
   //TODO Tear down drivers.
   fprintf(stderr,"%s:%d:TODO: Tear down drivers.\n",__FILE__,__LINE__);
+  
+  eggrt_rom_quit();
 }
 
 /* Init.
@@ -25,8 +27,19 @@ void eggrt_quit(int status) {
 int eggrt_init() {
   int err;
   
+  if ((err=eggrt_rom_init())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Failed to acquire game ROM.\n",eggrt.exename);
+    return -2;
+  }
+  
   //TODO Prep drivers.
   fprintf(stderr,"%s:%d:TODO: Driver setup.\n",__FILE__,__LINE__);
+  
+  // Initial preferences.
+  if ((err=eggrt_prefs_init())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Unspecified error initializing preferences.\n",eggrt.exename);
+    return -2;
+  }
   
   // Initialize client.
   if ((err=eggrt_call_client_init())<0) {

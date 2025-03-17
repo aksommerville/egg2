@@ -3,6 +3,8 @@
  */
 
 #include "eggrt_internal.h"
+#include <sys/time.h>
+#include <time.h>
 
 /* Odds, ends.
  */
@@ -22,21 +24,67 @@ void egg_log(const char *msg) {
 }
 
 double egg_time_real() {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return 0.0;
+  struct timeval tv={0};
+  gettimeofday(&tv,0);
+  return (double)tv.tv_sec+(double)tv.tv_usec/1000000.0;
 }
 
 void egg_time_local(int *dst,int dsta) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  if (!dst||(dsta<1)) return;
+  time_t now=time(0);
+  struct tm tm={0};
+  localtime_r(&now,&tm);
+  dst[0]=1900+tm.tm_year; if (dsta<2) return;
+  dst[1]=1+tm.tm_mon; if (dsta<3) return;
+  dst[2]=tm.tm_mday; if (dsta<4) return;
+  dst[3]=tm.tm_hour; if (dsta<5) return;
+  dst[4]=tm.tm_min; if (dsta<6) return;
+  dst[5]=tm.tm_sec; if (dsta<7) return;
+  struct timeval tv={0};
+  gettimeofday(&tv,0);
+  dst[6]=tv.tv_usec/1000;
 }
 
 int egg_prefs_get(int k) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  switch (k) {
+    case EGG_PREF_LANG: return eggrt.lang;
+    case EGG_PREF_MUSIC: return eggrt.music_enable;
+    case EGG_PREF_SOUND: return eggrt.sound_enable;
+  }
   return 0;
 }
 
 int egg_prefs_set(int k,int v) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  switch (k) {
+  
+    case EGG_PREF_LANG: {
+        if (v==eggrt.lang) return 0;
+        char name[3]={0};
+        EGG_STRING_FROM_LANG(name,v)
+        if (!EGG_STRING_IS_LANG(name)) return -1;
+        fprintf(stderr,"%s: Changing language to '%.2s'\n",eggrt.exename,name);
+        eggrt.lang=v;
+        //TODO Update window title etc.
+      } return 0;
+  
+    case EGG_PREF_MUSIC: {
+        v=v?1:0;
+        if (v==eggrt.music_enable) return 0;
+        if (eggrt.music_enable=v) {
+        } else {
+          //TODO Stop music.
+        }
+      } return 0;
+  
+    case EGG_PREF_SOUND: {
+        v=v?1:0;
+        if (v==eggrt.sound_enable) return 0;
+        if (eggrt.sound_enable=v) {
+        } else {
+          //TODO Stop sounds? Or just let them run out?
+        }
+      } return 0;
+  }
   return -1;
 }
 
@@ -44,13 +92,23 @@ int egg_prefs_set(int k,int v) {
  */
 
 int egg_rom_get(void *dst,int dsta) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return 0;
+  if (!dst||(dsta<0)) dsta=0;
+  int cpc=eggrt.romc;
+  if (cpc>dsta) cpc=dsta;
+  memcpy(dst,eggrt.rom,cpc);
+  return eggrt.romc;
 }
 
 int egg_rom_get_res(void *dst,int dsta,int tid,int rid) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return 0;
+  if ((tid<1)||(rid<1)) return 0;
+  if (!dst||(dsta<0)) dsta=0;
+  int p=eggrt_rom_search(tid,rid);
+  if (p<0) return 0;
+  const struct rom_entry *res=eggrt.resv+p;
+  int cpc=res->c;
+  if (cpc>dsta) cpc=dsta;
+  memcpy(dst,res->v,cpc);
+  return res->c;
 }
 
 int egg_store_get(char *v,int va,const char *k,int kc) {
@@ -114,6 +172,7 @@ int egg_gamepad_get_button(int *btnid,int *hidusage,int *lo,int *hi,int *rest,in
  */
  
 void egg_play_sound(int soundid,double trim,double pan) {
+  if (!eggrt.sound_enable) return;
   fprintf(stderr,"TODO %s\n",__func__);
 }
 
@@ -160,7 +219,9 @@ int egg_texture_new() {
 }
 
 void egg_texture_get_size(int *w,int *h,int texid) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  *w=320;//XXX
+  *h=180;
+  fprintf(stderr,"TODO %s texid=%d, reporting %dx%d\n",__func__,texid,*w,*h);
 }
 
 int egg_texture_load_image(int texid,int imageid) {
