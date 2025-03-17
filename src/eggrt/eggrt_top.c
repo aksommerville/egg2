@@ -1,5 +1,6 @@
 #include "eggrt_internal.h"
 #include "opt/serial/serial.h"
+#include "opt/image/image.h"
 #include <unistd.h>
 
 struct eggrt eggrt={0};
@@ -25,6 +26,15 @@ void eggrt_quit(int status) {
   synth_del(eggrt.synth);
   
   eggrt_rom_quit();
+  
+  if (eggrt.titlestorage) {
+    free(eggrt.titlestorage);
+    eggrt.titlestorage=0;
+  }
+  if (eggrt.iconstorage) {
+    free(eggrt.iconstorage);
+    eggrt.iconstorage=0;
+  }
 }
 
 /* Fill in (title,icon*,fbw,fbh) per ROM.
@@ -74,9 +84,8 @@ static int eggrt_eval_players(int *lo,int *hi,const char *src,int srcc) {
 static int eggrt_populate_video_setup(struct hostio_video_setup *setup) {
   setup->fbw=640; // Default framebuffer size, per our spec.
   setup->fbh=360;
-  const char *titlesrc=0; // Only if string unset.
+  const char *titlesrc=0;
   int titlesrcc=0;
-  int titlestrix=0; // Prefer if set.
   int iconimageid=0;
   
   int p=eggrt_rom_search(EGG_TID_metadata,1);
@@ -94,7 +103,7 @@ static int eggrt_populate_video_setup(struct hostio_video_setup *setup) {
           titlesrcc=entry.vc;
           
         } else if ((entry.kc==6)&&!memcmp(entry.k,"title$",6)) {
-          sr_int_eval(&titlestrix,entry.v,entry.vc);
+          sr_int_eval(&eggrt.titlestrix,entry.v,entry.vc);
           
         } else if ((entry.kc==9)&&!memcmp(entry.k,"iconImage",9)) {
           sr_int_eval(&iconimageid,entry.v,entry.vc);
@@ -119,14 +128,31 @@ static int eggrt_populate_video_setup(struct hostio_video_setup *setup) {
     }
   }
   
-  if (titlestrix>0) {
-    //TODO title from strings
-  }
-  if (!titlestrix&&titlesrcc) {
-    //TODO copy title
+  /* We can only do the default title from here, since we haven't picked a language yet.
+   */
+  if (titlesrcc) {
+    if (eggrt.titlestorage=malloc(titlesrcc+1)) {
+      memcpy(eggrt.titlestorage,titlesrc,titlesrcc);
+      ((char*)eggrt.titlestorage)[titlesrcc]=0;
+      setup->title=eggrt.titlestorage;
+    }
   }
   if (iconimageid>0) {
-    //TODO decode icon
+    int p=eggrt_rom_search(EGG_TID_image,iconimageid);
+    if (p>=0) {
+      const struct rom_entry *res=eggrt.resv+p;
+      int w=0,h=0;
+      if (image_measure(&w,&h,res->v,res->c)>=0) {
+        int len=w*h*4;
+        if (eggrt.iconstorage=malloc(len)) {
+          if (image_decode(eggrt.iconstorage,len,res->v,res->c)==len) {
+            setup->iconrgba=eggrt.iconstorage;
+            setup->iconw=w;
+            setup->iconh=h;
+          }
+        }
+      }
+    }
   }
 
   if (

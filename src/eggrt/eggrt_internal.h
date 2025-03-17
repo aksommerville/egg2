@@ -35,6 +35,8 @@ extern struct eggrt {
   int playerclo,playerchi;
   const char *romlang,*romrequired,*romoptional;
   int romlangc,romrequiredc,romoptionalc;
+  void *titlestorage,*iconstorage;
+  int titlestrix;
   
 // eggrt_rom.c:
   void *rom;
