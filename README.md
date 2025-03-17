@@ -41,7 +41,7 @@ Planned differences from Egg v1:
 - - [x] unpack
 - - [x] pack
 - [ ] Native runtime.
-- - [ ] Load.
+- - [x] Load.
 - - [ ] Synth.
 - - [ ] Render.
 - - [ ] Input.

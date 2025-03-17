@@ -3,6 +3,15 @@
 
 /* --help
  */
+  char *video_driver;
+  int fullscreen;
+  char *video_device;
+  char *audio_driver;
+  int audio_rate;
+  int audio_chanc;
+  int audio_buffer;
+  char *audio_device;
+  char *input_driver;
  
 void eggrt_print_help(const char *topic,int topicc) {
   fprintf(stderr,"\nUsage: %s [OPTIONS]\n",eggrt.exename);
@@ -10,9 +19,41 @@ void eggrt_print_help(const char *topic,int topicc) {
     "\n"
     "OPTIONS:\n"
     "  --help                   Print this message and exit.\n"
+    "  --video=DRIVER           Select driver manually (see below).\n"
+    "  --fullscreen             Start in fullscreen mode.\n"
+    "  --video-device=NAME      Depends on driver.\n"
+    "  --audio=DRIVER           Select driver manually (see below).\n"
+    "  --audio-rate=HZ          Suggest audio output rate.\n"
+    "  --audio-chanc=1|2        Suggest audio channel count.\n"
+    "  --stereo                 --audio-chanc=2\n"
+    "  --mono                   --audio-chanc=1\n"
+    "  --audio-buffer=FRAMES    Suggest audio buffer size in frames.\n"
+    "  --audio-device=NAME      Depends on driver.\n"
+    "  --input=DRIVER           Select driver manually (see below).\n"
     "\n"
   );
-  //TODO List drivers.
+  int i;
+  fprintf(stderr,"Video drivers:\n");
+  for (i=0;;i++) {
+    const struct hostio_video_type *type=hostio_video_type_by_index(i);
+    if (!type) break;
+    fprintf(stderr,"  %12s: %s\n",type->name,type->desc);
+  }
+  fprintf(stderr,"\n");
+  fprintf(stderr,"Audio drivers:\n");
+  for (i=0;;i++) {
+    const struct hostio_audio_type *type=hostio_audio_type_by_index(i);
+    if (!type) break;
+    fprintf(stderr,"  %12s: %s\n",type->name,type->desc);
+  }
+  fprintf(stderr,"\n");
+  fprintf(stderr,"Input drivers:\n");
+  for (i=0;;i++) {
+    const struct hostio_input_type *type=hostio_input_type_by_index(i);
+    if (!type) break;
+    fprintf(stderr,"  %12s: %s\n",type->name,type->desc);
+  }
+  fprintf(stderr,"\n");
 }
 
 /* Key=value arguments.
