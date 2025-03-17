@@ -1,4 +1,5 @@
 #include "eggrt_internal.h"
+#include "opt/serial/serial.h"
 #include <unistd.h>
 
 struct eggrt eggrt={0};
@@ -15,26 +16,139 @@ void eggrt_quit(int status) {
     fprintf(stderr,"%s:%d:TODO: Performance report\n",__FILE__,__LINE__);
   }
   
+  render_del(eggrt.render);
+  
+  hostio_audio_play(eggrt.hostio,0);
   hostio_del(eggrt.hostio);
   eggrt.hostio=0;
   
+  synth_del(eggrt.synth);
+  
   eggrt_rom_quit();
+}
+
+/* Fill in (title,icon*,fbw,fbh) per ROM.
+ * Fails if we don't end up with valid (fbw,fbh).
+ * Title and icon are purely optional.
+ * Also, since we're in there anyway, capture the metadata's player count, language, and feature flags.
+ */
+ 
+static int eggrt_eval_fb(int *w,int *h,const char *src,int srcc) {
+  *w=*h=0;
+  int srcp=0;
+  while ((srcp<srcc)&&(src[srcp]>='0')&&(src[srcp]<='9')) {
+    (*w)*=10;
+    (*w)+=src[srcp++]-'0';
+  }
+  if ((srcp>=srcc)||(src[srcp++]!='x')) return -1;
+  while ((srcp<srcc)&&(src[srcp]>='0')&&(src[srcp]<='9')) {
+    (*h)*=10;
+    (*h)+=src[srcp++]-'0';
+  }
+  if (srcp<srcc) return *w=*h=-1;
+  return 0;
+}
+
+static int eggrt_eval_players(int *lo,int *hi,const char *src,int srcc) {
+  *lo=*hi=0;
+  int srcp=0;
+  while ((srcp<srcc)&&(src[srcp]>='0')&&(src[srcp]<='9')) {
+    (*lo)*=10;
+    (*lo)+=src[srcp++]-'0';
+  }
+  if (srcp>=srcc) {
+    *hi=*lo;
+    return 0;
+  }
+  if ((srcp>srcc-2)||memcmp(src+srcp,"..",2)) return -1;
+  srcp+=2;
+  while ((srcp<srcc)&&(src[srcp]>='0')&&(src[srcp]<='9')) {
+    (*hi)*=10;
+    (*hi)+=src[srcp++]-'0';
+  }
+  if (srcp<srcc) return *lo=*hi=-1;
+  if (!*hi) *hi=8;
+  return 0;
+}
+ 
+static int eggrt_populate_video_setup(struct hostio_video_setup *setup) {
+  setup->fbw=640; // Default framebuffer size, per our spec.
+  setup->fbh=360;
+  const char *titlesrc=0; // Only if string unset.
+  int titlesrcc=0;
+  int titlestrix=0; // Prefer if set.
+  int iconimageid=0;
+  
+  int p=eggrt_rom_search(EGG_TID_metadata,1);
+  if (p>=0) {
+    struct metadata_reader reader;
+    if (metadata_reader_init(&reader,eggrt.resv[p].v,eggrt.resv[p].c)>=0) {
+      struct metadata_entry entry;
+      while (metadata_reader_next(&entry,&reader)>0) {
+      
+        if ((entry.kc==2)&&!memcmp(entry.k,"fb",2)) {
+          eggrt_eval_fb(&setup->fbw,&setup->fbh,entry.v,entry.vc);
+          
+        } else if ((entry.kc==5)&&!memcmp(entry.k,"title",5)) {
+          titlesrc=entry.v;
+          titlesrcc=entry.vc;
+          
+        } else if ((entry.kc==6)&&!memcmp(entry.k,"title$",6)) {
+          sr_int_eval(&titlestrix,entry.v,entry.vc);
+          
+        } else if ((entry.kc==9)&&!memcmp(entry.k,"iconImage",9)) {
+          sr_int_eval(&iconimageid,entry.v,entry.vc);
+          
+        } else if ((entry.kc==7)&&!memcmp(entry.k,"players",7)) {
+          eggrt_eval_players(&eggrt.playerclo,&eggrt.playerchi,entry.v,entry.vc);
+          
+        } else if ((entry.kc==4)&&!memcmp(entry.k,"lang",4)) {
+          eggrt.romlang=entry.v;
+          eggrt.romlangc=entry.vc;
+          
+        } else if ((entry.kc==8)&&!memcmp(entry.k,"required",8)) { //TODO We're dutifully recording these... Not sure when we ought to validate.
+          eggrt.romrequired=entry.v;
+          eggrt.romrequiredc=entry.vc;
+          
+        } else if ((entry.kc==8)&&!memcmp(entry.k,"optional",8)) {
+          eggrt.romoptional=entry.v;
+          eggrt.romoptionalc=entry.vc;
+      
+        }
+      }
+    }
+  }
+  
+  if (titlestrix>0) {
+    //TODO title from strings
+  }
+  if (!titlestrix&&titlesrcc) {
+    //TODO copy title
+  }
+  if (iconimageid>0) {
+    //TODO decode icon
+  }
+
+  if (
+    (setup->fbw<1)||(setup->fbw>EGG_TEXTURE_SIZE_LIMIT)||
+    (setup->fbh<1)||(setup->fbh>EGG_TEXTURE_SIZE_LIMIT)
+  ) {
+    fprintf(stderr,"%s: Invalid framebuffer dimensions %dx%d.\n",eggrt.exename,setup->fbw,setup->fbh);
+    return -2;
+  }
+  return 0;
 }
 
 /* Init drivers.
  */
  
 static int eggrt_init_video() {
+  int err;
   struct hostio_video_setup setup={
-    .title="EGG GAME",//TODO
-    .iconrgba=0,///TODO
-    .iconw=0,
-    .iconh=0,
-    .w=0,
-    .h=0,
     .fullscreen=eggrt.fullscreen,
     .device=eggrt.video_device,
   };
+  if ((err=eggrt_populate_video_setup(&setup))<0) return err;
   if (hostio_init_video(eggrt.hostio,eggrt.video_driver,&setup)<0) {
     fprintf(stderr,"%s: Failed to initialize any video driver.\n",eggrt.exename);
     return -2;
@@ -43,7 +157,9 @@ static int eggrt_init_video() {
     fprintf(stderr,"%s: Video driver '%s' does not appear to support OpenGL.\n",eggrt.exename,eggrt.hostio->video->type->name);
     return -2;
   }
-  //TODO Renderer.
+  if (!(eggrt.render=render_new())) return -1;
+  render_set_size(eggrt.render,eggrt.hostio->video->w,eggrt.hostio->video->h);
+  if (render_set_framebuffer_size(eggrt.render,setup.fbw,setup.fbh)<0) return -1;
   return 0;
 }
 
@@ -58,7 +174,10 @@ static int eggrt_init_audio() {
     fprintf(stderr,"%s: Failed to initialize any audio driver.\n",eggrt.exename);
     return -2;
   }
-  //TODO Synthesizer.
+  if (!(eggrt.synth=synth_new(eggrt.hostio->audio->rate,eggrt.hostio->audio->chanc))) {
+    fprintf(stderr,"%s: Failed to initialize synthesizer. rate=%d chanc=%d\n",eggrt.exename,eggrt.hostio->audio->rate,eggrt.hostio->audio->chanc);
+    return -2;
+  }
   return 0;
 }
 
@@ -157,8 +276,9 @@ int eggrt_update() {
   
   // Render.
   if ((err=eggrt.hostio->video->type->gx_begin(eggrt.hostio->video))<0) return err;
-  //TODO reset renderer
+  render_begin(eggrt.render);
   if ((err=eggrt_call_client_render())<0) return err;
+  render_commit(eggrt.render);
   if ((err=eggrt.hostio->video->type->gx_end(eggrt.hostio->video))<0) return err;
   
   return 0;

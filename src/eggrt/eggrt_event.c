@@ -18,7 +18,7 @@ void eggrt_cb_focus(struct hostio_video *driver,int focus) {
  */
  
 void eggrt_cb_resize(struct hostio_video *driver,int w,int h) {
-  fprintf(stderr,"%s %d,%d\n",__func__,w,h);
+  render_set_size(eggrt.render,w,h);
 }
 
 /* Keyboard.
@@ -52,7 +52,7 @@ void eggrt_cb_mwheel(struct hostio_video *driver,int dx,int dy) {
  */
  
 void eggrt_cb_pcm_out(int16_t *v,int c,struct hostio_audio *driver) {
-  memset(v,0,c<<1);//TODO synth
+  synth_updatei(v,c,eggrt.synth);
 }
 
 /* Gamepad.

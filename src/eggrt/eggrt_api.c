@@ -3,6 +3,7 @@
  */
 
 #include "eggrt_internal.h"
+#include "opt/image/image.h"
 #include <sys/time.h>
 #include <time.h>
 
@@ -71,18 +72,17 @@ int egg_prefs_set(int k,int v) {
         v=v?1:0;
         if (v==eggrt.music_enable) return 0;
         if (eggrt.music_enable=v) {
+          synth_play_song(eggrt.synth,eggrt.songid,0,eggrt.songrepeat);
         } else {
-          //TODO Stop music.
+          synth_play_song(eggrt.synth,0,0,0);
         }
       } return 0;
   
     case EGG_PREF_SOUND: {
         v=v?1:0;
         if (v==eggrt.sound_enable) return 0;
-        if (eggrt.sound_enable=v) {
-        } else {
-          //TODO Stop sounds? Or just let them run out?
-        }
+        eggrt.sound_enable=v;
+        // We could ask synth to cut off sound effects immediately, but I don't think it matters.
       } return 0;
   }
   return -1;
@@ -173,76 +173,87 @@ int egg_gamepad_get_button(int *btnid,int *hidusage,int *lo,int *hi,int *rest,in
  
 void egg_play_sound(int soundid,double trim,double pan) {
   if (!eggrt.sound_enable) return;
-  fprintf(stderr,"TODO %s\n",__func__);
+  synth_play_sound(eggrt.synth,soundid,trim,pan);
 }
 
 void egg_play_song(int songid,int force,int repeat) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  eggrt.songid=songid;
+  eggrt.songrepeat=repeat;
+  if (!eggrt.music_enable) return;
+  synth_play_song(eggrt.synth,songid,force,repeat);
 }
 
 int egg_song_get_id() {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return 0;
+  return synth_get_song_id(eggrt.synth);
 }
 
 double egg_song_get_playhead() {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return 0.0;
+  //TODO Adjust per driver
+  return synth_get_playhead(eggrt.synth);
 }
 
 void egg_song_set_playhead(double playhead) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  synth_set_playhead(eggrt.synth,playhead);
 }
 
 /* Video.
  */
  
 void egg_video_get_screen_size(int *w,int *h) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  if (w) *w=eggrt.hostio->video->w;
+  if (h) *h=eggrt.hostio->video->h;
 }
 
 void egg_video_fb_from_screen(int *x,int *y) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  render_coords_fb_from_win(eggrt.render,x,y);
 }
 
 void egg_video_screen_from_fb(int *x,int *y) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  render_coords_win_from_fb(eggrt.render,x,y);
 }
 
 void egg_texture_del(int texid) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  render_texture_del(eggrt.render,texid);
 }
 
 int egg_texture_new() {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return -1;
+  return render_texture_new(eggrt.render);
 }
 
 void egg_texture_get_size(int *w,int *h,int texid) {
-  *w=320;//XXX
-  *h=180;
-  fprintf(stderr,"TODO %s texid=%d, reporting %dx%d\n",__func__,texid,*w,*h);
+  render_texture_get_size(w,h,eggrt.render,texid);
 }
 
 int egg_texture_load_image(int texid,int imageid) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return -1;
+  if (texid<1) return -1;
+  int p=eggrt_rom_search(EGG_TID_image,imageid);
+  if (p<0) return -1;
+  const struct rom_entry *res=eggrt.resv+p;
+  int w=0,h=0;
+  if (image_measure(&w,&h,res->v,res->c)<0) return -1;
+  if ((w<1)||(h<1)||(w>EGG_TEXTURE_SIZE_LIMIT)||(h>EGG_TEXTURE_SIZE_LIMIT)) return -1;
+  int stride=w<<2;
+  int pixelslen=stride*h;
+  void *pixels=malloc(pixelslen);
+  if (!pixels) return -1;
+  int err=image_decode(pixels,pixelslen,res->v,res->c);
+  if (err>=0) err=render_texture_load_raw(eggrt.render,texid,w,h,stride,pixels,pixelslen);
+  free(pixels);
+  return err;
 }
 
 int egg_texture_load_raw(int texid,int w,int h,int stride,const void *src,int srcc) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return -1;
+  return render_texture_load_raw(eggrt.render,texid,w,h,stride,src,srcc);
 }
 
 int egg_texture_get_pixels(void *dst,int dsta,int texid) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return -1;
+  return render_texture_get_pixels(dst,dsta,eggrt.render,texid);
 }
 
 void egg_texture_clear(int texid) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  render_texture_clear(eggrt.render,texid);
 }
 
 void egg_render(const struct egg_render_uniform *uniform,const void *vtxv,int vtxc) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  render_render(eggrt.render,uniform,vtxv,vtxc);
 }

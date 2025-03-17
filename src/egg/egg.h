@@ -245,6 +245,8 @@ void egg_song_set_playhead(double playhead);
 
 /* Video.
  ******************************************************************************************/
+ 
+#define EGG_TEXTURE_SIZE_LIMIT 4096
 
 /* You shouldn't normally care about the "screen" size.
  * That's the window your game is running in, usually substantially larger than the framebuffer.

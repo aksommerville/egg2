@@ -22,12 +22,12 @@ export EGG_SDK:=/home/andy/proj/egg
 export EGG_TARGETS:=linux web
 export EGG_NATIVE_TARGET:=linux
 
-export eggdev_OPT_ENABLE:=serial fs midi synth zip http
+export eggdev_OPT_ENABLE:=serial fs midi synth zip http image
 export eggdev_CC:=gcc -c -MMD -O3 -Isrc -Werror -Wimplicit
 export eggdev_LD:=gcc -z noexecstack
 export eggdev_LDPOST:=-lm -lz
 
-export linux_OPT_ENABLE:=alsafd asound pulse xegl drm evdev fs serial synth res hostio
+export linux_OPT_ENABLE:=alsafd asound pulse xegl drm evdev fs serial synth res hostio render image
 export linux_CC:=gcc -c -MMD -O3 -Isrc -Werror -Wimplicit -I/usr/include/libdrm
 export linux_LD:=gcc -z noexecstack
 export linux_AR:=ar

@@ -4,6 +4,8 @@
 #include "egg/egg.h"
 #include "opt/res/res.h"
 #include "opt/hostio/hostio.h"
+#include "opt/synth/synth.h"
+#include "opt/render/render.h"
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -27,6 +29,12 @@ extern struct eggrt {
   int status;
   int client_init_called;
   struct hostio *hostio;
+  struct synth *synth;
+  int songid,songrepeat;
+  struct render *render;
+  int playerclo,playerchi;
+  const char *romlang,*romrequired,*romoptional;
+  int romlangc,romrequiredc,romoptionalc;
   
 // eggrt_rom.c:
   void *rom;
