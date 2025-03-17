@@ -8,6 +8,8 @@ Anything at h2 level here is addressable as `eggdev --help=TOPIC`.
 
 Usage: `eggdev build [PROJECT_DIR]`
 
+Detailed documentation about the build process is at EGG_SDK/etc/doc/eggdev-build.md.
+
 ## minify
 
 Usage: `eggdev minify -oDSTPATH SRCPATH`

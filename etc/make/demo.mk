@@ -1,0 +1,15 @@
+# demo.mk
+demo-all:
+
+demo_SRCDIR:=src/demo
+
+# Pick one output to use as a trigger.
+# When eggdev or libeggrt changes, force a clean build of the demo.
+# In the wild, games are not expected to track changes to Egg's bits.
+demo_EXE:=$(demo_SRCDIR)/out/demo-$(EGG_NATIVE_TARGET)$($(EGG_NATIVE_TARGET)_EXESFX)
+demo_SRCFILES:=$(filter src/demo/src/%,$(SRCFILES))
+demo_EGGRT:=out/$(EGG_NATIVE_TARGET)/libeggrt.a
+demo-all:$(demo_EXE)
+$(demo_EXE):$(eggdev_EXE) $(demo_EGGRT) $(demo_SRCFILES);rm -rf $(demo_SRCDIR)/mid $(demo_SRCDIR)/out ; $(eggdev_EXE) build $(demo_SRCDIR)
+
+demo-run:$(demo_EXE);$(demo_EXE)

@@ -212,6 +212,12 @@ int builder_schedule_link(struct builder *builder,struct builder_step *step) {
     struct builder_file *req=file->reqv[i];
     if (sr_encode_fmt(&cmd," %.*s",req->pathc,req->path)<0) { sr_encoder_cleanup(&cmd); return -1; }
   }
+  if ((target->pkgc==3)&&!memcmp(target->pkg,"web",3)) {
+    // Web builds don't link against a runtime -- their runtime is in javascript, at a higher level.
+  } else {
+    // Everything else requires libeggrt.
+    if (sr_encode_fmt(&cmd," %s/out/%.*s/libeggrt.a",g.sdkpath,target->namec,target->name)<0) { sr_encoder_cleanup(&cmd); return -1; }
+  }
   if (sr_encode_fmt(&cmd," %.*s",target->ldpostc,target->ldpost)<0) { sr_encoder_cleanup(&cmd); return -1; }
   int err=builder_begin_command(builder,step,cmd.v,cmd.c,0,0);
   sr_encoder_cleanup(&cmd);

@@ -54,3 +54,7 @@ Planned differences from Egg v1:
 - - [ ] Input.
 - - [ ] Persistence.
 - [ ] Editor.
+- [ ] Client utilities.
+- - [ ] stdlib
+- - [ ] graf
+- - [ ] font

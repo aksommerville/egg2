@@ -214,7 +214,7 @@ static void builder_dump_process_log(struct builder *builder,struct builder_proc
         const char *line=msg+msgp;
         int linec=0;
         while ((msgp<msgc)&&(msg[msgp++]!=0x0a)) linec++;
-        builder_error(builder,line,linec);
+        builder_error(builder,"%.*s\n",linec,line);
       }
     }
   }
