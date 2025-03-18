@@ -40,9 +40,9 @@ Planned differences from Egg v1:
 - - [x] metadata
 - - [x] unpack
 - - [x] pack
-- - [ ] list
-- - [ ] run: Same as build, but after a success launch the native executable. (update the project wizard's makefile too)
-- - [ ] hexdump: Convenience to extract one resource from a ROM and dump it.
+- - [x] list
+- - [x] run: Same as build, but after a success launch the native executable. (update the project wizard's makefile too)
+- - [x] dump: Convenience to extract one resource from a ROM and dump it.
 - [ ] Native runtime.
 - - [x] Load.
 - - [ ] Pick language.

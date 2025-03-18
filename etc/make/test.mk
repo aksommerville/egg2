@@ -3,7 +3,7 @@
 test_MIDDIR:=mid/test
 test_OUTDIR:=out/test
 
-test_CC:=$(eggdev_CC) -Imid/test
+test_CC:=$(eggdev_CC) -Imid/test $(foreach U,$(eggdev_OPT_ENABLE),-DUSE_$U=1)
 test_LD:=$(eggdev_LD)
 test_LDPOST:=$(eggdev_LDPOST)
 

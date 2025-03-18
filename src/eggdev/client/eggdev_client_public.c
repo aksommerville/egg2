@@ -201,12 +201,27 @@ int eggdev_tid_repr(char *dst,int dsta,int tid) {
  */
  
 int eggdev_symbol_eval(int *dst,const char *src,int srcc,int nstype,const char *ns,int nsc) {
+  if (!src) srcc=0; else if (srcc<0) { srcc=0; while (src[srcc]) srcc++; }
   if (nstype==EGGDEV_NSTYPE_RESTYPE) {
     *dst=eggdev_tid_eval(src,srcc);
     return (*dst>0)?0:-1;
   }
   if (ns) eggdev_client_require();
-  return eggdev_client_resolve_value(dst,nstype,ns,nsc,src,srcc);
+  if (eggdev_client_resolve_value(dst,nstype,ns,nsc,src,srcc)>=0) return 0;
+  if (sr_int_eval(dst,src,srcc)>=2) return 0;
+  
+  // Accept language qualified integers for EGGDEV_NSTYPE_RES.
+  if (nstype==EGGDEV_NSTYPE_RES) {
+    if ((srcc>=4)&&(src[0]>='a')&&(src[0]<='z')&&(src[1]>='a')&&(src[1]<='z')&&(src[2]=='-')) {
+      int subrid=0;
+      if ((sr_int_eval(&subrid,src+3,srcc-3)>=2)&&(subrid>0)&&(subrid<0x40)) {
+        *dst=((src[0]-'a'+1)<<11)|((src[1]-'a'+1)<<6)|subrid;
+        return 0;
+      }
+    }
+  }
+  
+  return -1;
 }
  
 int eggdev_symbol_repr(char *dst,int dsta,int v,int nstype,const char *ns,int nsc) {

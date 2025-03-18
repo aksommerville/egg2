@@ -135,43 +135,6 @@ static int eggdev_project_copy(struct eggdev_project_context *ctx,const char *sr
   return 0;
 }
 
-/* Path to the native executable, relative to the new project.
- * For 'make run'.
- * Empty if there isn't one.
- * May be a more complex shell command, eg for MacOS.
- *
- * Note that this is generated statically at project initialization.
- * If we really wanted to do things right, we'd do all these lookups dynamically at the moment it's requested.
- * So as is, you start a project on the Mac, clone it on the Linux box, 'make run' won't work right off the bat.
- * TODO Maybe eggdev should have its own "build then run the native executable" command.
- */
- 
-static int eggdev_project_get_executable_path(char *dst,int dsta,struct eggdev_project_context *ctx) {
-  if (dsta<1) return 0;
-  dst[0]=0;
-  const char *target=0;
-  int targetc=eggdev_config_get(&target,"EGG_NATIVE_TARGET",-1);
-  if (targetc<1) return 0;
-  const char *packaging=0;
-  int packagingc=eggdev_config_get_sub(&packaging,target,targetc,"PACKAGING",-1);
-  if ((packagingc==3)&&!memcmp(packaging,"web",3)) {
-    // Web builds don't produce executables. Really shouldn't be your "native target", user!
-    return 0;
-  } else if ((packagingc==3)&&!memcmp(packaging,"exe",3)) {
-    // The usual case, eg Linux and Windows.
-    const char *sfx=0;
-    int sfxc=eggdev_config_get_sub(&sfx,target,targetc,"EXESFX",-1);
-    if (sfxc<0) sfxc=0;
-    return snprintf(dst,dsta,"out/%.*s-%.*s%.*s",ctx->namec,ctx->name,targetc,target,sfxc,sfx);
-  } else if ((packagingc==5)&&!memcmp(packaging,"macos",5)) {
-    // MacOS builds are bundles. You can't launch the executable directly.
-    return snprintf(dst,dsta,"open -W out/%.*s-%.*s.app -- --reopen-tty=$(tty)",ctx->namec,ctx->name,targetc,target);
-  } else {
-    // Unknown packaging. 'make run' will not be an option.
-    return 0;
-  }
-}
-
 /* Generate the boilerplate .gitignore.
  */
  
@@ -199,15 +162,8 @@ static int gen_makefile(struct eggdev_project_context *ctx) {
     "\n"
     "all:;eggdev build\n"
     "clean:;rm -rf mid out\n"
+    "run:;eggdev run\n"
   ,-1)<0) return -1;
-  
-  char path[1024];
-  int pathc=eggdev_project_get_executable_path(path,sizeof(path),ctx);
-  if ((pathc>0)&&(pathc<sizeof(path))) {
-    if (sr_encode_fmt(&ctx->scratch,
-      "run:all;%.*s\n",pathc,path
-    )<0) return -1;
-  }
   
   if (sr_encode_fmt(&ctx->scratch,
     "web-run:all;eggdev serve --htdocs=out --project=.\n"

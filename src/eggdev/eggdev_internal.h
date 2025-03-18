@@ -74,6 +74,9 @@ extern struct g {
 #define EGGDEV_COMMAND_metadata 7
 #define EGGDEV_COMMAND_pack 8
 #define EGGDEV_COMMAND_unpack 9
+#define EGGDEV_COMMAND_list 10
+#define EGGDEV_COMMAND_run 11
+#define EGGDEV_COMMAND_dump 12
 #define EGGDEV_COMMAND_FOR_EACH \
   _(build) \
   _(serve) \
@@ -83,7 +86,10 @@ extern struct g {
   _(project) \
   _(metadata) \
   _(pack) \
-  _(unpack)
+  _(unpack) \
+  _(list) \
+  _(run) \
+  _(dump)
   
 #define _(tag) int eggdev_main_##tag();
 EGGDEV_COMMAND_FOR_EACH

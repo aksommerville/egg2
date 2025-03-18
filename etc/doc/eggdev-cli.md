@@ -10,6 +10,12 @@ Usage: `eggdev build [PROJECT_DIR]`
 
 Detailed documentation about the build process is at EGG_SDK/etc/doc/eggdev-build.md.
 
+## run
+
+Usage: `eggdev run [PROJECT_DIR]`
+
+Same as `build` but after the build succeeds, launch the native executable.
+
 ## minify
 
 Usage: `eggdev minify -oDSTPATH SRCPATH`
@@ -82,3 +88,19 @@ Extract a ROM file's contents into a new directory.
 
 By default, we will try to convert known resource types to their "portable" form.
 Use `--verbatim` to suppress that and copy resources exactly as they are.
+
+## list
+
+Usage: `eggdev list ROM [--format=default|summary|raw]`
+
+List the ROM's resources.
+With `--format=default` or none, prints one line per resource: `TYPE ID SIZE`.
+With `--format=summary`, prints one line per type: `TYPE COUNT TOTAL_SIZE`.
+`raw` is basically the same as `default` but type and id will always be numeric.
+
+## dump
+
+Usage: `eggdev dump ROM TYPE:ID`
+
+Convenience to extract one resource from a ROM and dump it to stdout in hexadecimal.
+This is for troubleshooting. If you need more than just seeing the content of one resource, try `unpack` instead.

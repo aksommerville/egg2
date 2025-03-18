@@ -183,6 +183,7 @@ static int eggdev_argv_kv(const char *k,int kc,const char *v,int vc) {
   
   if (kc==1) switch (k[0]) {
     case 'o': return eggdev_set_string(&g.dstpath,v,vc,k,kc);
+    case 'f': return eggdev_set_string(&g.format,v,vc,k,kc);
   }
   
   if ((kc==6)&&!memcmp(k,"dstfmt",6)) return eggdev_set_string(&g.dstfmt,v,vc,k,kc);

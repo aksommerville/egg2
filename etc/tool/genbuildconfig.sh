@@ -158,7 +158,7 @@ done
 #-----------------------------------------------------------------------------------------
 # Set eggdev up with hard-coded defaults.
 
-eggdev_OPT_ENABLE="serial fs midi synth zip http image"
+eggdev_OPT_ENABLE="serial fs midi synth zip http image res"
 eggdev_CC="gcc -c -MMD -O3 -Isrc -Werror -Wimplicit"
 eggdev_LD="gcc -z noexecstack"
 eggdev_LDPOST="-lm -lz"
