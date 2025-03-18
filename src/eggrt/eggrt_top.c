@@ -12,10 +12,7 @@ void eggrt_quit(int status) {
   
   eggrt_call_client_quit(status);
   
-  if (!status) {
-    //TODO Report performance.
-    fprintf(stderr,"%s:%d:TODO: Performance report\n",__FILE__,__LINE__);
-  }
+  if (!status) eggrt_clock_report();
   
   render_del(eggrt.render);
   
@@ -276,7 +273,8 @@ int eggrt_init() {
   
   // Start clock and audio.
   hostio_audio_play(eggrt.hostio,1);
-  //TODO clock
+  eggrt.clockmode=EGGRT_CLOCKMODE_NORMAL;
+  eggrt_clock_init();
   
   return 0;
 }
@@ -287,9 +285,8 @@ int eggrt_init() {
 int eggrt_update() {
   int err;
 
-  //TODO Tick clock.
-  usleep(200000);
-  double elapsed=0.016666;
+  // Tick clock.
+  double elapsed=eggrt_clock_update();
   
   // Update drivers.
   if ((err=hostio_update(eggrt.hostio))<0) {

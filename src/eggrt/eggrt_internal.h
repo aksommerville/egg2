@@ -11,6 +11,11 @@
 #include <limits.h>
 #include <stdio.h>
 
+// eggrt.clockmode
+#define EGGRT_CLOCKMODE_NORMAL   0 /* Sleep if necessary and return sanitized real time. */
+#define EGGRT_CLOCKMODE_UNIFORM  1 /* Sleep if necessary but return a constant every time. */
+#define EGGRT_CLOCKMODE_REDLINE  2 /* Never sleep, and return the same constant as UNIFORM. */
+
 extern struct eggrt {
 
 // eggrt_configure():
@@ -44,6 +49,15 @@ extern struct eggrt {
   struct rom_entry *resv;
   int resc,resa;
   
+// eggrt_clock.c:
+  int clockmode;
+  int updframec;
+  int clockfaultc;
+  int clockclampc;
+  double last_update_time;
+  double starttime_real;
+  double starttime_cpu;
+  
 // Preferences exposed via Platform API:
   int lang;
   int music_enable;
@@ -63,6 +77,10 @@ int eggrt_rom_init();
 int eggrt_rom_search(int tid,int rid);
 
 int eggrt_prefs_init();
+
+void eggrt_clock_init(); // Caller sets eggrt.clockmode first.
+double eggrt_clock_update(); // May sleep, and returns adjusted time for client consumption.
+void eggrt_clock_report(); // Noop if insufficient data.
 
 /* Don't call the egg_client_* functions directly.
  * Technically today you could. But eventually I expect to include a Wasm runtime.
