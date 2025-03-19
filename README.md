@@ -46,10 +46,14 @@ Planned differences from Egg v1:
 - [ ] Native runtime.
 - - [x] Load.
 - - [x] Pick language.
-- - [ ] Event queue.
+- - [x] Event queue.
 - - [ ] Synth.
 - - [ ] Render.
 - - [ ] Input.
+- - - [ ] Device mapping.
+- - - [ ] Persist mappings.
+- - - [ ] egg_gamepad_get_button: Need to cache full capability reports in inmgr.
+- - - [ ] Interactive reconfig.
 - - [ ] Persistence.
 - [ ] Web runtime.
 - - [ ] Load binary.

@@ -145,7 +145,7 @@ void egg_input_configure();
  * Devices are indexed by playerid, with playerid zero being an aggregate of all the other states.
  * Each state is 16 independent bits.
  */
-int egg_input_get_all(int *statev,int statea);
+void egg_input_get_all(int *statev,int statea);
 int egg_input_get_one(int playerid);
 
 /* Buttons for mapped gamepads are defined in very nearly the same order as the W3C Standard Mapping Gamepad.

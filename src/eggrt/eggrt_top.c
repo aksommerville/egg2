@@ -15,6 +15,7 @@ void eggrt_quit(int status) {
   if (!status) eggrt_clock_report();
   
   render_del(eggrt.render);
+  inmgr_quit(&eggrt.inmgr);
   
   hostio_audio_play(eggrt.hostio,0);
   hostio_del(eggrt.hostio);
@@ -106,7 +107,7 @@ static int eggrt_populate_video_setup(struct hostio_video_setup *setup) {
           sr_int_eval(&iconimageid,entry.v,entry.vc);
           
         } else if ((entry.kc==7)&&!memcmp(entry.k,"players",7)) {
-          eggrt_eval_players(&eggrt.playerclo,&eggrt.playerchi,entry.v,entry.vc);
+          eggrt_eval_players(&eggrt.inmgr.playerclo,&eggrt.inmgr.playerchi,entry.v,entry.vc);
           
         } else if ((entry.kc==4)&&!memcmp(entry.k,"lang",4)) {
           eggrt.romlang=entry.v;
@@ -210,7 +211,11 @@ static int eggrt_init_input() {
     fprintf(stderr,"%s: Error initializing input drivers.\n",eggrt.exename);
     return -2;
   }
-  //TODO Input manager.
+  int err=inmgr_init(&eggrt.inmgr);
+  if (err<0) {
+    if (err!=-2) fprintf(stderr,"%s: Error initializing input manager.\n",eggrt.exename);
+    return -2;
+  }
   return 0;
 }
  
@@ -235,6 +240,7 @@ static int eggrt_init_drivers() {
     .cb_button=eggrt_cb_button,
   };
   if (!(eggrt.hostio=hostio_new(&vdelegate,&adelegate,&idelegate))) return -1;
+  // Video must initialize before input.
   if ((err=eggrt_init_video())<0) return err;
   if ((err=eggrt_init_input())<0) return err;
   if ((err=eggrt_init_audio())<0) return err;
@@ -248,6 +254,7 @@ static int eggrt_init_drivers() {
 int eggrt_init() {
   int err;
   
+  // ROM must initialize before drivers, drivers before prefs, and prefs before client.
   if ((err=eggrt_rom_init())<0) {
     if (err!=-2) fprintf(stderr,"%s: Failed to acquire game ROM.\n",eggrt.exename);
     return -2;
@@ -291,6 +298,10 @@ int eggrt_update() {
   // Update drivers.
   if ((err=hostio_update(eggrt.hostio))<0) {
     if (err!=-2) fprintf(stderr,"%s: Error updating platform drivers.\n",eggrt.exename);
+    return -2;
+  }
+  if ((err=inmgr_update(&eggrt.inmgr))<0) {
+    if (err!=-2) fprintf(stderr,"%s: Error updating input manager.\n",eggrt.exename);
     return -2;
   }
   

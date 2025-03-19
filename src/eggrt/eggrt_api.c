@@ -133,38 +133,64 @@ void egg_input_configure() {
   fprintf(stderr,"TODO %s\n",__func__);
 }
 
-int egg_input_get_all(int *statev,int statea) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return 0;
+void egg_input_get_all(int *statev,int statea) {
+  if (!statev||(statea<1)) return;
+  if (statea>EGGRT_PLAYER_LIMIT) statea=EGGRT_PLAYER_LIMIT; // sanity check
+  if (statea<=eggrt.inmgr.playerc) {
+    memcpy(statev,eggrt.inmgr.playerv,sizeof(int)*statea);
+  } else {
+    memcpy(statev,eggrt.inmgr.playerv,sizeof(int)*eggrt.inmgr.playerc);
+    memset(statev+eggrt.inmgr.playerc,0,sizeof(int)*(statea-eggrt.inmgr.playerc));
+  }
 }
 
 int egg_input_get_one(int playerid) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return 0;
+  if ((playerid<0)||(playerid>=eggrt.inmgr.playerc)) return 0;
+  return eggrt.inmgr.playerv[playerid];
 }
 
 int egg_event_get(struct egg_event *dst,int dsta) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return 0;
+  return inmgr_evtq_pop(dst,dsta,&eggrt.inmgr);
 }
 
 int egg_event_enable(int evttype,int enable) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return -1;
+  return inmgr_event_enable(&eggrt.inmgr,evttype,enable);
 }
 
 int egg_event_is_enabled(int evttype) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return 0;
+  if ((evttype<0)||(evttype>=32)) return 0;
+  return (eggrt.inmgr->evtmask&(1<<evttype))?1:0;
 }
 
 int egg_gamepad_get_name(char *dst,int dsta,int *vid,int *pid,int *version,int devid) {
-  fprintf(stderr,"TODO %s\n",__func__);
+  if (!dst||(dsta<0)) dsta=0;
+  int i=0;
+  for (;i<eggrt.hostio->inputc;i++) {
+    struct hostio_input *driver=eggrt.hostio->inputv[i];
+    if (!driver->get_ids) continue;
+    const char *name=driver->get_ids(vid,pid,version,driver,devid);
+    if (!name) continue;
+    int namec=0;
+    while (name[namec]) namec++;
+    if (namec<=dsta) {
+      memcpy(dst,name,namec);
+      if (namec<dsta) dst[namec]=0;
+    } else {
+      memcpy(dst,name,dsta);
+    }
+    return namec;
+  }
+  if (vid) *vid=0;
+  if (pid) *pid=0;
+  if (version) *version=0;
+  if (dsta) dst[0]=0;
   return 0;
 }
 
 int egg_gamepad_get_button(int *btnid,int *hidusage,int *lo,int *hi,int *rest,int devid,int btnix) {
   fprintf(stderr,"TODO %s\n",__func__);
+  //TODO We need inmgr to cache the entire capability report for each device. Drivers expose an iterator, but Platform API exposes an index accessor.
+  // (and it is unreasonable for drivers to work on index, or wasm apps to provide a callback).
   return -1;
 }
 

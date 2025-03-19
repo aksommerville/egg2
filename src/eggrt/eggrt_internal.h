@@ -2,6 +2,7 @@
 #define EGGRT_INTERNAL_H
 
 #include "egg/egg.h"
+#include "inmgr/inmgr.h"
 #include "opt/res/res.h"
 #include "opt/hostio/hostio.h"
 #include "opt/synth/synth.h"
@@ -37,11 +38,11 @@ extern struct eggrt {
   struct synth *synth;
   int songid,songrepeat;
   struct render *render;
-  int playerclo,playerchi;
   const char *romlang,*romrequired,*romoptional;
   int romlangc,romrequiredc,romoptionalc;
   void *titlestorage,*iconstorage;
   int titlestrix;
+  struct inmgr inmgr;
   
 // eggrt_rom.c:
   void *rom;
