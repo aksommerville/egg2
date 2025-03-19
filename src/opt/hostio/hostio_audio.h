@@ -55,6 +55,8 @@ struct hostio_audio *hostio_audio_new(
 const struct hostio_audio_type *hostio_audio_type_by_index(int p);
 const struct hostio_audio_type *hostio_audio_type_by_name(const char *name,int namec);
 
+extern const struct hostio_audio_type hostio_audio_type_dummy;
+
 /* Returns a guess as to how much buffer has not reached the hardware yet, in seconds.
  * If you're tracking time based on callbacks, subtract this.
  */

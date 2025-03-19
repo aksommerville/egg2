@@ -45,7 +45,7 @@ Planned differences from Egg v1:
 - - [x] dump: Convenience to extract one resource from a ROM and dump it.
 - [ ] Native runtime.
 - - [x] Load.
-- - [ ] Pick language.
+- - [x] Pick language.
 - - [ ] Event queue.
 - - [ ] Synth.
 - - [ ] Render.
