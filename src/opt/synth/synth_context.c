@@ -3,8 +3,16 @@
 /* Delete.
  */
  
+static void synth_res_cleanup(struct synth_res *res) {
+  if (res->pcm) synth_pcm_del(res->pcm);
+}
+ 
 void synth_del(struct synth *synth) {
   if (!synth) return;
+  if (synth->resv) {
+    while (synth->resc-->0) synth_res_cleanup(synth->resv+synth->resc);
+    free(synth->resv);
+  }
   free(synth);
 }
 
@@ -12,6 +20,7 @@ void synth_del(struct synth *synth) {
  */
  
 struct synth *synth_new(int rate,int chanc) {
+  fprintf(stderr,"%s rate=%d chanc=%d\n",__func__,rate,chanc);
   if ((rate<SYNTH_RATE_MIN)||(rate>SYNTH_RATE_MAX)) return 0;
   if ((chanc<SYNTH_CHANC_MIN)||(chanc>SYNTH_CHANC_MAX)) return 0;
   struct synth *synth=calloc(1,sizeof(struct synth));
@@ -25,10 +34,12 @@ struct synth *synth_new(int rate,int chanc) {
  */
 
 int synth_load_song(struct synth *synth,int id,const void *src,int srcc) {
+  fprintf(stderr,"%s %d srcc=%d\n",__func__,id,srcc);
   return -1;
 }
 
 int synth_load_sound(struct synth *synth,int id,const void *src,int srcc) {
+  fprintf(stderr,"%s %d srcc=%d\n",__func__,id,srcc);
   return -1;
 }
 

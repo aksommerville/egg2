@@ -12,6 +12,8 @@ struct synth;
 void synth_del(struct synth *synth);
 struct synth *synth_new(int rate,int chanc);
 
+/* Resources are borrowed forever. We assume they are constant and immortal.
+ */
 int synth_load_song(struct synth *synth,int id,const void *src,int srcc);
 int synth_load_sound(struct synth *synth,int id,const void *src,int srcc);
 

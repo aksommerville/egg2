@@ -129,7 +129,7 @@ static int eggrt_prefs_choose_language() {
   int i=0;
   for (;i<sysc;i++) {
     int ri=romc,match=0;
-    while (ri-->0) if (romv[i]==sysv[i]) {
+    while (ri-->0) if (romv[ri]==sysv[i]) {
       match=1;
       break;
     }

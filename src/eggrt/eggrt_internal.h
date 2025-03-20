@@ -39,10 +39,7 @@ extern struct eggrt {
   struct synth *synth;
   int songid,songrepeat;
   struct render *render;
-  const char *romlang,*romrequired,*romoptional;
-  int romlangc,romrequiredc,romoptionalc;
   void *titlestorage,*iconstorage;
-  int titlestrix;
   struct inmgr inmgr;
   
 // eggrt_rom.c:
@@ -50,6 +47,20 @@ extern struct eggrt {
   int romc;
   struct rom_entry *resv;
   int resc,resa;
+  struct {
+    int fbw,fbh;
+    const char *title; // default languageless
+    int titlec;
+    int title_strix;
+    int icon_imageid;
+    int playerclo,playerchi;
+    const char *lang; // comma-delimited 631-1 codes
+    int langc;
+    const char *required;
+    int requiredc;
+    const char *optional;
+    int optionalc;
+  } metadata;
   
 // eggrt_clock.c:
   int clockmode;

@@ -42,7 +42,12 @@ void eggrt_quit(int status) {
  */
  
 void eggrt_language_changed() {
-  if ((eggrt.titlestrix<1)||(eggrt.titlestrix>1024)) return;
+  /**
+  char name[2];
+  EGG_STRING_FROM_LANG(name,eggrt.lang)
+  fprintf(stderr,"%s: %.2s\n",__func__,name);
+  /**/
+  if ((eggrt.metadata.title_strix<1)||(eggrt.metadata.title_strix>1024)) return;
   if (!eggrt.hostio->video||!eggrt.hostio->video->type->set_title) return;
   int resp=eggrt_rom_search(EGG_TID_strings,(eggrt.lang<<6)|1);
   if (resp<0) return;
@@ -50,7 +55,7 @@ void eggrt_language_changed() {
   if (strings_reader_init(&reader,eggrt.resv[resp].v,eggrt.resv[resp].c)<0) return;
   struct strings_entry entry;
   while (strings_reader_next(&entry,&reader)>0) {
-    if (entry.index==eggrt.titlestrix) {
+    if (entry.index==eggrt.metadata.title_strix) {
       char *v=malloc(entry.c+1);
       if (!v) return;
       memcpy(v,entry.v,entry.c);
@@ -65,105 +70,23 @@ void eggrt_language_changed() {
 /* Fill in (title,icon*,fbw,fbh) per ROM.
  * Fails if we don't end up with valid (fbw,fbh).
  * Title and icon are purely optional.
- * Also, since we're in there anyway, capture the metadata's player count, language, and feature flags.
  */
  
-static int eggrt_eval_fb(int *w,int *h,const char *src,int srcc) {
-  *w=*h=0;
-  int srcp=0;
-  while ((srcp<srcc)&&(src[srcp]>='0')&&(src[srcp]<='9')) {
-    (*w)*=10;
-    (*w)+=src[srcp++]-'0';
-  }
-  if ((srcp>=srcc)||(src[srcp++]!='x')) return -1;
-  while ((srcp<srcc)&&(src[srcp]>='0')&&(src[srcp]<='9')) {
-    (*h)*=10;
-    (*h)+=src[srcp++]-'0';
-  }
-  if (srcp<srcc) return *w=*h=-1;
-  return 0;
-}
-
-static int eggrt_eval_players(int *lo,int *hi,const char *src,int srcc) {
-  *lo=*hi=0;
-  int srcp=0;
-  while ((srcp<srcc)&&(src[srcp]>='0')&&(src[srcp]<='9')) {
-    (*lo)*=10;
-    (*lo)+=src[srcp++]-'0';
-  }
-  if (srcp>=srcc) {
-    *hi=*lo;
-    return 0;
-  }
-  if ((srcp>srcc-2)||memcmp(src+srcp,"..",2)) return -1;
-  srcp+=2;
-  while ((srcp<srcc)&&(src[srcp]>='0')&&(src[srcp]<='9')) {
-    (*hi)*=10;
-    (*hi)+=src[srcp++]-'0';
-  }
-  if (srcp<srcc) return *lo=*hi=-1;
-  if (!*hi) *hi=8;
-  return 0;
-}
- 
 static int eggrt_populate_video_setup(struct hostio_video_setup *setup) {
-  setup->fbw=640; // Default framebuffer size, per our spec.
-  setup->fbh=360;
-  const char *titlesrc=0;
-  int titlesrcc=0;
-  int iconimageid=0;
-  
-  int p=eggrt_rom_search(EGG_TID_metadata,1);
-  if (p>=0) {
-    struct metadata_reader reader;
-    if (metadata_reader_init(&reader,eggrt.resv[p].v,eggrt.resv[p].c)>=0) {
-      struct metadata_entry entry;
-      while (metadata_reader_next(&entry,&reader)>0) {
-      
-        if ((entry.kc==2)&&!memcmp(entry.k,"fb",2)) {
-          eggrt_eval_fb(&setup->fbw,&setup->fbh,entry.v,entry.vc);
-          
-        } else if ((entry.kc==5)&&!memcmp(entry.k,"title",5)) {
-          titlesrc=entry.v;
-          titlesrcc=entry.vc;
-          
-        } else if ((entry.kc==6)&&!memcmp(entry.k,"title$",6)) {
-          sr_int_eval(&eggrt.titlestrix,entry.v,entry.vc);
-          
-        } else if ((entry.kc==9)&&!memcmp(entry.k,"iconImage",9)) {
-          sr_int_eval(&iconimageid,entry.v,entry.vc);
-          
-        } else if ((entry.kc==7)&&!memcmp(entry.k,"players",7)) {
-          eggrt_eval_players(&eggrt.inmgr.playerclo,&eggrt.inmgr.playerchi,entry.v,entry.vc);
-          
-        } else if ((entry.kc==4)&&!memcmp(entry.k,"lang",4)) {
-          eggrt.romlang=entry.v;
-          eggrt.romlangc=entry.vc;
-          
-        } else if ((entry.kc==8)&&!memcmp(entry.k,"required",8)) { //TODO We're dutifully recording these... Not sure when we ought to validate.
-          eggrt.romrequired=entry.v;
-          eggrt.romrequiredc=entry.vc;
-          
-        } else if ((entry.kc==8)&&!memcmp(entry.k,"optional",8)) {
-          eggrt.romoptional=entry.v;
-          eggrt.romoptionalc=entry.vc;
-      
-        }
-      }
-    }
-  }
+  setup->fbw=eggrt.metadata.fbw;
+  setup->fbh=eggrt.metadata.fbh;
   
   /* We can only do the default title from here, since we haven't picked a language yet.
    */
-  if (titlesrcc) {
-    if (eggrt.titlestorage=malloc(titlesrcc+1)) {
-      memcpy(eggrt.titlestorage,titlesrc,titlesrcc);
-      ((char*)eggrt.titlestorage)[titlesrcc]=0;
+  if (eggrt.metadata.titlec) {
+    if (eggrt.titlestorage=malloc(eggrt.metadata.titlec+1)) {
+      memcpy(eggrt.titlestorage,eggrt.metadata.title,eggrt.metadata.titlec);
+      ((char*)eggrt.titlestorage)[eggrt.metadata.titlec]=0;
       setup->title=eggrt.titlestorage;
     }
   }
-  if (iconimageid>0) {
-    int p=eggrt_rom_search(EGG_TID_image,iconimageid);
+  if (eggrt.metadata.icon_imageid>0) {
+    int p=eggrt_rom_search(EGG_TID_image,eggrt.metadata.icon_imageid);
     if (p>=0) {
       const struct rom_entry *res=eggrt.resv+p;
       int w=0,h=0;
@@ -186,6 +109,22 @@ static int eggrt_populate_video_setup(struct hostio_video_setup *setup) {
   ) {
     fprintf(stderr,"%s: Invalid framebuffer dimensions %dx%d.\n",eggrt.exename,setup->fbw,setup->fbh);
     return -2;
+  }
+  return 0;
+}
+
+/* Deliver songs and sounds to the new synthesizer.
+ */
+ 
+static int eggrt_load_synth_resources() {
+  const struct rom_entry *res=eggrt.resv;
+  int i=eggrt.resc,err;
+  for (;i-->0;res++) {
+    if (res->tid==EGG_TID_song) {
+      if ((err=synth_load_song(eggrt.synth,res->rid,res->v,res->c))<0) return err;
+    } else if (res->tid==EGG_TID_sound) {
+      if ((err=synth_load_sound(eggrt.synth,res->rid,res->v,res->c))<0) return err;
+    }
   }
   return 0;
 }
@@ -229,6 +168,8 @@ static int eggrt_init_audio() {
     fprintf(stderr,"%s: Failed to initialize synthesizer. rate=%d chanc=%d\n",eggrt.exename,eggrt.hostio->audio->rate,eggrt.hostio->audio->chanc);
     return -2;
   }
+  int err=eggrt_load_synth_resources();
+  if (err<0) return err;
   return 0;
 }
 

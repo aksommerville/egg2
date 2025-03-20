@@ -11,6 +11,8 @@ void inmgr_quit(struct inmgr *inmgr) {
  
 int inmgr_init(struct inmgr *inmgr) {
 
+  inmgr->playerclo=eggrt.metadata.playerclo;
+  inmgr->playerchi=eggrt.metadata.playerchi;
   if (inmgr->playerclo<1) inmgr->playerclo=1;
   if (inmgr->playerchi>EGGRT_PLAYER_LIMIT) inmgr->playerchi=EGGRT_PLAYER_LIMIT;
   if (inmgr->playerclo>inmgr->playerchi) inmgr->playerclo=inmgr->playerchi;
