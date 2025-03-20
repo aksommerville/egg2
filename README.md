@@ -54,7 +54,8 @@ Planned differences from Egg v1:
 - - - [ ] Persist mappings.
 - - - [ ] egg_gamepad_get_button: Need to cache full capability reports in inmgr.
 - - - [ ] Interactive reconfig.
-- - [ ] Persistence.
+- - [x] Persistence.
+- - [ ] Record and playback session.
 - [ ] Web runtime.
 - - [ ] Load binary.
 - - [ ] Load base64.

@@ -176,5 +176,6 @@ static void eggrt_prefs_init_audio() {
 int eggrt_prefs_init() {
   eggrt.lang=eggrt_prefs_choose_language();
   eggrt_prefs_init_audio();
+  eggrt_language_changed();
   return 0;
 }

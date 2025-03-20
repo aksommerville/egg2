@@ -65,7 +65,7 @@ int egg_prefs_set(int k,int v) {
         if (!EGG_STRING_IS_LANG(name)) return -1;
         fprintf(stderr,"%s: Changing language to '%.2s'\n",eggrt.exename,name);
         eggrt.lang=v;
-        //TODO Update window title etc.
+        eggrt_language_changed();
       } return 0;
   
     case EGG_PREF_MUSIC: {
@@ -112,18 +112,15 @@ int egg_rom_get_res(void *dst,int dsta,int tid,int rid) {
 }
 
 int egg_store_get(char *v,int va,const char *k,int kc) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return 0;
+  return eggrt_store_get(v,va,k,kc);
 }
 
 int egg_store_set(const char *k,int kc,const char *v,int vc) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return -1;
+  return eggrt_store_set(k,kc,v,vc);
 }
 
 int egg_store_key_by_index(char *k,int ka,int p) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  return 0;
+  return eggrt_store_key_by_index(k,ka,p);
 }
 
 /* Input.
@@ -159,7 +156,7 @@ int egg_event_enable(int evttype,int enable) {
 
 int egg_event_is_enabled(int evttype) {
   if ((evttype<0)||(evttype>=32)) return 0;
-  return (eggrt.inmgr->evtmask&(1<<evttype))?1:0;
+  return (eggrt.inmgr.evtmask&(1<<evttype))?1:0;
 }
 
 int egg_gamepad_get_name(char *dst,int dsta,int *vid,int *pid,int *version,int devid) {
@@ -167,8 +164,8 @@ int egg_gamepad_get_name(char *dst,int dsta,int *vid,int *pid,int *version,int d
   int i=0;
   for (;i<eggrt.hostio->inputc;i++) {
     struct hostio_input *driver=eggrt.hostio->inputv[i];
-    if (!driver->get_ids) continue;
-    const char *name=driver->get_ids(vid,pid,version,driver,devid);
+    if (!driver->type->get_ids) continue;
+    const char *name=driver->type->get_ids(vid,pid,version,driver,devid);
     if (!name) continue;
     int namec=0;
     while (name[namec]) namec++;
@@ -214,8 +211,11 @@ int egg_song_get_id() {
 }
 
 double egg_song_get_playhead() {
-  //TODO Adjust per driver
-  return synth_get_playhead(eggrt.synth);
+  double p=synth_get_playhead(eggrt.synth);
+  if (p<=0.0) return 0.0;
+  double remaining=hostio_audio_estimate_remaining_buffer(eggrt.hostio->audio);
+  if (remaining>=p) return 0.0;
+  return p-remaining;
 }
 
 void egg_song_set_playhead(double playhead) {

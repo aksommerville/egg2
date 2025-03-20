@@ -16,6 +16,7 @@ void eggrt_quit(int status) {
   
   render_del(eggrt.render);
   inmgr_quit(&eggrt.inmgr);
+  eggrt_store_quit();
   
   hostio_audio_play(eggrt.hostio,0);
   hostio_del(eggrt.hostio);
@@ -25,13 +26,39 @@ void eggrt_quit(int status) {
   
   eggrt_rom_quit();
   
-  if (eggrt.titlestorage) {
-    free(eggrt.titlestorage);
-    eggrt.titlestorage=0;
-  }
-  if (eggrt.iconstorage) {
-    free(eggrt.iconstorage);
-    eggrt.iconstorage=0;
+  if (eggrt.titlestorage) free(eggrt.titlestorage);
+  if (eggrt.iconstorage) free(eggrt.iconstorage);
+  if (eggrt.video_driver) free(eggrt.video_driver);
+  if (eggrt.video_device) free(eggrt.video_device);
+  if (eggrt.audio_driver) free(eggrt.audio_driver);
+  if (eggrt.audio_device) free(eggrt.audio_device);
+  if (eggrt.input_driver) free(eggrt.input_driver);
+  if (eggrt.store_req) free(eggrt.store_req);
+  memset(&eggrt,0,sizeof(eggrt));
+}
+
+/* React to a change of language.
+ * - Window title.
+ */
+ 
+void eggrt_language_changed() {
+  if ((eggrt.titlestrix<1)||(eggrt.titlestrix>1024)) return;
+  if (!eggrt.hostio->video||!eggrt.hostio->video->type->set_title) return;
+  int resp=eggrt_rom_search(EGG_TID_strings,(eggrt.lang<<6)|1);
+  if (resp<0) return;
+  struct strings_reader reader;
+  if (strings_reader_init(&reader,eggrt.resv[resp].v,eggrt.resv[resp].c)<0) return;
+  struct strings_entry entry;
+  while (strings_reader_next(&entry,&reader)>0) {
+    if (entry.index==eggrt.titlestrix) {
+      char *v=malloc(entry.c+1);
+      if (!v) return;
+      memcpy(v,entry.v,entry.c);
+      v[entry.c]=0;
+      eggrt.hostio->video->type->set_title(eggrt.hostio->video,v);
+      free(v);
+      return;
+    }
   }
 }
 
@@ -260,6 +287,12 @@ int eggrt_init() {
     return -2;
   }
   
+  // Store must be after ROM, otherwise anywhere is good.
+  if ((err=eggrt_store_init())<0) {
+    if (err!=-2) fprintf(stderr,"%s: Failed to initialize persistence.\n",eggrt.exename);
+    return -2;
+  }
+  
   // Initialize drivers.
   if ((err=eggrt_init_drivers())<0) {
     if (err!=-2) fprintf(stderr,"%s: Unspecified error initializing platform drivers.\n",eggrt.exename);
@@ -304,9 +337,12 @@ int eggrt_update() {
     if (err!=-2) fprintf(stderr,"%s: Error updating input manager.\n",eggrt.exename);
     return -2;
   }
+  if (eggrt.terminate) return 0;
   
   // Update client.
   if ((err=eggrt_call_client_update(elapsed))<0) return err;
+  if ((err=eggrt_store_update())<0) return err;
+  if (eggrt.terminate) return 0;
   
   // Render.
   if ((err=eggrt.hostio->video->type->gx_begin(eggrt.hostio->video))<0) return err;

@@ -30,6 +30,7 @@ extern struct eggrt {
   int audio_buffer;
   char *audio_device;
   char *input_driver;
+  char *store_req;
   
   int terminate;
   int status;
@@ -59,6 +60,16 @@ extern struct eggrt {
   double starttime_real;
   double starttime_cpu;
   
+// eggrt_store.c:
+  struct eggrt_store_field {
+    char *k,*v;
+    int kc,vc;
+  } *storev;
+  int storec,storea;
+  char *storepath; // Null if store not in play.
+  int storedirty;
+  int storedebounce;
+  
 // Preferences exposed via Platform API:
   int lang;
   int music_enable;
@@ -82,6 +93,15 @@ int eggrt_prefs_init();
 void eggrt_clock_init(); // Caller sets eggrt.clockmode first.
 double eggrt_clock_update(); // May sleep, and returns adjusted time for client consumption.
 void eggrt_clock_report(); // Noop if insufficient data.
+
+void eggrt_store_quit();
+int eggrt_store_init();
+int eggrt_store_update(); // Store gets routine updates in case it deferred saving.
+int eggrt_store_get(char *v,int va,const char *k,int kc);
+int eggrt_store_set(const char *k,int kc,const char *v,int vc);
+int eggrt_store_key_by_index(char *k,int ka,int p);
+
+void eggrt_language_changed();
 
 /* Don't call the egg_client_* functions directly.
  * Technically today you could. But eventually I expect to include a Wasm runtime.

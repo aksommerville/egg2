@@ -11,4 +11,7 @@ demo_SRCFILES:=$(filter src/demo/src/%,$(SRCFILES))
 demo_EGGRT:=out/$(EGG_NATIVE_TARGET)/libeggrt.a
 demo-all:$(demo_EXE)
 $(demo_EXE):$(eggdev_EXE) $(demo_EGGRT) $(demo_SRCFILES);rm -rf $(demo_SRCDIR)/mid $(demo_SRCDIR)/out ; $(eggdev_EXE) build $(demo_SRCDIR)
-demo-run:$(eggdev_EXE) $(demo_EGGRT) $(demo_SRCFILES);rm -rf $(demo_SRCDIR)/mid $(demo_SRCDIR)/out ; $(eggdev_EXE) run $(demo_SRCDIR)
+
+# Don't use `eggdev run` for demo-run. Since we're part of eggdev's build, we would want to wipe demo/out first.
+#demo-run:$(eggdev_EXE) $(demo_EGGRT) $(demo_SRCFILES);rm -rf $(demo_SRCDIR)/mid $(demo_SRCDIR)/out ; $(eggdev_EXE) run $(demo_SRCDIR)
+demo-run:$(demo_EXE);$(demo_EXE)

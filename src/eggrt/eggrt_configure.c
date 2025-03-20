@@ -3,33 +3,25 @@
 
 /* --help
  */
-  char *video_driver;
-  int fullscreen;
-  char *video_device;
-  char *audio_driver;
-  int audio_rate;
-  int audio_chanc;
-  int audio_buffer;
-  char *audio_device;
-  char *input_driver;
  
 void eggrt_print_help(const char *topic,int topicc) {
   fprintf(stderr,"\nUsage: %s [OPTIONS]\n",eggrt.exename);
   fprintf(stderr,
     "\n"
     "OPTIONS:\n"
-    "  --help                   Print this message and exit.\n"
-    "  --video=DRIVER           Select driver manually (see below).\n"
-    "  --fullscreen             Start in fullscreen mode.\n"
-    "  --video-device=NAME      Depends on driver.\n"
-    "  --audio=DRIVER           Select driver manually (see below).\n"
-    "  --audio-rate=HZ          Suggest audio output rate.\n"
-    "  --audio-chanc=1|2        Suggest audio channel count.\n"
-    "  --stereo                 --audio-chanc=2\n"
-    "  --mono                   --audio-chanc=1\n"
-    "  --audio-buffer=FRAMES    Suggest audio buffer size in frames.\n"
-    "  --audio-device=NAME      Depends on driver.\n"
-    "  --input=DRIVER           Select driver manually (see below).\n"
+    "  --help                     Print this message and exit.\n"
+    "  --video=DRIVER             Select driver manually (see below).\n"
+    "  --fullscreen               Start in fullscreen mode.\n"
+    "  --video-device=NAME        Depends on driver.\n"
+    "  --audio=DRIVER             Select driver manually (see below).\n"
+    "  --audio-rate=HZ            Suggest audio output rate.\n"
+    "  --audio-chanc=1|2          Suggest audio channel count.\n"
+    "  --stereo                   --audio-chanc=2\n"
+    "  --mono                     --audio-chanc=1\n"
+    "  --audio-buffer=FRAMES      Suggest audio buffer size in frames.\n"
+    "  --audio-device=NAME        Depends on driver.\n"
+    "  --input=DRIVER             Select driver manually (see below).\n"
+    "  --store=default|none|PATH  Disable saving, or save to specific file.\n"
     "\n"
   );
   int i;
@@ -54,6 +46,24 @@ void eggrt_print_help(const char *topic,int topicc) {
     fprintf(stderr,"  %12s: %s\n",type->name,type->desc);
   }
   fprintf(stderr,"\n");
+}
+
+/* String argument.
+ */
+ 
+static int eggrt_arg_string(char **dstpp,const char *v,int vc,const char *k,int kc) {
+  if (*dstpp) {
+    if (!memcmp(*dstpp,v,vc)&&!(*dstpp)[vc]) return 0;
+    fprintf(stderr,"%s: Multiple values for option '%.*s' ('%s','%.*s')\n",eggrt.exename,kc,k,*dstpp,vc,v);
+    return -2;
+  }
+  if (!vc) return 0;
+  char *nv=malloc(vc+1);
+  if (!nv) return -1;
+  memcpy(nv,v,vc);
+  nv[vc]=0;
+  *dstpp=nv;
+  return 0;
 }
 
 /* Key=value arguments.
@@ -83,7 +93,23 @@ static int eggrt_arg_kv(const char *k,int kc,const char *v,int vc) {
     return 0;
   }
   
-  //TODO Options.
+  if ((kc==6)&&!memcmp(k,"stereo",6)) { eggrt.audio_chanc=2; return 0; }
+  if ((kc==4)&&!memcmp(k,"mono",4)) { eggrt.audio_chanc=1; return 0; }
+  
+  #define STROPT(fldname,kmatch) if ((kc==sizeof(kmatch)-1)&&!memcmp(k,kmatch,kc)) return eggrt_arg_string(&eggrt.fldname,v,vc,k,kc);
+  #define INTOPT(fldname,kmatch) if ((kc==sizeof(kmatch)-1)&&!memcmp(k,kmatch,kc)) { eggrt.fldname=vn; return 0; }
+  STROPT(video_driver,"video")
+  INTOPT(fullscreen,"fullscreen")
+  STROPT(video_device,"video-device")
+  STROPT(audio_driver,"audio")
+  INTOPT(audio_rate,"audio-rate")
+  INTOPT(audio_chanc,"audio-chanc")
+  INTOPT(audio_buffer,"audio-buffer")
+  STROPT(audio_device,"audio-device")
+  STROPT(input_driver,"input")
+  STROPT(store_req,"store-req")
+  #undef STROPT
+  #undef INTOPT
   
   fprintf(stderr,"%s: Unexpected option '%.*s' = '%.*s'\n",eggrt.exename,kc,k,vc,v);
   return -2;

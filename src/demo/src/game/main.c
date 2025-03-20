@@ -27,6 +27,21 @@ int egg_client_init() {
   msg[14]='0'+(g.romc/     10)%10;
   msg[15]='0'+(g.romc        )%10;
   egg_log(msg);
+  
+  char v[256];
+  int vc=egg_store_get(v,sizeof(v),"mySavedGame",11);
+  if ((vc>0)&&(vc<sizeof(v))) {
+    v[vc]=0;
+    egg_log("Acquired saved game:");
+    egg_log(v);
+  } else {
+    egg_log("Failed to load saved game.");
+  }
+  if (egg_store_set("mySavedGame",11,"Abcdefghi",9)<0) {
+    egg_log("Failed to save game.");
+  } else {
+    egg_log("Saved game.");
+  }
 
   //TODO
 

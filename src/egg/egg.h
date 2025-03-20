@@ -101,6 +101,9 @@ int egg_rom_get_res(void *dst,int dsta,int tid,int rid);
 /* Access to persistent key=value store.
  * Key and value are not terminated and length is always required.
  * Missing and empty fields are indistinguishable.
+ * User may be able to turn off saving. If that's so, the platform won't pretend to save anything.
+ * Keys must be 1..255 of G0 (space allowed), and values 0..65535 of UTF-8.
+ * You do not need to qualify your keys per game; the platform does that.
  */
 int egg_store_get(char *v,int va,const char *k,int kc);
 int egg_store_set(const char *k,int kc,const char *v,int vc);
