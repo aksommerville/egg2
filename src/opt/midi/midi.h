@@ -95,6 +95,8 @@ int midi_file_advance(struct midi_file *file,int framec);
  */
 int midi_file_is_finished(const struct midi_file *file);
 
+void midi_file_reset(struct midi_file *file);
+
 /* Constants.
  *********************************************************************/
 

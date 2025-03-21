@@ -123,6 +123,22 @@ struct midi_file *midi_file_new(const void *src,int srcc,int rate) {
   return file;
 }
 
+/* Reset.
+ */
+ 
+void midi_file_reset(struct midi_file *file) {
+  file->usperqnote=500000;
+  midi_file_recalculate_tempo(file);
+  file->elapsed_ticks=0.0;
+  struct midi_track *track=file->trackv;
+  int i=file->trackc;
+  for (;i-->0;track++) {
+    track->delay=-1;
+    track->p=0;
+    track->status=0;
+  }
+}
+
 /* Read event and update track.
  */
  

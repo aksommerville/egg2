@@ -40,6 +40,8 @@ extern struct g {
     int kc,vc;
   } *bcfgv;
   int bcfgc,bcfga;
+  void *instruments;
+  int instrumentsc;
   
 // May be populated when you resolve tid or symbols.
   struct eggdev_client {
@@ -105,6 +107,7 @@ int eggdev_configure(int argc,char **argv);
 int eggdev_config_key_by_index(void *dstpp,int p);
 int eggdev_config_get(void *dstpp,const char *k,int kc);
 int eggdev_config_get_sub(void *dstpp,const char *target,int targetc,const char *k,int kc);
+int eggdev_config_get_instruments(void *dstpp); // EAU file or empty.
 
 // client/eggdev_client_public.c
 void eggdev_client_dirty();

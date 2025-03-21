@@ -145,3 +145,40 @@ int eggdev_main_config() {
   }
   return 0;
 }
+
+/* Read the default instrument set.
+ */
+ 
+int eggdev_config_get_instruments(void *dstpp) {
+  if (!g.instruments) {
+    char path[1024];
+    int pathc=snprintf(path,sizeof(path),"%s/src/eggdev/instruments.eaut",g.sdkpath);
+    if ((pathc>0)&&(pathc<sizeof(path))) {
+      void *src=0;
+      int srcc=file_read(&src,path);
+      if (srcc>=0) {
+        struct sr_encoder dst={0};
+        struct eggdev_convert_context ctx={
+          .dst=&dst,
+          .src=src,
+          .srcc=srcc,
+          .refname=path,
+        };
+        int err=eggdev_eau_from_eaut(&ctx);
+        free(src);
+        if (err>=0) {
+          g.instruments=dst.v;
+          g.instrumentsc=dst.c;
+        } else {
+          sr_encoder_cleanup(&dst);
+        }
+      }
+    }
+    if (!g.instruments) {
+      fprintf(stderr,"%s: Failed to acquire default instruments from Egg SDK.\n",g.exename);
+      g.instruments=malloc(1);
+    }
+  }
+  *(void**)dstpp=g.instruments;
+  return g.instrumentsc;
+}

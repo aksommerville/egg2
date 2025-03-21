@@ -14,9 +14,11 @@ EAU is similar to MIDI, with these notable exceptions:
 
 ## From MIDI
 
-Meta 0x77 contains the full Channel Headers.
+Meta 0x77 contains the full Channel Headers, from the first (Channel ID), and not including the 0xff Terminator.
 If absent, our compiler will make up Channel Headers based on Program Change and other clues.
 If Meta 0x77 is present, we don't guess anything from the MIDI events.
+
+TODO: Need another Meta event or something, to indicate the loop position.
 
 ## EAU Binary
 
@@ -69,7 +71,7 @@ u8.8  Range LFO rate, qnotes.
 u0.8  Range LFO depth.
 ```
 
-Mode 3 = Sub.
+Mode 3 = SUB.
 ```
  ...  Level env.
    2  Width, hz.
