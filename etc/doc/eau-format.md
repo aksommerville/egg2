@@ -114,13 +114,13 @@ Post:
 
 Post Stage ID:
 - 0: NOOP.
-- 1: GAIN: u8.8 gain, u0.8 clip = 1, u0.8 gate = 0.
+- 1: GAIN: u8.8 gain, u0.8 clip = 1.
 - 2: DELAY: u8.8 period qnotes, u0.8 dry, u0.8 wet, u0.8 store, u0.8 feedback.
 - 3: LOPASS: u16 mid hz.
 - 4: HIPASS: u16 mid hz.
 - 5: BPASS: u16 mid hz, u16 width hz.
 - 6: NOTCH: u16 mid hz, u16 width hz.
-- 7: WAVESHAPER: u8 count, u0.16... levels. Positive side only, with an implicit leading zero.
+- 7: WAVESHAPER: u0.16... levels. Positive side only, with an implicit leading zero.
 
 Event:
 ```
@@ -140,19 +140,19 @@ Event:
 
 Line-oriented text.
 `#` starts a line comment, start of line only.
+Comments must not contain curly brackets (or they must be balanced if present).
 
 Top level is organized into blocks, and blocks can nest arbitrarily.
+'{' must be the last character on its line, and '}' must be alone on its line, after trimming whitespace.
 
-Once at top level:
+Once at top level, first block of the file:
 ```
 globals {
   tempo MS_PER_QNOTE
-  loopp MS
 }
 ```
-Value for `loopp` should line up with Delay events, otherwise it will actually be a bit later.
 
-Once at top level:
+One or two times at top level (after Channel Headers):
 ```
 events {
   delay MS
@@ -160,31 +160,35 @@ events {
   wheel CHID VALUE                # VALUE in 0..128..255
 }
 ```
+If there's two `events` block, the loop point is between them.
 
 Any other top-level block is a Channel Header:
 ```
 CHID TRIM PAN MODE {
   # ...mode-specific fields...
   post {
-    gain GAIN [CLIP [GATE]]               # Floats
+    gain GAIN [CLIP]                      # Floats
     delay PERIOD DRY WET STORE FEEDBACK   # Floats
     lopass HZ
     hipass HZ
     bpass HZ WIDTH
     notch HZ WIDTH
     waveshaper U16...
+    STAGEID HEXDUMP
   }
 }
 ```
 `post` may only appear at the end of the Channel Header.
 Mode-specific fields have an exact order they must be specified, and you're not allowed to skip except at the end.
 
+The entire mode-specific section may be omitted and instead: `modecfg HEXDUMP`
+
 MODE = noop. No configuration.
 
 MODE = drum.
 Configuration is a block per note:
 ```
-  note NOTEID [TRIMLO [TRIMHI [PAN]] {
+  note NOTEID [TRIMLO=0x80 [TRIMHI=0xff [PAN=0x80]] {
     # ...EAU-Text file...
   }
 ```

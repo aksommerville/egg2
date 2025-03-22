@@ -101,3 +101,114 @@ int eau_event_decode(struct eau_event *event,const void *src,int srcc) {
   // Anything else is Reserved and illegal.
   return -1;
 }
+
+/* Get the longest possible note duration for a channel header.
+ * It's in two pieces: (pre) before sustain and (post) after sustain.
+ * Non-sustaining channels must leave (post) zero.
+ */
+ 
+static void eau_estimate_channel_duration(int *pre,int *post,uint8_t mode,const uint8_t *src,int srcc) {
+  switch (mode) {
+    // Drums are a pain. We have to measure each of them and report the longest. There is never sustain.
+    case EAU_CHANNEL_MODE_DRUM: {
+        int srcp=0;
+        for (;;) {
+          if (srcp>srcc-6) break;
+          srcp+=4;
+          int paylen=(src[srcp]<<8)|src[srcp+1];
+          srcp+=2;
+          if (srcp>srcc-paylen) break;
+          int q=eau_estimate_duration(src+srcp,paylen);
+          if (q>*pre) *pre=q;
+          srcp+=paylen;
+        }
+      } break;
+    
+    // All tuned modes begin with their level envelope. (I arranged it like that, specifically to facilitate this case).
+    case EAU_CHANNEL_MODE_FM:
+    case EAU_CHANNEL_MODE_SUB: {
+        int srcp=0;
+        if (srcp>=srcc) return;
+        uint8_t flags=src[srcp++];
+        if (flags&2) { // Initials
+          srcp+=2;
+          if (flags&1) { // Velocity
+            srcp+=2;
+          }
+        }
+        int susp=256;
+        if (flags&4) { // Sustain
+          if (srcp>=srcc) return;
+          susp=src[srcp++];
+        }
+        if (srcp>=srcc) return;
+        int ptc=src[srcp++];
+        // We're going to take the longer option at each leg.
+        // That is of course not correct, but our job is to find the worst case, overestimating is ok.
+        int ptlen=(flags&1)?8:4;
+        if (srcp>srcc-ptlen*ptc) return;
+        int pti=0; for (;pti<ptc;pti++) {
+          int legdur=(src[srcp]<<8)|src[srcp+1];
+          srcp+=4;
+          if (flags&1) {
+            int q=(src[srcp]<<8)|src[srcp+1];
+            srcp+=4;
+            if (q>legdur) legdur=q;
+          }
+          if (pti<=susp) (*pre)+=legdur;
+          else (*post)+=legdur;
+        }
+        // (post) zero signals No Sustain. But in theory, it could sustain and stop.
+        // That would not be ok acoustically, but the format allows it.
+        // So if we're sustainable but don't have any post length, bump it to one.
+        if ((flags&4)&&!*post) *post=1;
+      } break;
+  }
+}
+
+/* Estimate duration.
+ */
+ 
+int eau_estimate_duration(const void *src,int srcc) {
+
+  /* Record the longest possible duration for each channel.
+   * If it doesn't sustain, (postdur) will be zero and (predur) the whole thing.
+   */
+  struct chinfo {
+    int predur,postdur;
+  } chinfov[16]={0};
+  struct eau_file file;
+  if (eau_file_decode(&file,src,srcc)<0) return -1;
+  struct eau_channel_reader reader={.v=file.chhdrv,.c=file.chhdrc};
+  struct eau_channel_entry channel;
+  while (eau_channel_reader_next(&channel,&reader)>0) {
+    if (channel.chid>=0x10) continue;
+    eau_estimate_channel_duration(&chinfov[channel.chid].predur,&chinfov[channel.chid].postdur,channel.mode,channel.payload,channel.payloadc);
+  }
+  
+  /* Walk events and track current time, and the high waterline for note end times.
+   */
+  int now=0,noteend=0,evtp=0,err;
+  while (evtp<file.evtc) {
+    struct eau_event event;
+    if ((err=eau_event_decode(&event,file.evtv+evtp,file.evtc-evtp))<1) break;
+    switch (event.type) {
+      case 'd': now+=event.delay; break;
+      case 'n': {
+          const struct chinfo *chinfo=chinfov+event.chid;
+          int end=now;
+          if (chinfo->postdur) {
+            if (chinfo->predur>event.delay) end+=chinfo->predur;
+            else end+=event.delay;
+            end+=chinfo->postdur;
+          } else {
+            end+=chinfo->predur;
+          }
+          if (end>noteend) noteend=end;
+        } break;
+    }
+  }
+  if (noteend>now) now=noteend;
+  
+  return now;
+}

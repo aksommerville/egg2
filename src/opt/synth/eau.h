@@ -10,6 +10,21 @@
 #define EAU_CHANNEL_MODE_FM 2
 #define EAU_CHANNEL_MODE_SUB 3
 
+#define EAU_STAGEID_NOOP 0
+#define EAU_STAGEID_GAIN 1
+#define EAU_STAGEID_DELAY 2
+#define EAU_STAGEID_LOPASS 3
+#define EAU_STAGEID_HIPASS 4
+#define EAU_STAGEID_BPASS 5
+#define EAU_STAGEID_NOTCH 6
+#define EAU_STAGEID_WAVESHAPER 7
+
+#define EAU_SHAPE_SINE 0
+#define EAU_SHAPE_SQUARE 1
+#define EAU_SHAPE_SAW 2
+#define EAU_SHAPE_TRIANGLE 3
+#define EAU_SHAPE_FIXEDFM 4
+
 struct eau_file {
   int tempo; // ms/qnote
   int loopp; // byte offset in (evtv)
@@ -54,5 +69,14 @@ struct eau_event {
   uint8_t velocity; // note, 0..0xf. Or 0..0xff for wheel.
 };
 int eau_event_decode(struct eau_event *event,const void *src,int srcc);
+
+/* More complex than just the sum of delays.
+ * We take the longest possible envelope for every channel, and track that worst-case end time for every note.
+ * For drum channels, we measure every sound but only retain the longest.
+ * So we will overestimate in most cases, but never under.
+ * We don't account for post stages eg delay, since those are mathematically infinite.
+ * Result in milliseconds.
+ */
+int eau_estimate_duration(const void *src,int srcc);
 
 #endif

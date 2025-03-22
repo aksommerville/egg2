@@ -503,48 +503,36 @@ int eggdev_convert_auto(
 /* Log error in context.
  */
  
-int eggdev_convert_error(struct eggdev_convert_context *ctx,const char *fmt,...) {
-  if (ctx->errmsg) {
-    if (!fmt) fmt="";
-    char msg[256];
-    va_list vargs;
-    va_start(vargs,fmt);
-    int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
-    if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
-    sr_encode_fmt(ctx->errmsg,"%s: %.*s\n",ctx->refname?ctx->refname:"<input>",msgc,msg);
-    return -2;
-  }
-  if (!ctx->refname) return -1;
+static int eggdev_convert_error_inner(struct eggdev_convert_context *ctx,int lineno,const char *fmt,va_list vargs) {
   if (!fmt) fmt="";
   char msg[256];
-  va_list vargs;
-  va_start(vargs,fmt);
   int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
   if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
-  while (msgc&&((unsigned char)msg[msgc-1]<=0x20)) msgc--; // Trim trailing space, in particular accidental linefeeds.
-  fprintf(stderr,"%s: %.*s\n",ctx->refname,msgc,msg);
+  while (msgc&&((unsigned char)msg[msgc-1]<=0x20)) msgc--;
+  const char *refname=ctx->refname;
+  if (!refname) refname="<input>";
+  else if ((refname[0]=='-')&&!refname[1]) refname="<stdin>";
+  if (ctx->errmsg) {
+    if (lineno) sr_encode_fmt(ctx->errmsg,"%s:%d: %.*s\n",refname,lineno,msgc,msg);
+    else sr_encode_fmt(ctx->errmsg,"%s: %.*s\n",refname,msgc,msg);
+  } else {
+    if (lineno) fprintf(stderr,"%s:%d: %.*s\n",refname,lineno,msgc,msg);
+    else fprintf(stderr,"%s: %.*s\n",refname,msgc,msg);
+  }
   return -2;
+}
+ 
+int eggdev_convert_error(struct eggdev_convert_context *ctx,const char *fmt,...) {
+  if (!ctx||(!ctx->errmsg&&!ctx->refname)) return -1;
+  va_list vargs;
+  va_start(vargs,fmt);
+  return eggdev_convert_error_inner(ctx,0,fmt,vargs);
 }
 
 int eggdev_convert_error_at(struct eggdev_convert_context *ctx,int lineno,const char *fmt,...) {
-  if (ctx->errmsg) {
-    if (!fmt) fmt="";
-    char msg[256];
-    va_list vargs;
-    va_start(vargs,fmt);
-    int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
-    if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
-    sr_encode_fmt(ctx->errmsg,"%s:%d: %.*s\n",ctx->refname?ctx->refname:"<input>",ctx->lineno0+lineno,msgc,msg);
-    return -2;
-  }
-  if (!ctx->refname) return -1;
-  if (!fmt) fmt="";
-  char msg[256];
+  if (!ctx||(!ctx->errmsg&&!ctx->refname)) return -1;
+  lineno+=ctx->lineno0;
   va_list vargs;
   va_start(vargs,fmt);
-  int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
-  if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
-  while (msgc&&((unsigned char)msg[msgc-1]<=0x20)) msgc--; // Trim trailing space, in particular accidental linefeeds.
-  fprintf(stderr,"%s:%d: %.*s\n",ctx->refname,ctx->lineno0+lineno,msgc,msg);
-  return -2;
+  return eggdev_convert_error_inner(ctx,lineno,fmt,vargs);
 }

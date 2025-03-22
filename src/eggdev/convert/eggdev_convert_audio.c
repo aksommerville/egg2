@@ -1,5 +1,5 @@
 /* eggdev_convert_audio.c
- * Various audio conversions.
+ * Audio converters of middling complexity: MIDI<=EAU, EAU<=MIDI, WAV<=EAU.
  */
 
 #include "eggdev/eggdev_internal.h"
@@ -11,24 +11,92 @@
  */
  
 int eggdev_wav_from_eau(struct eggdev_convert_context *ctx) {
-  fprintf(stderr,"TODO %s %s:%d\n",__func__,__FILE__,__LINE__);//TODO
-  return -2;
-}
 
-/* EAU bin from text.
- */
- 
-int eggdev_eau_from_eaut(struct eggdev_convert_context *ctx) {
-  fprintf(stderr,"TODO %s %s:%d\n",__func__,__FILE__,__LINE__);//TODO
-  return -2;
-}
+  /* Choice of rate and channel count is entirely arbitrary.
+   * TODO Get these from the caller somehow. (rate,chanc for WAV<=EAU)
+   */
+  const int rate=44100;
+  const int chanc=2;
 
-/* EAU text from bin.
- */
- 
-int eggdev_eaut_from_eau(struct eggdev_convert_context *ctx) {
-  fprintf(stderr,"TODO %s %s:%d\n",__func__,__FILE__,__LINE__);//TODO
-  return -2;
+  /* Estimate worst-case duration.
+   */
+  int durms=eau_estimate_duration(ctx->src,ctx->srcc);
+  if (durms<0) return eggdev_convert_error(ctx,"Failed to measure EAU song.");
+  if (!durms) durms=1;
+  int framec=(int)(((double)durms*(double)rate)/1000.0);
+  if ((framec<1)||(framec>INT_MAX/chanc)) return eggdev_convert_error(ctx,"High length or sample rate caused integer overflow.");
+  int samplec=framec*chanc;
+  
+  /* Emit the WAV header with placeholder lengths, right up to the data chunk payload.
+   */
+  int dstc0=ctx->dst->c;
+  if (sr_encode_raw(ctx->dst,
+    "RIFF\0\0\0\0WAVE"
+    "fmt \x10\0\0\0"
+    "\1\0" // format, always 1=LPCM
+  ,22)<0) return -1;
+  if (sr_encode_intle(ctx->dst,chanc,2)<0) return -1;
+  if (sr_encode_intle(ctx->dst,rate,4)<0) return -1;
+  if (sr_encode_intle(ctx->dst,rate*chanc*2,4)<0) return -1; // byte rate
+  if (sr_encode_intle(ctx->dst,chanc*2,2)<0) return -1; // frame size
+  if (sr_encode_raw(ctx->dst,
+    "\x10\0" // sample size
+    "data\0\0\0\0"
+  ,10)<0) return -1;
+  
+  /* If we didn't land on an even byte boundary, pad by one byte.
+   * We'll remove this padding at the end.
+   */
+  int padp=0;
+  if (ctx->dst->c&1) {
+    padp=ctx->dst->c;
+    if (sr_encode_u8(ctx->dst,0)<0) return -1;
+  }
+  
+  /* Allocate space and run the synthesizer.
+   * We can request an arbitrarily long update.
+   */
+  if (sr_encoder_require(ctx->dst,samplec*2)<0) return -1;
+  struct synth *synth=synth_new(rate,chanc);
+  if (!synth) return -1;
+  synth_load_song(synth,1,ctx->src,ctx->srcc);
+  synth_play_song(synth,1,0,0);
+  synth_updatei((int16_t*)((uint8_t*)ctx->dst->v+ctx->dst->c),samplec,synth);
+  synth_del(synth);
+  ctx->dst->c+=samplec*2;
+  
+  /* Drop the padding if we did that, then drop silent frames from the tail.
+   */
+  if (padp) {
+    char *dst=(char*)ctx->dst->v+padp;
+    ctx->dst->c-=1;
+    memmove(dst,dst+1,ctx->dst->c-padp);
+  }
+  int zeroc=0;
+  const uint8_t *q=(uint8_t*)ctx->dst->v+ctx->dst->c;
+  while ((zeroc<samplec)&&!q[-1]&&!q[-2]) { zeroc++; q-=2; }
+  zeroc/=chanc;
+  if (zeroc>=framec) zeroc=framec-1; // Don't eliminate the whole thing; at the limit, leave one silent frame.
+  if (zeroc>0) {
+    framec-=zeroc;
+    samplec=framec*chanc;
+    ctx->dst->c-=zeroc*chanc*2;
+  }
+  
+  /* Fill in file length and data chunk length.
+   */
+  int flen=ctx->dst->c-dstc0-8;
+  ((uint8_t*)ctx->dst->v)[dstc0+4]=flen;
+  ((uint8_t*)ctx->dst->v)[dstc0+5]=flen>>8;
+  ((uint8_t*)ctx->dst->v)[dstc0+6]=flen>>16;
+  ((uint8_t*)ctx->dst->v)[dstc0+7]=flen>>24;
+  int dlen=samplec*2;
+  ((uint8_t*)ctx->dst->v)[dstc0+40]=dlen;
+  ((uint8_t*)ctx->dst->v)[dstc0+41]=dlen>>8;
+  ((uint8_t*)ctx->dst->v)[dstc0+42]=dlen>>16;
+  ((uint8_t*)ctx->dst->v)[dstc0+43]=dlen>>24;
+  
+  return 0;
 }
 
 /* Copy a drum Channel Header, starting at (mode).

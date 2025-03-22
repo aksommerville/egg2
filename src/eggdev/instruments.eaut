@@ -1,3 +1,42 @@
 # instruments.eaut
 # Egg's default instrument set.
 # This file is read by eggdev as needed. You can modify it directly.
+
+globals {
+  tempo 400
+}
+
+0 0x60 0x80 fm {
+  level 0x0000 20 0xffff 20 0x3000* 200 0x0000
+  post {
+    gain 3.0 0.250
+  }
+}
+
+1 0x60 0x80 drum {
+  note 0x20 {
+    globals {
+      tempo 200
+    }
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+      wave sine
+      pitchenv 0
+      wheel 0
+      rate 0.5
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+}
+
+events {
+  note 0 0x40 7 0
+  delay 200
+}
+
+events {
+  note 0 0x47 7 0
+  delay 200
+}

@@ -48,7 +48,7 @@ Planned differences from Egg v1:
 - - [x] Pick language.
 - - [x] Event queue.
 - - [ ] Synth.
-- - - [ ] Data converters.
+- - - [x] Data converters.
 - - - [ ] Global orchestration, song player, etc.
 - - - [ ] FM channel
 - - - [ ] Drum channel
@@ -74,3 +74,7 @@ Planned differences from Egg v1:
 - - [ ] stdlib
 - - [ ] graf
 - - [ ] font
+- Minor things punted:
+- - [ ] Loop position in MIDI.
+- - [ ] WAV from EAU, can we get rate and chanc from the caller somehow?
+- - [ ] System language, for MacOS and Windows.

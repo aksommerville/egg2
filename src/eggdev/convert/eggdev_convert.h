@@ -113,7 +113,10 @@ int eggdev_convert_auto(
   int tid
 );
 
+/* error_at to print a line number.
+ * You provide it relative to (ctx->src) and we add (lineno0).
+ */
 int eggdev_convert_error(struct eggdev_convert_context *ctx,const char *fmt,...);
-int eggdev_convert_error_at(struct eggdev_convert_context *ctx,int lineno,const char *fmt,...); // Give us the line number relative to (ctx->src), we add (lineno0).
+int eggdev_convert_error_at(struct eggdev_convert_context *ctx,int lineno,const char *fmt,...);
 
 #endif
