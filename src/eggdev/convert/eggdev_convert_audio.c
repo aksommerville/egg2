@@ -142,7 +142,6 @@ static int eggdev_eau_default_channel_header(struct eggdev_convert_context *ctx,
   /* If (bank,pid) both zero and (chid) 9, assume it's a drum kit.
    */
   if ((chid==9)&&!bank&&!pid) pid=128;
-  fprintf(stderr,"%s: Looking up pid %d for channel %d...\n",ctx->refname,pid,chid);
   
   /* Best case scenario: The instrument is defined by SDK.
    */

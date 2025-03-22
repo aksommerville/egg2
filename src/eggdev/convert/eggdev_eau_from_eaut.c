@@ -164,7 +164,7 @@ static int eaut_env(struct eggdev_convert_context *ctx,struct eaut_statement *st
   #define POINT_LIMIT 16 /* This is imposed by synth too. */
   struct env_point {
     int tlo,vlo,thi,vhi,sus;
-  } pointv[POINT_LIMIT];
+  } pointv[POINT_LIMIT]={0};
   int pointc=0;
   int initlo=0,inithi=0;
   const char *token;

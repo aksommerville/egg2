@@ -192,6 +192,7 @@ int eau_estimate_duration(const void *src,int srcc) {
   while (evtp<file.evtc) {
     struct eau_event event;
     if ((err=eau_event_decode(&event,file.evtv+evtp,file.evtc-evtp))<1) break;
+    evtp+=err;
     switch (event.type) {
       case 'd': now+=event.delay; break;
       case 'n': {

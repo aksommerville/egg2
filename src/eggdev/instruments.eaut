@@ -2,41 +2,1045 @@
 # Egg's default instrument set.
 # This file is read by eggdev as needed. You can modify it directly.
 
-globals {
-  tempo 400
+# 2025-03-22: The skeleton is laid out but no instruments are actually defined yet.
+
+#--- 0..7: Piano -------------------------------------------------------------------
+
+# Acoustic Grand Piano
+0x00 0x40 0x80 noop {
 }
 
-0 0x60 0x80 fm {
-  level 0x0000 20 0xffff 20 0x3000* 200 0x0000
-  post {
-    gain 3.0 0.250
-  }
+# Bright Acoustic Piano
+0x01 0x40 0x80 noop {
 }
 
-1 0x60 0x80 drum {
-  note 0x20 {
-    globals {
-      tempo 200
-    }
+# Electic Grand Piano
+0x02 0x40 0x80 noop {
+}
+
+# Honky-Tonk Piano
+0x03 0x40 0x80 noop {
+}
+
+# EP 1 (Rhodes)
+0x04 0x40 0x80 noop {
+}
+
+# EP 2 (Chorus)
+0x05 0x40 0x80 noop {
+}
+
+# Harpsichord
+0x06 0x40 0x80 noop {
+}
+
+# Clavinet
+0x07 0x40 0x80 noop {
+}
+
+#--- 8..15: Chromatic --------------------------------------------------------------
+
+# Celesta
+0x08 0x40 0x80 noop {
+}
+
+# Glockenspiel
+0x09 0x40 0x80 noop {
+}
+
+# Music Box
+0x0a 0x40 0x80 noop {
+}
+
+# Vibraphone
+0x0b 0x40 0x80 noop {
+}
+
+# Marimba
+0x0c 0x40 0x80 noop {
+}
+
+# Xylophone
+0x0d 0x40 0x80 noop {
+}
+
+# Tubular Bells
+0x0e 0x40 0x80 noop {
+}
+
+# Dulcimer
+0x0f 0x40 0x80 noop {
+}
+
+#--- 16..23: Organ ----------------------------------------------------------------------------------
+
+# Drawbar Organ
+0x10 0x40 0x80 noop {
+}
+
+# Percussive Organ
+0x11 0x40 0x80 noop {
+}
+
+# Rock Organ
+0x12 0x40 0x80 noop {
+}
+
+# Church Organ
+0x13 0x40 0x80 noop {
+}
+
+# Reed Organ
+0x14 0x40 0x80 noop {
+}
+
+# Accordion (French)
+0x15 0x40 0x80 noop {
+}
+
+# Harmonica
+0x16 0x40 0x80 noop {
+}
+
+# Accordion (Tango)
+0x17 0x40 0x80 noop {
+}
+
+#--- 24..31: Guitar ----------------------------------------------------------------------
+
+# Acoustic Nylon Guitar
+0x18 0x40 0x80 noop {
+}
+
+# Acoustic Steel Guitar
+0x19 0x40 0x80 noop {
+}
+
+# Electric Jazz Guitar
+0x1a 0x40 0x80 noop {
+}
+
+# Electric Clean Guitar
+0x1b 0x40 0x80 noop {
+}
+
+# Electric Muted Guitar
+0x1c 0x40 0x80 noop {
+}
+
+# Overdriven Guitar
+0x1d 0x40 0x80 noop {
+}
+
+# Distortion Guitar
+0x1e 0x40 0x80 noop {
+}
+
+# Guitar Harmonics
+0x1f 0x40 0x80 noop {
+}
+
+#--- 32..39: Bass ---------------------------------------------------------------------------
+
+# Acoustic Bass
+0x20 0x40 0x80 noop {
+}
+
+# Electric Finger Bass
+0x21 0x40 0x80 noop {
+}
+
+# Electric Pick Bass
+0x22 0x40 0x80 noop {
+}
+
+# Fretless Bass
+0x23 0x40 0x80 noop {
+}
+
+# Slap Bass 1
+0x24 0x40 0x80 noop {
+}
+
+# Slap Bass 2
+0x25 0x40 0x80 noop {
+}
+
+# Synth Bass 1
+0x26 0x40 0x80 noop {
+}
+
+# Synth Bass 2
+0x27 0x40 0x80 noop {
+}
+
+#--- 40..47: Solo String -----------------------------------------------------------
+
+# Violin
+0x28 0x40 0x80 noop {
+}
+
+# Viola
+0x29 0x40 0x80 noop {
+}
+
+# Cello
+0x2a 0x40 0x80 noop {
+}
+
+# Contrabass
+0x2b 0x40 0x80 noop {
+}
+
+# Tremolo Strings
+0x2c 0x40 0x80 noop {
+}
+
+# Pizzicato Strings
+0x2d 0x40 0x80 noop {
+}
+
+# Orchestral Harp
+0x2e 0x40 0x80 noop {
+}
+
+# Timpani
+0x2f 0x40 0x80 noop {
+}
+
+#--- 48..55: String Ensemble --------------------------------------------------------
+
+# String Ensemble 1
+0x30 0x40 0x80 noop {
+}
+
+# String Ensemble 2
+0x31 0x40 0x80 noop {
+}
+
+# Synth Strings 1
+0x32 0x40 0x80 noop {
+}
+
+# Synth Strings 2
+0x33 0x40 0x80 noop {
+}
+
+# Choir Aah
+0x34 0x40 0x80 noop {
+}
+
+# Choir Ooh
+0x35 0x40 0x80 noop {
+}
+
+# Synth Voice
+0x36 0x40 0x80 noop {
+}
+
+# Orchestra Hit
+0x37 0x40 0x80 noop {
+}
+
+#--- 56..63: Brass ---------------------------------------------------------
+
+# Trumpet
+0x38 0x40 0x80 noop {
+}
+
+# Trombone
+0x39 0x40 0x80 noop {
+}
+
+# Tuba
+0x3a 0x40 0x80 noop {
+}
+
+# Muted Trumpet
+0x3b 0x40 0x80 noop {
+}
+
+# French Horn
+0x3c 0x40 0x80 noop {
+}
+
+# Brass Section
+0x3d 0x40 0x80 noop {
+}
+
+# Synth Brass 1
+0x3e 0x40 0x80 noop {
+}
+
+# Synth Brass 2
+0x3f 0x40 0x80 noop {
+}
+
+#--- 64..71: Solo Reed ------------------------------------------------------------------
+
+# Soprano Sax
+0x40 0x40 0x80 noop {
+}
+
+# Alto Sax
+0x41 0x40 0x80 noop {
+}
+
+# Tenor Sax
+0x42 0x40 0x80 noop {
+}
+
+# Baritone Sax
+0x43 0x40 0x80 noop {
+}
+
+# Oboe
+0x44 0x40 0x80 noop {
+}
+
+# English Horn
+0x45 0x40 0x80 noop {
+}
+
+# Bassoon
+0x46 0x40 0x80 noop {
+}
+
+# Clarinet
+0x47 0x40 0x80 noop {
+}
+
+#--- 72..79: Solo Flute ------------------------------------------------------------
+
+# Piccolo
+0x48 0x40 0x80 noop {
+}
+
+# Flute
+0x49 0x40 0x80 noop {
+}
+
+# Recorder
+0x4a 0x40 0x80 noop {
+}
+
+# Pan Flute
+0x4b 0x40 0x80 noop {
+}
+
+# Blown Bottle
+0x4c 0x40 0x80 noop {
+}
+
+# Shakuhachi
+0x4d 0x40 0x80 noop {
+}
+
+# Whistle
+0x4e 0x40 0x80 noop {
+}
+
+# Ocarina
+0x4f 0x40 0x80 noop {
+}
+
+#--- 80..87: Synth Lead -------------------------------------------------------------
+
+# Square Lead
+0x50 0x40 0x80 noop {
+}
+
+# Saw Lead
+0x51 0x40 0x80 noop {
+}
+
+# Calliope
+0x52 0x40 0x80 noop {
+}
+
+# Chiffer
+0x53 0x40 0x80 noop {
+}
+
+# Charang
+0x54 0x40 0x80 noop {
+}
+
+# Synth Voice
+0x55 0x40 0x80 noop {
+}
+
+# Fifths
+0x56 0x40 0x80 noop {
+}
+
+# Bass+Lead
+0x57 0x40 0x80 noop {
+}
+
+#--- 88..95: Synth Pad ------------------------------------------------------------------
+
+# Fantasia Pad
+0x58 0x40 0x80 noop {
+}
+
+# Warm Pad
+0x59 0x40 0x80 noop {
+}
+
+# Polysynth Pad
+0x5a 0x40 0x80 noop {
+}
+
+# Choir Space Voice
+0x5b 0x40 0x80 noop {
+}
+
+# Bowed Glass
+0x5c 0x40 0x80 noop {
+}
+
+# Metallic Pro Pad
+0x5d 0x40 0x80 noop {
+}
+
+# Halo Pad
+0x5e 0x40 0x80 noop {
+}
+
+# Sweep Pad
+0x5f 0x40 0x80 noop {
+}
+
+#--- 96..103: Synth Effects -------------------------------------------------------------
+
+# Rain
+0x60 0x40 0x80 noop {
+}
+
+# Soundtrack
+0x61 0x40 0x80 noop {
+}
+
+# Crystal
+0x62 0x40 0x80 noop {
+}
+
+# Atmosphere
+0x63 0x40 0x80 noop {
+}
+
+# Brightness
+0x64 0x40 0x80 noop {
+}
+
+# Goblins
+0x65 0x40 0x80 noop {
+}
+
+# Echoes, Drops
+0x66 0x40 0x80 noop {
+}
+
+# Sci-Fi Star Theme
+0x67 0x40 0x80 noop {
+}
+
+#--- 104..111: World -----------------------------------------------------------------
+
+# Sitar
+0x68 0x40 0x80 noop {
+}
+
+# Banjo
+0x69 0x40 0x80 noop {
+}
+
+# Shamisen
+0x6a 0x40 0x80 noop {
+}
+
+# Koto
+0x6b 0x40 0x80 noop {
+}
+
+# Kalimba
+0x6c 0x40 0x80 noop {
+}
+
+# Bagpipe
+0x6d 0x40 0x80 noop {
+}
+
+# Fiddle
+0x6e 0x40 0x80 noop {
+}
+
+# Shanai
+0x6f 0x40 0x80 noop {
+}
+
+#--- 112..119: Percussion ---------------------------------------------------------------
+
+# Tinkle Bell
+0x70 0x40 0x80 noop {
+}
+
+# Agogo
+0x71 0x40 0x80 noop {
+}
+
+# Steel Drums
+0x72 0x40 0x80 noop {
+}
+
+# Wood Block
+0x73 0x40 0x80 noop {
+}
+
+# Taiko
+0x74 0x40 0x80 noop {
+}
+
+# Melodic Tom
+0x75 0x40 0x80 noop {
+}
+
+# Synth Drum
+0x76 0x40 0x80 noop {
+}
+
+# Reverse Cymbal
+0x77 0x40 0x80 noop {
+}
+
+#--- 120..127: Filler --------------------------------------------------------------
+
+# Guitar Fret Noise
+0x78 0x40 0x80 noop {
+}
+
+# Breath Noise
+0x79 0x40 0x80 noop {
+}
+
+# Seashore
+0x7a 0x40 0x80 noop {
+}
+
+# Bird Tweet
+0x7b 0x40 0x80 noop {
+}
+
+# Telephone Ring
+0x7c 0x40 0x80 noop {
+}
+
+# Helicopter
+0x7d 0x40 0x80 noop {
+}
+
+# Applause
+0x7e 0x40 0x80 noop {
+}
+
+# Gunshot
+0x7f 0x40 0x80 noop {
+}
+
+#--- 128: GM Drums plus a bunch of extra opinionated percussion --------------------------------------------------------------
+
+# Standard Drum Kit
+0x80 0x40 0x80 drum {
+
+  # TODO Fill 0x00..0x22 with extra drums. Alternative kick/snare/hat, DJ scratch, whatever seems to be missing from GM...
+
+  #--- BEGIN GM DRUMS ---
+
+  # 35: Acoustic Bass Drum
+  note 0x23 {
     0 0x80 0x80 fm {
       level 0x0000 15 0xffff 20 0x2000 200 0x0000
-      wave sine
-      pitchenv 0
-      wheel 0
-      rate 0.5
     }
     events {
       note 0 0x30 15 0
     }
   }
+  
+  # 36: Bass Drum 1
+  note 0x24 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 37: Side Stick
+  note 0x25 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 38: Acoustic Snare
+  note 0x26 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 39: Hand Clap
+  note 0x27 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 40: Electric Snare
+  note 0x28 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 41: Low Floor Tom
+  note 0x29 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 42: Closed Hi Hat
+  note 0x2a {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 43: High Floor Tom
+  note 0x2b {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 44: Pedal Hi-Hat
+  note 0x2c {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 45: Low Tom
+  note 0x2d {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 46: Open Hi-Hat
+  note 0x2e {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 47: Low-Mid Tom
+  note 0x2f {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 48: Hi Mid Tom
+  note 0x30 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 49: Crash Cymbal 1
+  note 0x31 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 50: High Tom
+  note 0x32 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 51: Ride Cymbal 1
+  note 0x33 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 52: Chinese Cymbal
+  note 0x34 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 53: Ride Bell
+  note 0x35 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 54: Tambourine
+  note 0x36 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 55: Splash Cymbal
+  note 0x37 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 56: Cowbell
+  note 0x38 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 57: Crash Cymbal 2
+  note 0x39 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 58: Vibraslap
+  note 0x3a {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 59: Ride Cymbal 2
+  note 0x3b {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 60: Hi Bongo
+  note 0x3c {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 61: Low Bongo
+  note 0x3d {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 62: Mute Hi Conga
+  note 0x3e {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 63: Open Hi Conga
+  note 0x3f {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 64: Low Conga
+  note 0x40 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 65: High Timbale
+  note 0x41 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 66: Low Timbale
+  note 0x42 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 67: High Agogo
+  note 0x43 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 68: Low Agogo
+  note 0x44 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 69: Cabasa
+  note 0x45 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 70: Maracas
+  note 0x46 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 71: Short Whistle
+  note 0x47 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 72: Long Whistle
+  note 0x48 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 73: Short Guiro
+  note 0x49 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 74: Long Guiro
+  note 0x4a {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 75: Claves
+  note 0x4b {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 76: Hi Wood Block
+  note 0x4c {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 77: Low Wood Block
+  note 0x4d {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 78: Mute Cuica
+  note 0x4e {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 79: Open Cuica
+  note 0x4f {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 80: Mute Triangle
+  note 0x50 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  # 81: Open Triangle
+  note 0x51 {
+    0 0x80 0x80 fm {
+      level 0x0000 15 0xffff 20 0x2000 200 0x0000
+    }
+    events {
+      note 0 0x30 15 0
+    }
+  }
+  
+  #--- END GM DRUMS ---
+  
+  # 0x52..0x7f are available for additional percussion. Fill the low gap first.
 }
 
-events {
-  note 0 0x40 7 0
-  delay 200
+#--- 129: Standard sound effects, not intended for music ----------------------------------------------------------
+
+# Example Sound Effects
+0x81 0x40 0x80 drum {
+
+  # TODO Make an assortment of common gamey sound effects.
+
 }
 
-events {
-  note 0 0x47 7 0
-  delay 200
-}
+#--- 130..143: Reserve for additional drum kits and sound effects -------------------------------------------------
+
+#--- 144..254: Extra non-GM instruments ---------------------------------------------------------------------------
