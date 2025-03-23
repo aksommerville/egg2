@@ -54,8 +54,9 @@ static void synth_wave_print_square(float *v,uint8_t qual,struct synth *synth) {
   if (qual&&synth_sine_require(synth)) {
     const int quarter=halfperiod>>1;
     int curvelen=(qual*quarter)>>8;
+    if (curvelen<1) curvelen=1;
     uint32_t srcp=0;
-    uint32_t srcdp=(qual<<22)|(qual<<14)|(qual<<6)|(qual>>2);
+    uint32_t srcdp=0x40000000/curvelen;
     int i=0;
     for (;i<curvelen;i++,srcp+=srcdp) v[i]=synth->sine->v[srcp>>SYNTH_WAVE_SHIFT];
     for (;i<quarter;i++) v[i]=1.0f;
@@ -80,8 +81,9 @@ static void synth_wave_print_saw(float *v,uint8_t qual,struct synth *synth) {
     const int halfperiod=SYNTH_WAVE_SIZE_SAMPLES>>1;
     const int quarter=halfperiod>>1;
     int curvelen=(qual*quarter)>>8;
+    if (curvelen<1) curvelen=1;
     uint32_t srcp=0;
-    uint32_t srcdp=(qual<<22)|(qual<<14)|(qual<<6)|(qual>>2);
+    uint32_t srcdp=0x40000000/curvelen;
     int i=0;
     for (;i<curvelen;i++,srcp+=srcdp) v[i]=synth->sine->v[srcp>>SYNTH_WAVE_SHIFT];
     synth_wave_print_ramp(v+curvelen,halfperiod-curvelen,1.0f,0.0f);
