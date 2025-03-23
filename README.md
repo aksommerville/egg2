@@ -79,3 +79,5 @@ Planned differences from Egg v1:
 - - [ ] WAV from EAU, can we get rate and chanc from the caller somehow?
 - - [ ] System language, for MacOS and Windows.
 - - [ ] Expose a GM names service, using text ripped from eggdev/instruments.eaut dynamically.
+- - [ ] synth: Brief blackout on song transitions? Not sure whether it's needed.
+- - [ ] Decide whether to allow WAV for sound resources.
