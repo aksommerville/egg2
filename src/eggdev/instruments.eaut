@@ -3,11 +3,15 @@
 # This file is read by eggdev as needed. You can modify it directly.
 
 # 2025-03-22: The skeleton is laid out but no instruments are actually defined yet.
+# Instruments with an explicit "noop" mode will trigger a warning at convert.
 
 #--- 0..7: Piano -------------------------------------------------------------------
 
 # Acoustic Grand Piano
-0x00 0x40 0x80 noop {
+0x00 0x40 0x80 fm {
+  #XXX TEMP
+  level 0x0000 30..25 0x3000..0xffff 30 0x0800..0x1000* 1500..2500 0x0000
+  wave saw +0x24 0x6000 0xa000 0x1000 0x0400
 }
 
 # Bright Acoustic Piano
@@ -359,7 +363,10 @@
 }
 
 # Chiffer
-0x53 0x40 0x80 noop {
+0x53 0x40 0x80 fm {
+  #XXX TEMP
+  level 0x0000 30..15 0x4000..0xffff 40 0x1000..0x4000* 100..200 0x0000
+  wave square +0x40
 }
 
 # Charang
@@ -443,7 +450,10 @@
 }
 
 # Sci-Fi Star Theme
-0x67 0x40 0x80 noop {
+0x67 0x40 0x80 fm {
+  #XXX TEMP
+  level 0x0000 30..15 0x4000..0xffff 40 0x1000..0x4000* 100..200 0x0000
+  wave saw +0x40
 }
 
 #--- 104..111: World -----------------------------------------------------------------

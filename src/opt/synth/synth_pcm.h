@@ -42,6 +42,8 @@ int synth_wave_ref(struct synth_wave *wave);
  */
 struct synth_wave *synth_wave_new(struct synth *synth,const void *src,int srcc);
 
+int synth_wave_measure(const void *src,int srcc);
+
 /* PCM Printer.
  ****************************************************************************/
  
@@ -85,13 +87,93 @@ int synth_pcmplay_update(float *v,int framec,struct synth_pcmplay *pcmplay);
 
 /* Envelope config and runner.
  *******************************************************************************/
+ 
+#define SYNTH_ENV_POINT_LIMIT 16 /* One less, if sustaining. */
 
-//TODO env
+#define SYNTH_ENV_FLAG_VELOCITY 0x01
+#define SYNTH_ENV_FLAG_INITIAL  0x02
+#define SYNTH_ENV_FLAG_SUSTAIN  0x04
+
+struct synth_env {
+  uint8_t flags;
+  uint8_t susp;
+  float initlo,inithi;
+  struct synth_env_point {
+    int tlo,thi; // frames
+    float vlo,vhi;
+  } pointv[SYNTH_ENV_POINT_LIMIT];
+  int pointc;
+// Runner only:
+  float level;
+  float dlevel;
+  int c;
+  int pointp;
+};
+
+/* Measure and decode an envelope config.
+ * Times are converted to frames, minimum 1, and levels scaled to 0..1.
+ * (level,dlevel,c,pointp) are not populated.
+ * Returns consumed length.
+ */
+int synth_env_decode(struct synth_env *env,const void *src,int srcc,int rate);
+
+/* Adjust all values of an envelope config.
+ */
+void synth_env_scale(struct synth_env *env,float mlt);
+void synth_env_bias(struct synth_env *env,float add);
+
+/* Start an envelope runner, using a separate synth_env as configuration.
+ * Runners only use their 'lo' line, and track level and timing.
+ * (durframec) is the duration from start to release, for sustaining envelopes.
+ */
+void synth_env_reset(struct synth_env *runner,const struct synth_env *config,float velocity,int durframec);
+
+/* If we are sustainable and haven't yet finished the sustain point, begin releasing now.
+ * Or if we haven't reached the sustain leg yet, drop its duration to the minimum.
+ */
+void synth_env_release(struct synth_env *env);
+
+// PRIVATE, only synth_env_update() should call it.
+void synth_env_advance(struct synth_env *env);
+
+static inline int synth_env_is_complete(const struct synth_env *env) {
+  return (env->pointp>=env->pointc);
+}
+
+// How many frames left.
+int synth_env_remaining(const struct synth_env *env);
+
+/* Advance time by one frame and return the next value.
+ */
+static inline float synth_env_update(struct synth_env *env) {
+  if (env->c<=0) synth_env_advance(env);
+  env->c--;
+  env->level+=env->dlevel;
+  return env->level;
+}
 
 /* Ring buffer.
  ********************************************************************************/
  
-//TODO ring
+struct synth_ring {
+  int c,p;
+  float *v;
+};
+
+void synth_ring_cleanup(struct synth_ring *ring);
+
+int synth_ring_init(struct synth_ring *ring,int framec);
+
+static inline void synth_ring_write(struct synth_ring *ring,float v) {
+  ring->v[ring->p]=v;
+}
+static inline float synth_ring_read(const struct synth_ring *ring) {
+  return ring->v[ring->p];
+}
+static inline void synth_ring_advance(struct synth_ring *ring) {
+  ring->p++;
+  if (ring->p>=ring->c) ring->p=0;
+}
 
 /* IIR runner.
  ********************************************************************************/

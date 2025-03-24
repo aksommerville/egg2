@@ -158,6 +158,9 @@ static int eggdev_eau_default_channel_header(struct eggdev_convert_context *ctx,
           if (channel.mode==EAU_CHANNEL_MODE_DRUM) {
             return eggdev_eau_channel_copy_drums(ctx,&channel,notev);
           } else {
+            if (!channel.mode) {
+              if (ctx->refname&&!ctx->errmsg) fprintf(stderr,"%s:WARNING: pid 0x%02x in default instruments has mode zero.\n",ctx->refname,pid);
+            }
             if (sr_encode_u8(ctx->dst,channel.mode)<0) return -1;
             if (sr_encode_intbelen(ctx->dst,channel.payload,channel.payloadc,2)<0) return -1;
             if (sr_encode_intbelen(ctx->dst,channel.post,channel.postc,2)<0) return -1;

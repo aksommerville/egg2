@@ -27,6 +27,9 @@ struct synth {
   int qbufa;
   struct synth_wave *sine; // lazy
   int framec_in_progress;
+  float *scratch; // For channels' use. SYNTH_UPDATE_LIMIT_FRAMES*chanc
+  uint32_t rateiv[128];
+  float ratefv[128];
   
   struct synth_res {
     int qid; // rid + 0x10000 for song, 0 for sound
@@ -46,6 +49,7 @@ struct synth {
   
   struct synth_channel *channelv[SYNTH_CHANNEL_LIMIT];
   int channelc;
+  struct synth_channel *channel_by_chid[16]; // WEAK and sparse.
   
   struct synth_pcmplay pcmplayv[SYNTH_PCMPLAY_LIMIT];
   int pcmplayc;
@@ -54,9 +58,13 @@ struct synth {
   int printerc,printera;
 };
 
-//TODO
-static inline void synth_end_song(struct synth *synth) {}
-static inline int synth_prepare_song_channels(struct synth *synth,const struct eau_file *file) { return -1; }
-static inline void synth_update_internal(float *v,int framec,struct synth *synth) {}
+void synth_end_song(struct synth *synth);
+int synth_prepare_song_channels(struct synth *synth,const struct eau_file *file);
+
+/* (framec) must be <=SYNTH_UPDATE_LIMIT_FRAMES.
+ * (v) must be initially zero, we add to it.
+ * Adding isn't important, we could change to overwrite, but I figure do the memset out before slicing.
+ */
+void synth_update_internal(float *v,int framec,struct synth *synth);
 
 #endif

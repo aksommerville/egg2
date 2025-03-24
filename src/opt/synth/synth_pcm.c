@@ -1,5 +1,5 @@
 /* synth_pcm.c
- * synth_pcm, synth_pcmplay, and synth_printer are all pretty simple, so I'm lumping them together here.
+ * synth_pcm, synth_pcmplay, synth_ring, and synth_printer are all pretty simple, so I'm lumping them together here.
  * Nothing particularly interesting happens here.
  */
 
@@ -125,4 +125,22 @@ int synth_pcmplay_update(float *v,int framec,struct synth_pcmplay *pcmplay) {
     }
   }
   return (pcmplay->p>=pcmplay->pcm->c)?0:1;
+}
+
+/* Ring buffer.
+ */
+ 
+void synth_ring_cleanup(struct synth_ring *ring) {
+  if (!ring) return;
+  if (ring->v) free(ring->v);
+  memset(ring,0,sizeof(struct synth_ring));
+}
+
+int synth_ring_init(struct synth_ring *ring,int framec) {
+  if (framec<1) return -1;
+  if (framec>INT_MAX/sizeof(float)) return -1;
+  if (!(ring->v=calloc(sizeof(float),framec))) return -1;
+  ring->p=0;
+  ring->c=framec;
+  return 0;
 }

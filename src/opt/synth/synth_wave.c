@@ -222,3 +222,15 @@ struct synth_wave *synth_wave_new(struct synth *synth,const void *src,int srcc) 
   }
   return wave;
 }
+
+/* Measure serial.
+ */
+ 
+int synth_wave_measure(const void *src,int srcc) {
+  if (!src||(srcc<3)) return -1;
+  const uint8_t *SRC=src;
+  int coefc=SRC[2];
+  int len=3+coefc*2;
+  if (len>srcc) return -1;
+  return len;
+}

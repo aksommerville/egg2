@@ -14,6 +14,7 @@ void synth_del(struct synth *synth) {
     free(synth->resv);
   }
   if (synth->qbuf) free(synth->qbuf);
+  if (synth->scratch) free(synth->scratch);
   synth_wave_del(synth->sine);
   while (synth->channelc>0) synth_channel_del(synth->channelv[--(synth->channelc)]);
   while (synth->pcmplayc>0) synth_pcmplay_cleanup(synth->pcmplayv+(--(synth->pcmplayc)));
@@ -22,6 +23,35 @@ void synth_del(struct synth *synth) {
     free(synth->printerv);
   }
   free(synth);
+}
+
+/* Calculate rate tables.
+ */
+ 
+static void synth_rates_init(struct synth *synth) {
+
+  /* Calculate one octave in the middle entirely from scratch at each note.
+   * The "440.0" here is the frequency of MIDI note 69 (A4), and it's safe to change arbitrarily*.
+   * [*] Unless you want songs to sound correct.
+   */
+  float frate=(float)synth->rate;
+  int start_noteid=0x40,i,noteid;
+  for (i=12,noteid=start_noteid;i-->0;noteid++) {
+    synth->ratefv[noteid]=(440.0f*powf(2.0f,(noteid-69)/12.0f))/frate;
+    synth->rateiv[noteid]=(uint32_t)(synth->ratefv[noteid]*4294976295.0f);
+  }
+  
+  /* Walk down from there, dividing by two.
+   * Then up, multiplying by two.
+   */
+  for (noteid=start_noteid;noteid-->0;) {
+    synth->ratefv[noteid]=synth->ratefv[noteid+12]*0.5f;
+    synth->rateiv[noteid]=synth->rateiv[noteid+12]>>1;
+  }
+  for (noteid=start_noteid+12;noteid<0x80;noteid++) {
+    synth->ratefv[noteid]=synth->ratefv[noteid-12]*2.0f;
+    synth->rateiv[noteid]=synth->rateiv[noteid-12]<<1;
+  }
 }
 
 /* New.
@@ -34,6 +64,11 @@ struct synth *synth_new(int rate,int chanc) {
   if (!synth) return 0;
   synth->rate=rate;
   synth->chanc=chanc;
+  if (!(synth->scratch=malloc(sizeof(float)*SYNTH_UPDATE_LIMIT_FRAMES*chanc))) {
+    synth_del(synth);
+    return 0;
+  }
+  synth_rates_init(synth);
   return synth;
 }
 
@@ -103,10 +138,8 @@ int synth_load_sound(struct synth *synth,int id,const void *src,int srcc) {
  */
 
 void synth_updatef(float *v,int c,struct synth *synth) {
-  if (synth->framec_in_progress) {
-    memset(v,0,sizeof(float)*c);
-    return;
-  }
+  memset(v,0,sizeof(float)*c);
+  if (synth->framec_in_progress) return;
   int framec=c/synth->chanc;
   while (framec>SYNTH_UPDATE_LIMIT_FRAMES) {
     synth_update_internal(v,SYNTH_UPDATE_LIMIT_FRAMES,synth);
@@ -148,6 +181,61 @@ void synth_updatei(int16_t *v,int c,struct synth *synth) {
     synth_updatef(synth->qbuf,c,synth);
     synth_quantize(v,synth->qbuf,c);
   }
+}
+
+/* End song.
+ */
+ 
+void synth_end_song(struct synth *synth) {
+  synth->songid=0;
+  synth->songrepeat=0;
+  synth->song=0;
+  synth->songc=0;
+  synth->songp=0;
+  synth->songloopp=0;
+  synth->songdelay=0;
+  int i=synth->channelc;
+  while (i-->0) {
+    synth_channel_terminate(synth->channelv[i]);
+  }
+  memset(synth->channel_by_chid,0,sizeof(synth->channel_by_chid));
+}
+
+/* Create new channels for song.
+ */
+ 
+int synth_prepare_song_channels(struct synth *synth,const struct eau_file *file) {
+  struct eau_channel_reader reader={.v=file->chhdrv,.c=file->chhdrc};
+  struct eau_channel_entry entry;
+  while (eau_channel_reader_next(&entry,&reader)>0) {
+  
+    // Invalid chid, silent trim, or channel already configured, skip it.
+    if (entry.chid>=0x10) continue;
+    if (!entry.trim) continue;
+    if (entry.mode==EAU_CHANNEL_MODE_NOOP) continue;
+    if (synth->channel_by_chid[entry.chid]) continue;
+    
+    // If the channel doesn't create, we must fail.
+    struct synth_channel *channel=synth_channel_new(synth,&entry);
+    if (!channel) {
+      synth_end_song(synth);
+      return -1;
+    }
+    
+    // If we don't have room, evict the first channel in the list.
+    // That presumably belongs to some earlier song, hopefully nobody will miss it.
+    if (synth->channelc>=SYNTH_CHANNEL_LIMIT) {
+      fprintf(stderr,"%s:%d: Forcible eviction of channel.\n",__FILE__,__LINE__);//TODO Confirm that this situation can arise, when changing song too fast.
+      synth_channel_del(synth->channelv[0]);
+      synth->channelc--;
+      memmove(synth->channelv,synth->channelv+1,sizeof(void*)*synth->channelc);
+    }
+    
+    // Add to both channel lists.
+    synth->channelv[synth->channelc++]=channel;
+    synth->channel_by_chid[entry.chid]=channel;
+  }
+  return 0;
 }
 
 /* Play song.
