@@ -6,6 +6,10 @@
 void synth_channel_del(struct synth_channel *channel) {
   if (!channel) return;
   if (channel->del) channel->del(channel);
+  if (channel->stagev) {
+    while (channel->stagec-->0) synth_stage_del(channel->stagev[channel->stagec]);
+    free(channel->stagev);
+  }
   free(channel);
 }
 
@@ -40,6 +44,32 @@ static void synth_channel_xfer_multi_stereo(float *dst,const float *src,int fram
     dst[0]+=src[0]*channel->gainl;
     dst[1]+=src[1]*channel->gainr;
   }
+}
+
+/* Init post pipe.
+ */
+ 
+static int synth_channel_init_post(struct synth_channel *channel,const uint8_t *src,int srcc) {
+  int srcp=0;
+  while (srcp<srcc) {
+    if (srcp>srcc-2) return -1;
+    uint8_t stageid=src[srcp++];
+    uint8_t len=src[srcp++];
+    if (srcp>srcc-len) return -1;
+    if (channel->stagec>=channel->stagea) {
+      int na=channel->stagea+8;
+      if (na>INT_MAX/sizeof(void*)) return -1;
+      void *nv=realloc(channel->stagev,sizeof(void*)*na);
+      if (!nv) return -1;
+      channel->stagev=nv;
+      channel->stagea=na;
+    }
+    struct synth_stage *stage=synth_stage_new(channel->synth,channel->chanc,stageid,src+srcp,len);
+    if (!stage) return -1;
+    srcp+=len;
+    channel->stagev[channel->stagec++]=stage;
+  }
+  return 0;
 }
 
 /* New.
@@ -108,8 +138,9 @@ struct synth_channel *synth_channel_new(struct synth *synth,const struct eau_cha
   
   /* Stand the post pipe if we have one.
    */
-  if (src->postc>0) {
-    fprintf(stderr,"%s:%d:TODO: Enable post for channel %d, srcc=%d\n",__FILE__,__LINE__,src->chid,src->postc);//TODO post
+  if (src->postc&&(synth_channel_init_post(channel,src->post,src->postc)<0)) {
+    synth_channel_del(channel);
+    return 0;
   }
   
   /* Select the appropriate transfer function based on channel counts.
@@ -167,7 +198,9 @@ int synth_channel_update(float *v,int framec,struct synth_channel *channel) {
   
   /* Run post if there is one.
    */
-  //TODO post
+  struct synth_stage **stage=channel->stagev;
+  int i=channel->stagec;
+  for (;i-->0;stage++) (*stage)->update(channel->synth->scratch,framec,*stage);
   
   /* Our transfer function manages copying to the output.
    */

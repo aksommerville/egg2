@@ -26,6 +26,10 @@ struct synth_channel {
    * REQUIRED.
    */
   void (*update)(float *v,int framec,struct synth_channel *channel);
+  
+  // Post pipe.
+  struct synth_stage **stagev;
+  int stagec,stagea;
 };
 
 void synth_channel_del(struct synth_channel *channel);

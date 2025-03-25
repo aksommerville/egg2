@@ -4,6 +4,7 @@
 #include "synth.h"
 #include "synth_pcm.h"
 #include "eau.h"
+#include "synth_stage.h"
 #include "synth_channel.h"
 #include <stdlib.h>
 #include <string.h>

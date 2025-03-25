@@ -22,6 +22,16 @@
   #rangeenv 0
   rangelforate 4.000
   rangelfodepth 1.000
+  post {
+    gain 12.0 0.200
+    delay 1.000 0.500 0.500 0.500 0.500
+    #lopass HZ
+    #hipass HZ
+    #bpass HZ WIDTH
+    #notch HZ WIDTH
+    #waveshaper U16...
+    #STAGEID HEXDUMP
+  }
 }
 
 # Bright Acoustic Piano
@@ -373,10 +383,20 @@
 }
 
 # Chiffer
-0x53 0x40 0x80 fm {
+0x53 0x60 0xa0 fm {
   #XXX TEMP
-  level 0x0000 30..15 0x4000..0xffff 40 0x1000..0x4000* 100..200 0x0000
-  wave square +0x40
+  level 0x0000 30..15 0x4000..0xffff 40 0x1000..0x4000* 300..800 0x0000
+  wave square +0x30
+  pitchenv 0
+  wheel 0
+  rate 1.0
+  range 3.0
+  rangeenv 0
+  rangelforate 8.0
+  rangelfodepth 0.750
+  post {
+    delay 0.500 0.500 0.500 0.500 0.500
+  }
 }
 
 # Charang
@@ -460,10 +480,20 @@
 }
 
 # Sci-Fi Star Theme
-0x67 0x40 0x80 fm {
+0x67 0x01 0x00 fm {
   #XXX TEMP
   level 0x0000 30..15 0x4000..0xffff 40 0x1000..0x4000* 100..200 0x0000
   wave saw +0x40
+  pitchenv 0
+  wheel 0
+  rate 0.500
+  range 3.0
+  rangeenv 0x8000 30..15 0xffff 40 0xa000* 100..200 0x4000
+  rangelforate 4.0
+  rangelfodepth 0.250
+  post {
+    gain 15.0 0.250
+  }
 }
 
 #--- 104..111: World -----------------------------------------------------------------
