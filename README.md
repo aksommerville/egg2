@@ -50,7 +50,7 @@ Planned differences from Egg v1:
 - - [ ] Synth.
 - - - [x] Data converters.
 - - - [x] Global orchestration, song player, etc.
-- - - [ ] FM channel
+- - - [x] FM channel
 - - - [ ] Drum channel
 - - - [ ] Sub channel
 - - - [ ] Post
@@ -81,3 +81,6 @@ Planned differences from Egg v1:
 - - [ ] Expose a GM names service, using text ripped from eggdev/instruments.eaut dynamically.
 - - [ ] synth: Brief blackout on song transitions? Not sure whether it's needed.
 - - [ ] Decide whether to allow WAV for sound resources.
+- - [ ] Add phase to FM LFO. I think. Maybe?
+- - [ ] FM pitch wheel.
+- - [ ] FM: Should we adjust the modulator too, when pitchenv in play? Currently keeping it fixed.

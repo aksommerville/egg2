@@ -197,11 +197,11 @@ MODE = fm.
 ```
   level ENV
   wave WAVE
-  pitchenv ENV
+  pitchenv ENV: cents, bias 0x8000. Ignored if it's a single zero.
   wheel CENTS
   rate FLOAT
   range FLOAT
-  rangeenv ENV
+  rangeenv ENV: Ignored if it's a single zero.
   rangelforate FLOAT
   rangelfodepth FLOAT
 ```

@@ -1,10 +1,30 @@
 #include "synth_internal.h"
 
+/* Default envelope.
+ * When a wave is unspecified we use sine. Unfortunately, there isn't such a canonical default for envelopes.
+ * Whatever we do here must be done exactly the same in web, so keep it simple.
+ */
+ 
+static int synth_env_default(struct synth_env *env,int rate) {
+  env->flags=SYNTH_ENV_FLAG_SUSTAIN;
+  env->susp=1;
+  env->initlo=env->inithi=0.0f;
+  env->pointc=3;
+  env->pointv[0].tlo=env->pointv[0].thi=rate/50; // 20 ms attack
+  env->pointv[0].vlo=env->pointv[0].vhi=0.500;   // 1/2 attack level
+  env->pointv[1].tlo=env->pointv[1].thi=rate/50; // 20 ms decay
+  env->pointv[1].vlo=env->pointv[1].vhi=0.125;   // 1/8 sustain level
+  env->pointv[2].tlo=env->pointv[2].thi=rate/8;  // 125 ms release
+  env->pointv[2].vlo=env->pointv[2].vhi=0.000;   // silence at the end (this one at least is not debatable)
+  return 0;
+}
+
 /* Decode.
  */
  
 int synth_env_decode(struct synth_env *env,const void *src,int srcc,int rate) {
-  if (!env||!src||(srcc<1)) return -1;
+  if (!src||(srcc<1)) return synth_env_default(env,rate);
+  if (!env) return -1;
   const uint8_t *SRC=src;
   int srcp=0;
   double tscale=(double)rate/1000.0;

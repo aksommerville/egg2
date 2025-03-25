@@ -46,6 +46,7 @@ struct synth {
   int songloopp;
   int songp;
   int songdelay; // Frames.
+  int tempo_frames; // frames/qnote, and may be zero
   
   struct synth_channel *channelv[SYNTH_CHANNEL_LIMIT];
   int channelc;

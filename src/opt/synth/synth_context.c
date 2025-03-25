@@ -194,6 +194,7 @@ void synth_end_song(struct synth *synth) {
   synth->songp=0;
   synth->songloopp=0;
   synth->songdelay=0;
+  synth->tempo_frames=0;
   int i=synth->channelc;
   while (i-->0) {
     synth_channel_terminate(synth->channelv[i]);
@@ -271,6 +272,7 @@ void synth_play_song(struct synth *synth,int songid,int force,int repeat) {
   if (!songid) return;
   
   // Update context state for the new song.
+  synth->tempo_frames=(int)(((double)file.tempo*(double)synth->rate)/1000.0);
   if (synth_prepare_song_channels(synth,&file)<0) return;
   synth->song=file.evtv;
   synth->songc=file.evtc;

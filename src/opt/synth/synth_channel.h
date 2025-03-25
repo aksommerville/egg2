@@ -58,17 +58,39 @@ int synth_channel_drum_init(struct synth_channel *channel,const uint8_t *src,int
 void synth_channel_drum_terminate(struct synth_channel *channel);
 void synth_channel_drum_note(struct synth_channel *channel,uint8_t noteid,float velocity);
  
+struct synth_fm_voice {
+  uint32_t p;
+  uint32_t dp;
+  uint32_t modp;
+  uint32_t moddp;
+  struct synth_env level; // runner
+  struct synth_env pitchenv;
+  struct synth_env rangeenv;
+};
 struct synth_channel_fm {
   struct synth_channel hdr;
+  struct synth_wave *sine; // If FM in play.
   struct synth_wave *carrier;
   struct synth_env level; // config
+  struct synth_env pitchenv; // config, value in cents -32k..32k
+  int wheelrange; // cents
+  float modrate;
+  float modrange; // baked into (rangeenv)
+  struct synth_env rangeenv;
+  float lforate;
+  float lfodepth; // 0..1
+  uint8_t use_pitchenv,use_moddp,use_rangeenv,use_lfo;
   
-  struct synth_fm_voice {
-    uint32_t p;
-    uint32_t dp;
-    struct synth_env level; // runner
-  } *voicev;
+  // Selected at init.
+  void (*voice_update)(float *v,int c,struct synth_fm_voice *voice,struct synth_channel *channel);
+  
+  struct synth_fm_voice *voicev;
   int voicec,voicea;
+  
+  struct synth_wave *lfo;
+  uint32_t lfop;
+  uint32_t lfodp;
+  float *lfobuf;
 };
 
 int synth_channel_fm_init(struct synth_channel *channel,const uint8_t *src,int srcc);

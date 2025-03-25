@@ -185,19 +185,12 @@ static int eggdev_eau_default_channel_header(struct eggdev_convert_context *ctx,
   /* And finally a single canned bare-minimum instrument.
    * This is never the instrument you want.
    */
-  if (sr_encode_u8(ctx->dst,EAU_CHANNEL_MODE_FM)<0) return -1;
-  const uint8_t payload[]={
-    0x04,1,3, // Level env. Sustain, no velocity.
-      0x00,0x10, 0xf0,0x00,
-      0x00,0x20, 0x40,0x00,
-      0x01,0x00, 0x00,0x00,
-    0x00,0x00,0, // Wave: Sine.
-    0,0, // Pitch env: noop
-    0x01,0x00, // Wheel range: 256 cents.
+  const uint8_t dummy[]={
+    EAU_CHANNEL_MODE_FM,
+    0,0, // Payload length. Zero is permitted; synth must have a default envelope and wave.
+    0,0, // Post length.
   };
-  if (sr_encode_intbelen(ctx->dst,payload,sizeof(payload),2)<0) return -1;
-  if (sr_encode_raw(ctx->dst,"\0\0",2)<0) return -1;
-  return 0;
+  return sr_encode_raw(ctx->dst,dummy,sizeof(dummy));
 }
 
 /* Validate EAU header chunk, from a MIDI Meta 0x77 (our private thing).
