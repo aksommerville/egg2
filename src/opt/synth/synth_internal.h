@@ -69,4 +69,6 @@ int synth_prepare_song_channels(struct synth *synth,const struct eau_file *file)
  */
 void synth_update_internal(float *v,int framec,struct synth *synth);
 
+struct synth_pcm *synth_begin_print(struct synth *synth,const void *src,int srcc);
+
 #endif

@@ -33,6 +33,10 @@ struct synth_channel {
 };
 
 void synth_channel_del(struct synth_channel *channel);
+
+/* (src->payload) must be constant and immortal.
+ * It is presumed to come from the synthesizer's song store, which shares those constraints.
+ */
 struct synth_channel *synth_channel_new(struct synth *synth,const struct eau_channel_entry *src);
 
 /* Channel guarantees to report termination during a near future update.
@@ -54,8 +58,21 @@ void synth_channel_wheel(struct synth_channel *channel,uint8_t v);
 /* Specific implementations.
  ***********************************************************************************/
  
+#define SYNTH_DRUM_PCMPLAY_LIMIT 16
+struct synth_drum_note {
+  double trimlo,trimhi,pan;
+  const void *src; // WEAK, borrowed from input serial.
+  int srcc,warned;
+  struct synth_pcm *pcm;
+};
 struct synth_channel_drum {
   struct synth_channel hdr;
+  // (notev) contains contiguous noteid, but not necessarily starting at zero.
+  struct synth_drum_note *notev;
+  int notec,notea;
+  int noteid0;
+  struct synth_pcmplay pcmplayv[SYNTH_DRUM_PCMPLAY_LIMIT];
+  int pcmplayc;
 };
 
 int synth_channel_drum_init(struct synth_channel *channel,const uint8_t *src,int srcc);

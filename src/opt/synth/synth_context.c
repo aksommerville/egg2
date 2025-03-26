@@ -287,7 +287,7 @@ void synth_play_song(struct synth *synth,int songid,int force,int repeat) {
  * Returns STRONG on success.
  */
  
-static struct synth_pcm *synth_begin_print(struct synth *synth,const void *src,int srcc) {
+struct synth_pcm *synth_begin_print(struct synth *synth,const void *src,int srcc) {
   if (synth->printerc>=synth->printera) {
     int na=synth->printera+16;
     if (na>INT_MAX/sizeof(void*)) return 0;

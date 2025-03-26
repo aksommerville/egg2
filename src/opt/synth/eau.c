@@ -128,7 +128,12 @@ static void eau_estimate_channel_duration(int *pre,int *post,uint8_t mode,const 
     case EAU_CHANNEL_MODE_FM:
     case EAU_CHANNEL_MODE_SUB: {
         int srcp=0;
-        if (srcp>=srcc) return;
+        if (srcp>=srcc) {
+          // Empty envelope is legal, for a default. See synth_env.c:synth_env_default().
+          *pre=40;
+          *post=125;
+          return;
+        }
         uint8_t flags=src[srcp++];
         if (flags&2) { // Initials
           srcp+=2;

@@ -114,7 +114,7 @@ static int eggdev_eau_channel_copy_drums(struct eggdev_convert_context *ctx,stru
     if (srcp>srcc-6) break;
     int sublen=(src[srcp+4]<<8)|src[srcp+5];
     if (srcp>srcc-sublen-6) break;
-    if (!(src[srcp]&0x80)&&notev[src[srcp]]) {
+    if (!(src[srcp]&0x80)){//&&notev[src[srcp]]) {
       if (sr_encode_raw(ctx->dst,src+srcp,6+sublen)<0) return -1;
     }
     srcp+=6+sublen;

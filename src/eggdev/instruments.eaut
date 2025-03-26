@@ -38,7 +38,7 @@
     #STAGEID HEXDUMP
   }
 }
-0x00 0x40 0x80 sub {
+0x800 0x40 0x80 sub {
   level 0x0000 40..20 0x2000..0xffff 30 0x1000..0x4000* 200..500 0x0000
   width 40 80
   stagec 5
@@ -47,6 +47,210 @@
     waveshaper 0xc000 0xf000 0xffff
     tremolo 0.500 0.500 0
     delay 0.250 0.500 0.500 0.500 0.500
+  }
+}
+0x00 0x40 0x80 drum {
+  note 0x1f 255 255 0x48 {
+    0 0x80 0x80 fm {
+      #level 0x0000 40..20 0x2000..0xffff 30 0x1000..0x4000* 200..500 0x0000
+    }
+    events {
+      note 0 0x1f 15 200
+    }
+  }
+  note 0x21 255 255 0x38 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x21 15 200
+    }
+  }
+  note 0x22 255 255 0x28 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x22 15 200
+    }
+  }
+  note 0x24 255 255 0x18 {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x24 15 200
+    }
+  }
+  note 0x26 255 255 0x08 {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x26 15 200
+    }
+  }
+  note 0x29 255 255 0xb0 {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x29 15 200
+    }
+  }
+  note 0x2b 255 255 0xa0 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x2b 15 200
+    }
+  }
+  note 0x2d 255 255 0x90 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x2d 15 200
+    }
+  }
+  note 0x2e 255 255 0x80 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x2e 15 200
+    }
+  }
+  note 0x2f 255 255 0x70 {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x2f 15 200
+    }
+  }
+  note 0x30 255 255 0x60 {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x30 15 200
+    }
+  }
+  note 0x32 255 255 0x50 {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x32 15 200
+    }
+  }
+  note 0x35 255 255 0x40 {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x35 15 200
+    }
+  }
+  note 0x37 255 255 0x30 {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x37 15 200
+    }
+  }
+  note 0x39 255 255 0x20 {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x39 15 200
+    }
+  }
+  note 0x3b 255 255 0x10 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x3b 15 200
+    }
+  }
+  note 0x3c 255 255 0x00 {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x3c 15 200
+    }
+  }
+  note 0x3e 255 255 0xb0 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x3e 15 200
+    }
+  }
+  note 0x3f 255 255 0xb8 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x3f 15 200
+    }
+  }
+  note 0x41 255 255 0xc0 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x41 15 200
+    }
+  }
+  note 0x42 255 255 0xc8 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x42 15 200
+    }
+  }
+  note 0x43 255 255 0xd0 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x43 15 200
+    }
+  }
+  note 0x45 255 255 0xd8 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x45 15 200
+    }
+  }
+  note 0x46 255 255 0xe0 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x46 15 200
+    }
+  }
+  note 0x47 255 255 0xe8 {
+    0 0x80 0x80 fm {
+    }
+    events {
+      note 0 0x47 15 200
+    }
+  }
+  note 0x48 255 255 0xf0 {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x48 15 200
+    }
+  }
+  note 0x49 255 255 0xf8 {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x49 15 200
+    }
+  }
+  note 0x4a 255 255 0xff {
+    0 0x80 0x80 fm {
+    }
+    events {
+    note 0 0x4a 15 200
+    }
+  }
+  post {
+    gain 12.0 0.400
+    delay 0.250 0.500 0.500 0.500 0.500
+    tremolo 0.500 0.500 0
   }
 }
 

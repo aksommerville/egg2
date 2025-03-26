@@ -47,11 +47,11 @@ Planned differences from Egg v1:
 - - [x] Load.
 - - [x] Pick language.
 - - [x] Event queue.
-- - [ ] Synth.
+- - [x] Synth.
 - - - [x] Data converters.
 - - - [x] Global orchestration, song player, etc.
 - - - [x] FM channel
-- - - [ ] Drum channel
+- - - [x] Drum channel
 - - - [x] Sub channel
 - - - [x] Post
 - - [ ] Render.

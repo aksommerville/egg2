@@ -16,6 +16,7 @@ static int synth_env_default(struct synth_env *env,int rate) {
   env->pointv[1].vlo=env->pointv[1].vhi=0.125;   // 1/8 sustain level
   env->pointv[2].tlo=env->pointv[2].thi=rate/8;  // 125 ms release
   env->pointv[2].vlo=env->pointv[2].vhi=0.000;   // silence at the end (this one at least is not debatable)
+  // If you change these, update eau.c:eau_estimate_channel_duration()
   return 0;
 }
 

@@ -46,6 +46,8 @@ Channel will be silent.
 Likewise, any channel with trim==0 will be silent, will not be configured.
 
 Mode 1 = DRUM.
+Notes do not need to be in order.
+If a noteid appears more than once, synthesizer's behavior is undefined (use either the first or last).
 Payload is zero or more of:
 ```
    1  Note ID.
