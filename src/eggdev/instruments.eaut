@@ -1,6 +1,7 @@
 # instruments.eaut
 # Egg's default instrument set.
 # This file is read by eggdev as needed. You can modify it directly.
+# Note that the channel-level trim and pan in here are ignored. Compiler will always use what's in the MIDI file, or universal defaults.
 
 # 2025-03-22: The skeleton is laid out but no instruments are actually defined yet.
 # Instruments with an explicit "noop" mode will trigger a warning at convert.
@@ -8,7 +9,7 @@
 #--- 0..7: Piano -------------------------------------------------------------------
 
 # Acoustic Grand Piano
-0x00 0x40 0x80 fm {
+0x700 0x40 0x80 fm {
   #XXX TEMP
   level 0x0000 30..25 0x3000..0xffff 30 0x1000..0x3000* 150..400 0x0000
   wave saw +0xc4 0xa000 0x3000 0x1000 0x0400
@@ -35,6 +36,17 @@
     lopass 1200
     tremolo 0.250 0.500 0.000
     #STAGEID HEXDUMP
+  }
+}
+0x00 0x40 0x80 sub {
+  level 0x0000 40..20 0x2000..0xffff 30 0x1000..0x4000* 200..500 0x0000
+  width 40 80
+  stagec 5
+  gain 100.0
+  post {
+    waveshaper 0xc000 0xf000 0xffff
+    tremolo 0.500 0.500 0
+    delay 0.250 0.500 0.500 0.500 0.500
   }
 }
 

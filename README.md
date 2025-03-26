@@ -52,7 +52,7 @@ Planned differences from Egg v1:
 - - - [x] Global orchestration, song player, etc.
 - - - [x] FM channel
 - - - [ ] Drum channel
-- - - [ ] Sub channel
+- - - [x] Sub channel
 - - - [x] Post
 - - [ ] Render.
 - - [ ] Input.

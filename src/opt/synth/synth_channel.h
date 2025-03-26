@@ -102,8 +102,19 @@ void synth_channel_fm_terminate(struct synth_channel *channel);
 void synth_channel_fm_note(struct synth_channel *channel,uint8_t noteid,float velocity,int dur);
 void synth_channel_fm_wheel(struct synth_channel *channel,uint8_t v);
 
+#define SYNTH_SUB_STAGE_LIMIT 16
+struct synth_sub_voice {
+  struct synth_iir3 iirv[SYNTH_SUB_STAGE_LIMIT];
+  struct synth_env level;
+};
 struct synth_channel_sub {
   struct synth_channel hdr;
+  struct synth_env level;
+  float widthlo,widthhi; // 0..1/2
+  int stagec; // 1..SYNTH_SUB_STAGE_LIMIT
+  float gain;
+  struct synth_sub_voice *voicev;
+  int voicec,voicea;
 };
 
 int synth_channel_sub_init(struct synth_channel *channel,const uint8_t *src,int srcc);

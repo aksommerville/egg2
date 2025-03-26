@@ -74,7 +74,8 @@ u0.8  Range LFO depth.
 Mode 3 = SUB.
 ```
  ...  Level env.
-   2  Width, hz.
+   2  Width, hz. Minimum velocity.
+   2  Width, hz. Maximum velocity.
    1  Stage count.
 u8.8  Gain.
 ```
@@ -185,6 +186,9 @@ Mode-specific fields have an exact order they must be specified, and you're not 
 
 The entire mode-specific section may be omitted and instead: `modecfg HEXDUMP`
 
+Channel ID >255 are legal but will not produce any output. I use that sometimes to temporarily ignore a channel.
+255 exactly is never permitted.
+
 MODE = noop. No configuration.
 
 MODE = drum.
@@ -211,7 +215,7 @@ MODE = fm.
 MODE = sub.
 ```
   level ENV
-  width HZ
+  width HZ [HI]
   stagec INT
   gain FLOAT
 ```

@@ -150,6 +150,21 @@ static int eaut_scalar_u16(struct eggdev_convert_context *ctx,struct eaut_statem
   return 0;
 }
 
+static int eaut_scalar_u16_pair(struct eggdev_convert_context *ctx,struct eaut_statement *st,const char *name) {
+  int lo,hi,err,srcc;
+  const char *src;
+  if ((srcc=eaut_statement_next_token(&src,st))<1) return eaut_error(ctx,st->head,"Expected u16 for %s",name);
+  if ((sr_int_eval(&lo,src,srcc)<2)||(lo<0)||(lo>0xffff)) return eaut_error(ctx,src,"Expected u16 for %s, found '%.*s'",name,srcc,src);
+  if ((srcc=eaut_statement_next_token(&src,st))>0) {
+    if ((sr_int_eval(&hi,src,srcc)<2)||(hi<0)||(hi>0xffff)) return eaut_error(ctx,src,"Expected u16 for %s, found '%.*s'",name,srcc,src);
+  } else {
+    hi=lo;
+  }
+  if (sr_encode_intbe(ctx->dst,lo,2)<0) return -1;
+  if (sr_encode_intbe(ctx->dst,hi,2)<0) return -1;
+  return eaut_statement_finished(st,ctx,1);
+}
+
 static int eaut_scalar_u8(struct eggdev_convert_context *ctx,struct eaut_statement *st,const char *name) {
   int v,err;
   if ((err=eaut_statement_u8(&v,st,ctx,name))<0) return err;
@@ -501,7 +516,7 @@ static int eggdev_eau_from_eaut_chhdr_sub(struct eggdev_convert_context *ctx,con
       if ((err=eaut_statement_finished(st,ctx,1))<0) return err; \
     } return 0;
     SEQCMD(0,"level",eaut_env)
-    SEQCMD(1,"width",eaut_scalar_u16)
+    SEQCMD(1,"width",eaut_scalar_u16_pair)
     SEQCMD(2,"stagec",eaut_scalar_u8)
     SEQCMD(3,"gain",eaut_scalar_u8_8)
     #undef SEQCMD
@@ -746,7 +761,7 @@ static int eggdev_eau_from_eaut_chhdr(struct eggdev_convert_context *ctx,struct 
   
   int chid,trim,pan,modec,mode;
   const char *modestr;
-  if ((err=eaut_statement_u8(&chid,st,ctx,"chid"))<0) return err;
+  if ((err=eaut_statement_int(&chid,st,ctx,"chid"))<0) return err;
   if ((err=eaut_statement_u8(&trim,st,ctx,"trim"))<0) return err;
   if ((err=eaut_statement_u8(&pan,st,ctx,"pan"))<0) return err;
   if ((modec=eaut_statement_next_token(&modestr,st))<1) return eaut_error(ctx,st->head,"Expected channel mode (fm,sub,drum).");
@@ -760,12 +775,14 @@ static int eggdev_eau_from_eaut_chhdr(struct eggdev_convert_context *ctx,struct 
   else if ((sr_int_eval(&mode,modestr,modec)>=2)&&(mode>=0)&&(mode<0x100)) ;
   else return eaut_error(ctx,st->head,"Unknown channel mode '%.*s'",modec,modestr);
   
-  if (sr_encode_u8(ctx->dst,chid)<0) return -1;
-  if (sr_encode_u8(ctx->dst,trim)<0) return -1;
-  if (sr_encode_u8(ctx->dst,pan)<0) return -1;
-  if (sr_encode_u8(ctx->dst,mode)<0) return -1;
+  if ((chid>=0)&&(chid<0xff)) { // Allow but ignore high chid.
+    if (sr_encode_u8(ctx->dst,chid)<0) return -1;
+    if (sr_encode_u8(ctx->dst,trim)<0) return -1;
+    if (sr_encode_u8(ctx->dst,pan)<0) return -1;
+    if (sr_encode_u8(ctx->dst,mode)<0) return -1;
   
-  if ((err=eggdev_eau_from_eaut_chhdr_body(ctx,st->body,st->bodyc,mode))<0) return err;
+    if ((err=eggdev_eau_from_eaut_chhdr_body(ctx,st->body,st->bodyc,mode))<0) return err;
+  }
   
   return 0;
 }

@@ -121,6 +121,13 @@ static int eggdev_eaut_u16(struct eggdev_convert_context *ctx,const char *fldnam
   return 2;
 }
  
+static int eggdev_eaut_u16_pair(struct eggdev_convert_context *ctx,const char *fldname,const uint8_t *src,int srcc) {
+  if (srcc<1) return 0;
+  if (srcc<4) return -1;
+  if (sr_encode_fmt(ctx->dst,"%s %d %d\n",fldname,(src[0]<<8)|src[1],(src[2]<<8)|src[3])<0) return -1;
+  return 2;
+}
+ 
 static int eggdev_eaut_u0_8(struct eggdev_convert_context *ctx,const char *fldname,const uint8_t *src,int srcc) {
   if (srcc<1) return 0;
   if (sr_encode_fmt(ctx->dst,"%s %f\n",fldname,src[0]/255.0f)<0) return -1;
@@ -194,7 +201,7 @@ static int eggdev_eaut_generate_chhdr_sub(struct eggdev_convert_context *ctx,con
     srcp+=err; \
   }
   NEXT(eggdev_eaut_env,"level")
-  NEXT(eggdev_eaut_u16,"width")
+  NEXT(eggdev_eaut_u16_pair,"width")
   NEXT(eggdev_eaut_u8,"stagec")
   NEXT(eggdev_eaut_u8_8,"gain")
   #undef NEXT
