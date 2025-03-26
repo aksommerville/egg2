@@ -41,7 +41,8 @@ int synth_stage_delay_init(struct synth_stage *stage,const uint8_t *src,int srcc
 
 struct synth_stage_iir {
   struct synth_stage hdr;
-  //TODO
+  struct synth_iir3 iir;
+  struct synth_iir3 r;
 };
 
 int synth_stage_lopass_init(struct synth_stage *stage,const uint8_t *src,int srcc);
@@ -51,7 +52,8 @@ int synth_stage_notch_init(struct synth_stage *stage,const uint8_t *src,int srcc
 
 struct synth_stage_waveshaper {
   struct synth_stage hdr;
-  //TODO
+  float *map; // Entire range -1..1
+  int mapc;
 };
 
 int synth_stage_waveshaper_init(struct synth_stage *stage,const uint8_t *src,int srcc);

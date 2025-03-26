@@ -53,7 +53,7 @@ Planned differences from Egg v1:
 - - - [x] FM channel
 - - - [ ] Drum channel
 - - - [ ] Sub channel
-- - - [ ] Post
+- - - [x] Post
 - - [ ] Render.
 - - [ ] Input.
 - - - [ ] Device mapping.

@@ -144,3 +144,49 @@ int synth_ring_init(struct synth_ring *ring,int framec) {
   ring->c=framec;
   return 0;
 }
+
+/* IIR setup.
+ * I don't really understand how these work. Copied from the Blue Book:
+ *   Steven W Smith: The Scientist and Engineer's Guide to Digital Signal Processing
+ *   Ch 19, p 322..326
+ */
+ 
+void synth_iir3_init_lopass(struct synth_iir3 *iir,float freq) {
+  float x=powf(M_E,-2.0f*M_PI*freq);
+  iir->dcv[0]=1.0f-x;
+  iir->dcv[1]=0.0f;
+  iir->dcv[2]=0.0f;
+  iir->wcv[0]=x;
+  iir->wcv[1]=0.0f;
+}
+
+void synth_iir3_init_hipass(struct synth_iir3 *iir,float freq) {
+  float x=powf(M_E,-2.0f*M_PI*freq);
+  iir->dcv[0]=(1.0f+x)/2.0f;
+  iir->dcv[1]=-(1.0f+x)/2.0f;
+  iir->dcv[2]=0.0f;
+  iir->wcv[0]=x;
+  iir->wcv[1]=0.0f;
+}
+
+void synth_iir3_init_bpass(struct synth_iir3 *iir,float mid,float wid) {
+  float r=1.0f-3.0f*wid;
+  float cosfreq=cosf(M_PI*2.0f*mid);
+  float k=(1.0f-2.0f*r*cosfreq+r*r)/(2.0f-2.0f*cosfreq);
+  iir->dcv[0]=1.0f-k;
+  iir->dcv[1]=2.0f*(k-r)*cosfreq;
+  iir->dcv[2]=r*r-k;
+  iir->wcv[0]=2.0f*r*cosfreq;
+  iir->wcv[1]=-r*r;
+}
+
+void synth_iir3_init_notch(struct synth_iir3 *iir,float mid,float wid) {
+  float r=1.0f-3.0f*wid;
+  float cosfreq=cosf(M_PI*2.0f*mid);
+  float k=(1.0f-2.0f*r*cosfreq+r*r)/(2.0f-2.0f*cosfreq);
+  iir->dcv[0]=k;
+  iir->dcv[1]=-2.0f*k*cosfreq;
+  iir->dcv[2]=k;
+  iir->wcv[0]=2.0f*r*cosfreq;
+  iir->wcv[1]=-r*r;
+}

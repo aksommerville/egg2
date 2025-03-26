@@ -11,8 +11,8 @@
 0x00 0x40 0x80 fm {
   #XXX TEMP
   level 0x0000 30..25 0x3000..0xffff 30 0x1000..0x3000* 150..400 0x0000
-  wave saw +0xc4 0xa000 0x3000 0x1000 0x0400
-  #wave sine
+  #wave saw +0xc4 0xa000 0x3000 0x1000 0x0400
+  wave sine
   #pitchenv 0x7e80..0x8180 50 0x8000
   pitchenv 0
   wheel 200
@@ -23,13 +23,16 @@
   rangelforate 4.000
   rangelfodepth 1.000
   post {
-    gain 12.0 0.200
-    delay 1.000 0.500 0.500 0.500 0.500
-    #lopass HZ
-    #hipass HZ
-    #bpass HZ WIDTH
-    #notch HZ WIDTH
-    #waveshaper U16...
+    #gain 12.0 0.200
+    #lopass 800
+    #hipass 800
+    #bpass 1000 1200
+    #notch 400 400
+    #delay 0.050 0.600 0.400 0.500 0.960
+    #waveshaper 0xa000 0xb000 0xb800 0xbe00 0xbf00 0xbfff
+    #waveshaper 0xc000 0xffff
+    #delay 0.500 0.500 0.500 0.500 0.500
+    #hipass 1200
     #STAGEID HEXDUMP
   }
 }

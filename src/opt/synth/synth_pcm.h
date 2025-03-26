@@ -178,6 +178,31 @@ static inline void synth_ring_advance(struct synth_ring *ring) {
 /* IIR runner.
  ********************************************************************************/
  
-//TODO iir
+struct synth_iir3 {
+  float dcv[3];
+  float wcv[2];
+  float dv[3];
+  float wv[2];
+};
+
+void synth_iir3_init_lopass(struct synth_iir3 *iir,float freq);
+void synth_iir3_init_hipass(struct synth_iir3 *iir,float freq);
+void synth_iir3_init_bpass(struct synth_iir3 *iir,float mid,float wid);
+void synth_iir3_init_notch(struct synth_iir3 *iir,float mid,float wid);
+
+static inline float synth_iir3_update(struct synth_iir3 *iir,float src) {
+  float dst=
+    iir->dcv[0]*iir->dv[0]+
+    iir->dcv[1]*iir->dv[1]+
+    iir->dcv[2]*iir->dv[2]+
+    iir->wcv[0]*iir->wv[0]+
+    iir->wcv[1]*iir->wv[1];
+  iir->dv[2]=iir->dv[1];
+  iir->dv[1]=iir->dv[0];
+  iir->dv[0]=src;
+  iir->wv[1]=iir->wv[0];
+  iir->wv[0]=dst;
+  return dst;
+}
 
 #endif

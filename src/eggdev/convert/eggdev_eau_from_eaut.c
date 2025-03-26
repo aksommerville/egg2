@@ -652,6 +652,7 @@ static int eggdev_eau_from_eaut_post(struct eggdev_convert_context *ctx,const ch
     else if ((kwc==6)&&!memcmp(kw,"hipass",6)) err=eggdev_eau_from_eaut_post_hipass(ctx,&st);
     else if ((kwc==5)&&!memcmp(kw,"bpass",5)) err=eggdev_eau_from_eaut_post_bpass(ctx,&st);
     else if ((kwc==5)&&!memcmp(kw,"notch",5)) err=eggdev_eau_from_eaut_post_notch(ctx,&st);
+    else if ((kwc==10)&&!memcmp(kw,"waveshaper",10)) err=eggdev_eau_from_eaut_post_waveshaper(ctx,&st);
     else err=eggdev_eau_from_eaut_post_generic(ctx,kw,kwc,&st);
     if (err<0) return err;
   }
