@@ -291,6 +291,14 @@ static int eggdev_eaut_generate_post_waveshaper(struct eggdev_convert_context *c
   return 0;
 }
 
+/* Post stage: TREMOLO
+ */
+ 
+static int eggdev_eaut_generate_post_tremolo(struct eggdev_convert_context *ctx,const uint8_t *src,int srcc) {
+  if (srcc!=4) return eggdev_eaut_generate_post_generic(ctx,EAU_STAGEID_TREMOLO,src,srcc);
+  return sr_encode_fmt(ctx->dst,"tremolo %f %f %f\n",((src[0]<<8)|src[1])/256.0f,src[2]/255.0f,src[3]/255.0f);
+}
+
 /* Channel Header blocks.
  */
  
@@ -331,12 +339,13 @@ static int eggdev_eaut_generate_chhdr(struct eggdev_convert_context *ctx,struct 
         if (postp>channel.postc-len) return eggdev_convert_error(ctx,"Malformed EAU post.");
         switch (stageid) {
           case EAU_STAGEID_GAIN: err=eggdev_eaut_generate_post_gain(ctx,channel.post+postp,len); break;
-          case EAU_STAGEID_DELAY: err=eggdev_eaut_generate_post_gain(ctx,channel.post+postp,len); break;
-          case EAU_STAGEID_LOPASS: err=eggdev_eaut_generate_post_gain(ctx,channel.post+postp,len); break;
-          case EAU_STAGEID_HIPASS: err=eggdev_eaut_generate_post_gain(ctx,channel.post+postp,len); break;
-          case EAU_STAGEID_BPASS: err=eggdev_eaut_generate_post_gain(ctx,channel.post+postp,len); break;
-          case EAU_STAGEID_NOTCH: err=eggdev_eaut_generate_post_gain(ctx,channel.post+postp,len); break;
-          case EAU_STAGEID_WAVESHAPER: err=eggdev_eaut_generate_post_gain(ctx,channel.post+postp,len); break;
+          case EAU_STAGEID_DELAY: err=eggdev_eaut_generate_post_delay(ctx,channel.post+postp,len); break;
+          case EAU_STAGEID_LOPASS: err=eggdev_eaut_generate_post_lopass(ctx,channel.post+postp,len); break;
+          case EAU_STAGEID_HIPASS: err=eggdev_eaut_generate_post_hipass(ctx,channel.post+postp,len); break;
+          case EAU_STAGEID_BPASS: err=eggdev_eaut_generate_post_bpass(ctx,channel.post+postp,len); break;
+          case EAU_STAGEID_NOTCH: err=eggdev_eaut_generate_post_notch(ctx,channel.post+postp,len); break;
+          case EAU_STAGEID_WAVESHAPER: err=eggdev_eaut_generate_post_waveshaper(ctx,channel.post+postp,len); break;
+          case EAU_STAGEID_TREMOLO: err=eggdev_eaut_generate_post_tremolo(ctx,channel.post+postp,len); break;
           default: err=eggdev_eaut_generate_post_generic(ctx,stageid,channel.post+postp,len); break;
         }
         if (err<0) return err;

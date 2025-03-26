@@ -58,4 +58,12 @@ struct synth_stage_waveshaper {
 
 int synth_stage_waveshaper_init(struct synth_stage *stage,const uint8_t *src,int srcc);
 
+struct synth_stage_tremolo {
+  struct synth_stage hdr;
+  struct synth_wave *wave;
+  uint32_t p,dp;
+};
+
+int synth_stage_tremolo_init(struct synth_stage *stage,const uint8_t *src,int srcc);
+
 #endif

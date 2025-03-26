@@ -26,6 +26,7 @@ struct synth_stage *synth_stage_new(struct synth *synth,int chanc,int stageid,co
     case EAU_STAGEID_BPASS: stage=calloc(1,sizeof(struct synth_stage_iir)); break;
     case EAU_STAGEID_NOTCH: stage=calloc(1,sizeof(struct synth_stage_iir)); break;
     case EAU_STAGEID_WAVESHAPER: stage=calloc(1,sizeof(struct synth_stage_waveshaper)); break;
+    case EAU_STAGEID_TREMOLO: stage=calloc(1,sizeof(struct synth_stage_tremolo)); break;
   }
   if (!stage) return 0;
   stage->synth=synth;
@@ -40,6 +41,7 @@ struct synth_stage *synth_stage_new(struct synth *synth,int chanc,int stageid,co
     case EAU_STAGEID_BPASS: err=synth_stage_bpass_init(stage,src,srcc); break;
     case EAU_STAGEID_NOTCH: err=synth_stage_notch_init(stage,src,srcc); break;
     case EAU_STAGEID_WAVESHAPER: err=synth_stage_waveshaper_init(stage,src,srcc); break;
+    case EAU_STAGEID_TREMOLO: err=synth_stage_tremolo_init(stage,src,srcc); break;
   }
   if (err<0) {
     synth_stage_del(stage);

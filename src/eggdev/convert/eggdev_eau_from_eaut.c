@@ -613,6 +613,20 @@ static int eggdev_eau_from_eaut_post_waveshaper(struct eggdev_convert_context *c
   return 0;
 }
 
+/* Post: tremolo
+ */
+ 
+static int eggdev_eau_from_eaut_post_tremolo(struct eggdev_convert_context *ctx,struct eaut_statement *st) {
+  int err;
+  if (sr_encode_u8(ctx->dst,EAU_STAGEID_TREMOLO)<0) return -1;
+  if (sr_encode_u8(ctx->dst,4)<0) return -1;
+  if ((err=eaut_scalar_u8_8(ctx,st,"period"))<0) return err;
+  if ((err=eaut_scalar_u0_8(ctx,st,"depth"))<0) return err;
+  if ((err=eaut_scalar_u0_8(ctx,st,"phase"))<0) return err;
+  if ((err=eaut_statement_finished(st,ctx,1))<0) return err;
+  return 0;
+}
+
 /* Generic post field.
  */
  
@@ -653,6 +667,7 @@ static int eggdev_eau_from_eaut_post(struct eggdev_convert_context *ctx,const ch
     else if ((kwc==5)&&!memcmp(kw,"bpass",5)) err=eggdev_eau_from_eaut_post_bpass(ctx,&st);
     else if ((kwc==5)&&!memcmp(kw,"notch",5)) err=eggdev_eau_from_eaut_post_notch(ctx,&st);
     else if ((kwc==10)&&!memcmp(kw,"waveshaper",10)) err=eggdev_eau_from_eaut_post_waveshaper(ctx,&st);
+    else if ((kwc==7)&&!memcmp(kw,"tremolo",7)) err=eggdev_eau_from_eaut_post_tremolo(ctx,&st);
     else err=eggdev_eau_from_eaut_post_generic(ctx,kw,kwc,&st);
     if (err<0) return err;
   }

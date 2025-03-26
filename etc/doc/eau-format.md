@@ -121,6 +121,7 @@ Post Stage ID:
 - 5: BPASS: u16 mid hz, u16 width hz.
 - 6: NOTCH: u16 mid hz, u16 width hz.
 - 7: WAVESHAPER: u0.16... levels. Positive side only, with an implicit leading zero.
+- 8: TREMOLO: u8.8 period qnotes, u0.8 depth, u0.8 phase
 
 Event:
 ```
@@ -174,6 +175,7 @@ CHID TRIM PAN MODE {
     bpass HZ WIDTH
     notch HZ WIDTH
     waveshaper U16...
+    tremolo PERIOD DEPTH PHASE
     STAGEID HEXDUMP
   }
 }
