@@ -1,0 +1,160 @@
+html {
+  background-color: #444;
+  color: #fff;
+  font-family: sans-serif;
+  font-size: 10pt;
+}
+
+body {
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+dialog {
+  border-radius: 5px;
+  box-shadow: #000 0 0 10px;
+}
+
+::backdrop {
+  background-color: #000;
+  opacity: 0.500;
+}
+
+.ModalPickOne {
+  display: flex;
+  flex-direction: column;
+}
+
+.ModalError {
+  background-color: #400;
+  color: #fff;
+  white-space: pre;
+  min-width: 50vw;
+  min-height: 50vh;
+}
+
+.RootUi {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100vw;
+  height: 100vh;
+}
+.RootUi > .workbench {
+  flex: 1;
+  display: flex;
+}
+.RootUi > .workbench > * {
+  width: 100%;
+  height: 100%;
+}
+
+.SidebarUi {
+  min-width: 200px;
+  border-right: 1px solid #000;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.SidebarUi .topRow {
+  display: flex;
+  flex-direction: row;
+  padding: 4px;
+  gap: 4px;
+}
+.SidebarUi .backendIndicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 12px;
+  border: 2px solid #000;
+  background-color: #888;
+}
+.SidebarUi .backendIndicator.clean {
+  background-color: #080;
+}
+.SidebarUi .backendIndicator.dirty {
+  background-color: #ff0;
+}
+.SidebarUi .backendIndicator.pending {
+  background-color: #f80;
+}
+.SidebarUi .backendIndicator.error {
+  background-color: #f00;
+}
+.SidebarUi .toc {
+  overflow-y: scroll;
+  flex: 1;
+}
+.SidebarUi details.type {
+  margin-top: 5px;
+}
+.SidebarUi summary.type {
+  background-color: #103;
+  cursor: pointer;
+  user-select: none;
+}
+.SidebarUi .res {
+  cursor: pointer;
+  user-select: none;
+}
+.SidebarUi .res:hover {
+  background-color: #333;
+}
+
+.NewResourceModal {
+  min-width: 400px;
+}
+.NewResourceModal h2 {
+  margin: 0;
+}
+.NewResourceModal table {
+  width: 100%;
+}
+.NewResourceModal td.value > input {
+  width: 100%;
+}
+.NewResourceModal .bottomRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.ResourceDetailsModal .path {
+  font-size: 14pt;
+  font-weight: bold;
+}
+.ResourceDetailsModal input[name='npath'] {
+  min-width: 300px;
+}
+.ResourceDetailsModal .editors {
+  display: flex;
+  flex-direction: column;
+}
+.ResourceDetailsModal .editor.great {
+  background-color: #0c0;
+}
+.ResourceDetailsModal .editor.good {
+  background-color: #898;
+}
+.ResourceDetailsModal .editor.bad {
+  background-color: #f66;
+}
+
+.TextEditor textarea {
+  box-sizing: border-box;
+  width: 100%;
+  height: 99%;
+  background-color: #012;
+  color: #fff;
+  font-family: monospace;
+}
+
+.HexEditor textarea {
+  box-sizing: border-box;
+  width: 100%;
+  height: 99%; /* At 100%, it goes 3px taller than the container and forces scroll bars. Why??? */
+  background-color: #201;
+  color: #fff;
+  font-family: monospace;
+}

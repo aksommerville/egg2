@@ -184,12 +184,12 @@ int eggdev_http_paths_resolve(
 ) {
   if (paths->local||paths->inner) return -1;
 
-  /* Measure input, and replace empty with "/".
+  /* Measure input, and replace empty with "/index.html".
    */
   if (!reqpath) reqpathc=0; else if (reqpathc<0) { reqpathc=0; while (reqpath[reqpathc]) reqpathc++; }
-  if (!reqpathc) {
-    reqpath="/";
-    reqpathc=1;
+  if (!reqpathc||((reqpathc==1)&&(reqpath[0]=='/'))) {
+    reqpath="/index.html";
+    reqpathc=11;
   }
   
   /* If it doesn't start with slash, or contains a double-dot entry, reject it.

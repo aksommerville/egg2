@@ -169,6 +169,7 @@ static int gen_makefile(struct eggdev_project_context *ctx) {
     "web-run:all;eggdev serve --htdocs=out --project=.\n"
   )<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,
+    //TODO Serve editor and overrides.
     "edit:;eggdev serve --htdocs=/data:src/data --htdocs=/out:out --writeable=src/data --project=.\n"
   )<0) return -1;
   

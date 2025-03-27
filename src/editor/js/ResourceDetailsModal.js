@@ -1,0 +1,65 @@
+/* ResourceDetailsModal.js
+ * Delete, rename, or pick an editor.
+ */
+ 
+import { Dom } from "./Dom.js";
+import { Actions } from "./Actions.js";
+
+export class ResourceDetailsModal {
+  static getDependencies() {
+    return [HTMLElement, Dom, Actions];
+  }
+  constructor(element, dom, actions) {
+    this.element = element;
+    this.dom = dom;
+    this.actions = actions;
+    
+    this.result = new Promise((resolve, reject) => {
+      this.resolve = resolve;
+      this.reject = reject;
+    });
+  }
+  
+  onRemoveFromDom() {
+    this.resolve(null);
+  }
+  
+  setup(res) {
+    this.element.innerHTML = "";
+    
+    this.dom.spawn(this.element, "DIV", ["path"], res.path);
+    
+    const fsopRow = this.dom.spawn(this.element, "DIV", ["fsopRow"]);
+    this.dom.spawn(fsopRow, "INPUT", { type: "text", value: res.path, name: "npath", "on-input": () => this.onNpathInput() });
+    this.dom.spawn(fsopRow, "INPUT", ["renameOrDelete"], { type: "button", value: "Rename", "on-click": () => this.onRenameOrDelete() });
+    
+    this.dom.spawn(this.element, "DIV", "Open with...");
+    const editors = this.dom.spawn(this.element, "DIV", ["editors"]);
+    for (const editor of this.actions.editors) {
+      const pref = editor.checkResource(res);
+      this.dom.spawn(editors, "INPUT",
+        ["editor", (pref === 2) ? "great" : (pref === 1) ? "good" : "bad"],
+        { type: "button", value: editor.name, "on-click": () => this.onEdit(res, editor) }
+      );
+    }
+  }
+  
+  onNpathInput() {
+    const npath = this.element.querySelector("input[name='npath']").value;
+    const button = this.element.querySelector(".renameOrDelete");
+    if (npath) button.value = "Rename";
+    else button.value = "Delete";
+  }
+  
+  onRenameOrDelete() {
+    const npath = this.element.querySelector("input[name='npath']").value;
+    if (npath) this.resolve({ action: "rename", path: npath });
+    else this.resolve({ action: "delete" });
+    this.element.remove();
+  }
+  
+  onEdit(res, editor) {
+    this.resolve({ action: "edit", editor });
+    this.element.remove();
+  }
+}

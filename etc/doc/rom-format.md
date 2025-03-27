@@ -45,6 +45,9 @@ PROJECT/
     game/
       main.c
       shared_symbols.h
+    editor/
+      override.css
+      override.js
   etc/
 ```
 
