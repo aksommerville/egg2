@@ -73,9 +73,9 @@ Planned differences from Egg v1:
 - - [ ] `eggdev project`: Prep overrides.
 - - [x] Basic plumbing: Injector, Dom, modals, bootstrap.
 - - [x] TextEditor and HexEditor.
-- - [ ] MetadataEditor
-- - [ ] StringsEditor
-- - [ ] ImageEditor: For now just show the image.
+- - [x] MetadataEditor - nah text is fine
+- - [x] StringsEditor - ''
+- - [x] ImageEditor: For now just show the image.
 - - [ ] TilesheetEditor
 - - [ ] DecalsheetEditor
 - - [ ] SpriteEditor
@@ -99,3 +99,4 @@ Planned differences from Egg v1:
 - - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
 - - [ ] HexEditor: Paging, offset, ASCII, multi-byte edits.
 - - [ ] ImageEditor: Animation preview like we had in v1.
+- - [ ] StringsEditor: Side-by-side editing across languages, like we had in v1.

@@ -13,6 +13,7 @@ Launch with `eggdev serve` and arguments:
 - `--htdocs=[REMOTE:]LOCAL`: Serve files read-only from `LOCAL`, optionally mapping to request path `REMOTE`.
 - - If you omit `REMOTE:`, `LOCAL` is the root. ie `GET /abc/index.html` will serve `LOCAL/abc/index.html`.
 - - You may provide more than one. We search the last arguments first. So `--htdocs=my_defaults --htdocs=piecemeal_overrides`.
+- - Start the local path with "EGG_SDK/" to serve from the SDK.
 - - `LOCAL` may be Zip file, we'll painstakingly unpack it on every request. Always use a `REMOTE:` prefix in this case, otherwise it matches every request.
 - `--writeable=LOCAL`: Mark one local path as accepting PUT and DELETE methods. It must also be listed as `--htdocs`.
 - `--project=DIR`: Identify an Egg project, which we use for resource compilation and the `/api/buildfirst/...` endpoint.

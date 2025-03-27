@@ -158,3 +158,15 @@ dialog {
   color: #fff;
   font-family: monospace;
 }
+
+.ImageEditor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ImageEditor img {
+  width: 80%;
+  height: 80%;
+  image-rendering: pixelated;
+  object-fit: contain;
+}

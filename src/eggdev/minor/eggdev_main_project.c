@@ -170,7 +170,7 @@ static int gen_makefile(struct eggdev_project_context *ctx) {
   )<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,
     //TODO Serve editor and overrides.
-    "edit:;eggdev serve --htdocs=/data:src/data --htdocs=/out:out --writeable=src/data --project=.\n"
+    "edit:;eggdev serve --htdocs=/data:src/data --htdocs=EGG_SDK/src/editor --htdocs=src/editor --htdocs=/out:out --writeable=src/data --project=.\n"
   )<0) return -1;
   
   return eggdev_project_write(ctx,"Makefile",ctx->scratch.v,ctx->scratch.c);
@@ -344,6 +344,16 @@ static int gen_icon(struct eggdev_project_context *ctx) {
   return eggdev_project_copy(ctx,"etc/skeleton/appicon.png","src/data/image/1-appicon.png");
 }
 
+/* Generate the empty editor override files.
+ */
+ 
+static int gen_editor(struct eggdev_project_context *ctx) {
+  int err;
+  if ((err=eggdev_project_copy(ctx,"src/editor/override.css","src/editor/override.css"))<0) return err;
+  if ((err=eggdev_project_copy(ctx,"src/editor/Override.js","src/editor/Override.js"))<0) return err;
+  return 0;
+}
+
 /* Generate project.
  * All inputs must have been gathered and validated before this.
  */
@@ -354,6 +364,7 @@ static int eggdev_project_commit(struct eggdev_project_context *ctx) {
   if ((err=eggdev_project_mkdir(ctx,""))<0) return err;
   if ((err=eggdev_project_mkdir(ctx,"src"))<0) return err;
   if ((err=eggdev_project_mkdir(ctx,"src/game"))<0) return err;
+  if ((err=eggdev_project_mkdir(ctx,"src/editor"))<0) return err;
   if ((err=eggdev_project_mkdir(ctx,"src/data"))<0) return err;
   if ((err=eggdev_project_mkdir(ctx,"src/data/image"))<0) return err;
   if ((err=eggdev_project_mkdir(ctx,"src/data/strings"))<0) return err;
@@ -366,6 +377,7 @@ static int eggdev_project_commit(struct eggdev_project_context *ctx) {
   if ((err=gen_header(ctx))<0) return err;
   if ((err=gen_main(ctx))<0) return err;
   if ((err=gen_icon(ctx))<0) return err;
+  if ((err=gen_editor(ctx))<0) return err;
   
   return 0;
 }

@@ -356,6 +356,45 @@ static void eggdev_cb_signal(int sigid) {
   }
 }
 
+/* Any htdocs whose local path begins "EGG_SDK/", replace with the SDK path.
+ */
+ 
+static int eggdev_serve_massage_htdocs() {
+  int i=g.htdocsc;
+  while (i-->0) {
+    const char *src=g.htdocsv[i];
+    int srcc=0,sepp=-1;
+    for (;src[srcc];srcc++) {
+      if ((sepp<0)&&(src[srcc]==':')) sepp=srcc;
+    }
+    const char *local=src;
+    int localc=srcc;
+    if (sepp>=0) {
+      local+=sepp+1;
+      localc-=sepp+1;
+    }
+    if ((localc>=8)&&!memcmp(local,"EGG_SDK/",8)) {
+      local+=8;
+      localc-=8;
+      char nv[1024];
+      int nc;
+      if (sepp>=0) {
+        nc=snprintf(nv,sizeof(nv),"%.*s:%s/%.*s",sepp,src,g.sdkpath,localc,local);
+      } else {
+        nc=snprintf(nv,sizeof(nv),"%s/%.*s",g.sdkpath,localc,local);
+      }
+      if ((nc<1)||(nc>=sizeof(nv))) return -1;
+      char *cp=malloc(nc+1);
+      if (!cp) return -1;
+      memcpy(cp,nv,nc);
+      cp[nc]=0;
+      free(g.htdocsv[i]);
+      g.htdocsv[i]=cp;
+    }
+  }
+  return 0;
+}
+
 /* Serve, main entry point.
  */
  
@@ -363,6 +402,7 @@ int eggdev_main_serve() {
   int err=0;
   if (g.http) return -1;
   signal(SIGINT,eggdev_cb_signal);
+  eggdev_serve_massage_htdocs();
   if (!g.port) g.port=8080;
   if (g.project) {
     if ((err=eggdev_client_set_root(g.project,-1))<0) return err;

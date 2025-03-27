@@ -7,6 +7,7 @@ import { Override } from "../Override.js";
 import { Dom } from "./Dom.js";
 import { TextEditor } from "./TextEditor.js";
 import { HexEditor } from "./HexEditor.js";
+import { ImageEditor } from "./ImageEditor.js";
  
 export class Actions {
   static getDependencies() {
@@ -26,6 +27,7 @@ export class Actions {
     this.editors = [
       ...this.override.editors,
       //TODO standard editors
+      ImageEditor,
       TextEditor,
       HexEditor,
     ];
