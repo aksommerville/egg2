@@ -103,7 +103,7 @@ export class TilesheetEditor {
     this.data.getImageAsync(res.rid).then(image => {
       this.image = image;
       this.renderSoon();
-    });
+    }).catch(e => {});
     this.populateUi();
   }
   

@@ -14,6 +14,15 @@ body {
   height: 100vh;
 }
 
+.row {
+  display: flex;
+  flex-direction: row;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+}
+
 dialog {
   border-radius: 5px;
   box-shadow: #000 0 0 10px;
@@ -71,6 +80,7 @@ input.toggle:checked + label.toggle {
   align-items: stretch;
   width: 100vw;
   height: 100vh;
+  overflow: hidden; /* Without this, we tend to get useless scroll bars for content that fits the available space exactly. */
 }
 .RootUi > .workbench {
   flex: 1;
@@ -295,3 +305,55 @@ input.toggle:checked + label.toggle {
   object-fit: contain;
 }
 
+/* Decalsheet
+ *********************************************************************************/
+ 
+.DecalsheetEditor {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+.DecalsheetEditor .sidebar {
+  min-width: 300px;
+  border-right: 1px solid #000;
+  overflow-y: scroll;
+}
+.DecalsheetEditor .panel {
+  padding: 5px;
+  border: 1px solid #000;
+  background-color: #040;
+}
+.DecalsheetEditor .panel:nth-child(odd) {
+  background-color: #020;
+}
+.DecalsheetEditor .spacer {
+  flex: 1;
+}
+.DecalsheetEditor input[name='comment'] {
+  box-sizing: border-box;
+  width: 100%;
+}
+.DecalsheetEditor input.coords {
+  flex: 1;
+}
+.DecalsheetEditor .panel:hover input {
+  background-color: #def;
+}
+.DecalsheetEditor .panel input.autoSetting {
+  background-color: #ff0;
+}
+.DecalsheetEditor .previewWrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.DecalsheetEditor .preview {
+  /* width,height:100% and object-fit:contain work great for display purposes, but then it is impossible to project mouse coordinates into canvas space.
+   * So instead, CSS will center the canvas in its wrapper, and JS will scale it up to the available space.
+   */
+  image-rendering: pixelated;
+  position: absolute;
+}

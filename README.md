@@ -77,7 +77,7 @@ Planned differences from Egg v1:
 - - [x] StringsEditor - ''
 - - [x] ImageEditor: For now just show the image.
 - - [x] TilesheetEditor
-- - [ ] DecalsheetEditor
+- - [x] DecalsheetEditor
 - - [ ] SpriteEditor
 - - [ ] MapEditor
 - - [ ] SongEditor
@@ -103,3 +103,4 @@ Planned differences from Egg v1:
 - - [ ] StringsEditor: Side-by-side editing across languages, like we had in v1.
 - - [ ] SidebarUi: Persist open panels.
 - - [ ] TilesheetEditor: Persist toolbar.
+- - [ ] DecalsheetEditor: Validation.
