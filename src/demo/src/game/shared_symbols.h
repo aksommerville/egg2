@@ -21,4 +21,8 @@
 #define NS_tilesheet_neighbors 0
 #define NS_tilesheet_weight 0
 
+#define NS_physics_vacant 0
+#define NS_physics_solid 1
+#define NS_physics_water 2
+
 #endif

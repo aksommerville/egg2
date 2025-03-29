@@ -113,11 +113,12 @@ export class Data {
    * If we resolve, the new file exists.
    */
   createResource(path, serial) {
-    if (!serial) serial = "";
+    if (!serial) serial = new Uint8Array();
+    if (!(serial instanceof Uint8Array)) throw new Error(`New resource serial must be null or Uint8Array.`);
     if (!path?.startsWith("/data/")) return Promise.reject("Invalid path.");
     if (this.resv.find(r => r.path === path)) return Promise.reject("Resource already exists.");
     return this.comm.http("PUT", path, null, null, serial).then(() => {
-      const res = { path, serial: "", ...this.evalPath(path) };
+      const res = { path, serial, ...this.evalPath(path) };
       this.resv.push(res);
       this.broadcastToc();
       return res;
@@ -184,6 +185,32 @@ export class Data {
       this.flushDirties();
     }, DIRTY_DEBOUNCE_TIME);
     this.broadcastDirty("dirty");
+  }
+  
+  /* Images.
+   ***********************************************************************************/
+  
+  // Resolves with Image, or rejects if anything goes wrong.
+  getImageAsync(rid) {
+    const res = this.resv.find(r => ((r.type === "image") && (r.rid === rid)));
+    if (!res) return Promise.reject(`image:${rid} not found`);
+    if (res.image) return Promise.resolve(res.image); // If image present, assume it's loaded. This won't always be so, does it matter?
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([res.serial]);
+      const url = URL.createObjectURL(blob);
+      const image = new Image();
+      image.addEventListener("load", () => {
+        URL.revokeObjectURL(url);
+        resolve(image);
+      }, { once: true });
+      image.addEventListener("error", error => {
+        URL.revokeObjectURL(url);
+        delete res.image;
+        reject(error);
+      }, { once: true });
+      image.src = url;
+      res.image = image;
+    });
   }
   
   /* Subscriptions.

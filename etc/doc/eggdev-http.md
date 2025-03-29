@@ -39,6 +39,11 @@ If `--project` was provided, do the equivalent of `eggdev build PROJECT` first.
 If that build fails, respond 500 with the build log.
 If it succeeds, or no `--project` was provided, proceed with `GET /**`.
 
+### GET /api/symbols
+
+Returns an array of `{nstype,ns,k,v}` for the symbols declared in the project's `shared_symbols.h`.
+If no project was specified at launch, or anything else goes wrong, returns an empty array.
+
 ### GET /api/toc/**
 
 Resolve the remainder of the path and return a JSON array describing all the files under it.

@@ -5,9 +5,14 @@
  
 import { Override } from "../Override.js";
 import { Dom } from "./Dom.js";
-import { TextEditor } from "./TextEditor.js";
-import { HexEditor } from "./HexEditor.js";
-import { ImageEditor } from "./ImageEditor.js";
+import { TextEditor } from "./std/TextEditor.js";
+import { HexEditor } from "./std/HexEditor.js";
+import { ImageEditor } from "./std/ImageEditor.js";
+import { TilesheetEditor } from "./std/TilesheetEditor.js";
+//import { DecalsheetEditor } from "./std/DecalsheetEditor.js";
+//import { SpriteEditor } from "./std/SpriteEditor.js";
+//import { MapEditor } from "./map/MapEditor.js";
+//import { SongEditor } from "./song/SongEditor.js";
  
 export class Actions {
   static getDependencies() {
@@ -26,7 +31,11 @@ export class Actions {
     
     this.editors = [
       ...this.override.editors,
-      //TODO standard editors
+      TilesheetEditor,
+      //DecalsheetEditor,
+      //SpriteEditor,
+      //MapEditor,
+      //SongEditor,
       ImageEditor,
       TextEditor,
       HexEditor,

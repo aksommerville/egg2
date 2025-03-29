@@ -8,8 +8,8 @@
  *  - Offset and ASCII columns.
  */
  
-import { Dom } from "./Dom.js";
-import { Data } from "./Data.js";
+import { Dom } from "../Dom.js";
+import { Data } from "../Data.js";
 
 export class HexEditor {
   static getDependencies() {

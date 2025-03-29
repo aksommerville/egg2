@@ -41,6 +41,38 @@ static int eggdev_cb_get_buildfirst(struct http_xfer *req,struct http_xfer *rsp)
   return eggdev_cb_get_other(req,rsp);
 }
 
+/* GET /api/symbols
+ */
+ 
+static int eggdev_cb_get_symbols(struct http_xfer *req,struct http_xfer *rsp) {
+  eggdev_client_require();
+  struct sr_encoder *dst=http_xfer_get_body(rsp);
+  if (sr_encode_json_array_start(dst,0,0)<0) return -1;
+  const struct eggdev_ns *ns=g.client.nsv;
+  int nsi=g.client.nsc;
+  for (;nsi-->0;ns++) {
+    const char *nstype=0;
+    switch (ns->nstype) {
+      case EGGDEV_NSTYPE_NS: nstype="NS"; break;
+      case EGGDEV_NSTYPE_CMD: nstype="CMD"; break;
+    }
+    if (!nstype) continue; // Other things may be recorded in (g.client), we can ignore them.
+    const struct eggdev_sym *sym=ns->symv;
+    int symi=ns->symc;
+    for (;symi-->0;sym++) {
+      int jsonctx=sr_encode_json_object_start(dst,0,0);
+      sr_encode_json_string(dst,"nstype",6,nstype,-1);
+      sr_encode_json_string(dst,"ns",2,ns->name,ns->namec);
+      sr_encode_json_string(dst,"k",1,sym->k,sym->kc);
+      sr_encode_json_int(dst,"v",1,sym->v);
+      if (sr_encode_json_end(dst,jsonctx)<0) return -1;
+    }
+  }
+  if (sr_encode_json_end(dst,0)<0) return -1;
+  http_xfer_set_header(rsp,"Content-Type",12,"application/json",16);
+  return http_xfer_set_status(rsp,200,"OK");
+}
+
 /* GET /api/toc/**
  */
  
@@ -334,6 +366,7 @@ static int eggdev_cb_unmatched(struct http_xfer *req,struct http_xfer *rsp) {
 static int eggdev_cb_serve(struct http_xfer *req,struct http_xfer *rsp,void *userdata) {
   return http_dispatch(req,rsp,
     HTTP_METHOD_GET,"/api/buildfirst**",eggdev_cb_get_buildfirst,
+    HTTP_METHOD_GET,"/api/symbols",eggdev_cb_get_symbols,
     HTTP_METHOD_GET,"/api/toc**",eggdev_cb_get_toc,
     HTTP_METHOD_GET,"/api/allcontent**",eggdev_cb_get_allcontent,
     HTTP_METHOD_POST,"/api/convert",eggdev_cb_post_convert,

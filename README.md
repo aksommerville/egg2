@@ -76,11 +76,12 @@ Planned differences from Egg v1:
 - - [x] MetadataEditor - nah text is fine
 - - [x] StringsEditor - ''
 - - [x] ImageEditor: For now just show the image.
-- - [ ] TilesheetEditor
+- - [x] TilesheetEditor
 - - [ ] DecalsheetEditor
 - - [ ] SpriteEditor
 - - [ ] MapEditor
 - - [ ] SongEditor
+- - [ ] Acquire shared symbols.
 - [ ] Client utilities.
 - - [ ] stdlib
 - - [ ] graf
@@ -100,3 +101,5 @@ Planned differences from Egg v1:
 - - [ ] HexEditor: Paging, offset, ASCII, multi-byte edits.
 - - [ ] ImageEditor: Animation preview like we had in v1.
 - - [ ] StringsEditor: Side-by-side editing across languages, like we had in v1.
+- - [ ] SidebarUi: Persist open panels.
+- - [ ] TilesheetEditor: Persist toolbar.

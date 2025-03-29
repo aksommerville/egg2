@@ -3,8 +3,8 @@
  * TODO Allow scale and scroll, maybe some tile previewer, or a robust animation preview like we had in v1.
  */
  
-import { Dom } from "./Dom.js";
-import { Data } from "./Data.js";
+import { Dom } from "../Dom.js";
+import { Data } from "../Data.js";
 
 export class ImageEditor {
   static getDependencies() {

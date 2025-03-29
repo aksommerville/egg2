@@ -3,8 +3,8 @@
  * This is the simplest possible editor, so it's a good template for custom ones.
  */
  
-import { Dom } from "./Dom.js";
-import { Data } from "./Data.js";
+import { Dom } from "../Dom.js";
+import { Data } from "../Data.js";
 
 export class TextEditor {
   static getDependencies() {
