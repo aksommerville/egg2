@@ -215,6 +215,37 @@ input.toggle:checked + label.toggle {
   object-fit: contain;
 }
 
+.PickImageModal {
+  display: flex;
+  flex-direction: column;
+}
+.PickImageModal .topRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.PickImageModal button.image {
+  height: 150px;
+  width: 500px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+.PickImageModal button.image.prior {
+  background-color: #fec;
+}
+.PickImageModal canvas.thumbnail {
+  width: 128px;
+  height: 128px;
+  margin-right: 10px;
+}
+
+.PickTileModal canvas {
+  width: 768px;
+  height: 768px;
+}
+
 /* Tilesheet
  *************************************************************************************/
 
@@ -356,4 +387,23 @@ input.toggle:checked + label.toggle {
    */
   image-rendering: pixelated;
   position: absolute;
+}
+
+/* CommandList
+ **************************************************************************************/
+
+.CommandListEditor {
+  overflow-y: scroll;
+}
+.CommandListEditor input[name='command'] {
+  flex: 1;
+}
+
+.SpriteEditor .topRow {
+  align-items: center;
+}
+.SpriteEditor .preview {
+  width: 128px;
+  height: 128px;
+  image-rendering: pixelated;
 }

@@ -78,10 +78,11 @@ Planned differences from Egg v1:
 - - [x] ImageEditor: For now just show the image.
 - - [x] TilesheetEditor
 - - [x] DecalsheetEditor
-- - [ ] SpriteEditor
+- - [x] SpriteEditor
 - - [ ] MapEditor
 - - [ ] SongEditor
-- - [ ] Acquire shared symbols.
+- - [x] Acquire shared symbols.
+- - [ ] Verify overrides
 - [ ] Client utilities.
 - - [ ] stdlib
 - - [ ] graf
@@ -104,3 +105,4 @@ Planned differences from Egg v1:
 - - [ ] SidebarUi: Persist open panels.
 - - [ ] TilesheetEditor: Persist toolbar.
 - - [ ] DecalsheetEditor: Validation.
+- - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?

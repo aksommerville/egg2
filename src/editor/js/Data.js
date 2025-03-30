@@ -187,12 +187,41 @@ export class Data {
     this.broadcastDirty("dirty");
   }
   
+  /* (req) may be path, rid, name, or qualified name.
+   * (type) is optional; if false, (req) must be a qualified name or path.
+   * This is meant to be the one-stop-shop for any way you might address a resource.
+   */
+  findResource(req, type) {
+    // If (req) contains a slash, it must be the full path, and (type) is ignored.
+    if (req.indexOf("/") >= 0) {
+      return this.resv.find(r => r.path === req);
+    }
+    // If (req) contains a colon, the first bit replaces (type).
+    if (typeof(req) === "string") {
+      const sepp = req.indexOf(":");
+      if (sepp >= 0) {
+        type = req.substring(0, sepp);
+        req = req.substring(sepp +1);
+      }
+    }
+    // After splitting (req), (type) is required.
+    if (!type) return null;
+    // If (req) is a number, it's the rid.
+    let rid = +req;
+    if (!isNaN(rid)) {
+      if ((rid < 1) || (rid > 0xffff)) return null;
+      return this.resv.find(r => ((r.type === type) && (r.rid === rid)));
+    }
+    // (req) must be the name.
+    return this.resv.find(r => ((r.type === type) && (r.name === req)));
+  }
+  
   /* Images.
    ***********************************************************************************/
   
   // Resolves with Image, or rejects if anything goes wrong.
   getImageAsync(rid) {
-    const res = this.resv.find(r => ((r.type === "image") && (r.rid === rid)));
+    const res = this.findResource(rid, "image");
     if (!res) return Promise.reject(`image:${rid} not found`);
     if (res.image) return Promise.resolve(res.image); // If image present, assume it's loaded. This won't always be so, does it matter?
     return new Promise((resolve, reject) => {

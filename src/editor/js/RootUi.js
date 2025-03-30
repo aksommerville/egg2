@@ -6,24 +6,29 @@ import { Dom } from "./Dom.js";
 import { SidebarUi } from "./SidebarUi.js";
 import { Data } from "./Data.js";
 import { Actions } from "./Actions.js";
+import { SharedSymbols } from "./SharedSymbols.js";
 
 export class RootUi {
   static getDependencies() {
-    return [HTMLElement, Dom, Window, Data, Actions];
+    return [HTMLElement, Dom, Window, Data, Actions, SharedSymbols];
   }
-  constructor(element, dom, window, data, actions) {
+  constructor(element, dom, window, data, actions, sharedSymbols) {
     this.element = element;
     this.dom = dom;
     this.window = window;
     this.data = data;
     this.actions = actions;
+    this.sharedSymbols = sharedSymbols;
     
     this.sidebar = this.dom.spawnController(this.element, SidebarUi);
     this.dom.spawn(this.element, "DIV", ["workbench"]);
     
     this.hashListener = e => this.onHashChange(e);
     this.window.addEventListener("hashchange", this.hashListener);
-    this.data.whenLoaded().then(() => {
+    Promise.all([
+      this.data.whenLoaded(),
+      this.sharedSymbols.whenLoaded(),
+    ]).then(() => {
       this.onHashChange({ newURL: this.window.location.href, fakeFirstEvent: true });
     });
   }

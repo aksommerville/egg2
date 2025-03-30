@@ -2,6 +2,7 @@
  * Coordinates access to the project's "shared_symbols.h" file, with helpful enums.
  * (ns) is "NS" or "CMD".
  * Namespace and symbol names come straight off the header.
+ * RootUi waits for us to load before initializing, so most editors may assume that it's always ready.
  */
  
 import { Comm } from "./Comm.js";

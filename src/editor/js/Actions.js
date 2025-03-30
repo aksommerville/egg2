@@ -7,10 +7,11 @@ import { Override } from "../Override.js";
 import { Dom } from "./Dom.js";
 import { TextEditor } from "./std/TextEditor.js";
 import { HexEditor } from "./std/HexEditor.js";
+import { CommandListEditor } from "./std/CommandListEditor.js";
 import { ImageEditor } from "./std/ImageEditor.js";
 import { TilesheetEditor } from "./std/TilesheetEditor.js";
 import { DecalsheetEditor } from "./std/DecalsheetEditor.js";
-//import { SpriteEditor } from "./std/SpriteEditor.js";
+import { SpriteEditor } from "./std/SpriteEditor.js";
 //import { MapEditor } from "./map/MapEditor.js";
 //import { SongEditor } from "./song/SongEditor.js";
  
@@ -33,10 +34,11 @@ export class Actions {
       ...this.override.editors,
       TilesheetEditor,
       DecalsheetEditor,
-      //SpriteEditor,
+      SpriteEditor,
       //MapEditor,
       //SongEditor,
       ImageEditor,
+      CommandListEditor,
       TextEditor,
       HexEditor,
     ];

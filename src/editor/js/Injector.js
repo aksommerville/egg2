@@ -17,6 +17,10 @@ export class Injector {
   constructor(window) {
     this.window = window;
     
+    if (!Injector.globalSingleton) {
+      Injector.globalSingleton = this;
+    }
+    
     this.singletons = {
       Injector: this,
       Window: window,
@@ -24,6 +28,14 @@ export class Injector {
     };
     this.inProgress = [];
     this.nextNonce = 1;
+  }
+  
+  /* Use this to acquire the injector (and thru it, anything) from any static context.
+   * Undefined if Injector has never been instantiated.
+   * Make an effort not to need this!
+   */
+  static getGlobalSingleton() {
+    return Injector.globalSingleton;
   }
   
   instantiate(clazz, overrides) {
