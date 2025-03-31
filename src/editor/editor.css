@@ -75,16 +75,14 @@ input.toggle:checked + label.toggle {
  *************************************************************************************************/
 
 .RootUi {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
   width: 100vw;
   height: 100vh;
-  overflow: hidden; /* Without this, we tend to get useless scroll bars for content that fits the available space exactly. */
+  display: grid;
+  grid-template-columns: 250px calc(100vw - 250px);
+  overflow:hidden;
 }
 .RootUi > .workbench {
   flex: 1;
-  display: flex;
 }
 .RootUi > .workbench > * {
   width: 100%;
@@ -406,4 +404,108 @@ input.toggle:checked + label.toggle {
   width: 128px;
   height: 128px;
   image-rendering: pixelated;
+}
+
+/* Map
+ *************************************************************************************/
+ 
+.MapEditor {
+  display: grid;
+  grid-template-rows: 55px calc(100vh - 55px);
+  grid-template-columns: 100%;
+}
+
+.MapToolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-bottom: 1px solid #000;
+  gap: 4px;
+  padding: 0 4px;
+}
+.MapToolbar > .palette {
+  width: 32px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid #000;
+  image-rendering: pixelated;
+}
+.MapToolbar > .toolbox {
+  display: grid;
+  grid-template-rows: 50% 50%;
+  grid-auto-flow: column;
+}
+.MapToolbar > .toolbox .tool {
+  width: 16px;
+  height: 16px;
+  padding: 1px;
+  background-image: url('./icons.png');
+  background-clip: content-box;
+  cursor: pointer;
+}
+.MapToolbar > .toolbox .tool.selected {
+  background-color: #ff0;
+}
+.MapToolbar > .toolbox .tool[data-name='pencil']   { background-position:    1px 1px; }
+.MapToolbar > .toolbox .tool[data-name='rainbow']  { background-position:  -15px 1px; }
+.MapToolbar > .toolbox .tool[data-name='monalisa'] { background-position:  -31px 1px; }
+.MapToolbar > .toolbox .tool[data-name='heal']     { background-position:  -47px 1px; }
+.MapToolbar > .toolbox .tool[data-name='pickup']   { background-position:  -63px 1px; }
+.MapToolbar > .toolbox .tool[data-name='marquee']  { background-position:  -79px 1px; }
+.MapToolbar > .toolbox .tool[data-name='lasso']    { background-position:  -95px 1px; }
+.MapToolbar > .toolbox .tool[data-name='poiedit']  { background-position: -111px 1px; }
+.MapToolbar > .toolbox .tool[data-name='poimove']  { background-position: -127px 1px; }
+.MapToolbar > .toolbox .tool[data-name='door']     { background-position: -143px 1px; }
+.MapToolbar > .vzone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.MapToolbar .toggles {
+  display: flex;
+  flex-direction: row;
+}
+.MapToolbar .tattles {
+  display: flex;
+  flex-direction: row;
+}
+.MapToolbar .tattle {
+  background-color: #000;
+  font-family: monospace;
+  margin: 2px;
+  padding: 3px 5px;
+  height: 1lh;
+}
+.MapToolbar .tattle.position {
+  color: #0f0;
+  width: 60px;
+  white-space: pre;
+}
+.MapToolbar .tattle.detail {
+  color: #ff0;
+  flex: 1;
+}
+
+.MapCanvas {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  position: relative;
+}
+.MapCanvas .scroller {
+  flex: 1;
+  overflow: scroll;
+}
+.MapCanvas .sizer {
+  background-color: #000;
+}
+.MapCanvas .main {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(100% - 15px); /* attempting to crop out the scroll bars */
+  height: calc(100% - 15px);
+  pointer-events: none;
 }

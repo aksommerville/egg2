@@ -36,11 +36,16 @@ export class CommandList {
   
   // To Uint8Array
   encode() {
+    return new TextEncoder("utf8").encode(this.encodeText());
+  }
+  
+  // To string
+  encodeText() {
     let dst = "";
     for (const command of this.commands) {
       dst += command.join(" ") + "\n";
     }
-    return new TextEncoder("utf8").encode(dst);
+    return dst;
   }
   
   /* Replace an existing command with a space-delimited string.

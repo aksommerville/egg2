@@ -54,10 +54,10 @@ export class Dom {
    * Controllers are expected to declare a dependency of some subclass of HTMLElement, and assign it to "element".
    * If the controller class implements onRemoveFromDom(), we call it as the element gets removed.
    */
-  spawnController(parent, controllerClass) {
+  spawnController(parent, controllerClass, overrides) {
     const tagName = this.tagNameForControllerClass(controllerClass);
     const element = this.spawn(parent, tagName, [controllerClass.name]);
-    const controller = this.injector.instantiate(controllerClass, [element]);
+    const controller = this.injector.instantiate(controllerClass, [element, ...(overrides || [])]);
     element.__egg_controller = controller;
     return controller;
   }

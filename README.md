@@ -82,6 +82,7 @@ Planned differences from Egg v1:
 - - [ ] MapEditor
 - - [ ] SongEditor
 - - [x] Acquire shared symbols.
+- - [ ] Standard actions... what's needed?
 - - [ ] Verify overrides
 - [ ] Client utilities.
 - - [ ] stdlib

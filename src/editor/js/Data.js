@@ -193,7 +193,7 @@ export class Data {
    */
   findResource(req, type) {
     // If (req) contains a slash, it must be the full path, and (type) is ignored.
-    if (req.indexOf("/") >= 0) {
+    if ((typeof(req) === "string") && (req.indexOf("/") >= 0)) {
       return this.resv.find(r => r.path === req);
     }
     // If (req) contains a colon, the first bit replaces (type).

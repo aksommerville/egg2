@@ -12,8 +12,8 @@ import { ImageEditor } from "./std/ImageEditor.js";
 import { TilesheetEditor } from "./std/TilesheetEditor.js";
 import { DecalsheetEditor } from "./std/DecalsheetEditor.js";
 import { SpriteEditor } from "./std/SpriteEditor.js";
-//import { MapEditor } from "./map/MapEditor.js";
-//import { SongEditor } from "./song/SongEditor.js";
+import { MapEditor } from "./map/MapEditor.js";
+import { SongEditor } from "./song/SongEditor.js";
  
 export class Actions {
   static getDependencies() {
@@ -35,8 +35,8 @@ export class Actions {
       TilesheetEditor,
       DecalsheetEditor,
       SpriteEditor,
-      //MapEditor,
-      //SongEditor,
+      MapEditor,
+      SongEditor,
       ImageEditor,
       CommandListEditor,
       TextEditor,
