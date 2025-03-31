@@ -58,6 +58,7 @@ export class MapEditor {
   onPaintEvent(event) {
     switch (event.type) {
       case "commands": this.data.dirty(this.res.path, () => this.map.encode()); break;
+      case "cellDirty": this.data.dirty(this.res.path, () => this.map.encode()); break;
     }
   }
   
@@ -107,6 +108,8 @@ export class MapEditor {
         case "KeyI": toolp = 15; break;
         case "KeyO": toolp = 17; break;
         case "KeyP": toolp = 19; break;
+        //TODO Esc to anchor selection.
+        //TODO Space (?) to open palette.
       }
       if ((toolp >= 0) && (toolp < MapPaint.TOOLS.length)) {
         this.mapPaint.setTool(MapPaint.TOOLS[toolp].name);

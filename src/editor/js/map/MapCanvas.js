@@ -6,6 +6,7 @@ import { Dom } from "../Dom.js";
 import { Data } from "../Data.js";
 import { MapService } from "./MapService.js";
 import { MapPaint } from "./MapPaint.js";
+import { TilesheetEditor } from "../std/TilesheetEditor.js";
 
 export class MapCanvas {
   static getDependencies() {
@@ -57,9 +58,11 @@ export class MapCanvas {
     this.dom.spawn(this.element, "DIV", ["scroller"],
       { "on-scroll": e => this.onScroll(e) },
       { "on-wheel": e => this.onWheel(e) },
-      { "on-mousemove": e => this.onMotion(e) },
-      { "on-mouseenter": e => this.onMotion(e) },
-      { "on-mouseleave": e => this.onMotion(e) },
+      { "on-pointermove": e => this.onMotion(e) },
+      { "on-pointerenter": e => this.onMotion(e) },
+      { "on-pointerleave": e => this.onMotion(e) },
+      { "on-pointerdown": e => this.onMouseDown(e) },
+      { "on-pointerup": e => this.onMouseUp(e) },
       this.dom.spawn(null, "DIV", ["sizer"])
     );
     this.renderSoon();
@@ -99,14 +102,48 @@ export class MapCanvas {
     let dsty = rowa * tilesize - this.scrolly + this.margin;
     const dstx0 = cola * tilesize - this.scrollx + this.margin;
     let rowp = rowa * this.mapPaint.map.w + cola;
+    const phcolors = this.mapPaint.toggles.physics && TilesheetEditor.getColors();
     for (let row=rowa; row<=rowz; row++, dsty+=tilesize, rowp+=this.mapPaint.map.w) {
       for (let col=cola, dstx=dstx0, cellp=rowp; col<=colz; col++, dstx+=tilesize, cellp++) {
-        if (this.mapPaint.image) {
+        if (this.mapPaint.image && this.mapPaint.toggles.image) {
           const srcx = (this.mapPaint.map.v[cellp] & 15) * this.mapPaint.tilesize;
           const srcy = (this.mapPaint.map.v[cellp] >> 4) * this.mapPaint.tilesize;
           ctx.drawImage(this.mapPaint.image, srcx, srcy, this.mapPaint.tilesize, this.mapPaint.tilesize, dstx, dsty, tilesize, tilesize);
         }
+        if (this.mapPaint.toggles.poi) {
+          //TODO poi badges
+        }
+        if (this.mapPaint.toggles.physics && this.mapPaint.tilesheet) {
+          const ph = this.mapPaint.tilesheet.tables.physics?.[this.mapPaint.map.v[cellp]] || 0;
+          ctx.fillStyle = phcolors[ph];
+          ctx.globalAlpha = 0.750;
+          ctx.fillRect(dstx + 2, dsty + 2, tilesize - 4, tilesize - 4);
+          ctx.globalAlpha = 1;
+        }
       }
+    }
+    
+    //TODO Selection and provisional selection.
+    
+    if (this.mapPaint.toggles.grid) {
+      ctx.beginPath();
+      const xa = this.margin - this.scrollx;
+      const xz = this.margin + this.mapPaint.map.w * tilesize - this.scrollx;
+      const ya = this.margin - this.scrolly;
+      const yz = this.margin + this.mapPaint.map.h * tilesize - this.scrolly;
+      for (let col=cola, x=Math.floor(dstx0)+0.5; col<=colz+1; col++, x+=tilesize) {
+        ctx.moveTo(x, ya);
+        ctx.lineTo(x, yz);
+      }
+      for (let row=rowa, y=Math.floor(rowa*tilesize-this.scrolly+this.margin)+0.5; row<=rowz+1; row++, y+=tilesize) {
+        ctx.moveTo(xa, y);
+        ctx.lineTo(xz, y);
+      }
+      ctx.strokeStyle = "#0f0";
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.500;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
     }
     
     for (const ni of this.neighborImages) {
@@ -242,6 +279,8 @@ export class MapCanvas {
       case "image": this.renderSoon(); break;
       case "map": this.refreshSizer(); this.forceScrollerPosition(); break;
       case "zoom": this.refreshSizer(); break;
+      case "cellDirty": this.renderSoon(); break;
+      case "toggle": this.renderSoon(); break;
     }
   }
   
@@ -272,12 +311,23 @@ export class MapCanvas {
   }
   
   onMotion(event) {
-    if (event.type === "mouseleave") {
+    if (event.type === "pointerleave") {
       this.mapPaint.setMouse(-1, -1);
       return;
     }
     if (!this.canvasBounds) return;
     const mp = this.coordsMapFromElement(event.x - this.canvasBounds.x, event.y - this.canvasBounds.y);
-    this.mapPaint.setMouse(mp[0], mp[1]);
+    if (!this.mapPaint.setMouse(mp[0], mp[1])) return;
+  }
+  
+  onMouseDown(event) {
+    if (event.button !== 0) return;
+    event.target.setPointerCapture(event.pointerId);
+    this.mapPaint.onMouseDown();
+  }
+  
+  onMouseUp(event) {
+    if (event.button !== 0) return;
+    this.mapPaint.onMouseUp();
   }
 }

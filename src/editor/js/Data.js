@@ -216,6 +216,17 @@ export class Data {
     return this.resv.find(r => ((r.type === type) && (r.name === req)));
   }
   
+  /* (type) is required, and if (req) contains a type identifier, we strip it.
+   */
+  findResourceOverridingType(req, type) {
+    if (!type) return null;
+    if (typeof(req) === "string") {
+      const sepp = req.indexOf(":");
+      if (sepp >= 0) req = req.substring(sepp + 1);
+    }
+    return this.findResource(req, type);
+  }
+  
   /* Images.
    ***********************************************************************************/
   

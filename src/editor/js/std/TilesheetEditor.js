@@ -107,6 +107,11 @@ export class TilesheetEditor {
     this.populateUi();
   }
   
+  static getColors() {
+    requireValueColors();
+    return VALUE_COLORS;
+  }
+  
   /* UI setup.
    **************************************************************************/
    
