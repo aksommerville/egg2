@@ -9,6 +9,7 @@ import { Dom } from "../Dom.js";
 import { Data } from "../Data.js";
 import { CommandListEditor } from "../std/CommandListEditor.js";
 import { Tilesheet } from "../std/Tilesheet.js";
+import { Selection } from "./Selection.js";
  
 export class MapPaint {
   static getDependencies() {
@@ -31,11 +32,17 @@ export class MapPaint {
     this.scrollTimeout = null;
     this.mousex = -1; // integer, in map cells
     this.mousey = -1; // ''
+    this.pvmx = -1; // Previous mouse position, compare to (mousex).
+    this.pvmy = -1; // ''
     this.mousefx = -1; // "floating-point" or "full-precision"
     this.mousefy = -1; // ''
     this.toolInProgress = ""; // Populated while dragging in progress.
     this.anchorx = 0; // monalisa and marquee
     this.anchory = 0;
+    this.selection = null; // Selection or null
+    this.tempSelection = null; // Selection or null; only exists while a marquee or lasso operation in progress.
+    this.dragging = false; // marquee and lasso; are they doing the generic "drag selection"?
+    this.selectMode = ""; // Relevant if not dragging and tempSelection present: "replace", "combine", "remove"
     
     this.manualTool = "rainbow";
     this.effectiveTool = this.manualTool;
@@ -232,6 +239,10 @@ export class MapPaint {
     y = Math.floor(y);
     if (!this.map || (x < 0) || (x >= this.map.w) || (y < 0) || (y >= this.map.h)) x = y = -1;
     if ((x === this.mousex) && (y === this.mousey)) return false;
+    if (this.mousex >= 0) {
+      this.pvmx = this.mousex;
+      this.pvmy = this.mousey;
+    }
     this.mousex = x;
     this.mousey = y;
     this.broadcast({ type: "mouse", x, y });
@@ -246,8 +257,9 @@ export class MapPaint {
     if (this.toolInProgress) return;
     if (!this.map || (this.mousex < 0) || (this.mousey < 0) || (this.mousex >= this.map.w) || (this.mousey >= this.map.h)) return;
     const fnname = this.effectiveTool + "Begin";
-    if (this[fnname]?.(this.mousex, this.mousey)) {
-      this.toolInProgress = this.effectiveTool;
+    this.toolInProgress = this.effectiveTool;
+    if (!this[fnname]?.(this.mousex, this.mousey)) {
+      this.toolInProgress = "";
     }
   }
   
@@ -452,37 +464,116 @@ export class MapPaint {
    **************************************************************/
    
   marqueeBegin(x, y) {
-    //TODO If a selection exists, begin dragging it. Or if outside, anchor it first. If dragging with Shift, copy it down first.
-    //TODO record anchor
+    if (this.dragging = this.genericSelectionBegin(x, y)) return true;
     return true;
   }
   
   marqueeUpdate(x, y) {
-    //TODO Drag selection if we're doing that.
-    //TODO Compare to anchor and update provisional selection
-    //TODO Update details tattle
+    if (this.dragging) return this.genericSelectionUpdate(x, y);
+    this.tempSelection.setRectangle(x, y);
+    this.broadcast({ type: "selectionDirty" });
   }
   
   marqueeEnd() {
-    //TODO Commit selection (or do nothing if dragging).
+    this.genericSelectionEnd();
   }
   
   /* Lasso: Free selection and measurement.
    ****************************************************************/
    
   lassoBegin(x, y) {
-    //TODO If a selection exists, begin dragging it. Or if outside, anchor it first. If dragging with Shift, copy it down first.
-    this.lassoUpdate(x, y);
+    if (this.dragging = this.genericSelectionBegin(x, y)) return true;
     return true;
   }
   
   lassoUpdate(x, y) {
-    //TODO Add to selection if absent, and add to pedometer regardless.
-    //TODO Update details tattle.
+    if (this.dragging) return this.genericSelectionUpdate(x, y);
+    if (this.tempSelection.addPoint(x, y)) {
+      this.broadcast({ type: "selectionDirty" });
+    }
   }
   
   lassoEnd() {
-    //TODO Commit selection (or do nothing if dragging).
+    // A familiar lasso tool would close its path and include the inner content.
+    // We don't do that. We only select the cells that you directly visit.
+    // (and in hindsight, "lasso" was probably the wrong name for it, but I'm not sure what a righter name would be).
+    this.genericSelectionEnd();
+  }
+  
+  /* Generic Selection.
+   * Marquee and Lasso are essentially the same thing, so they lean on this shared behavior.
+   * It's really only during Update that they behave a little different.
+   ************************************************************************/
+  
+  // Call always, and if we return true, do nothing more -- that means we're dragging an existing selection.
+  // If we return false, we'll have prepared (tempSelection).
+  genericSelectionBegin(x, y) {
+    this.selectMode = "replace";
+    if (this.selection) {
+      if (this.selection.contains(x, y)) {
+        if (this.modifiers.includes("shift")) {
+          this.selection.anchor(this.map);
+          this.broadcast({ type: "cellDirty", x, y });
+        }
+        if (!this.modifiers.includes("ctl")) { // With ctl down, no dragging. (so you can lasso out individual cells).
+          return true;
+        }
+      }
+      if (this.modifiers.includes("shift")) {
+        this.selectMode = "combine";
+      } else if (this.modifiers.includes("ctl")) {
+        this.selectMode = "remove";
+      } else {
+        this.selection.anchor(this.map);
+        this.selection = null;
+        this.broadcast({ type: "cellDirty", x, y });
+      }
+    }
+    this.tempSelection = new Selection(x, y);
+    this.broadcast({ type: "selectionDirty" });
+    return false;
+  }
+  
+  // Call only if we returned true at genericSelectionBegin, and in that case do nothing more, we got it.
+  genericSelectionUpdate(x, y) {
+    if (this.pvmx < 0) return; // Extremely unlikely, can only happen at the first event.
+    const dx = x - this.pvmx;
+    const dy = y - this.pvmy;
+    this.selection.move(dx, dy);
+    this.broadcast({ type: "selectionDirty" });
+  }
+  
+  // Call whether dragging or not.
+  genericSelectionEnd() {
+    if (this.dragging) {
+      this.dragging = false;
+      // Nothing more to do.
+    } else {
+      // End of regular select operation.
+      switch (this.selectMode) {
+        case "replace": {
+            this.selection = this.tempSelection;
+            this.selection.float(this.map);
+            this.tempSelection = null;
+            this.broadcast({ type: "selectionDirty" });
+            // Return without reporting cells dirty. Establishing a new selection doesn't dirty the map (selections are implicitly anchored before saving).
+          } return;
+        case "combine": this.selection.combine(this.tempSelection, this.map); break;
+        case "remove": this.selection.remove(this.tempSelection, this.map); break;
+      }
+      this.tempSelection = null;
+      this.broadcast({ type: "cellDirty", x: 0, y: 0 });
+      this.broadcast({ type: "selectionDirty" });
+    }
+  }
+  
+  dropSelection() {
+    if (!this.selection) return;
+    if (this.toolInProgress) return;
+    this.selection.anchor(this.map);
+    this.selection = null;
+    this.broadcast({ type: "cellDirty", x: 0, y: 0 });
+    this.broadcast({ type: "selectionDirty" });
   }
   
   /* Poi Edit: Open a modal for the focussed POI.

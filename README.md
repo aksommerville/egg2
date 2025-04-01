@@ -80,7 +80,7 @@ Planned differences from Egg v1:
 - - [x] DecalsheetEditor
 - - [x] SpriteEditor
 - - [ ] MapEditor
-- - - [ ] Selection
+- - - [x] Selection
 - - - [ ] POI
 - - - [ ] Actions
 - - - [ ] Neighbors

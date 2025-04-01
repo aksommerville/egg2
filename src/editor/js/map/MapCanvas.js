@@ -123,7 +123,12 @@ export class MapCanvas {
       }
     }
     
-    //TODO Selection and provisional selection.
+    if (this.mapPaint.selection) {
+      this.renderSelection(ctx, this.mapPaint.selection, tilesize, "#0ff");
+    }
+    if (this.mapPaint.tempSelection) {
+      this.renderSelection(ctx, this.mapPaint.tempSelection, tilesize, "#08f");
+    }
     
     if (this.mapPaint.toggles.grid) {
       ctx.beginPath();
@@ -158,6 +163,50 @@ export class MapCanvas {
       else dsty = this.margin;
       ctx.drawImage(ni.image, 0, 0, ni.image.width, ni.image.height, dstx, dsty, dstw, dsth);
     }
+  }
+  
+  renderSelection(ctx, selection, tilesize, color) {
+  
+    // If it's floated, we have to draw its cells first.
+    if (selection.cellv && this.mapPaint.image && this.mapPaint.toggles.image) {
+      const srctilesize = this.mapPaint.image.naturalWidth >> 4;
+      const dstx0 = this.margin + selection.x * tilesize - this.scrollx;
+      let dsty = this.margin + selection.y * tilesize - this.scrolly;
+      for (let yi=selection.h, srcp=0; yi-->0; dsty+=tilesize) {
+        for (let dstx=dstx0, xi=selection.w; xi-->0; dstx+=tilesize, srcp++) {
+          if (!selection.mask || selection.mask[srcp]) {
+            const srcx = (selection.cellv[srcp] & 15) * srctilesize;
+            const srcy = (selection.cellv[srcp] >> 4) * srctilesize;
+            ctx.drawImage(this.mapPaint.image, srcx, srcy, srctilesize, srctilesize, dstx, dsty, tilesize, tilesize);
+          }
+        }
+      }
+    }
+  
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.750;
+    
+    // Selections are often a simple rectangle, and those are of course easier than other shapes.
+    if (!selection.mask) {
+      const x = this.margin + selection.x * tilesize - this.scrollx;
+      const y = this.margin + selection.y * tilesize - this.scrolly;
+      const w = selection.w * tilesize;
+      const h = selection.h * tilesize;
+      ctx.fillRect(x, y, w, h);
+      
+    // Any other shape, we draw one cell at a time.
+    } else {
+      const dstx0 = this.margin + selection.x * tilesize - this.scrollx;
+      let dsty = this.margin + selection.y * tilesize - this.scrolly;
+      for (let yi=selection.h, srcp=0; yi-->0; dsty+=tilesize) {
+        for (let dstx=dstx0, xi=selection.w; xi-->0; dstx+=tilesize, srcp++) {
+          if (selection.mask[srcp]) {
+            ctx.fillRect(dstx, dsty, tilesize, tilesize);
+          }
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
   }
   
   /* Neighbor images.
@@ -281,6 +330,7 @@ export class MapCanvas {
       case "zoom": this.refreshSizer(); break;
       case "cellDirty": this.renderSoon(); break;
       case "toggle": this.renderSoon(); break;
+      case "selectionDirty": this.renderSoon(); break;
     }
   }
   

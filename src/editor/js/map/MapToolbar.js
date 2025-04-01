@@ -95,6 +95,25 @@ export class MapToolbar {
     else tattle.innerText = x.toString().padStart(3) + "," + y.toString().padStart(3);
   }
   
+  refreshDetailTattle() {
+    const tattle = this.element.querySelector(".tattle.detail");
+    tattle.innerText = "";
+    
+    // When a selection is being established, describe the box or cell count.
+    // Egg v1 had a Pedometer tool, which I want to roll into the lasso.
+    if (this.mapPaint.tempSelection) {
+      if (this.mapPaint.toolInProgress === "lasso") {
+        tattle.innerText = `${this.mapPaint.tempSelection.countCells()} cells`;
+      } else {
+        const s = this.mapPaint.tempSelection;
+        tattle.innerText = `${s.x},${s.y},${s.w},${s.h} = ${s.w * s.h} cells`;
+      }
+      return;
+    }
+    
+    //TODO Other details worth showing...
+  }
+  
   /* Events.
    ********************************************************************************/
    
@@ -126,6 +145,7 @@ export class MapToolbar {
       case "tool": this.refreshToolHighlights(); break;
       case "image": this.drawPalette(); break;
       case "mouse": this.setPositionTattle(event.x, event.y); break;
+      case "selectionDirty": this.refreshDetailTattle(); break;
     }
   }
   

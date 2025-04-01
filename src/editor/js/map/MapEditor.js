@@ -55,10 +55,19 @@ export class MapEditor {
     this.mapCanvas = this.dom.spawnController(this.element, MapCanvas, [this.mapPaint]);
   }
   
+  encode() {
+    if (!this.mapPaint.selection) return this.mapPaint.map.encode();
+    // It's safe to anchor, encode, and re-float the selection. Only thing is, content under the selection will be lost.
+    this.mapPaint.selection.anchor(this.mapPaint.map);
+    const dst = this.mapPaint.map.encode();
+    this.mapPaint.selection.float(this.mapPaint.map);
+    return dst;
+  }
+  
   onPaintEvent(event) {
     switch (event.type) {
-      case "commands": this.data.dirty(this.res.path, () => this.map.encode()); break;
-      case "cellDirty": this.data.dirty(this.res.path, () => this.map.encode()); break;
+      case "commands": this.data.dirty(this.res.path, () => this.encode()); break;
+      case "cellDirty": this.data.dirty(this.res.path, () => this.encode()); break;
     }
   }
   
@@ -108,8 +117,8 @@ export class MapEditor {
         case "KeyI": toolp = 15; break;
         case "KeyO": toolp = 17; break;
         case "KeyP": toolp = 19; break;
-        //TODO Esc to anchor selection.
-        //TODO Space (?) to open palette.
+        case "Escape": this.mapPaint.dropSelection(); break;
+        case "Space": this.mapToolbar?.onClickPalette(); break;
       }
       if ((toolp >= 0) && (toolp < MapPaint.TOOLS.length)) {
         this.mapPaint.setTool(MapPaint.TOOLS[toolp].name);
