@@ -53,6 +53,13 @@ export class MapEditor {
     this.mapPaint.setResource(this.res.path, this.map);
     this.mapToolbar = this.dom.spawnController(this.element, MapToolbar, [this.mapPaint]);
     this.mapCanvas = this.dom.spawnController(this.element, MapCanvas, [this.mapPaint]);
+    
+    // Try to update scroll position if mapService indicates a focus cell. For door traversal.
+    if (this.mapService.focusx >= 0) {
+      this.mapCanvas.scrollToCell(this.mapService.focusx, this.mapService.focusy);
+      this.mapService.focusx = -1;
+      this.mapService.focusy = -1;
+    }
   }
   
   encode() {

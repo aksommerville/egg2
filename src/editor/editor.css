@@ -63,6 +63,10 @@ input.toggle:checked + label.toggle {
   flex-direction: column;
 }
 
+.ModalText input.response {
+  min-width: 50vw;
+}
+
 .ModalError {
   background-color: #400;
   color: #fff;
@@ -395,6 +399,7 @@ input.toggle:checked + label.toggle {
 }
 .CommandListEditor input[name='command'] {
   flex: 1;
+  min-width: 40vw;
 }
 
 .SpriteEditor .topRow {

@@ -81,7 +81,7 @@ Planned differences from Egg v1:
 - - [x] SpriteEditor
 - - [ ] MapEditor
 - - - [x] Selection
-- - - [ ] POI
+- - - [x] POI
 - - - [ ] Actions
 - - - [ ] Neighbors
 - - [ ] SongEditor
@@ -111,3 +111,4 @@ Planned differences from Egg v1:
 - - [ ] TilesheetEditor: Persist toolbar.
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
+- - [ ] POI icons for sprite and custom overrides.

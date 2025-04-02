@@ -111,7 +111,25 @@ export class MapToolbar {
       return;
     }
     
-    //TODO Other details worth showing...
+    // With any POI tool selected, show details for the hovered POI.
+    if (
+      (this.mapPaint.effectiveTool === "poiedit") ||
+      (this.mapPaint.effectiveTool === "poimove") ||
+      (this.mapPaint.effectiveTool === "door")
+    ) {
+      const poi = this.mapPaint.getFocusPoi();
+      if (poi) tattle.innerText = this.describePoi(poi);
+      return;
+    }
+    
+    // Surely there's more worth showing up here.
+  }
+  
+  describePoi(poi) {
+    if (poi.mapid !== this.mapPaint.map.rid) {
+      return `[from map:${poi.mapid}] ` + poi.cmd.join(" ");
+    }
+    return poi.cmd.join(" ");
   }
   
   /* Events.
@@ -142,10 +160,11 @@ export class MapToolbar {
   onPaintEvent(event) {
     switch (event.type) {
       case "tileid": this.drawPalette(); break;
-      case "tool": this.refreshToolHighlights(); break;
+      case "tool": this.refreshToolHighlights(); this.refreshDetailTattle(); break;
       case "image": this.drawPalette(); break;
       case "mouse": this.setPositionTattle(event.x, event.y); break;
       case "selectionDirty": this.refreshDetailTattle(); break;
+      case "refreshDetailTattle": this.refreshDetailTattle(); break;
     }
   }
   

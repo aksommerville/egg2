@@ -45,11 +45,12 @@ export class ModalPickOne {
 
 export class ModalText {
   static getDependencies() {
-    return [HTMLElement, Dom];
+    return [HTMLElement, Dom, Window];
   }
-  constructor(element, dom) {
+  constructor(element, dom, window) {
     this.element = element;
     this.dom = dom;
+    this.window = window;
     
     this.result = new Promise((resolve, reject) => {
       this.resolve = resolve;
@@ -75,10 +76,16 @@ export class ModalText {
   }
   
   setup(prompt, preset) {
+    if (!preset) preset = "";
     this.element.querySelector(".prompt").innerText = prompt;
     const response = this.element.querySelector(".response");
-    response.value = preset || "";
-    response.select();
+    response.value = preset;
+    // Apparently, after a showModal(), the DOM isn't stable yet?
+    // If we focus and select immediately, nothing happens.
+    this.window.requestAnimationFrame(() => {
+      response.focus();
+      response.select();
+    });
   }
 }
 

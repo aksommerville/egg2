@@ -34,3 +34,10 @@
 1100000000030000000000000000000000000033343434330010111200343300000000000000000000000003000020
 
 image image:tiles
+sprite @17,20 sprite:hero
+sprite @24,22 sprite:devil
+thingy @26,17
+sprite @23,18 sprite:devil
+thingy @27,20
+door @31,25 map:another @8,3
+door @24,26 map:another @1,3

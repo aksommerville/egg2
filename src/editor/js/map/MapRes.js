@@ -118,3 +118,35 @@ export class MapRes {
     }
   }
 }
+
+/* Maps don't create POI by default.
+ * MapPaint will ask for them, and store them on its own.
+ * A Poi object refers to (map.cmd.commands[]) by reference.
+ */
+export class Poi {
+
+  /* null if not a POI command, otherwise a Poi instance.
+   */
+  static fromCommand(cmd, mapid, posp) {
+    if (typeof(posp) !== "number") {
+      posp = cmd.findIndex(t => t.startsWith("@"));
+    }
+    const match = cmd[posp]?.match(/@(\d+),(\d+)/);
+    if (!match) return null;
+    return new Poi(cmd, +match[1], +match[2], mapid, posp);
+  }
+  
+  constructor(cmd, x, y, mapid, posp) {
+    this.cmd = cmd;
+    this.kw = cmd[0];
+    this.x = x;
+    this.y = y;
+    this.mapid = mapid;
+    this.posp = posp;
+    this.position = 0; // 0..3 = NW,NE,SW,SE
+  }
+  
+  setLocation(x, y) {
+    this.cmd[this.posp] = `@${x},${y}`;
+  }
+}

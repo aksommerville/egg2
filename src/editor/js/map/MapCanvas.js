@@ -29,12 +29,18 @@ export class MapCanvas {
     this.canvasBounds = null; // refreshed at render
     this.renderTimeout = null;
     this.scrollTimeout = null; // Debounce dispatch of scroll events, they come in hot and heavy.
+    this.icons = null;
     this.neighborImages = []; // {image,dx,dy} (dx,dy) in -1..1 and can't both be zero. (image) at natural size.
     this.acquireNeighborImages();
     this.buildUi();
     this.mapPaintListener = this.mapPaint.listen(e => this.onPaintEvent(e));
     this.refreshSizer();
     this.forceScrollerPosition();
+    
+    this.data.fetchImageByUrl("../../icons.png").then(image => {
+      this.icons = image;
+      this.renderSoon();
+    }).catch(() => {});
   }
   
   onRemoveFromDom() {
@@ -110,9 +116,6 @@ export class MapCanvas {
           const srcy = (this.mapPaint.map.v[cellp] >> 4) * this.mapPaint.tilesize;
           ctx.drawImage(this.mapPaint.image, srcx, srcy, this.mapPaint.tilesize, this.mapPaint.tilesize, dstx, dsty, tilesize, tilesize);
         }
-        if (this.mapPaint.toggles.poi) {
-          //TODO poi badges
-        }
         if (this.mapPaint.toggles.physics && this.mapPaint.tilesheet) {
           const ph = this.mapPaint.tilesheet.tables.physics?.[this.mapPaint.map.v[cellp]] || 0;
           ctx.fillStyle = phcolors[ph];
@@ -120,6 +123,16 @@ export class MapCanvas {
           ctx.fillRect(dstx + 2, dsty + 2, tilesize - 4, tilesize - 4);
           ctx.globalAlpha = 1;
         }
+      }
+    }
+    
+    if (this.mapPaint.toggles.poi) {
+      for (const poi of this.mapPaint.poiv) {
+        if (poi.x < cola) continue;
+        if (poi.x > colz) continue;
+        if (poi.y < rowa) continue;
+        if (poi.y > rowz) continue;
+        this.renderPoi(ctx, dstx0 + (poi.x - cola) * tilesize, poi.y * tilesize - this.scrolly + this.margin, tilesize, poi);
       }
     }
     
@@ -207,6 +220,40 @@ export class MapCanvas {
       }
     }
     ctx.globalAlpha = 1;
+  }
+  
+  renderPoi(ctx, x, y, tilesize, poi) {
+  
+    if (poi.position & 1) x += tilesize - 16;
+    if (poi.position & 2) y += tilesize - 16;
+  
+    // If the icons aren't loaded, just a 16x16 white square.
+    if (!this.icons) {
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(x, y, 16, 16);
+      return;
+    }
+    
+    // POI may bring their own icon. I expect to use this for "sprite", and maybe for custom overrides somehow?
+    if (poi.icon) {
+      ctx.drawImage(poi.icon, x, y);
+      return;
+    }
+    
+    // We have icons for a few specific standard types.
+    switch (poi.kw) {
+      case "sprite": ctx.drawImage(this.icons, 16, 16, 16, 16, x, y, 16, 16); return;
+      case "door": { // Different icons for exit vs entrance.
+          if (poi.mapid === this.mapPaint.map.rid) {
+            ctx.drawImage(this.icons, 32, 16, 16, 16, x, y, 16, 16);
+          } else {
+            ctx.drawImage(this.icons, 48, 16, 16, 16, x, y, 16, 16);
+          }
+        } return;
+    }
+    
+    // Final fallback is the generic red dot at 0x10.
+    ctx.drawImage(this.icons, 0, 16, 16, 16, x, y, 16, 16);
   }
   
   /* Neighbor images.
@@ -298,6 +345,20 @@ export class MapCanvas {
     scroller.scrollTop = this.mapPaint.scrolly;
   }
   
+  scrollToCell(x, y) {
+    const scroller = this.element.querySelector(".scroller");
+    const tilesize = this.mapPaint.tilesize * this.mapPaint.zoom;
+    const midx = this.margin + x * tilesize + (tilesize >> 1); // tile's center in scroller space
+    const midy = this.margin + y * tilesize + (tilesize >> 1);
+    if (!this.canvasBounds) {
+      // We need canvasBounds for this. Unfortunately, we usually get called right after construction and no render has happened yet.
+      const canvas = this.element.querySelector("canvas.main");
+      this.canvasBounds = canvas.getBoundingClientRect();
+    }
+    scroller.scrollLeft = midx - (this.canvasBounds.width >> 1);
+    scroller.scrollTop = midy - (this.canvasBounds.height >> 1);
+  }
+  
   /* For a vert-wheel-plus-control event, call this first to record the pointer's position in the map, and also its position on screen.
    * Whatever we return, deliver that to applyZoomAnchor after effecting the zoom and size change.
    */
@@ -331,6 +392,8 @@ export class MapCanvas {
       case "cellDirty": this.renderSoon(); break;
       case "toggle": this.renderSoon(); break;
       case "selectionDirty": this.renderSoon(); break;
+      case "commands": this.renderSoon(); break;
+      case "render": this.renderSoon(); break;
     }
   }
   

@@ -253,6 +253,20 @@ export class Data {
     });
   }
   
+  // Really not a Data concern, but since we load images already, let's do this too.
+  fetchImageByUrl(url) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.addEventListener("load", () => {
+        resolve(image);
+      }, { once: true });
+      image.addEventListener("error", error => {
+        reject(error);
+      }, { once: true });
+      image.src = url;
+    });
+  }
+  
   /* Subscriptions.
    ***********************************************************************************/
    

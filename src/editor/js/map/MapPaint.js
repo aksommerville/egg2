@@ -10,6 +10,8 @@ import { Data } from "../Data.js";
 import { CommandListEditor } from "../std/CommandListEditor.js";
 import { Tilesheet } from "../std/Tilesheet.js";
 import { Selection } from "./Selection.js";
+import { MapRes, Poi } from "./MapRes.js";
+import { NewDoorModal } from "./NewDoorModal.js";
  
 export class MapPaint {
   static getDependencies() {
@@ -36,6 +38,7 @@ export class MapPaint {
     this.pvmy = -1; // ''
     this.mousefx = -1; // "floating-point" or "full-precision"
     this.mousefy = -1; // ''
+    this.poiPosition = -1;
     this.toolInProgress = ""; // Populated while dragging in progress.
     this.anchorx = 0; // monalisa and marquee
     this.anchory = 0;
@@ -43,6 +46,7 @@ export class MapPaint {
     this.tempSelection = null; // Selection or null; only exists while a marquee or lasso operation in progress.
     this.dragging = false; // marquee and lasso; are they doing the generic "drag selection"?
     this.selectMode = ""; // Relevant if not dragging and tempSelection present: "replace", "combine", "remove"
+    this.poiv = []; // Poi, exported from MapRes.js
     
     this.manualTool = "rainbow";
     this.effectiveTool = this.manualTool;
@@ -107,6 +111,8 @@ export class MapPaint {
    * { type:"toggle", k, v }
    * { type:"mouse", x, y } in map cells
    * { type:"cellDirty", x, y }
+   * { type:"refreshDetailTattle" }
+   * { type:"render" }
    */
   listen(cb) {
     const id = this.nextListenerId++;
@@ -132,6 +138,7 @@ export class MapPaint {
     this.image = null;
     this.tilesheet = null;
     this.tilesize = 16;
+    this.composePoiv();
     const imageName = this.map.cmd.getFirstArg("image");
     if (imageName) {
       this.data.getImageAsync(imageName).then(image => {
@@ -145,6 +152,26 @@ export class MapPaint {
       }
     }
     this.broadcast({ type: "map", map, path, image: null });
+  }
+  
+  composePoiv() {
+    this.poiv = this.map.cmd.commands.map(c => Poi.fromCommand(c, this.map.rid)).filter(v => v);
+    for (const poi of this.mapService.findDoorsPointingTo(this.map)) {
+      this.poiv.push(poi);
+    }
+    this.refreshPoiPositions();
+    for (const poi of this.poiv) {
+      //TODO Populate (icon) in (this.poiv) as warranted, eg "sprite".
+    }
+  }
+  
+  refreshPoiPositions() {
+    const countByCellp = [];
+    for (const poi of this.poiv) {
+      const cellp = poi.y * this.map.w + poi.x;
+      poi.position = countByCellp[cellp] || 0;
+      countByCellp[cellp] = poi.position + 1;
+    }
   }
   
   setPalette(tileid) {
@@ -189,6 +216,7 @@ export class MapPaint {
     if (name === this.manualTool) return;
     this.manualTool = name;
     this.effectiveTool = name;
+    this.poiPosition = -1;
     this.saveSettings();
     this.broadcast({ type: "tool", tool: this.effectiveTool });
   }
@@ -229,6 +257,8 @@ export class MapPaint {
    *   {TOOLNAME}Begin(x,y): Return true to receive Update and End events.
    *   {TOOLNAME}Update(x,y): Called when cell changes.
    *   {TOOLNAME}End()
+   *   {TOOLNAME}Motion(x,y): Called at each cell change, when not interacting. (to update tattle)
+   *   {TOOLNAME}FineMotion(x,y): Same, but only when cell boundaries are not crossed.
    * You'll only be called with in-bounds coordinates, always integers.
    *******************************************************************************/
   
@@ -238,7 +268,11 @@ export class MapPaint {
     x = Math.floor(x);
     y = Math.floor(y);
     if (!this.map || (x < 0) || (x >= this.map.w) || (y < 0) || (y >= this.map.h)) x = y = -1;
-    if ((x === this.mousex) && (y === this.mousey)) return false;
+    if ((x === this.mousex) && (y === this.mousey)) {
+      const fnname = this.effectiveTool + "FineMotion";
+      this[fnname]?.(this.mousex, this.mousey);
+      return false;
+    }
     if (this.mousex >= 0) {
       this.pvmx = this.mousex;
       this.pvmy = this.mousey;
@@ -248,6 +282,9 @@ export class MapPaint {
     this.broadcast({ type: "mouse", x, y });
     if (this.toolInProgress && (x >= 0)) {
       const fnname = this.toolInProgress + "Update";
+      this[fnname]?.(this.mousex, this.mousey);
+    } else {
+      const fnname = this.effectiveTool + "Motion";
       this[fnname]?.(this.mousex, this.mousey);
     }
     return true;
@@ -580,32 +617,179 @@ export class MapPaint {
    ***********************************************************/
    
   poieditBegin(x, y) {
-    //TODO Locate POI, use this.mousefx,this.mousefy
-    //TODO Modal
+    const poi = this.getFocusPoi();
+    let prompt, initial;
+    if (!poi) {
+      prompt = "New command:";
+      initial = `KEYWORD @${x},${y}`;
+    } else if (poi.mapid !== this.map.rid) {
+      prompt = `Command in remote map ${poi.mapid}:`;
+      initial = poi.cmd.join(" ");
+    } else {
+      prompt = "Command:";
+      initial = poi.cmd.join(" ");
+    }
+    this.dom.modalText(prompt, initial).then(rsp => {
+      if (typeof(rsp) !== "string") return;
+      if (rsp === initial) return;
+      let map = this.map;
+      if (poi && (poi.mapid !== this.map.rid)) {
+        map = this.mapService.getByRid(poi.mapid);
+        if (!map) return;
+      }
+      if (poi) {
+        const cmdp = map.cmd.commands.indexOf(poi.cmd);
+        if (cmdp < 0) return;
+        map.cmd.commands[cmdp] = rsp.split(/\s+/g).filter(v => v);
+        if (poi.mapid !== this.map.rid) this.mapService.dirtyRid(poi.mapid);
+      } else {
+        map.cmd.commands.push(rsp.split(/\s+/g).filter(v => v));
+      }
+      this.composePoiv();
+      this.broadcast({ type: "refreshDetailTattle" });
+      this.broadcast({ type: "commands" });
+    });
     return false;
+  }
+  
+  poieditMotion(x, y) {
+    this.poiPosition = 0;
+    if (this.mousefx % 1 >= 0.5) this.poiPosition |= 1;
+    if (this.mousefy % 1 >= 0.5) this.poiPosition |= 2;
+    this.broadcast({ type: "refreshDetailTattle" });
+  }
+  
+  poieditFineMotion(x, y) {
+    let position = 0;
+    if (this.mousefx % 1 >= 0.5) position |= 1;
+    if (this.mousefy % 1 >= 0.5) position |= 2;
+    if (position === this.poiPosition) return;
+    this.poiPosition = position;
+    this.broadcast({ type: "refreshDetailTattle" });
+  }
+  
+  getFocusPoi() {
+    if (this.poiPosition < 0) {
+      return this.poiv.find(p => ((p.x === this.mousex) && (p.y === this.mousey)));
+    }
+    return this.poiv.find(p => ((p.x === this.mousex) && (p.y === this.mousey) && (p.position === this.poiPosition)));
   }
   
   /* Poi Move: Move or duplicate POI.
    **************************************************************/
    
   poimoveBegin(x, y) {
-    //TODO Locate POI (f). Return false if none.
-    //TODO If Shift, drop a copy of the POI first.
+    let poi = this.getFocusPoi();
+    if (!poi) return false;
+    if (this.modifiers.includes("shift")) {
+      const cmd = poi.cmd;
+      if (poi.mapid === this.map.rid) { // Shift-drag to copy only works for local POI.
+        this.map.cmd.commands.push([...cmd]);
+        this.composePoiv();
+        this.broadcast({ type: "commands" });
+        if (!(poi = this.poiv.find(p => p.cmd === cmd))) return; // composePoiv makes fresh objects, but must contain the same (cmd).
+      }
+    }
+    this.dragPoi = poi;
     return true;
   }
   
   poimoveUpdate(x, y) {
-    //TODO Move POI.
+    if (!this.dragPoi) return;
+    this.dragPoi.x = x;
+    this.dragPoi.y = y;
+    this.refreshPoiPositions();
+    this.broadcast({ type: "render" });
+  }
+  
+  poimoveEnd() {
+    if (!this.dragPoi) return;
+    this.dragPoi.setLocation(this.mousex, this.mousey);
+    this.broadcast({ type: "commands" });
+    if (this.dragPoi.mapid !== this.map.rid) {
+      this.mapService.dirtyRid(this.dragPoi.mapid);
+    }
+    this.broadcast({ type: "refreshDetailTattle" });
+  }
+  
+  poimoveMotion(x, y) {
+    this.poiPosition = 0;
+    if (this.mousefx % 1 >= 0.5) this.poiPosition |= 1;
+    if (this.mousefy % 1 >= 0.5) this.poiPosition |= 2;
+    this.broadcast({ type: "refreshDetailTattle" });
+  }
+  
+  poimoveFineMotion(x, y) {
+    let position = 0;
+    if (this.mousefx % 1 >= 0.5) position |= 1;
+    if (this.mousefy % 1 >= 0.5) position |= 2;
+    if (position === this.poiPosition) return;
+    this.poiPosition = position;
+    this.broadcast({ type: "refreshDetailTattle" });
   }
   
   /* Door: Travel through Door POI.
    **************************************************************/
    
   doorBegin(x, y) {
-    //TODO Locate Door (f)
-    //TODO Record destination coords in MapService, and fetch and clear those if present when loading a map.
-    //TODO Open the remote map
+    let poi = this.getFocusPoi();
+    if (poi && (poi.kw === "door")) {
+      let nameOrId=null, loc=null;
+      if (poi.mapid === this.map.rid) {
+        // Traverse EXIT door, ie to poi's destination.
+        nameOrId = poi.cmd[2];
+        loc = poi.cmd[3];
+      } else {
+        // Traverse ENTRANCE door, ie to poi's source.
+        nameOrId = poi.mapid;
+        loc = poi.cmd[1];
+      }
+      const lmatch = loc?.match(/^@(\d+),(\d+)/);
+      if (!lmatch) return false;
+      const x = +lmatch[1];
+      const y = +lmatch[2];
+      this.mapService.navigate(nameOrId, x, y);
+      return false;
+    }
+    if (!poi) {
+      const modal = this.dom.spawnModal(NewDoorModal);
+      modal.setup(this.map, x, y);
+      modal.result.then(rsp => {
+        if (!rsp) return;
+        const srcres = this.data.findResource(this.map.rid, "map");
+        if (!srcres) return;
+        let dstres = this.data.findResource(rsp.dstmapid, "map");
+        const dstmap = this.mapService.getByPath(dstres?.path);
+        if (!dstmap) return this.dom.modalError(`Map '${rsp.dstmapid}' not found`);
+        if (rsp.dstx < 0) rsp.dstx = 0; else if (rsp.dstx >= dstmap.w) rsp.dstx = dstmap.w - 1;
+        if (rsp.dsty < 0) rsp.dsty = 0; else if (rsp.dsty >= dstmap.h) rsp.dsty = dstmap.h - 1;
+        this.map.cmd.commands.push(["door", `@${x},${y}`, `map:${dstres.name || dstres.rid}`, `@${rsp.dstx},${rsp.dsty}`]);
+        this.data.dirty(srcres.path, () => this.map.encode());
+        if (rsp.roundtrip) {
+          dstmap.cmd.commands.push(["door", `@${rsp.dstx},${rsp.dsty}`, `map:${srcres.name || srcres.rid}`, `@${x},${y}`]);
+          this.data.dirty(dstres.path, () => dstmap.encode());
+        }
+        this.composePoiv();
+        this.broadcast({ type: "commands" });
+      });
+    }
     return false;
+  }
+  
+  doorMotion(x, y) {
+    this.poiPosition = 0;
+    if (this.mousefx % 1 >= 0.5) this.poiPosition |= 1;
+    if (this.mousefy % 1 >= 0.5) this.poiPosition |= 2;
+    this.broadcast({ type: "refreshDetailTattle" });
+  }
+  
+  doorFineMotion(x, y) {
+    let position = 0;
+    if (this.mousefx % 1 >= 0.5) position |= 1;
+    if (this.mousefy % 1 >= 0.5) position |= 2;
+    if (position === this.poiPosition) return;
+    this.poiPosition = position;
+    this.broadcast({ type: "refreshDetailTattle" });
   }
   
   /* Impulse actions.
@@ -620,9 +804,17 @@ export class MapPaint {
   action_commands() {
     const modal = this.dom.spawnModal(CommandListEditor);
     modal.setup(this.map.cmd, "map");
+    let dirty = false;
     modal.ondirty = () => {
+      dirty = true;
       this.broadcast({ type: "commands" });
     };
+    modal.element.addEventListener("close", () => {
+      if (dirty) {
+        this.composePoiv();
+        this.broadcast({ type: "commands" });
+      }
+    });
   }
   
   action_resize() {
