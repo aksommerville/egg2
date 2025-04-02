@@ -12,6 +12,7 @@ import { Tilesheet } from "../std/Tilesheet.js";
 import { Selection } from "./Selection.js";
 import { MapRes, Poi } from "./MapRes.js";
 import { NewDoorModal } from "./NewDoorModal.js";
+import { MapResizeModal } from "./MapResizeModal.js";
  
 export class MapPaint {
   static getDependencies() {
@@ -818,11 +819,26 @@ export class MapPaint {
   }
   
   action_resize() {
-    console.log(`MapPaint.action_resize`);//TODO
+    const modal = this.dom.spawnModal(MapResizeModal);
+    modal.setup(this.map);
+    modal.result.then(rsp => {
+      if (!rsp) return;
+      if ((typeof(rsp.w) !== "number") || (rsp.w < 1) || (rsp.w > 0xff)) return;
+      if ((typeof(rsp.h) !== "number") || (rsp.h < 1) || (rsp.h > 0xff)) return;
+      if ((rsp.w === this.map.w) && (rsp.h === this.map.h)) return;
+      this.map.resize(rsp.w, rsp.h, rsp.anchor);
+      this.broadcast({ type: "zoom" });
+      this.broadcast({ type: "cellDirty", x: 0, y: 0 });
+    });
   }
   
   action_healAll() {
-    console.log(`MapPaint.action_healAll`);//TODO
+    for (let y=0; y<this.map.h; y++) {
+      for (let x=0; x<this.map.w; x++) {
+        this.healUpdate(x, y, false);
+      }
+    }
+    this.broadcast({ type: "cellDirty", x: 0, y: 0 });
   }
   
   action_neighbors() {

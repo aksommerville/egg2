@@ -92,28 +92,54 @@ export class MapRes {
   }
   
   /* Resize in place to (nw,nh).
-   * If provided (ax,ay) are the anchor point in old coordinates, which copy to (0,0) after the resize.
-   * We apply that anchor to the first "@" argument of every command, too.
-   * You may request the current dimensions, and use (ax,ay) to effect a shuffle.
+   * (anchor) is one of: nw, n, ne, w, c, e, sw, s, se. "nw" if omitted.
    */
-  resize(nw, nh, ax, ay) {
+  resize(nw, nh, anchor) {
     if ((nw < 1) || (nh < 1) || (nw > 0xff) || (nh > 0xff)) throw new Error(`Invalid map size ${nw},${nh}`);
-    if ((nw === this.w) && (nh === this.h) && !ax && !ay) return;
+    if ((nw === this.w) && (nh === this.h)) return;
+    if (!anchor) anchor = "nw";
+    let dstx=0, dsty=0;
+    switch (anchor) {
+      case "n": case "c": case "s": dstx = (nw >> 1) - (this.w >> 1); break;
+      case "ne": case "e": case "se": dstx = nw - this.w; break;
+    }
+    switch (anchor) {
+      case "w": case "c": case "e": dsty = (nh >> 1) - (this.h >> 1); break;
+      case "sw": case "s": case "se": dsty = nh - this.h; break;
+    }
     const nv = new Uint8Array(nw * nh);
-    this.copyCells(nv, nw, nh, this.v, this.w, this.h, ax || 0, ay || 0, this.w, this.h);
+    this.copyCells(nv, nw, nh, this.v, this.w, this.h, dstx, dsty, this.w, this.h);
     this.w = nw;
     this.h = nh;
     this.v = nv;
-    if (ax || ay) {
+    if (dstx || dsty) {
       for (const command of this.cmd.commands) {
         for (let i=1; i<command.length; i++) {
           if (!command[i].startsWith("@")) continue;
           const v = command[i].substring(1).split(',').map(v => +v);
-          if (v.length >= 1) v[0] -= ax || 0;
-          if (v.length >= 2) v[1] -= ay || 0;
+          if (v.length >= 1) v[0] += dstx;
+          if (v.length >= 2) v[1] += dsty;
           command[i] = "@" + v.join(",");
-          break;
+          break; // only edit the first "@" token.
         }
+      }
+      //TODO Entrance doors are not being updated... We can't do that from here. Does it matter?
+    }
+  }
+  
+  copyCells(dst, dstw, dsth, src, srcw, srch, dstx, dsty, w, h) {
+    let srcx=0, srcy=0;
+    if (dstx < 0) { w += dstx; srcx -= dstx; dstx = 0; }
+    if (dsty < 0) { h += dsty; srcy -= dsty; dsty = 0; }
+    if (dstx + w > dstw) w = dstw - dstx;
+    if (dsty + h > dsth) h = dsth - dsty;
+    if (srcx + w > srcw) w = srcw - srcx;
+    if (srcy + h > srch) h = srch - srcy;
+    let srcrowp = srcy * srcw + srcx;
+    let dstrowp = dsty * dstw + dstx;
+    for (let yi=h; yi-->0; srcrowp+=srcw, dstrowp+=dstw) {
+      for (let xi=w, srcp=srcrowp, dstp=dstrowp; xi-->0; srcp++, dstp++) {
+        dst[dstp] = src[srcp];
       }
     }
   }

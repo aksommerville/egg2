@@ -82,7 +82,7 @@ Planned differences from Egg v1:
 - - [ ] MapEditor
 - - - [x] Selection
 - - - [x] POI
-- - - [ ] Actions
+- - - [x] Actions
 - - - [ ] Neighbors
 - - [ ] SongEditor
 - - [x] Acquire shared symbols.
