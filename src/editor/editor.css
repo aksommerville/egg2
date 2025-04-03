@@ -396,6 +396,7 @@ input.toggle:checked + label.toggle {
 
 .CommandListEditor {
   overflow-y: scroll;
+  height: 50vh;
 }
 .CommandListEditor input[name='command'] {
   flex: 1;

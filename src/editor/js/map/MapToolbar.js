@@ -99,6 +99,19 @@ export class MapToolbar {
     const tattle = this.element.querySelector(".tattle.detail");
     tattle.innerText = "";
     
+    // If they're pointing to the neighbors gutter, that trumps all.
+    if (this.mapPaint.majorFocus !== 4) {
+      const dx = (this.mapPaint.majorFocus % 3) - 1;
+      const dy = Math.floor(this.mapPaint.majorFocus / 3) - 1;
+      const res = this.mapService.getNeighborResource(this.mapPaint.map, dx, dy);
+      if (res) {
+        tattle.innerText = res.path;
+      } else if (this.mapService.canGenerateNeighbor(this.mapPaint.map, dx, dy)) {
+        tattle.innerText = "new map";
+      }
+      return;
+    }
+    
     // When a selection is being established, describe the box or cell count.
     // Egg v1 had a Pedometer tool, which I want to roll into the lasso.
     if (this.mapPaint.tempSelection) {
@@ -165,6 +178,7 @@ export class MapToolbar {
       case "mouse": this.setPositionTattle(event.x, event.y); break;
       case "selectionDirty": this.refreshDetailTattle(); break;
       case "refreshDetailTattle": this.refreshDetailTattle(); break;
+      case "majorFocus": this.refreshDetailTattle(); break;
     }
   }
   

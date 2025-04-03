@@ -57,9 +57,16 @@ If present, the editor will use:
 - `image`: imageid (tilesheet)
 - `sprite`: position, spriteid
 - `door`: position, mapid, dstposition
+- `neighbors`: west, east, north, south: 4 neighbor maps.
+- `position`: longitude, latitude, elevation: Absolute position in the world.
 
 Also, any command with an `@` argument, the editor will display it on top of the cells.
 Note that the editor doesn't care about the binary format of commands, only the text.
+
+If `neighbors` or `position` is in play, you should define shared symbols `NS_sys_mapw` and `NS_sys_maph`; all maps should be the same size.
+`neighbors` means each map can point to 4 adjacent maps.
+`position` means there is a global coordinate system in which each map can place itself.
+Don't use both.
 
 ## Sprite
 

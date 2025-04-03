@@ -79,11 +79,11 @@ Planned differences from Egg v1:
 - - [x] TilesheetEditor
 - - [x] DecalsheetEditor
 - - [x] SpriteEditor
-- - [ ] MapEditor
+- - [x] MapEditor
 - - - [x] Selection
 - - - [x] POI
 - - - [x] Actions
-- - - [ ] Neighbors
+- - - [x] Neighbors
 - - [ ] SongEditor
 - - [x] Acquire shared symbols.
 - - [ ] Standard actions... what's needed?

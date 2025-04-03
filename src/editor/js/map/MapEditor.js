@@ -10,15 +10,16 @@ import { MapCanvas } from "./MapCanvas.js";
 
 export class MapEditor {
   static getDependencies() {
-    return [HTMLElement, Dom, Data, MapService, MapPaint, Window];
+    return [HTMLElement, Dom, Data, MapService, MapPaint, Window, "nonce"];
   }
-  constructor(element, dom, data, mapService, mapPaint, window) {
+  constructor(element, dom, data, mapService, mapPaint, window, nonce) {
     this.element = element;
     this.dom = dom;
     this.data = data;
     this.mapService = mapService;
     this.mapPaint = mapPaint;
     this.window = window;
+    this.nonce = nonce;
     
     this.mapPaint.mapEditor = this;
     
@@ -30,15 +31,19 @@ export class MapEditor {
     this.keyListener = e => this.onKey(e);
     this.window.addEventListener("keydown", this.keyListener);
     this.window.addEventListener("keyup", this.keyListener);
+    this.neighborCheckTimeout = null;
   }
   
   onRemoveFromDom() {
     this.mapPaint.unlisten(this.mapPaintListener);
-    this.mapPaint.destroy();
     if (this.keyListener) {
       this.window.removeEventListener("keydown", this.keyListener);
       this.window.removeEventListener("keyup", this.keyListener);
       this.keyListener = null;
+    }
+    if (this.neighborCheckTimeout) {
+      this.window.clearTimeout(this.neighborCheckTimeout);
+      this.neighborCheckTimeout = null;
     }
   }
   
@@ -71,10 +76,19 @@ export class MapEditor {
     return dst;
   }
   
+  checkNeighborsSoon() {
+    if (this.mapService.neighborStrategy === "none") return;
+    if (this.neighborCheckTimeout) this.window.clearTimeout(this.neighborCheckTimeout);
+    this.neighborCheckTimeout = this.window.setTimeout(() => {
+      this.neighborCheckTimeout = null;
+      this.mapService.requireLayout();
+    }, 1000);
+  }
+  
   onPaintEvent(event) {
     switch (event.type) {
-      case "commands": this.data.dirty(this.res.path, () => this.encode()); break;
-      case "cellDirty": this.data.dirty(this.res.path, () => this.encode()); break;
+      case "commands": if (this.mapPaint.map) this.data.dirty(this.res.path, () => this.encode()); this.checkNeighborsSoon(); break;
+      case "cellDirty": if (this.mapPaint.map) this.data.dirty(this.res.path, () => this.encode()); break;
     }
   }
   

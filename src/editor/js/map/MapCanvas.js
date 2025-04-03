@@ -169,11 +169,13 @@ export class MapCanvas {
       const dsth = ni.image.height * this.mapPaint.zoom;
       let dstx;
       if (ni.dx < 0) dstx = this.margin - this.edgeGap - dstw;
-      else if (ni.dx > 0) dstx = this.margin + this.mapPaint.map.w * this.mapPaint.tilesize + this.edgeGap;
+      else if (ni.dx > 0) dstx = this.margin + this.mapPaint.map.w * tilesize + this.edgeGap;
       else dstx = this.margin;
       if (ni.dy < 0) dsty = this.margin - this.edgeGap - dsth;
-      else if (ni.dy > 0) dsty = this.margin + this.mapPaint.map.h * this.mapPaint.tilesize + this.edgeGap;
+      else if (ni.dy > 0) dsty = this.margin + this.mapPaint.map.h * tilesize + this.edgeGap;
       else dsty = this.margin;
+      dstx -= this.scrollx;
+      dsty -= this.scrolly;
       ctx.drawImage(ni.image, 0, 0, ni.image.width, ni.image.height, dstx, dsty, dstw, dsth);
     }
   }

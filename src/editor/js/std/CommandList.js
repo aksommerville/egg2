@@ -81,4 +81,8 @@ export class CommandList {
     if (cmd.length > 2) return cmd.slice(1).join(" ");
     return cmd[1];
   }
+  
+  getFirstArgArray(kw) {
+    return this.commands.find(c => c[0] === kw);
+  }
 }

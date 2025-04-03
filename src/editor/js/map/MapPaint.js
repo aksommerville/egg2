@@ -13,16 +13,19 @@ import { Selection } from "./Selection.js";
 import { MapRes, Poi } from "./MapRes.js";
 import { NewDoorModal } from "./NewDoorModal.js";
 import { MapResizeModal } from "./MapResizeModal.js";
+import { Actions } from "../Actions.js";
+import { NewMapModal } from "./NewMapModal.js";
  
 export class MapPaint {
   static getDependencies() {
-    return [MapService, Dom, Data, Window];
+    return [MapService, Dom, Data, Window, Actions];
   }
-  constructor(mapService, dom, data, window) {
+  constructor(mapService, dom, data, window, actions) {
     this.mapService = mapService;
     this.dom = dom;
     this.data = data;
     this.window = window;
+    this.actions = actions;
     this.mapEditor = null; // MapEditor should inject itself here during construction.
     
     this.path = "";
@@ -40,6 +43,7 @@ export class MapPaint {
     this.mousefx = -1; // "floating-point" or "full-precision"
     this.mousefy = -1; // ''
     this.poiPosition = -1;
+    this.majorFocus = 4; // 0..8 = NW..SE, tracking neighbor regions.
     this.toolInProgress = ""; // Populated while dragging in progress.
     this.anchorx = 0; // monalisa and marquee
     this.anchory = 0;
@@ -114,6 +118,7 @@ export class MapPaint {
    * { type:"cellDirty", x, y }
    * { type:"refreshDetailTattle" }
    * { type:"render" }
+   * { type:"majorFocus", x, y }
    */
   listen(cb) {
     const id = this.nextListenerId++;
@@ -262,12 +267,28 @@ export class MapPaint {
    *   {TOOLNAME}FineMotion(x,y): Same, but only when cell boundaries are not crossed.
    * You'll only be called with in-bounds coordinates, always integers.
    *******************************************************************************/
+   
+  checkMajorFocus(x, y) {
+    if (!this.map) return;
+    let np = this.majorFocus;
+    if (x < 0) x = 0;
+    else if (x < this.map.w) x = 1;
+    else x = 2;
+    if (y < 0) y = 0;
+    else if (y < this.map.h) y = 1;
+    else y = 2;
+    np = y * 3 + x;
+    if (np === this.majorFocus) return;
+    this.majorFocus = np;
+    this.broadcast({ type: "majorFocus", x, y });
+  }
   
   setMouse(x, y) {
     this.mousefx = x;
     this.mousefy = y;
     x = Math.floor(x);
     y = Math.floor(y);
+    this.checkMajorFocus(x, y);
     if (!this.map || (x < 0) || (x >= this.map.w) || (y < 0) || (y >= this.map.h)) x = y = -1;
     if ((x === this.mousex) && (y === this.mousey)) {
       const fnname = this.effectiveTool + "FineMotion";
@@ -293,11 +314,23 @@ export class MapPaint {
   
   onMouseDown() {
     if (this.toolInProgress) return;
-    if (!this.map || (this.mousex < 0) || (this.mousey < 0) || (this.mousex >= this.map.w) || (this.mousey >= this.map.h)) return;
-    const fnname = this.effectiveTool + "Begin";
-    this.toolInProgress = this.effectiveTool;
-    if (!this[fnname]?.(this.mousex, this.mousey)) {
-      this.toolInProgress = "";
+    if (!this.map) return;
+    if (this.majorFocus === 4) {
+      if ((this.mousex < 0) || (this.mousey < 0) || (this.mousex >= this.map.w) || (this.mousey >= this.map.h)) return;
+      const fnname = this.effectiveTool + "Begin";
+      this.toolInProgress = this.effectiveTool;
+      if (!this[fnname]?.(this.mousex, this.mousey)) {
+        this.toolInProgress = "";
+      }
+    } else {
+      const dx = this.majorFocus % 3 - 1;
+      const dy = Math.floor(this.majorFocus / 3) - 1;
+      const res = this.mapService.getNeighborResource(this.map, dx, dy);
+      if (res) {
+        this.actions.editResource(res.path);
+      } else if (this.mapService.canGenerateNeighbor(this.map, dx, dy)) {
+        this.generateNeighbor(dx, dy);
+      }
     }
   }
   
@@ -764,10 +797,10 @@ export class MapPaint {
         if (!dstmap) return this.dom.modalError(`Map '${rsp.dstmapid}' not found`);
         if (rsp.dstx < 0) rsp.dstx = 0; else if (rsp.dstx >= dstmap.w) rsp.dstx = dstmap.w - 1;
         if (rsp.dsty < 0) rsp.dsty = 0; else if (rsp.dsty >= dstmap.h) rsp.dsty = dstmap.h - 1;
-        this.map.cmd.commands.push(["door", `@${x},${y}`, `map:${dstres.name || dstres.rid}`, `@${rsp.dstx},${rsp.dsty}`]);
+        this.map.cmd.commands.push(["door", `@${x},${y}`, `map:${dstres.name || dstres.rid}`, `@${rsp.dstx},${rsp.dsty}`, "0x0000"]);
         this.data.dirty(srcres.path, () => this.map.encode());
         if (rsp.roundtrip) {
-          dstmap.cmd.commands.push(["door", `@${rsp.dstx},${rsp.dsty}`, `map:${srcres.name || srcres.rid}`, `@${x},${y}`]);
+          dstmap.cmd.commands.push(["door", `@${rsp.dstx},${rsp.dsty}`, `map:${srcres.name || srcres.rid}`, `@${x},${y}`, "0x0000"]);
           this.data.dirty(dstres.path, () => dstmap.encode());
         }
         this.composePoiv();
@@ -791,6 +824,21 @@ export class MapPaint {
     if (position === this.poiPosition) return;
     this.poiPosition = position;
     this.broadcast({ type: "refreshDetailTattle" });
+  }
+  
+  /* Generate neighbor.
+   ***********************************************************************************/
+   
+  generateNeighbor(dx, dy) {
+    if (!this.map) return;
+    const modal = this.dom.spawnModal(NewMapModal);
+    modal.setup(this.map, dx, dy);
+    modal.result.then(rsp => {
+      if (!rsp) return null;
+      return this.mapService.generateNeighbor(this.map, dx, dy, rsp.name, rsp.rid);
+    }).then(res => {
+      if (res) this.actions.editResource(res.path);
+    }).catch(e => this.dom.modalError(e));
   }
   
   /* Impulse actions.
@@ -839,10 +887,6 @@ export class MapPaint {
       }
     }
     this.broadcast({ type: "cellDirty", x: 0, y: 0 });
-  }
-  
-  action_neighbors() {
-    console.log(`MapPaint.action_neighbors`);//TODO
   }
 }
 
@@ -909,9 +953,5 @@ MapPaint.ACTIONS = [
   {
     name: "healAll",
     label: "Heal All",
-  },
-  {
-    name: "neighbors",
-    label: "Neighbors...",
   },
 ];

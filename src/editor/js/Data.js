@@ -187,6 +187,11 @@ export class Data {
     this.broadcastDirty("dirty");
   }
   
+  dirtyRid(type, rid, cb) {
+    const res = this.resv.find(r => ((r.type === type) && (r.rid === rid)));
+    this.dirty(res.path, cb);
+  }
+  
   /* (req) may be path, rid, name, or qualified name.
    * (type) is optional; if false, (req) must be a qualified name or path.
    * This is meant to be the one-stop-shop for any way you might address a resource.
@@ -234,16 +239,18 @@ export class Data {
   getImageAsync(rid) {
     const res = this.findResource(rid, "image");
     if (!res) return Promise.reject(`image:${rid} not found`);
-    if (res.image) return Promise.resolve(res.image); // If image present, assume it's loaded. This won't always be so, does it matter?
-    return new Promise((resolve, reject) => {
+    if (res.image) return res.loadPromise || Promise.resolve(res.image);
+    return res.loadPromise = new Promise((resolve, reject) => {
       const blob = new Blob([res.serial]);
       const url = URL.createObjectURL(blob);
       const image = new Image();
       image.addEventListener("load", () => {
+        res.loadPromise = null;
         URL.revokeObjectURL(url);
         resolve(image);
       }, { once: true });
       image.addEventListener("error", error => {
+        res.loadPromise = null;
         URL.revokeObjectURL(url);
         delete res.image;
         reject(error);
