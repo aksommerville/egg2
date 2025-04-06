@@ -44,6 +44,13 @@ If it succeeds, or no `--project` was provided, proceed with `GET /**`.
 Returns an array of `{nstype,ns,k,v}` for the symbols declared in the project's `shared_symbols.h`.
 If no project was specified at launch, or anything else goes wrong, returns an empty array.
 
+### GET /api/instruments
+
+Returns the synth instruments config file verbatim (EAU-Text).
+That should stored at `EGG_SDK/src/eggdev/instruments.eaut`.
+This is read from scratch every time you call it; no need to restart the server if you change the underlying file.
+Beware that regular conversion against the default instruments does cache, and you do have to restart to get that.
+
 ### GET /api/toc/**
 
 Resolve the remainder of the path and return a JSON array describing all the files under it.

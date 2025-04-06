@@ -66,11 +66,16 @@ export class Dom {
    * We add some logic to dismiss on OOB clicks (why isn't that the browser's default?), and to remove on close.
    */
   spawnModal(controllerClass) {
+    let downInBounds = true;
     const element = this.spawn(this.document.body, "DIALOG", [controllerClass.name], {
+      "on-mousedown": event => { // Obnoxious hack to prevent dismissing when one drags from inside the modal to outside, eg selecting text.
+        const bounds = element.getBoundingClientRect();
+        downInBounds = ((event.x >= bounds.x) && (event.y >= bounds.y) && (event.x < bounds.right) && (event.y < bounds.bottom));
+      },
       "on-click": event => {
         const bounds = element.getBoundingClientRect();
         const inBounds = ((event.x >= bounds.x) && (event.y >= bounds.y) && (event.x < bounds.right) && (event.y < bounds.bottom));
-        if (!inBounds) {
+        if (!inBounds && !downInBounds) {
           element.close();
           event.preventDefault();
           event.stopPropagation();

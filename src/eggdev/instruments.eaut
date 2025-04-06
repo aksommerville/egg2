@@ -1479,3 +1479,12 @@
 #--- 130..143: Reserve for additional drum kits and sound effects -------------------------------------------------
 
 #--- 144..254: Extra non-GM instruments ---------------------------------------------------------------------------
+
+globals {
+  tempo 12345
+}
+events {
+  delay 100
+  note 1 0x40 7 1234
+  wheel 1 0x30
+}

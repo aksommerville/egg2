@@ -73,6 +73,19 @@ static int eggdev_cb_get_symbols(struct http_xfer *req,struct http_xfer *rsp) {
   return http_xfer_set_status(rsp,200,"OK");
 }
 
+/* GET /api/instruments
+ */
+ 
+static int eggdev_cb_get_instruments(struct http_xfer *req,struct http_xfer *rsp) {
+  void *src=0;
+  int srcc=eggdev_config_get_instruments_text(&src);
+  if (srcc<0) srcc=0;
+  sr_encode_raw(http_xfer_get_body(rsp),src,srcc);
+  if (src) free(src);
+  http_xfer_set_header(rsp,"Content-Type",12,"text/plain",10);
+  return http_xfer_set_status(rsp,200,"OK");
+}
+
 /* GET /api/toc/**
  */
  
@@ -367,6 +380,7 @@ static int eggdev_cb_serve(struct http_xfer *req,struct http_xfer *rsp,void *use
   return http_dispatch(req,rsp,
     HTTP_METHOD_GET,"/api/buildfirst**",eggdev_cb_get_buildfirst,
     HTTP_METHOD_GET,"/api/symbols",eggdev_cb_get_symbols,
+    HTTP_METHOD_GET,"/api/instruments",eggdev_cb_get_instruments,
     HTTP_METHOD_GET,"/api/toc**",eggdev_cb_get_toc,
     HTTP_METHOD_GET,"/api/allcontent**",eggdev_cb_get_allcontent,
     HTTP_METHOD_POST,"/api/convert",eggdev_cb_post_convert,

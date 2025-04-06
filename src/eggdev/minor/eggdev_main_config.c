@@ -151,27 +151,23 @@ int eggdev_main_config() {
  
 int eggdev_config_get_instruments(void *dstpp) {
   if (!g.instruments) {
-    char path[1024];
-    int pathc=snprintf(path,sizeof(path),"%s/src/eggdev/instruments.eaut",g.sdkpath);
-    if ((pathc>0)&&(pathc<sizeof(path))) {
-      void *src=0;
-      int srcc=file_read(&src,path);
-      if (srcc>=0) {
-        struct sr_encoder dst={0};
-        struct eggdev_convert_context ctx={
-          .dst=&dst,
-          .src=src,
-          .srcc=srcc,
-          .refname=path,
-        };
-        int err=eggdev_eau_from_eaut(&ctx);
-        free(src);
-        if (err>=0) {
-          g.instruments=dst.v;
-          g.instrumentsc=dst.c;
-        } else {
-          sr_encoder_cleanup(&dst);
-        }
+    void *src=0;
+    int srcc=eggdev_config_get_instruments_text(&src);
+    if (srcc>=0) {
+      struct sr_encoder dst={0};
+      struct eggdev_convert_context ctx={
+        .dst=&dst,
+        .src=src,
+        .srcc=srcc,
+        .refname="EGG_SDK/src/eggdev/instruments.eaut",
+      };
+      int err=eggdev_eau_from_eaut(&ctx);
+      free(src);
+      if (err>=0) {
+        g.instruments=dst.v;
+        g.instrumentsc=dst.c;
+      } else {
+        sr_encoder_cleanup(&dst);
       }
     }
     if (!g.instruments) {
@@ -181,4 +177,11 @@ int eggdev_config_get_instruments(void *dstpp) {
   }
   *(void**)dstpp=g.instruments;
   return g.instrumentsc;
+}
+
+int eggdev_config_get_instruments_text(void *dstpp) {
+  char path[1024];
+  int pathc=snprintf(path,sizeof(path),"%s/src/eggdev/instruments.eaut",g.sdkpath);
+  if ((pathc>0)&&(pathc>=sizeof(path))) return -1;
+  return file_read(dstpp,path);
 }

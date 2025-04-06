@@ -11,7 +11,7 @@ export class Encoder {
   
   _init() {
     this.c = 0;
-    this.v = []; // Uint8Array unless empty; length>=c
+    this.v = new Uint8Array(1024);
   }
   
   _copy(src) {
@@ -27,5 +27,79 @@ export class Encoder {
       if (sig.charCodeAt(i) !== src[i]) return false;
     }
     return true;
+  }
+  
+  finish() {
+    const nv = new Uint8Array(this.c);
+    const srcview = new Uint8Array(this.v.buffer, 0, this.c);
+    nv.set(srcview);
+    return nv;
+  }
+  
+  require(addc) {
+    if (addc < 1) return;
+    if (this.c <= this.v.length - this.c) return;
+    const na = ((this.c + addc + 1024) & ~1023);
+    const nv = new Uint8Array(na);
+    const dstview = new Uint8Array(nv.buffer, 0, this.v.length);
+    dstview.set(this.v);
+    this.v = nv;
+  }
+  
+  u8(src) {
+    this.require(1);
+    this.v[this.c++] = src;
+  }
+  
+  u16be(src) {
+    this.require(2);
+    this.v[this.c++] = src >> 8;
+    this.v[this.c++] = src;
+  }
+  
+  u24be(src) {
+    this.require(3);
+    this.v[this.c++] = src >> 16;
+    this.v[this.c++] = src >> 8;
+    this.v[this.c++] = src;
+  }
+  
+  u32be(src) {
+    this.require(4);
+    this.v[this.c++] = src >> 24;
+    this.v[this.c++] = src >> 16;
+    this.v[this.c++] = src >> 8;
+    this.v[this.c++] = src;
+  }
+  
+  u16le(src) {
+    this.require(2);
+    this.v[this.c++] = src;
+    this.v[this.c++] = src >> 8;
+  }
+  
+  u24le(src) {
+    this.require(3);
+    this.v[this.c++] = src;
+    this.v[this.c++] = src >> 8;
+    this.v[this.c++] = src >> 16;
+  }
+  
+  u32le(src) {
+    this.require(4);
+    this.v[this.c++] = src;
+    this.v[this.c++] = src >> 8;
+    this.v[this.c++] = src >> 16;
+    this.v[this.c++] = src >> 24;
+  }
+  
+  raw(src) {
+    if (typeof(src) === "string") src = new TextEncoder("utf8").encode(src);
+    if (src instanceof ArrayBuffer) src = new Uint8Array(src);
+    if (!(src instanceof Uint8Array)) throw new Error(`Encoder.raw expected string, ArrayBuffer, or Uint8Array`);
+    this.require(src.length);
+    const dstview = new Uint8Array(this.v.buffer, this.c, src.length);
+    dstview.set(src);
+    this.c += src.length;
   }
 }

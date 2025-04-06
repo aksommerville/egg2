@@ -112,3 +112,5 @@ Planned differences from Egg v1:
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] POI icons for sprite and custom overrides.
+- - [ ] SongEditor: Playback
+- - [ ] SongEditor: Channel names per MIDI file.

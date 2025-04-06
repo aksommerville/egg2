@@ -108,6 +108,7 @@ int eggdev_config_key_by_index(void *dstpp,int p);
 int eggdev_config_get(void *dstpp,const char *k,int kc);
 int eggdev_config_get_sub(void *dstpp,const char *target,int targetc,const char *k,int kc);
 int eggdev_config_get_instruments(void *dstpp); // EAU file or empty.
+int eggdev_config_get_instruments_text(void *dstpp); // Reads source file from scratch, usually not what you want. Caller frees.
 
 // client/eggdev_client_public.c
 void eggdev_client_dirty();

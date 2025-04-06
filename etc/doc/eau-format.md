@@ -18,6 +18,11 @@ Meta 0x77 contains the full Channel Headers, from the first (Channel ID), and no
 If absent, our compiler will make up Channel Headers based on Program Change and other clues.
 If Meta 0x77 is present, we don't guess anything from the MIDI events.
 
+Meta 0x51 Set Tempo should appear once, at time zero.
+If it appears mid-song, we'll process timing correctly, but the song's declared tempo will be undefined.
+
+Opening a MIDI file in our editor and resaving it may destroy information.
+
 TODO: Need another Meta event or something, to indicate the loop position.
 
 ## EAU Binary

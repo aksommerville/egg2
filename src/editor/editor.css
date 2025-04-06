@@ -515,3 +515,47 @@ input.toggle:checked + label.toggle {
   height: calc(100% - 15px);
   pointer-events: none;
 }
+
+/* Song.
+ *********************************************************************************************/
+ 
+.SongEditor {
+  display: flex;
+  flex-direction: column;
+  height: 100vh !important;
+}
+.SongEditor > .detailContainer {
+  flex: 1;
+  overflow: scroll;
+}
+
+.SongToolbar {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid #000;
+}
+
+.SongChannelsUi {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid #000;
+  overflow-x: scroll;
+}
+.SongChannelsUi > .channel {
+  border: 1px solid #000;
+  margin: 4px;
+  padding: 4px;
+  border-radius: 4px;
+  background-color: #222;
+  height: 200px;
+  width: 300px;
+  min-width: 300px;
+}
+.SongChannelsUi > .channel > .topRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.SongChannelsUi > .channel .title {
+  font-weight: bold;
+}
