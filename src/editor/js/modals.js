@@ -26,9 +26,10 @@ export class ModalPickOne {
     this.resolve(null);
   }
   
-  setup(options) {
+  setup(prompt, options) {
     this.options = options;
     this.element.innerHTML = "";
+    this.dom.spawn(this.element, "DIV", ["prompt"], prompt);
     for (const option of options) {
       this.dom.spawn(this.element, "INPUT", { type: "button", value: option, "on-click": () => this.onClick(option) });
     }

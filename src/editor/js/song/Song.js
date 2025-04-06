@@ -107,7 +107,7 @@ export class SongChannel {
     const paylen = (src[srcp + 4] << 8) | src[srcp + 5];
     let postp = srcp + 6 + paylen;
     let postlen = src[postp++] << 8;
-    postlen |= src[srcp++];
+    postlen |= src[postp++];
     if (postp > src.length - postlen) return 0;
     return postp + postlen;
   }
@@ -159,6 +159,7 @@ export class SongChannel {
   }
   
   getDisplayName() {
+    if (this.name) return this.name;
     return `Channel ${this.chid}`;
   }
 }

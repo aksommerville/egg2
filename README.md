@@ -94,6 +94,7 @@ Planned differences from Egg v1:
 - - [ ] font
 - Minor things punted:
 - - [ ] Loop position in MIDI.
+- - [ ] Also need to manage loop in editor Song.
 - - [ ] WAV from EAU, can we get rate and chanc from the caller somehow?
 - - [ ] System language, for MacOS and Windows.
 - - [ ] Expose a GM names service, using text ripped from eggdev/instruments.eaut dynamically.

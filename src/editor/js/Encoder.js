@@ -96,10 +96,30 @@ export class Encoder {
   raw(src) {
     if (typeof(src) === "string") src = new TextEncoder("utf8").encode(src);
     if (src instanceof ArrayBuffer) src = new Uint8Array(src);
+    if (src.hasOwnProperty("length") && !src.length) return; // Allow things like empty array.
     if (!(src instanceof Uint8Array)) throw new Error(`Encoder.raw expected string, ArrayBuffer, or Uint8Array`);
     this.require(src.length);
     const dstview = new Uint8Array(this.v.buffer, this.c, src.length);
     dstview.set(src);
     this.c += src.length;
+  }
+  
+  vlq(src) {
+    if ((typeof(src) !== "number") || (src < 0)) throw new Error(`Invalid input for VLQ: ${src}`);
+    if (src < 0x80) {
+      this.u8(src);
+    } else if (src < 0x4000) {
+      this.u8(0x80 | (src >> 7));
+      this.u8(src & 0x7f);
+    } else if (src < 0x200000) {
+      this.u8(0x80 | (src >> 14));
+      this.u8(0x80 | ((src >> 7) & 0x7f));
+      this.u8(src & 0x7f);
+    } else if (src < 0x10000000) {
+      this.u8(0x80 | (src >> 21));
+      this.u8(0x80 | ((src >> 14) & 0x7f));
+      this.u8(0x80 | ((src >> 7) & 0x7f));
+      this.u8(src & 0x7f);
+    } else throw new Error(`Invalid input for VLQ: ${src}`);
   }
 }

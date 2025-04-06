@@ -72,7 +72,7 @@ export class Actions {
     }
     if (!candidates.length) return Promise.reject("No suitable editor found.");
     if (candidates.length === 1) return Promise.resolve(candidates[0]);
-    return this.dom.modalPickOne(candidates.map(c => c.name))
+    return this.dom.modalPickOne("Pick editor:", candidates.map(c => c.name))
       .then(name => candidates.find(c => c.name === name))
       .then(editor => {
         if (!editor) throw new Error("Cancelled.");

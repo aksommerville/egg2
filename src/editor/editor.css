@@ -554,7 +554,10 @@ input.toggle:checked + label.toggle {
 .SongChannelsUi > .channel > .topRow {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: stretch;
+}
+.SongChannelsUi > .channel > .topRow > .spacer {
+  flex: 1;
 }
 .SongChannelsUi > .channel .title {
   font-weight: bold;

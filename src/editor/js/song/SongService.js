@@ -81,6 +81,10 @@ export class SongService {
    *   { type:"setup" }
    *   { type:"detailEditor" }
    *   { type:"visibilityFilter" }
+   *   { type:"dirty" }
+   *   { type:"channelsRemoved" }
+   *   { type:"eventsRemoved" }
+   *   { type:"channelChanged", chid }
    *************************************************************************************/
   
   listen(cb) {

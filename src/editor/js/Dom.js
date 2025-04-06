@@ -93,9 +93,9 @@ export class Dom {
   
   /* Resolves with one member of (strings), or null if cancelled.
    */
-  modalPickOne(strings) {
+  modalPickOne(prompt, strings) {
     const modal = this.spawnModal(ModalPickOne);
-    modal.setup(strings);
+    modal.setup(prompt, strings);
     return modal.result;
   }
   

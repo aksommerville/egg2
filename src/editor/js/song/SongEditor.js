@@ -57,10 +57,19 @@ export class SongEditor {
     this.detailEditor.setup?.(); // They normally expect a "setup" event.
   }
   
+  dirty() {
+    if (!this.res || !this.song) return;
+    this.data.dirty(this.res.path, () => this.song.encode());
+  }
+  
   onSongServiceEvent(event) {
     console.log(`SongEditor.onSongServiceEvent: ${JSON.stringify(event)}`);
     switch (event.type) {
       case "detailEditor": this.replaceDetailEditor(); break;
+      case "channelsRemoved":
+      case "channelChanged":
+      case "eventsRemoved":
+      case "dirty": this.dirty(); break;
     }
   }
 }

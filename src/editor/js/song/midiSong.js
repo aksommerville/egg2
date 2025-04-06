@@ -5,13 +5,205 @@
  */
  
 import { SongChannel, SongEvent } from "./Song.js";
+import { Encoder } from "../Encoder.js";
 
 /* Encode.
  ******************************************************************************/
 
 export function midiSongEncode(song) {
-  console.log(`TODO midiSongEncode`);
-  return new Uint8Array(0); // TODO
+  const encoder = new Encoder();
+  
+  let tracks = []; // { trackId, events }, initially sparse but we'll pack before proceeding.
+  for (const event of song.events) {
+    let track = tracks[event.trackId || 0];
+    if (!track) track = tracks[event.trackId || 0] = { trackId: event.trackId || 0, events: [] };
+    track.events.push(event);
+  }
+  tracks = tracks.filter(v => v);
+  if (!tracks.length) { // We must emit at least one MTrk, to hold the channel configs.
+    tracks.push({ trackId: 0, events: [] });
+  }
+  
+  const division = 48; // TODO ticks/qnote... Should we calculate this more fancily? Should we record it from the input file?
+  encoder.raw("MThd");
+  encoder.u32be(6);
+  encoder.u16be(1); // Format
+  encoder.u16be(tracks.length);
+  encoder.u16be(division);
+  
+  let channels = song.channels;
+  for (const track of tracks) {
+    encoder.raw("MTrk");
+    const lenp = encoder.c;
+    encoder.u32be(0);
+    midiEventsEncode(encoder, song, track.events, division, channels);
+    channels = null;
+    const len = encoder.c - lenp - 4;
+    if ((len < 0) || (len > 0xffffffff)) throw new Error(`Invalid MTrk length`);
+    encoder.v[lenp] = len >> 24;
+    encoder.v[lenp+1] = len >> 16;
+    encoder.v[lenp+2] = len >> 8;
+    encoder.v[lenp+3] = len;
+  }
+  
+  return encoder.finish();
+}
+
+function midiEventsEncode(encoder, song, events, division, channels) {
+
+  /* Rewrite (events) in a structure more amenable to MIDI encoding.
+   * Unused events will be dropped.
+   * Note Off will be added.
+   * Digested events are { time, opcode, chid?, a, b?, v? }
+   */
+  const digestedEvents = [];
+  for (const event of events) {
+    switch (event.type) {
+      case "n": {
+          digestedEvents.push({
+            time: event.time,
+            opcode: 0x90,
+            chid: event.chid,
+            a: event.noteid,
+            b: (event.velocity << 4) | (event.velocity & 0x07),
+          });
+          digestedEvents.push({
+            time: event.time + event.durms + 0.001, // The extra microsecond ensures that Note Off will encode after its Note On.
+            opcode: 0x80,
+            chid: event.chid,
+            a: event.noteid,
+            b: 0x40,
+          });
+        } break;
+      case "w": {
+          const v = (event.v << 6) | (event.v & 0x3f);
+          digestedEvents.push({
+            time: event.time,
+            opcode: 0xe0,
+            chid: event.chid,
+            a: v & 0x7f,
+            b: v >> 7,
+          });
+        } break;
+      case "m": {
+          const digested = {
+            time: event.time,
+            opcode: event.opcode,
+            chid: event.chid,
+          };
+          switch (event.opcode) {
+            case 0xa0: digested.a = event.a; digested.b = event.b; break;
+            case 0xb0: digested.a = event.a; digested.b = event.b; break;
+            case 0xc0: digested.a = event.a; break;
+            case 0xd0: digested.a = event.a; break;
+            case 0xf0: digested.v = event.v || new Uint8Array(0); break;
+            case 0xf7: digested.v = event.v || new Uint8Array(0); break;
+            case 0xff: {
+                if (event.a === 0x51) continue; // Set Tempo. We can only have one, we'll insert it at the start.
+                if (event.a === 0x77) continue; // EAU Channel Headers. We'll synthesize these. (and this should never have made it into the model)
+                digested.a = event.a;
+                digested.v = event.v || new Uint8Array(0);
+              } break;
+            // Drop Note On, Note Off, and Wheel. They must use "n" and "w" events. (ditto for unknown or invalid)
+            default: continue;
+          }
+          digestedEvents.push(digested);
+        } break;
+    }
+  }
+  digestedEvents.sort((a, b) => a.time - b.time);
+  
+  /* The first call to us gets a non-null (channels).
+   * That's the signal to emit Channel Headers and Set Tempo.
+   * Write these directly to (encoder), don't bother wrapping them in events.
+   */
+  if (channels) {
+    const usperqnote = song.tempo * 1000;
+    const tempo = new Uint8Array(3);
+    tempo[0] = usperqnote >> 16;
+    tempo[1] = usperqnote >> 8;
+    tempo[2] = usperqnote;
+    encoder.u8(0); // delay
+    encoder.u8(0xff); // Meta
+    encoder.u8(0x51); // Set Tempo
+    encoder.u8(3); // length
+    encoder.u24be(usperqnote);
+    encoder.u8(0); // delay
+    encoder.u8(0xff); // Meta
+    encoder.u8(0x77); // EAU Channel Headers (nonstandard)
+    const src = encodeChannelHeadersAsMetaPayload(channels);
+    encoder.vlq(src.length);
+    encoder.raw(src);
+  }
+  const ticksperms = division / song.tempo;
+  
+  // Rephrase time in ticks.
+  for (const event of digestedEvents) {
+    event.time = Math.round(event.time * ticksperms);
+  }
+  
+  /* Encode events.
+   */
+  let encodedTime = 0;
+  let status = 0;
+  for (const event of digestedEvents) {
+  
+    // Every event gets a leading delay, even if zero.
+    const delay = Math.max(0, event.time - encodedTime);
+    encoder.vlq(delay);
+    encodedTime = event.time;
+  
+    // Pick off Note Off where we can emit as Note On instead
+    if (
+      (event.opcode === 0x80) &&
+      ((status & 0xf0) === 0x90) &&
+      ((status & 0x0f) === event.chid)
+      // No need to verify (event.b); it can only be 0x40.
+    ) {
+      encoder.u8(event.a);
+      encoder.u8(0x00);
+      continue;
+    }
+    
+    // Meta and Sysex reset running status.
+    if (event.opcode >= 0xf0) {
+      status = 0;
+      encoder.u8(event.opcode);
+      if (event.opcode === 0xff) encoder.u8(event.a);
+      encoder.vlq(event.v.length);
+      encoder.raw(event.v);
+      continue;
+    }
+    
+    // Regular channel voice events.
+    const nextStatus = event.opcode | event.chid;
+    if (nextStatus !== status) {
+      status = nextStatus;
+      encoder.u8(status);
+    }
+    encoder.u8(event.a);
+    if (event.hasOwnProperty("b")) encoder.u8(event.b);
+  }
+}
+
+function encodeChannelHeadersAsMetaPayload(channels) {
+  const encoder = new Encoder();
+  for (const channel of channels) {
+    if (!channel) continue;
+    if ((channel.chid < 0) || (channel.chid >= 0xff)) continue; // sic >=, channel 255 is unencodable
+    if ((channel.payload.length > 0xffff) || (channel.post.length > 0xffff)) {
+      throw new Error(`${channel.getDisplayName()} payload or post exceeds 64k`);
+    }
+    encoder.u8(channel.chid);
+    encoder.u8(channel.trim);
+    encoder.u8(channel.pan);
+    encoder.u8(channel.mode);
+    encoder.u16be(channel.payload.length);
+    encoder.raw(channel.payload);
+    encoder.u16be(channel.post.length);
+    encoder.raw(channel.post);
+  }
+  return encoder.finish();
 }
 
 /* Decode.
@@ -60,7 +252,7 @@ export function midiSongDecode(song, src) {
     return channel;
   };
   let gotEauHeaders = false;
-    
+  
   /* Decode events from all MTrk in parallel.
    * We have to do it this way because we allow Set Tempo events anywhere, which will impact our calculation of timestamps.
    * Fill in (this.channels) as events warrant. Any chid with a Note On, we must have a channel, even if it's a dummy.

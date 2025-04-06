@@ -8,15 +8,328 @@
  */
  
 import { Song, SongChannel, SongEvent } from "./Song.js";
-import { eauSongEncode } from "./eauSong.js";
+import { eauSongEncode, eauSongDecode } from "./eauSong.js";
 import { Encoder } from "../Encoder.js";
 
 /* Encode.
  ******************************************************************************/
 
 export function eautSongEncode(song) {
-  console.log(`TODO eautSongEncode`);
-  return new Uint8Array(0); // TODO
+  const encoder = new Encoder();
+  encoder.raw(`globals {\ntempo ${song.tempo}\n}\n`);
+  for (const channel of song.channels) {
+    if (channel) eautChannelEncode(encoder, channel);
+  }
+  if (song.events.length > 0) {
+    encoder.raw("events {\n");
+    let now = 0;
+    const delayTo = (endTime) => {
+      let delay = endTime - now;
+      if (delay > 0) encoder.raw(`delay ${delay}\n`);
+      now = endTime;
+    };
+    for (const event of song.events) {
+      switch (event.type) {
+        case "n": {
+            delayTo(event.time);
+            encoder.raw(`note ${event.chid} ${event.noteid} ${event.velocity} ${event.durms}\n`);
+          } break;
+        case "w": {
+            delayTo(event.time);
+            encoder.raw(`wheel ${event.chid} ${event.v}\n`);
+          } break;
+      }
+    }
+    delayTo(song.events[song.events.length-1].time); // In case we skipped the last event. EAU can end on a delay but our model can't.
+    encoder.raw("}\n");
+  }
+  return encoder.finish();
+}
+
+function eautChannelEncode(encoder, channel) {
+  //TODO Is it feasible to emit (song.rangeNames) too?
+  if (channel.name) encoder.raw(`# ${channel.name}\n`);
+  let modeName = channel.mode;
+  switch (channel.mode) {
+    case 0: modeName = "noop"; break;
+    case 1: modeName = "drum"; break;
+    case 2: modeName = "fm"; break;
+    case 3: modeName = "sub"; break;
+  }
+  encoder.raw(`${channel.chid} ${channel.trim} ${channel.pan} ${modeName} {\n`);
+  const dstcBeforeConfig = encoder.c;
+  try {
+    switch (channel.mode) {
+      case 0: break; // do not emit any channel config for noop
+      case 1: eautChannelEncode_drum(encoder, channel); break;
+      case 2: eautChannelEncode_fm(encoder, channel); break;
+      case 3: eautChannelEncode_sub(encoder, channel); break;
+      default: throw null;
+    }
+  } catch (e) {
+    encoder.c = dstcBeforeConfig;
+    eautChannelEncode_generic(encoder, channel);
+  }
+  eautPostEncode(encoder, channel.post);
+  encoder.raw("}\n");
+}
+
+function eautChannelEncode_generic(encoder, channel) {
+  if (channel.payload.length < 1) return;
+  encoder.raw("modecfg ");
+  for (let i=0; i<channel.payload.length; i++) {
+    encoder.raw(channel.payload[i].toString(16).padStart(2, '0'));
+  }
+  encoder.u8(0x0a);
+}
+
+function eautChannelEncode_drum(encoder, channel) {
+  for (let i=0; i<channel.payload.length; ) {
+    const noteid = channel.payload[i++] || 0;
+    const trimlo = channel.payload[i++] || 0;
+    const trimhi = channel.payload[i++] || 0;
+    const pan = channel.payload[i++] || 0;
+    const len = (channel.payload[i] << 8) | channel.payload[i+1];
+    i += 2;
+    if (i > channel.payload.length - len) break;
+    encoder.raw(`drum ${trimlo} ${trimhi} ${pan} {\n`);
+    const eau = new Uint8Array(channel.payload.buffer, channel.payload.byteOffset + i, len);
+    const song = new Song();
+    eauSongDecode(song, eau);
+    const text = eautSongEncode(song);
+    encoder.raw(text);
+    if (encoder.v[encoder.c - 1] !== 0x0a) encoder.u8(0x0a);
+    encoder.raw("}\n");
+  }
+}
+
+function eautChannelEncode_fm(encoder, channel) {
+  let srcp = 0;
+  srcp = eautFieldEncode_env(encoder, "level", channel.payload, srcp);
+  srcp = eautFieldEncode_wave(encoder, "wave", channel.payload, srcp);
+  srcp = eautFieldEncode_env(encoder, "pitchenv", channel.payload, srcp);
+  srcp = eautFieldEncode_u16(encoder, "wheel", channel.payload, srcp);
+  srcp = eautFieldEncode_u8_8(encoder, "rate", channel.payload, srcp);
+  srcp = eautFieldEncode_u8_8(encoder, "range", channel.payload, srcp);
+  srcp = eautFieldEncode_env(encoder, "rangeenv", channel.payload, srcp);
+  srcp = eautFieldEncode_u8_8(encoder, "rangelforate", channel.payload, srcp);
+  srcp = eautFieldEncode_u0_8(encoder, "rangelfodepth", channelpayload, srcp);
+}
+
+function eautChannelEncode_sub(encoder, channel) {
+  let srcp = 0;
+  srcp = eautFieldEncode_env(encoder, "level", channel.payload, srcp);
+  if (srcp <= channel.payload.length - 4) {
+    const lo = (channel.payload.length[srcp] << 8) | channel.payload.length[srcp+1]; srcp += 2;
+    const hi = (channel.payload.length[srcp] << 8) | channel.payload.length[srcp+1]; srcp += 2;
+    encoder.raw(`width ${lo} ${hi}\n`);
+  } else if (srcp <= channel.payload.length - 2) {
+    const lo = (channel.payload.length[srcp] << 8) | channel.payload.length[srcp+1]; srcp += 2;
+    encoder.raw(`width ${lo}\n`);
+  } else return;
+  srcp = eautFieldEncode_u8(encoder, "stagec", channel.payload, srcp);
+  srcp = eautFieldEncode_u8_8(encoder, "gain", channel.payload, srcp);
+}
+
+function eautFieldEncode_env(encoder, name, src, srcp) {
+  if (srcp > src.length - 1) return src.length;
+  const flags = src[srcp++];
+  let initlo=0, inithi=0, susp=-1;
+  if (flags & 2) {
+    initlo = (src[srcp] << 8) | src[srcp+1]; srcp += 2;
+    if (flags & 1) {
+      inithi = (src[srcp] << 8) | src[srcp+1]; srcp += 2;
+    } else {
+      inithi = initlo;
+    }
+  }
+  if (flags & 4) {
+    susp = src[srcp++];
+  }
+  const ptc = src[srcp++] || 0;
+  const ptlen = (flags & 1) ? 8 : 4;
+  if (ptc > src.length - ptc * ptlen) return src.length;
+  
+  encoder.raw(`${name} ${initlo}`);
+  if (initlo !== inithi) encoder.raw(`..${inithi}`);
+  for (let i=0; i<ptc; i++) {
+    const tlo = (src[srcp] << 8) | src[srcp+1]; srcp += 2;
+    const vlo = (src[srcp] << 8) | src[srcp+1]; srcp += 2;
+    let thi = tlo, vhi = vlo;
+    if (flags & 1) {
+      const thi = (src[srcp] << 8) | src[srcp+1]; srcp += 2;
+      const vhi = (src[srcp] << 8) | src[srcp+1]; srcp += 2;
+    }
+    encoder.raw(` ${tlo}`);
+    if (tlo !== thi) encoder.raw(`..${thi}`);
+    encoder.raw(` ${vlo}`);
+    if (vlo !== vhi) encoder.raw(`..${vhi}`);
+    if (i === susp) encoder.raw("*");
+  }
+  encoder.u8(0x0a);
+  return srcp;
+}
+
+function eautFieldEncode_wave(encoder, name, src, srcp) {
+  if (srcp > src.length - 3) return src.length;
+  const shape = src[srcp++];
+  const qual = src[srcp++];
+  const coefc = src[srcp++];
+  if (srcp > src.length - coefc * 2) return src.length;
+  encoder.raw(name);
+  switch (shape) {
+    case 0: encoder.raw(" sine"); break;
+    case 1: encoder.raw(" square"); break;
+    case 2: encoder.raw(" saw"); break;
+    case 3: encoder.raw(" triangle"); break;
+    case 4: encoder.raw(" fixedfm"); break;
+    default: encoder.raw(" " + shape.toString()); break;
+  }
+  if (qual) {
+    encoder.raw(" +" + qual.toString());
+  }
+  for (let i=0; i<coefc; i++) {
+    const v = (src[srcp] << 8) | src[srcp+1];
+    srcp += 2;
+    encoder.raw(" 0x" + v.toString(16).padStart(4, '0'));
+  }
+  encoder.u8(0x0a);
+  return srcp;
+}
+
+function eautFieldEncode_u8(encoder, name, src, srcp) {
+  if (srcp > src.length - 1) return src.length;
+  encoder.raw(`${name} ${src[srcp]}\n`);
+  return srcp + 1;
+}
+
+function eautFieldEncode_u16(encoder, name, src, srcp) {
+  if (srcp > src.length - 2) return src.length;
+  encoder.raw(`${name} ${(src[srcp] << 8) | src[srcp+1]}`);
+  srcp += 2;
+  return srcp;
+}
+
+function eautFieldEncode_u0_8(encoder, name, src, srcp) {
+  if (srcp > src.length - 1) return src.length;
+  const v = src[srcp++] / 255;
+  encoder.raw(`${name} ${v}\n`);
+  return srcp;
+}
+
+function eautFieldEncode_u8_8(encoder, name, src, srcp) {
+  if (srcp > src.length - 2) return src.length;
+  const v = ((src[srcp] << 8) | src[srcp+1]) / 256;
+  srcp += 2;
+  encoder.raw(`${name} ${v}\n`);
+  return srcp;
+}
+
+function eautPostEncode(encoder, src) {
+  if (!src?.length) return;
+  encoder.raw("post {\n");
+  for (let srcp=0; srcp<src.length; ) {
+    const stageid = src[srcp++] || 0;
+    const len = src[srcp++] || 0;
+    if (srcp > src.length - len) break;
+    const body = new Uint8Array(src.buffer, src.byteOffset + srcp, len);
+    srcp += len;
+    const dstcBefore = encoder.c;
+    try {
+      switch (stageid) {
+        case 1: eautPostEncode_gain(encoder, body); break;
+        case 2: eautPostEncode_delay(encoder, body); break;
+        case 3: eautPostEncode_lopass(encoder, body); break;
+        case 4: eautPostEncode_hipass(encoder, body); break;
+        case 5: eautPostEncode_bpass(encoder, body); break;
+        case 6: eautPostEncode_notch(encoder, body); break;
+        case 7: eautPostEncode_waveshaper(encoder, body); break;
+        case 8: eautPostEncode_tremolo(encoder, body); break;
+        default: throw null;
+      }
+    } catch (e) {
+      eautPostEncode_generc(encoder, stageid, body);
+    }
+  }
+  encoder.raw("}\n");
+}
+
+function eautPostEncode_gain(encoder, body) {
+  if (body.length === 3) {
+    const gain = ((body[0] << 8) | body[1]) / 256;
+    const clip = body[2] / 255;
+    encoder.raw(`gain ${gain} ${clip}\n`);
+  } else if (body.length === 2) {
+    const gain = ((body[0] << 8) | body[1]) / 256;
+    encoder.raw(`gain ${gain}\n`);
+  } else {
+    throw null;
+  }
+}
+
+function eautPostEncode_delay(encoder, body) {
+  if (body.length !== 6) throw null;
+  const period = ((body[0] << 8) | body[1]) / 256;
+  const dry = body[2] / 255;
+  const wet = body[3] / 255;
+  const store = body[4] / 255;
+  const feedback = body[5] / 255;
+  encoder.raw(`delay ${period} ${dry} ${wet} ${store} ${feedback}\n`);
+}
+
+function eautPostEncode_lopass(encoder, body) {
+  if (body.length !== 2) throw null;
+  const hz = (body[0] << 8) | body[1];
+  encoder.raw(`lopass ${hz}\n`);
+}
+
+function eautPostEncode_hipass(encoder, body) {
+  if (body.length !== 2) throw null;
+  const hz = (body[0] << 8) | body[1];
+  encoder.raw(`hipass ${hz}\n`);
+}
+
+function eautPostEncode_bpass(encoder, body) {
+  if (body.length !== 4) throw null;
+  const hz = (body[0] << 8) | body[1];
+  const width = (body[2] << 8) | body[3];
+  encoder.raw(`bpass ${hz} ${width}\n`);
+}
+
+function eautPostEncode_notch(encoder, body) {
+  if (body.length !== 4) throw null;
+  const hz = (body[0] << 8) | body[1];
+  const width = (body[2] << 8) | body[3];
+  encoder.raw(`notch ${hz} ${width}\n`);
+}
+
+function eautPostEncode_waveshaper(encoder, body) {
+  if (body.length & 1) throw null;
+  encoder.raw("waveshaper");
+  for (let i=0; i<body.length; i+=2) {
+    const coef = (body[i] << 8) | body[i+1];
+    encoder.raw(" 0x" + coef.toString(16).padStart(4, '0'));
+  }
+  encoder.u8(0x0a);
+}
+
+function eautPostEncode_tremolo(encoder, body) {
+  if (body.length !== 4) throw null;
+  const period = (body[0] << 8) | body[1];
+  const depth = body[2] / 255;
+  const phase = body[3] / 255;
+  encoder.raw(`tremolo ${period} ${depth} ${phase}\n`);
+}
+
+function eautPostEncode_generic(encoder, stageid, body) {
+  encoder.raw(stageid.toString());
+  if (body.length) {
+    encoder.u8(0x20);
+    for (let i=0; i<body.length; i++) {
+      encoder.raw(body[i].toString(16).padStart(2, '0'));
+    }
+  }
+  encoder.u8(0x0a);
 }
 
 /* Structured decoder for breaking the text apart generically.
@@ -107,8 +420,6 @@ export function eautSongDecode(song, src, lineno0) {
           hi: +match[2],
           name: match[3],
         });
-        const r=song.rangeNames[song.rangeNames.length-1];//XXX
-        console.log(`${statement.lineno}:RANGE: ${r.lo} .. ${r.hi} = ${JSON.stringify(r.name)}`);
         recentComment = "";
       } else {
         recentComment = statement.comment;
@@ -126,6 +437,17 @@ export function eautSongDecode(song, src, lineno0) {
       eautSongDecodeChannel(song, name, statement);
     }
     recentComment = "";
+  }
+  // Emit a dummy event to fix the end time, in case the song ended on a delay.
+  if ((now > 0) && (!song.events.length || (now > song.events[song.events.length-1].time))) {
+    const event = new SongEvent();
+    event.time = now;
+    event.type = "m";
+    event.trackId = 0;
+    event.opcode = 0xff; // Meta
+    event.a = 0x2f; // End of Track
+    event.v = new Uint8Array(0);
+    song.events.push(event);
   }
 }
 
