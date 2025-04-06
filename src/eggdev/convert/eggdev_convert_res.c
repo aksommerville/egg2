@@ -593,7 +593,7 @@ int eggdev_map_from_maptxt(struct eggdev_convert_context *ctx) {
   struct eggdev_convert_context subctx=*ctx;
   subctx.src=(char*)ctx->src+decoder.p;
   subctx.srcc=decoder.c-decoder.p;
-  subctx.lineno0=lineno-1;
+  subctx.lineno0=lineno;
   subctx.ns="map";
   subctx.nsc=3;
   return eggdev_cmdlist_from_cmdltxt(&subctx);
@@ -772,7 +772,7 @@ int eggdev_cmdlist_from_cmdltxt(struct eggdev_convert_context *ctx) {
     // Opcode.
     token=line+linep;
     tokenc=0;
-    while ((linep<linec)&&((unsigned char)line[linep++]<=0x20)) tokenc++;
+    while ((linep<linec)&&((unsigned char)line[linep++]>0x20)) tokenc++;
     while ((linep<linec)&&((unsigned char)line[linep]<=0x20)) linep++;
     int opcode;
     if ((eggdev_symbol_eval(&opcode,token,tokenc,EGGDEV_NSTYPE_CMD,ctx->ns,ctx->nsc))<0) {
@@ -792,7 +792,7 @@ int eggdev_cmdlist_from_cmdltxt(struct eggdev_convert_context *ctx) {
     while (linep<linec) {
       token=line+linep;
       tokenc=0;
-      while ((linep<linec)&&((unsigned char)line[linep++]<=0x20)) tokenc++;
+      while ((linep<linec)&&((unsigned char)line[linep++]>0x20)) tokenc++;
       while ((linep<linec)&&((unsigned char)line[linep]<=0x20)) linep++;
       if ((tokenc==1)&&(token[0]=='*')) {
         pad=1;
@@ -828,7 +828,7 @@ int eggdev_cmdlist_from_cmdltxt(struct eggdev_convert_context *ctx) {
       if (sr_encode_zero(ctx->dst,expectlen-havelen)<0) return -1;
       havelen=expectlen;
     }
-    if (havelen!=expectlen) return eggdev_convert_error_at(ctx,lineno,"Expected %d bytes payload, found %d.",expectlen,havelen);
+    if (havelen!=expectlen) return eggdev_convert_error_at(ctx,lineno,"Expected %d bytes payload, found %d. (opcode 0x%02x)",expectlen,havelen,opcode);
   }
   return 0;
 }

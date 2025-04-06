@@ -84,7 +84,7 @@ int eggdev_res_ids_from_path(int *tid,int *rid,const char *path) {
     base+=3;
     basec-=3;
   }
-  if ((basec<1)||(base[0]<'0')||(base[0]>='9')) return -1;
+  if ((basec<1)||(base[0]<'0')||(base[0]>'9')) return -1;
   *rid=0;
   int basep=0;
   while ((basep<basec)&&(base[basep]>='0')&&(base[basep]<='9')) {

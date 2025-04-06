@@ -63,7 +63,7 @@ export class SongEditor {
   }
   
   onSongServiceEvent(event) {
-    console.log(`SongEditor.onSongServiceEvent: ${JSON.stringify(event)}`);
+    //console.log(`SongEditor.onSongServiceEvent: ${JSON.stringify(event)}`);
     switch (event.type) {
       case "detailEditor": this.replaceDetailEditor(); break;
       case "channelsRemoved":

@@ -96,7 +96,8 @@ export class SongChannel {
     for (let srcp=0; srcp<src.length; ) {
       const len = SongChannel.measure(src, srcp);
       if (len < 1) break;
-      channels.push(new SongChannel(src.slice(srcp, srcp + len)));
+      const channel = new SongChannel(src.slice(srcp, srcp + len));
+      channels[channel.chid] = channel;
       srcp += len;
     }
     return channels;
