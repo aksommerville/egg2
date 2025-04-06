@@ -23,7 +23,11 @@ export class SongListUi {
   setup() {
     this.element.innerHTML = "";
     this.dom.spawn(this.element, "DIV", "TODO SongListUi");
-    //for (let i=0; i<200; i++) this.dom.spawn(this.element, "DIV", `Long list of events: ${i}`);
+    for (const event of this.songService.song.events) {
+      if (event.chid !== 1) continue;
+      if (event.type !== "n") continue;
+      this.dom.spawn(this.element, "DIV", `${event.time} ${event.chid} ${event.type} ${event.noteid}`);
+    }
   }
   
   onSongServiceEvent(event) {

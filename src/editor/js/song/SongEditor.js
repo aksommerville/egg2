@@ -69,6 +69,7 @@ export class SongEditor {
       case "channelsRemoved":
       case "channelChanged":
       case "eventsRemoved":
+      case "eventsChanged":
       case "dirty": this.dirty(); break;
     }
   }

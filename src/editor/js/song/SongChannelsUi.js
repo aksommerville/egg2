@@ -35,7 +35,7 @@ export class SongChannelsUi {
     const card = this.dom.spawn(this.element, "DIV", ["channel"], { "data-chid": channel.chid });
     
     const topRow = this.dom.spawn(card, "DIV", ["topRow"]);
-    this.dom.spawn(topRow, "DIV", ["title"], channel.getDisplayName());
+    this.dom.spawn(topRow, "DIV", ["title"], { "on-click": () => this.onClickName(channel.chid) }, channel.getDisplayName());
     this.dom.spawn(topRow, "DIV", ["spacer"]);
     this.dom.spawn(topRow, "INPUT", { type: "button", value: "Replace...", "on-click": () => this.onReplaceChannel(channel.chid) });
     this.dom.spawn(topRow, "INPUT", { type: "button", value: "X", "on-click": () => this.onDeleteChannel(channel.chid) });
@@ -49,7 +49,19 @@ export class SongChannelsUi {
       this.dom.spawn(null, "INPUT", { type: "range", name: "pan", min: 0, max: 255, value: channel.pan, "on-input": () => this.onSliderChanged(channel.chid) })
     );
     
-    //TODO payload
+    let modeSelect;
+    this.dom.spawn(card, "DIV", ["modeRow"],
+      modeSelect = this.dom.spawn(null, "SELECT", { name: "mode", "on-change": e => this.onModeChanged(channel.chid, e) },
+        this.dom.spawn(null, "OPTION", { value: "0" }, "noop"),
+        this.dom.spawn(null, "OPTION", { value: "1" }, "drum"),
+        this.dom.spawn(null, "OPTION", { value: "2" }, "fm"),
+        this.dom.spawn(null, "OPTION", { value: "3" }, "sub"),
+      ),
+      this.dom.spawn(null, "INPUT", { type: "button", value: "Edit config...", "on-click": () => this.onEditModeConfig(channel.chid) })
+    );
+    for (let i=4; i<256; i++) this.dom.spawn(modeSelect, "OPTION", { value: i }, i);
+    modeSelect.value = channel.mode;
+    
     //TODO post
   }
   
@@ -122,5 +134,36 @@ export class SongChannelsUi {
     card.querySelector(".tattle.pan").innerText = channel.pan.toString().padStart(3);
     // Don't say "channelChanged" because we would redundantly update our UI. I don't think anyone else listens for it.
     this.songService.broadcast({ type: "dirty" });
+  }
+  
+  onClickName(chid) {
+    const channel = this.songService.song.channels[chid];
+    if (!channel) return;
+    const card = this.element.querySelector(`.channel[data-chid='${chid}']`);
+    if (!card) return;
+    this.dom.modalText(`Name for channel ${chid}:`, channel.name || "").then(rsp => {
+      if (rsp === null) return;
+      channel.name = rsp;
+      card.querySelector(".title").innerText = channel.getDisplayName();
+      if (this.songService.song.replaceEventsForChannelName(chid)) {
+        this.songService.broadcast({ type: "eventsChanged" });
+      } else {
+        this.songService.broadcast({ type: "dirty" });
+      }
+    });
+  }
+  
+  onModeChanged(chid, event) {
+    const v = +event?.target?.value;
+    if (isNaN(v) || (v < 0) || (v > 0xff)) return;
+    const channel = this.songService.song.channels[chid];
+    if (!channel) return;
+    if (channel.mode === v) return;
+    channel.changeMode(v);
+    this.songService.broadcast({ type: "dirty" });
+  }
+  
+  onEditModeConfig(chid) {
+    console.log(`SongChannelsUi.onEditModeConfig ${chid}`);
   }
 }

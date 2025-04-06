@@ -114,4 +114,5 @@ Planned differences from Egg v1:
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] POI icons for sprite and custom overrides.
 - - [ ] SongEditor: Playback
-- - [ ] SongEditor: Channel names per MIDI file.
+- - [x] SongEditor: Channel names per MIDI file.
+- - [ ] SongEditor: Preserve payload where possible on a channel mode change.

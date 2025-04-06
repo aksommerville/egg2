@@ -563,6 +563,7 @@ input.toggle:checked + label.toggle {
 }
 .SongChannelsUi > .channel .title {
   font-weight: bold;
+  cursor: pointer;
 }
 .SongChannelsUi .slider {
   display: flex;
@@ -573,5 +574,12 @@ input.toggle:checked + label.toggle {
   white-space: pre;
 }
 .SongChannelsUi .slider > input {
+  flex: 1;
+}
+.SongChannelsUi .modeRow {
+  display: flex;
+  flex-direction: row;
+}
+.SongChannelsUi .modeRow > select {
   flex: 1;
 }

@@ -22,7 +22,7 @@ export class SongService {
     this.nextListenerId = 1;
     this.listeners = [];
     
-    this.detailEditorIdentifier = "chart";
+    this.detailEditorIdentifier = "list";
     this.visibilityFilter = {
       track: "", // Empty string or trackId as string.
       channel: "", // Empty string or chid as string.
@@ -84,6 +84,7 @@ export class SongService {
    *   { type:"dirty" }
    *   { type:"channelsRemoved" }
    *   { type:"eventsRemoved" }
+   *   { type:"eventsChanged" }
    *   { type:"channelChanged", chid }
    *************************************************************************************/
   

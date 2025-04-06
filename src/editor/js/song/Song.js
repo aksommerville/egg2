@@ -72,6 +72,39 @@ export class Song {
     }
     return chids;
   }
+  
+  /* Special accessors.
+   ****************************************************************************/
+  
+  /* If you've just changed a channel's "name" property, call this to force events to match it.
+   * Songs source from EAU or EAU-Text won't change anything here, but MIDI will.
+   * Returns true if anything changed.
+   */
+  replaceEventsForChannelName(chid) {
+    const channel = this.channels.find(c => c?.chid === chid);
+    if (!channel) return false;
+    const ep = this.events.findIndex(e => ((e.type === "m") && (e.opcode === 0xff) && (e.chid === chid) && ((e.a === 0x03) || (e.a === 0x04))));
+    if (ep >= 0) {
+      const event = this.events[ep];
+      if (channel.name) {
+        event.v = new TextEncoder("utf8").encode(channel.name);
+      } else {
+        this.events.splice(ep, 1);
+      }
+      return true;
+    } else if (channel.name) { // Add a MIDI Meta 0x03 Track Name event, regardless of our source mode. EAUs will drop it at encode.
+      const event = new SongEvent();
+      event.time = 0;
+      event.type = "m";
+      event.opcode = 0xff;
+      event.chid = chid;
+      event.a = 0x03;
+      event.v = new TextEncoder("utf8").encode(channel.name);
+      this.events.splice(0, 0, event);
+      return true;
+    }
+    return false;
+  }
 }
 
 /* Channel.
@@ -160,8 +193,15 @@ export class SongChannel {
   }
   
   getDisplayName() {
-    if (this.name) return this.name;
+    if (this.name) return `${this.chid}: ${this.name}`;
     return `Channel ${this.chid}`;
+  }
+  
+  changeMode(nmode) {
+    //TODO If changing to noop, preserve the payload why not. Changing between fm and sub, preserve the level envelope.
+    //TODO Extra credit: Can we stash the dropped config somewhere local and recover it if they change back to the old mode?
+    this.mode = nmode;
+    this.payload = new Uint8Array(0);
   }
 }
 

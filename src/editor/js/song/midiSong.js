@@ -113,6 +113,28 @@ function midiEventsEncode(encoder, song, events, division, channels) {
   }
   digestedEvents.sort((a, b) => a.time - b.time);
   
+  /* Check Meta events with a (chid) present. They must be preceded by Meta 0x20 MIDI Channel Prefix.
+   */
+  let channelPrefix = -1;
+  for (let i=0; i<digestedEvents.length; i++) {
+    const event = digestedEvents[i];
+    if (event.opcode !== 0xff) continue;
+    if ((event.a === 0x20) && (event.v.length === 1)) {
+      channelPrefix = event.v[0];
+    }
+    if ((event.chid < 0) || (event.chid > 15)) continue;
+    if (channelPrefix === event.chid) continue;
+    channelPrefix = event.chid;
+    const nevent = {
+      time: event.time,
+      opcode: 0xff,
+      chid: event.chid,
+      a: 0x20,
+      v: new Uint8Array([event.chid]),
+    };
+    digestedEvents.splice(i, 0, nevent);
+  }
+  
   /* The first call to us gets a non-null (channels).
    * That's the signal to emit Channel Headers and Set Tempo.
    * Write these directly to (encoder), don't bother wrapping them in events.
@@ -258,6 +280,7 @@ export function midiSongDecode(song, src) {
    * Fill in (this.channels) as events warrant. Any chid with a Note On, we must have a channel, even if it's a dummy.
    */
   forEachMidiEvent(song, mtrkv, division, event => {
+    console.log(`MIDI EVENT`, event);
       
     // Drop Note Off, after applying to their Note On.
     if ((event.type === "m") && (event.opcode === 0x80)) {
@@ -303,8 +326,21 @@ export function midiSongDecode(song, src) {
     // Note events require a channel. It's OK for the channel to be completely unconfigured.
     if (event.type === "n") requireChannel(event.chid);
       
+    // Meta events 0x01..0x0f are text; if a MIDI Channel Prefix was present maybe we can do something with the text.
+    if ((event.type === "m") && (event.opcode === 0xff) && (event.chid >= 0) && (event.a >= 0x01) && (event.a <= 0x0f)) {
+      try {
+        const str = new TextDecoder("utf8").decode(event.v);
+        if (str) {
+          const channel = requireChannel(event.chid);
+          if (event.a === 0x03) channel.name = str; // Track Name
+          else if ((event.a === 0x04) && !channel.name) channel.name = str; // Instrument Name (take only if there's no Track Name)
+        }
+      } catch (e) {}
+    }
+      
     song.events.push(event);
   });
+  console.log(`decoded song from midi`, song);
 }
 
   
@@ -318,6 +354,7 @@ function forEachMidiEvent(song, mtrkv, division, cb) {
     p: 0,
     status: 0,
     delay: -1, // ticks; <0 if we haven't read yet (expect vlq delay next in stream)
+    channelPrefix: -1,
   }));
   let mspertick = 500 / division;
   let now = 0; // ticks
@@ -358,8 +395,6 @@ function forEachMidiEvent(song, mtrkv, division, cb) {
       }
       continue;
     }
-      
-    //TODO Look for Meta 0x20 MIDI Channel Prefix, then 0x01..0x0f text events, to apply as channel name.
       
     cb(event);
   }
@@ -465,6 +500,14 @@ function readMidiEvent(track) {
         }
         event.v = new Uint8Array(track.src.buffer, track.src.byteOffset + track.p, len);
         track.p += len;
+        
+        // Meta and Sysex can be assigned to a channel, per Meta 0x20 MIDI Channel Prefix.
+        if ((event.opcode === 0xff) && (event.a === 0x20) && (event.v.length === 1)) {
+          track.channelPrefix = event.v[0];
+        }
+        if (track.channelPrefix >= 0) {
+          event.chid = track.channelPrefix;
+        }
       } break;
       
     default: throw new Error(`Unexpected status byte ${lead} in MIDI track.`);
