@@ -5,6 +5,7 @@ import { SongService } from "./SongService.js";
 import { PidModal } from "./PidModal.js";
 import { Dom } from "../Dom.js";
 import { SharedSymbols } from "../SharedSymbols.js";
+import { getChannelColor } from "./songDisplayBits.js";
 
 export class SongChannelsUi {
   static getDependencies() {
@@ -33,6 +34,7 @@ export class SongChannelsUi {
   
   spawnChannelCard(channel) {
     const card = this.dom.spawn(this.element, "DIV", ["channel"], { "data-chid": channel.chid });
+    card.style.backgroundColor = getChannelColor(channel.chid);
     
     const topRow = this.dom.spawn(card, "DIV", ["topRow"]);
     this.dom.spawn(topRow, "DIV", ["title"], { "on-click": () => this.onClickName(channel.chid) }, channel.getDisplayName());
@@ -78,7 +80,6 @@ export class SongChannelsUi {
     card.querySelector(".tattle.trim").innerText = channel.trim.toString().padStart(3);
     card.querySelector("input[name='pan']").value = channel.pan;
     card.querySelector(".tattle.pan").innerText = channel.pan.toString().padStart(3);
-    //TODO payload
     //TODO post
   }
   

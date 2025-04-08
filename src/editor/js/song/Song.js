@@ -8,7 +8,6 @@
 import { eauSongEncode, eauSongDecode } from "./eauSong.js";
 import { eautSongEncode, eautSongDecode } from "./eautSong.js";
 import { midiSongEncode, midiSongDecode } from "./midiSong.js";
- 
 import { Encoder } from "../Encoder.js";
  
 export class Song {
@@ -105,6 +104,12 @@ export class Song {
     }
     return false;
   }
+  
+  /* Call if you change any event's (time).
+   */
+  sortEvents() {
+    this.events.sort((a, b) => a.time - b.time);
+  }
 }
 
 /* Channel.
@@ -127,15 +132,16 @@ export class SongChannel {
   static decodeHeaders(src) {
     const channels = [];
     for (let srcp=0; srcp<src.length; ) {
-      const len = SongChannel.measure(src, srcp);
-      if (len < 1) break;
-      const channel = new SongChannel(src.slice(srcp, srcp + len));
+      const nextp = SongChannel.measure(src, srcp);
+      if (nextp <= srcp) break;
+      const channel = new SongChannel(src.slice(srcp, nextp));
       channels[channel.chid] = channel;
-      srcp += len;
+      srcp = nextp;
     }
     return channels;
   }
   
+  // Returns the new (srcp).
   static measure(src, srcp) {
     if (srcp > src.length - 8) return 0;
     const paylen = (src[srcp + 4] << 8) | src[srcp + 5];

@@ -583,3 +583,72 @@ input.toggle:checked + label.toggle {
 .SongChannelsUi .modeRow > select {
   flex: 1;
 }
+
+.SongListUi .event {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-bottom: 1px solid #333;
+}
+.SongListUi .event:hover {
+  background-color: #333;
+}
+.SongListUi .event .time {
+  width: 50px;
+  text-align: right;
+}
+.SongListUi .event .chid {
+  width: 25px;
+  margin: 0 5px;
+  text-align: center;
+}
+.SongListUi .event .noteid {
+  width: 90px;
+  font-family: monospace;
+}
+.SongListUi .event .velocity {
+  width: 40px;
+}
+.SongListUi .event .durms {
+  width: 40px;
+}
+.SongListUi .event .wheel {
+  width: 40px;
+}
+.SongListUi .event .meta {
+  width: 250px;
+}
+.SongListUi .event .payload {
+  font-family: monospace;
+  flex: 1;
+}
+.SongListUi .event .payloadPlaceholder {
+  font-style: italic;
+  flex: 1;
+  color: #ccc;
+}
+.SongListUi .event .payloadText {
+  flex: 1;
+  color: #dfd;
+}
+.SongListUi .event .opcode {
+  width: 40px;
+}
+
+.SongEventModal {
+  min-width: 50vw;
+  min-height: 50vh;
+  display: flex;
+  flex-direction: row;
+}
+.SongEventModal form {
+  flex: 1;
+}
+.SongEventModal td.key {
+  width: 80px;
+  text-align: right;
+}
+.SongEventModal td.value > * {
+  width: 100%;
+  box-sizing: border-box;
+}

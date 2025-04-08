@@ -65,7 +65,7 @@ function midiEventsEncode(encoder, song, events, division, channels) {
             opcode: 0x90,
             chid: event.chid,
             a: event.noteid,
-            b: (event.velocity << 4) | (event.velocity & 0x07),
+            b: (event.velocity << 3) | (event.velocity & 0x07),
           });
           digestedEvents.push({
             time: event.time + event.durms + 0.001, // The extra microsecond ensures that Note Off will encode after its Note On.
@@ -280,7 +280,6 @@ export function midiSongDecode(song, src) {
    * Fill in (this.channels) as events warrant. Any chid with a Note On, we must have a channel, even if it's a dummy.
    */
   forEachMidiEvent(song, mtrkv, division, event => {
-    console.log(`MIDI EVENT`, event);
       
     // Drop Note Off, after applying to their Note On.
     if ((event.type === "m") && (event.opcode === 0x80)) {
@@ -340,7 +339,6 @@ export function midiSongDecode(song, src) {
       
     song.events.push(event);
   });
-  console.log(`decoded song from midi`, song);
 }
 
   
