@@ -6,6 +6,8 @@
 #ifndef SYNTH_PCM_H
 #define SYNTH_PCM_H
 
+struct synth;
+
 /* PCM dump.
  *******************************************************************************/
 
@@ -39,6 +41,7 @@ int synth_wave_ref(struct synth_wave *wave);
 
 /* Decode an EAU wave into a new object.
  * It's possible you'll get an existing object retained from (synth).
+ * (synth) is optional. May be unnecessarily expensive if null.
  */
 struct synth_wave *synth_wave_new(struct synth *synth,const void *src,int srcc);
 

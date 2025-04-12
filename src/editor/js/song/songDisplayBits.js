@@ -134,3 +134,24 @@ export function reprPayload(src) {
   // And finally, a generic placeholder.
   return [`${src.length} bytes`, "placeholder"];
 }
+
+/* General hex dump.
+ * Uint8Array on the binary side, string on the text side.
+ */
+export function reprHexdump(src) {
+  let dst = "";
+  for (let i=0; i<src.length; i++) {
+    dst += src[i].toString(16).padStart(2, '0');
+  }
+  return dst;
+}
+export function evalHexdump(src) {
+  src = src.replace(/\s+/g, "");
+  const invalid = src.match(/[^0-9a-fA-F]/);
+  if (invalid) throw new Error(`Invalid character '${invalid[0]}' in hex dump`);
+  const dst = new Uint8Array(src.length >> 1);
+  for (let dstp=0, srcp=0; srcp<src.length; dstp++, srcp+=2) {
+    dst[dstp] = parseInt(src.substring(srcp, srcp+2), 16);
+  }
+  return dst;
+}

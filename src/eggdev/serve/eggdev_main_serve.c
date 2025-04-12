@@ -1,6 +1,7 @@
 #include "eggdev_serve_internal.h"
 #include "eggdev/build/builder.h"
 #include "opt/zip/zip.h"
+#include "opt/synth/synth_pcm.h"
 #include <sys/signal.h>
 #include <unistd.h>
 
@@ -253,6 +254,28 @@ static int eggdev_cb_post_convert(struct http_xfer *req,struct http_xfer *rsp) {
   return err;
 }
 
+/* POST /api/synthwave
+ */
+ 
+static int eggdev_cb_post_synthwave(struct http_xfer *req,struct http_xfer *rsp) {
+  struct sr_encoder *reqbody=http_xfer_get_body(req);
+  if (!reqbody) return -1;
+  struct synth_wave *wave=synth_wave_new(0,reqbody->v,reqbody->c);
+  if (!wave) return http_xfer_set_status(rsp,400,"Failed to decode wave.");
+  struct sr_encoder *rspbody=http_xfer_get_body(rsp);
+  const float *src=wave->v;
+  int i=SYNTH_WAVE_SIZE_SAMPLES;
+  for (;i-->0;src++) {
+    int v=(int)((*src)*32767.0f);
+    if (v<-32768) v=-32768;
+    else if (v>32767) v=32767;
+    sr_encode_intle(rspbody,v,2);
+  }
+  synth_wave_del(wave);
+  http_xfer_set_header(rsp,"Content-Type",12,"application/octet-stream",24);
+  return http_xfer_set_status(rsp,200,"OK");
+}
+
 /* GET **, extracting from Zip container.
  */
  
@@ -384,6 +407,7 @@ static int eggdev_cb_serve(struct http_xfer *req,struct http_xfer *rsp,void *use
     HTTP_METHOD_GET,"/api/toc**",eggdev_cb_get_toc,
     HTTP_METHOD_GET,"/api/allcontent**",eggdev_cb_get_allcontent,
     HTTP_METHOD_POST,"/api/convert",eggdev_cb_post_convert,
+    HTTP_METHOD_POST,"/api/synthwave",eggdev_cb_post_synthwave,
     HTTP_METHOD_GET,"",eggdev_cb_get_other,
     HTTP_METHOD_PUT,"",eggdev_cb_put_other,
     HTTP_METHOD_DELETE,"",eggdev_cb_delete_other,

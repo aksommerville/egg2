@@ -6,6 +6,11 @@ import { PidModal } from "./PidModal.js";
 import { Dom } from "../Dom.js";
 import { SharedSymbols } from "../SharedSymbols.js";
 import { getChannelColor } from "./songDisplayBits.js";
+import { eauPostForEach, EAU_POST_STAGE_NAMES } from "./eauSong.js";
+import { ModecfgGenericModal } from "./ModecfgGenericModal.js";
+import { ModecfgDrumModal } from "./ModecfgDrumModal.js";
+import { ModecfgFmModal } from "./ModecfgFmModal.js";
+import { ModecfgSubModal } from "./ModecfgSubModal.js";
 
 export class SongChannelsUi {
   static getDependencies() {
@@ -64,7 +69,8 @@ export class SongChannelsUi {
     for (let i=4; i<256; i++) this.dom.spawn(modeSelect, "OPTION", { value: i }, i);
     modeSelect.value = channel.mode;
     
-    //TODO post
+    const post = this.dom.spawn(card, "DIV", ["post"]);
+    this.populatePostUi(post, channel);
   }
   
   rebuildChannelCardForChid(chid) {
@@ -80,7 +86,20 @@ export class SongChannelsUi {
     card.querySelector(".tattle.trim").innerText = channel.trim.toString().padStart(3);
     card.querySelector("input[name='pan']").value = channel.pan;
     card.querySelector(".tattle.pan").innerText = channel.pan.toString().padStart(3);
-    //TODO post
+    card.querySelector("select[name='mode']").value = channel.mode;
+    const post = card.querySelector(".post");
+    post.innerHTML = "";
+    this.populatePostUi(post, channel);
+  }
+  
+  populatePostUi(parent, channel) {
+    eauPostForEach(channel.post, (stageid, body, p) => {
+      const pill = this.dom.spawn(parent, "DIV", ["stage"]);
+      this.dom.spawn(pill, "INPUT", ["delete"], { type: "button", value: "X", "on-click": () => this.onDeletePostStage(channel.chid, p) });
+      this.dom.spawn(pill, "DIV", ["title"], EAU_POST_STAGE_NAMES[stageid] || stageid.toString());
+      this.dom.spawn(pill, "INPUT", { type: "button", value: "...", "on-click": () => this.onEditPostStage(channel.chid, p) });
+    });
+    this.dom.spawn(parent, "INPUT", { type: "button", value: "+", "on-click": () => this.onAddPostStage(channel.chid) });
   }
   
   onSongServiceEvent(event) {
@@ -166,5 +185,34 @@ export class SongChannelsUi {
   
   onEditModeConfig(chid) {
     console.log(`SongChannelsUi.onEditModeConfig ${chid}`);
+    const channel = this.songService.song.channels[chid];
+    if (!channel) return;
+    let modalcls;
+    switch (channel.mode) {
+      case 1: modalcls = ModecfgDrumModal; break;
+      case 2: modalcls = ModecfgFmModal; break;
+      case 3: modalcls = ModecfgSubModal; break;
+      default: modalcls = ModecfgGenericModal; break;
+    }
+    const modal = this.dom.spawnModal(modalcls);
+    modal.setup(channel, this.songService.song);
+    modal.result.then(rsp => {
+      console.log(`SongChannelsUi.onEditModeConfig got response`, { rsp, chid, channel });
+      if (!rsp) return;
+      channel.payload = rsp;
+      this.songService.broadcast({ type: "channelChanged", chid: channel.chid });
+    });
+  }
+  
+  onDeletePostStage(chid, p) {
+    console.log(`SongChannelUi.onDeletePostStage ${chid}@${p}`);
+  }
+  
+  onEditPostStage(chid, p) {
+    console.log(`SongChannelUi.onEditPostStage ${chid}@${p}`);
+  }
+  
+  onAddPostStage(chid) {
+    console.log(`SongChannelUi.onAddPostStage ${chid}`);
   }
 }

@@ -57,6 +57,14 @@ label.toggle {
 input.toggle:checked + label.toggle {
   background-color: #123;
 }
+label.toggle.light {
+  color: #555;
+  background-color: #eee;
+}
+input.toggle:checked + label.toggle.light {
+  background-color: #ff0;
+  color: #000;
+}
 
 .ModalPickOne {
   display: flex;
@@ -583,6 +591,23 @@ input.toggle:checked + label.toggle {
 .SongChannelsUi .modeRow > select {
   flex: 1;
 }
+.SongChannelsUi .post {
+  display: flex;
+  flex-wrap: wrap;
+}
+.SongChannelsUi .post .stage {
+  border: 1px solid #000;
+  margin: 2px;
+  background-color: #333;
+  display: flex;
+  flex-direction: row;
+}
+.SongChannelsUi .post .stage .delete {
+  background-color: #faa;
+}
+.SongChannelsUi .post .stage .title {
+  margin: 0 5px;
+}
 
 .SongListUi .event {
   display: flex;
@@ -651,4 +676,60 @@ input.toggle:checked + label.toggle {
 .SongEventModal td.value > * {
   width: 100%;
   box-sizing: border-box;
+}
+
+.ModecfgGenericModal {
+  min-width: 40vw;
+  min-height: 40vh;
+  display: flex;
+}
+.ModecfgGenericModal form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.ModecfgGenericModal form textarea {
+  flex: 1;
+}
+
+.ScalarUi {
+  display: flex;
+  flex-direction: row;
+}
+.ScalarUi > .key {
+  font-weight: bold;
+  width: 100px;
+  text-align: right;
+  margin-right: 10px;
+}
+.ScalarUi > input {
+  width: 100px;
+}
+.ScalarUi > .advice {
+  margin-left: 5px;
+}
+
+.WaveUi {
+  margin: 5px 0;
+}
+.WaveUi input[name='qual'] {
+  width: 60px;
+}
+
+.EnvUi {
+  display: flex;
+  flex-direction: column;
+}
+.EnvUi .playground {
+  height: 150px;
+}
+.EnvUi .zoom {
+  width: 1lh;
+  height: 1lh;
+  cursor: pointer;
+  user-select: none;
+  background-color: #a50;
+  border-radius: 0.5lh;
+  text-align: center;
 }

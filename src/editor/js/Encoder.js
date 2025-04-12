@@ -93,6 +93,21 @@ export class Encoder {
     this.v[this.c++] = src >> 24;
   }
   
+  // Fixed-point numbers are always big-endian.
+  
+  u0_8(src) {
+    src = Math.max(0, Math.min(0xff, Math.round(src * 255)));
+    this.require(1);
+    this.v[this.c++] = src;
+  }
+  
+  u8_8(src) {
+    src = Math.max(0, Math.min(0xffff, Math.round(src * 256)));
+    this.require(2);
+    this.v[this.c++] = src >> 8;
+    this.v[this.c++] = src;
+  }
+  
   raw(src) {
     if (typeof(src) === "string") src = new TextEncoder("utf8").encode(src);
     if (src instanceof ArrayBuffer) src = new Uint8Array(src);

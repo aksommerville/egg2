@@ -113,6 +113,8 @@ export class SongService {
       { value: "autoEndTime", label: "Auto end time" },
       { value: "removeUnusedEvents", label: "Remove unused events" },
       { value: "reassignChannels", label: "Reassign channels..." },
+      { value: "addChannel", label: "Add Channel" },
+      { value: "addEvent", label: "Add Event..." },
     ];
   }
   
@@ -139,6 +141,14 @@ export class SongService {
   
   action_reassignChannels() {
     console.log(`TODO SongService.action_reassignChannels`);
+  }
+  
+  action_addChannel() {
+    console.log(`TODO SongService.action_addChannel`);
+  }
+  
+  action_addEvent() {
+    console.log(`TODO SongService.action_addEvent`);
   }
 }
 

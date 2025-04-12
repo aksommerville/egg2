@@ -49,48 +49,69 @@ static void synth_wave_print_ramp(float *v,int c,float a,float z) {
 /* Square with optional tapering.
  */
  
-static void synth_wave_print_square(float *v,uint8_t qual,struct synth *synth) {
+static void synth_wave_print_square_inner(float *v,uint8_t qual,const float *sine) {
   const int halfperiod=SYNTH_WAVE_SIZE_SAMPLES>>1;
-  if (qual&&synth_sine_require(synth)) {
-    const int quarter=halfperiod>>1;
-    int curvelen=(qual*quarter)>>8;
-    if (curvelen<1) curvelen=1;
-    uint32_t srcp=0;
-    uint32_t srcdp=0x40000000/curvelen;
-    int i=0;
-    for (;i<curvelen;i++,srcp+=srcdp) v[i]=synth->sine->v[srcp>>SYNTH_WAVE_SHIFT];
-    for (;i<quarter;i++) v[i]=1.0f;
-    int from=i-1;
-    for (;i<halfperiod;i++,from--) v[i]=v[from];
-    for (from=0;i<SYNTH_WAVE_SIZE_SAMPLES;i++,from++) v[i]=-v[from];
-  } else {
+  const int quarter=halfperiod>>1;
+  int curvelen=(qual*quarter)>>8;
+  if (curvelen<1) curvelen=1;
+  uint32_t srcp=0;
+  uint32_t srcdp=0x40000000/curvelen;
+  int i=0;
+  for (;i<curvelen;i++,srcp+=srcdp) v[i]=sine[srcp>>SYNTH_WAVE_SHIFT];
+  for (;i<quarter;i++) v[i]=1.0f;
+  int from=i-1;
+  for (;i<halfperiod;i++,from--) v[i]=v[from];
+  for (from=0;i<SYNTH_WAVE_SIZE_SAMPLES;i++,from++) v[i]=-v[from];
+}
+ 
+static void synth_wave_print_square(float *v,uint8_t qual,struct synth *synth) {
+  if (!qual) {
+    const int halfperiod=SYNTH_WAVE_SIZE_SAMPLES>>1;
     int i;
     for (i=halfperiod;i-->0;v++) *v=1.0f;
     for (i=halfperiod;i-->0;v++) *v=-1.0f;
+    return;
+  }
+  if (synth_sine_require(synth)) {
+    synth_wave_print_square_inner(v,qual,synth->sine->v);
+  } else {
+    float sine[SYNTH_WAVE_SIZE_SAMPLES];
+    synth_wave_print_sine(sine);
+    synth_wave_print_square_inner(v,qual,sine);
   }
 }
 
 /* Saw with optional tapering.
  */
  
+static void synth_wave_print_saw_inner(float *v,uint8_t qual,const float *sine) {
+  // Unlike the similar square, we have a mild discontinuity even at maximum qual.
+  // The sine segment reaches the top and then immediately turns into a ramp.
+  // TODO Confirm it sounds ok. My gut says it will be fine.
+  const int halfperiod=SYNTH_WAVE_SIZE_SAMPLES>>1;
+  const int quarter=halfperiod>>1;
+  int curvelen=(qual*quarter)>>8;
+  if (curvelen<1) curvelen=1;
+  uint32_t srcp=0;
+  uint32_t srcdp=0x40000000/curvelen;
+  int i=0;
+  for (;i<curvelen;i++,srcp+=srcdp) v[i]=sine[srcp>>SYNTH_WAVE_SHIFT];
+  synth_wave_print_ramp(v+curvelen,halfperiod-curvelen,1.0f,0.0f);
+  int from=halfperiod-1;
+  for (i=halfperiod;i<SYNTH_WAVE_SIZE_SAMPLES;i++,from--) v[i]=-v[from];
+}
+ 
 static void synth_wave_print_saw(float *v,uint8_t qual,struct synth *synth) {
-  if (qual&&synth_sine_require(synth)) {
-    // Unlike the similar square, we have a mild discontinuity even at maximum qual.
-    // The sine segment reaches the top and then immediately turns into a ramp.
-    // TODO Confirm it sounds ok. My gut says it will be fine.
-    const int halfperiod=SYNTH_WAVE_SIZE_SAMPLES>>1;
-    const int quarter=halfperiod>>1;
-    int curvelen=(qual*quarter)>>8;
-    if (curvelen<1) curvelen=1;
-    uint32_t srcp=0;
-    uint32_t srcdp=0x40000000/curvelen;
-    int i=0;
-    for (;i<curvelen;i++,srcp+=srcdp) v[i]=synth->sine->v[srcp>>SYNTH_WAVE_SHIFT];
-    synth_wave_print_ramp(v+curvelen,halfperiod-curvelen,1.0f,0.0f);
-    int from=halfperiod-1;
-    for (i=halfperiod;i<SYNTH_WAVE_SIZE_SAMPLES;i++,from--) v[i]=-v[from];
-  } else {
+  if (!qual) {
     synth_wave_print_ramp(v,SYNTH_WAVE_SIZE_SAMPLES,1.0f,-1.0f);
+    return;
+  }
+  if (synth_sine_require(synth)) {
+    synth_wave_print_saw_inner(v,qual,synth->sine->v);
+  } else {
+    float sine[SYNTH_WAVE_SIZE_SAMPLES];
+    synth_wave_print_sine(sine);
+    synth_wave_print_saw_inner(v,qual,sine);
   }
 }
 
@@ -197,13 +218,20 @@ struct synth_wave *synth_wave_new(struct synth *synth,const void *src,int srcc) 
       } break;
       
     case EAU_SHAPE_FIXEDFM: {
-        if (!synth_sine_require(synth)) return 0;
-        if (!qual&&!coefc) { // With no qualifier or coefficients, it's just a sine wave.
-          if (synth_wave_ref(synth->sine)>=0) return synth->sine;
+        if (synth_sine_require(synth)) {
+          if (!qual&&!coefc) { // With no qualifier or coefficients, it's just a sine wave.
+            if (synth_wave_ref(synth->sine)>=0) return synth->sine;
+          }
+          if (!(wave=calloc(1,sizeof(struct synth_wave)))) return 0;
+          wave->refc=1;
+          synth_wave_print_fixedfm(wave->v,qual,synth->sine->v);
+        } else {
+          float sine[SYNTH_WAVE_SIZE_SAMPLES];
+          synth_wave_print_sine(sine);
+          if (!(wave=calloc(1,sizeof(struct synth_wave)))) return 0;
+          wave->refc=1;
+          synth_wave_print_fixedfm(wave->v,qual,sine);
         }
-        if (!(wave=calloc(1,sizeof(struct synth_wave)))) return 0;
-        wave->refc=1;
-        synth_wave_print_fixedfm(wave->v,qual,synth->sine->v);
       } break;
       
     default: return 0;

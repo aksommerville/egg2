@@ -116,3 +116,5 @@ Planned differences from Egg v1:
 - - [ ] SongEditor: Playback
 - - [x] SongEditor: Channel names per MIDI file.
 - - [ ] SongEditor: Preserve payload where possible on a channel mode change.
+- - [ ] SongEditor:WaveUi: Have wave preview printed by synthesizer. Currently calling out to the server for each render.
+- - [x] SongEditor:EnvUi: Place new points proportionately in the alternate line.
