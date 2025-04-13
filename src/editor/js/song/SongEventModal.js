@@ -16,7 +16,7 @@ export class SongEventModal {
     this.window = window;
     this.sharedSymbols = sharedSymbols;
     
-    this.event = null; // SongEvent, immutable.
+    this.event = null; // SongEvent, immutable. Or something with similar shape; we only touch fields, no method calls.
     this.song = null; // Song, optional, for advice.
     
     this.result = new Promise((resolve, reject) => {

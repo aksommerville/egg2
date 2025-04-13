@@ -72,6 +72,13 @@ export class Song {
     return chids;
   }
   
+  unusedChid() {
+    for (let chid=0; chid<16; chid++) {
+      if (!this.channels[chid]) return chid;
+    }
+    return -1;
+  }
+  
   /* Special accessors.
    ****************************************************************************/
   

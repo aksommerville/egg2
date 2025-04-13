@@ -14,6 +14,10 @@ class EauModecfgDecoder {
     this.p = 0;
   }
   
+  finished() {
+    return (this.p >= this.src.length);
+  }
+  
   u8(fallback) {
     if (this.p >= this.src.length) return fallback || 0;
     return this.src[this.p++];
@@ -191,7 +195,7 @@ export function eauModecfgDecodeDrum(src) {
     notes: [],
   };
   const decoder = new EauModecfgDecoder(src);
-  while (!decoder.finished) {
+  while (!decoder.finished()) {
     const note = {};
     note.noteid = decoder.u8();
     note.trimLo = decoder.u8() || 0;
@@ -209,7 +213,7 @@ export function eauModecfgEncodeDrum(src) {
     encoder.u8(note.trimLo);
     encoder.u8(note.trimHi);
     encoder.u8(note.pan);
-    encoder.u16(note.serial.length);
+    encoder.u16be(note.serial.length);
     encoder.raw(note.serial);
   }
   return encoder.finish();

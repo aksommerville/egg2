@@ -97,7 +97,7 @@ Planned differences from Egg v1:
 - - [ ] Also need to manage loop in editor Song.
 - - [ ] WAV from EAU, can we get rate and chanc from the caller somehow?
 - - [ ] System language, for MacOS and Windows.
-- - [ ] Expose a GM names service, using text ripped from eggdev/instruments.eaut dynamically.
+- - [ ] Expose a GM names service, using text ripped from eggdev/instruments.eaut dynamically. <-- have it for instruments in editor... can we get drums too?
 - - [ ] synth: Brief blackout on song transitions? Not sure whether it's needed.
 - - [ ] Decide whether to allow WAV for sound resources.
 - - [ ] Add phase to FM LFO. I think. Maybe?
@@ -113,7 +113,8 @@ Planned differences from Egg v1:
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] POI icons for sprite and custom overrides.
-- - [ ] SongEditor: Playback
+- - [ ] SongEditor: Playback (From SongEditor top, and also within ModecfgDrumModal)
+- - [ ] SongEditor: Live MIDI-In. Requires web synthesizer.
 - - [x] SongEditor: Channel names per MIDI file.
 - - [ ] SongEditor: Preserve payload where possible on a channel mode change.
 - - [ ] SongEditor:WaveUi: Have wave preview printed by synthesizer. Currently calling out to the server for each render.

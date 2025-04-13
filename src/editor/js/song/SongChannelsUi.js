@@ -106,6 +106,7 @@ export class SongChannelsUi {
     switch (event.type) {
       case "setup": this.setup(); break;
       case "channelsRemoved": this.setup(); break;
+      case "channelAdded": this.setup(); break;
       case "channelChanged": this.rebuildChannelCardForChid(event.chid); break;
     }
   }
@@ -184,7 +185,6 @@ export class SongChannelsUi {
   }
   
   onEditModeConfig(chid) {
-    console.log(`SongChannelsUi.onEditModeConfig ${chid}`);
     const channel = this.songService.song.channels[chid];
     if (!channel) return;
     let modalcls;
@@ -197,7 +197,6 @@ export class SongChannelsUi {
     const modal = this.dom.spawnModal(modalcls);
     modal.setup(channel, this.songService.song);
     modal.result.then(rsp => {
-      console.log(`SongChannelsUi.onEditModeConfig got response`, { rsp, chid, channel });
       if (!rsp) return;
       channel.payload = rsp;
       this.songService.broadcast({ type: "channelChanged", chid: channel.chid });

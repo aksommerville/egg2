@@ -68,8 +68,10 @@ export class SongEditor {
       case "detailEditor": this.replaceDetailEditor(); break;
       case "channelsRemoved":
       case "channelChanged":
+      case "channelAdded":
       case "eventsRemoved":
       case "eventsChanged":
+      case "eventAdded":
       case "dirty": this.dirty(); break;
     }
   }

@@ -1,6 +1,6 @@
 /* midiSong.js
  * Encode and decode Song objects to/from MIDI.
- * We support EAU and EAU-Text, but MIDI is the one we actually expect to see.
+ * Editor supports EAU and EAU-Text, but MIDI is the one we actually expect to see.
  * (the EAUs are largely runtime-only).
  */
  
@@ -23,6 +23,7 @@ export function midiSongEncode(song) {
   if (!tracks.length) { // We must emit at least one MTrk, to hold the channel configs.
     tracks.push({ trackId: 0, events: [] });
   }
+  tracks.sort((a, b) => a.trackId - b.trackId);
   
   const division = 48; // TODO ticks/qnote... Should we calculate this more fancily? Should we record it from the input file?
   encoder.raw("MThd");

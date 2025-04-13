@@ -110,6 +110,7 @@ export class SongListUi {
     switch (event.type) {
       case "setup": this.setup(); break;
       case "visibilityFilter": this.showTooMany = false; this.setup(); break;
+      case "eventAdded": this.setup(); break; // heavy-handed but meh
     }
   }
   

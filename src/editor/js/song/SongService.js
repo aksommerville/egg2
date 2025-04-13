@@ -6,6 +6,7 @@
 import { Song, SongChannel, SongEvent } from "./Song.js";
 import { SongChartUi } from "./SongChartUi.js";
 import { SongListUi } from "./SongListUi.js";
+import { SongEventModal } from "./SongEventModal.js";
 import { Dom } from "../Dom.js";
 import { Data } from "../Data.js";
  
@@ -83,8 +84,10 @@ export class SongService {
    *   { type:"visibilityFilter" }
    *   { type:"dirty" }
    *   { type:"channelsRemoved" }
+   *   { type:"channelAdded" }
    *   { type:"eventsRemoved" }
    *   { type:"eventsChanged" }
+   *   { type:"eventAdded" }
    *   { type:"channelChanged", chid }
    *************************************************************************************/
   
@@ -144,11 +147,37 @@ export class SongService {
   }
   
   action_addChannel() {
-    console.log(`TODO SongService.action_addChannel`);
+    if (!this.song) return;
+    const chid = this.song.unusedChid();
+    if (chid < 0) return this.dom.spawnModal("All channels in use.");
+    const channel = new SongChannel(chid);
+    this.song.channels[chid] = channel;
+    this.broadcast({ type: "channelAdded" });
   }
   
   action_addEvent() {
-    console.log(`TODO SongService.action_addEvent`);
+    if (!this.song) return;
+    const modal = this.dom.spawnModal(SongEventModal);
+    modal.setup({
+      time: 0,
+      type: "n",
+      chid: 0, // TODO Maybe change if there's a visibility filter, or use the lowest chid known to exist...
+      noteid: 0x40,
+      velocity: 7,
+      durms: 0,
+    }, this.song);
+    modal.result.then(rsp => {
+      if (!rsp) return;
+      console.log(`event to add`, rsp);
+      if ((rsp.chid >= 0) && !this.song.channels[rsp.chid]) {
+        // Implicitly add the channel, since we don't need any more detail to do so.
+        this.song.channels[rsp.chid] = new SongChannel(rsp.chid);
+        this.broadcast({ type: "channelAdded" });
+      }
+      this.song.events.push(rsp);
+      this.song.sortEvents();
+      this.broadcast({ type: "eventAdded" });
+    });
   }
 }
 

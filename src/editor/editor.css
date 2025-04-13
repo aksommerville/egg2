@@ -733,3 +733,66 @@ input.toggle:checked + label.toggle.light {
   border-radius: 0.5lh;
   text-align: center;
 }
+
+.ModecfgSubModal {
+  width: 450px;
+}
+
+.ModecfgDrumModal {
+  min-width: 450px;
+}
+.ModecfgDrumModal .scroller {
+  overflow-y: scroll;
+  height: 75vh;
+  margin-bottom: 10px;
+}
+.ModecfgDrumModal table.notes {
+  width: 100%;
+}
+.ModecfgDrumModal .tableHeader {
+  position: sticky;
+  top: 0;
+  background-color: #ace;
+}
+.ModecfgDrumModal .gmName {
+  min-width: 150px;
+}
+.ModecfgDrumModal td.actions {
+  min-width: 200px;
+  display: flex;
+  flex-direction: row;
+  text-align: right;
+}
+.ModecfgDrumModal .serialLength {
+  width: 40px;
+  margin-right: 5px;
+}
+.ModecfgDrumModal .spacer {
+  flex: 1;
+}
+
+.DrumsImportModal .subui {
+  width: 700px;
+  height: 400px;
+  overflow-y: scroll;
+}
+.DrumsImportModal .sourceNote {
+  align-items: baseline;
+}
+.DrumsImportModal .sourceNote.recommend {
+  background-color: #cfc;
+}
+.DrumsImportModal .sourceNote > .sourceNoteId {
+  width: 200px;
+  overflow: hidden;
+}
+.DrumsImportModal .sourceNote > input[type='number'] {
+  width: 50px;
+  margin-right: 5px;
+}
+.DrumsImportModal .bottomRow {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+}
