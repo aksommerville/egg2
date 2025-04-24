@@ -5,6 +5,121 @@
 import { SongChannel, SongEvent } from "./Song.js";
 import { Encoder } from "../Encoder.js";
 
+/* Convenience to generate a default channel header payload, possibly in the context
+ * of a previous config and a different mode we're coming from.
+ * This is what happens when you change mode in the editor's channel headers.
+ * SongChannel stashes config for the old mode as it changes, and provides that here.
+ ******************************************************************************/
+ 
+export function eauGuessInitialChannelConfig(toMode, proposal, fromMode, fromSerial) {
+
+  // Same mode, either generate a default (fromSerial empty) or return it verbatim.
+  if (toMode === fromMode) {
+    if (fromSerial?.length) return new Uint8Array(fromSerial);
+    return eauDefaultChannelConfigForMode(toMode);
+  }
+  
+  // (fromSerial) not provided, use the proposal or default.
+  if (!fromSerial?.length) {
+    if (proposal?.length) return new Uint8Array(proposal);
+    return eauDefaultChannelConfigForMode(toMode);
+  }
+  
+  // If we don't have (proposal), generate the default.
+  if (!proposal?.length) proposal = eauDefaultChannelConfigForMode(toMode);
+  
+  // FM<=SUB or SUB<=FM, take the level envelope from (fromSerial) and the rest from (proposal).
+  if ((toMode === 2) && (fromMode === 3)) {
+    const proposalModel = eauModecfgDecodeFm(proposal);
+    const fromModel = eauModecfgDecodeSub(fromSerial);
+    proposalModel.level = fromModel.level;
+    return eauModecfgEncodeFm(proposalModel);
+  }
+  if ((toMode === 3) && (fromMode === 2)) {
+    const proposalModel = eauModecfgDecodeSub(proposal);
+    const fromModel = eauModecfgDecodeFm(fromSerial);
+    proposalModel.level = fromModel.level;
+    return eauModecfgEncodeSub(proposalModel);
+  }
+  
+  // Finally, give them the proposal.
+  return new proposal;
+}
+
+export function eauDefaultChannelConfigForMode(mode) {
+  // Since these are static, it would be more efficient to write them out encoded.
+  // That would be cumbersome to read, so we're generating a model first and then encoding it.
+  // Don't worry! Encode and decode of channel header payloads is cheap.
+  switch (mode) {
+    
+    case 1: { // DRUM
+        const model = {
+          notes: [],
+        };
+        return eauModecfgEncodeDrum(model);
+      }
+      
+    case 2: { // FM
+        const model = {
+          level: eauDefaultLevel(),
+          wave: {
+            shape: 0, // sine
+            qual: 0,
+            harmonics: [],
+          },
+          pitchEnv: eauNoopEnv(),
+          wheelRange: 200,
+          modRate: 0,
+          modRange: 0,
+          rangeEnv: eauNoopEnv(),
+          rangeLfoRate: 0,
+          rangeLfoDepth: 0,
+          remainder: new Uint8Array(0),
+        };
+        return eauModecfgEncodeFm(model);
+      }
+      
+    case 3: { // SUB
+        const model = {
+          level: eauDefaultLevel(),
+          widthLo: 150,
+          widthHi: 150,
+          stageCount: 2,
+          gain: 5.0,
+          remainder: new Uint8Array(0),
+        };
+        return eauModecfgEncodeSub(model);
+      }
+  }
+  // Empty is always legal.
+  return new Uint8Array(0);
+}
+
+// Envelope model.
+function eauDefaultLevel() {
+  return {
+    flags: 0x05, // velocity|sustain
+    initlo: 0,
+    inithi: 0,
+    susp: 1,
+    points: [
+      { tlo: 20, thi: 30, vlo:0x3000, vhi:0xffff },
+      { tlo: 40, thi: 40, vlo:0x2000, vhi:0x4000 },
+      { tlo:150, thi:300, vlo:0x0000, vhi:0x0000 },
+    ],
+  };
+}
+
+function eauNoopEnv() {
+  return {
+    flags: 0,
+    initlo: 0,
+    inithi: 0,
+    susp: -1,
+    points: [],
+  };
+}
+
 /* Decoder specific to EAU Channel Header payloads.
  ******************************************************************************/
  

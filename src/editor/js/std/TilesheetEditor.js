@@ -1,5 +1,4 @@
 /* TilesheetEditor.js
-TODO persist toolbar state
  */
  
 import { Dom } from "../Dom.js";
@@ -77,6 +76,7 @@ export class TilesheetEditor {
     this.copying = false;
     this.mouseUpListener = null;
     
+    this.loadState();
     this.buildUi();
   }
   
@@ -110,6 +110,27 @@ export class TilesheetEditor {
   static getColors() {
     requireValueColors();
     return VALUE_COLORS;
+  }
+  
+  loadState() {
+    try {
+      const state = JSON.parse(this.window.localStorage.getItem("egg2.TilesheetEditor"));
+      this.visibleTables = state.visibleTables || [];
+      this.options = {
+        showImage: true,
+        showGrid: true,
+        numeric: false,
+        bg: false,
+        ...(state.options || {}),
+      };
+    } catch (e) {}
+  }
+  
+  saveState() {
+    this.window.localStorage.setItem("egg2.TilesheetEditor", JSON.stringify({
+      visibleTables: this.visibleTables,
+      options: this.options,
+    }));
   }
   
   /* UI setup.
@@ -299,11 +320,13 @@ export class TilesheetEditor {
       this.options[k] = checkbox.checked;
     }
     this.renderSoon();
+    this.saveState();
   }
   
   onVisibilityChanged() {
     this.visibleTables = Array.from(this.element.querySelectorAll(".visibility input:checked")).map(e => e.name);
     this.renderSoon();
+    this.saveState();
   }
    
   onAddTable() {

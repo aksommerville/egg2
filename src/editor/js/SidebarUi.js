@@ -2,8 +2,6 @@
  * Left side of RootUi. Resource picker and global controls.
  */
  
-//TODO Persist state of open panels.
- 
 import { Dom } from "./Dom.js";
 import { Actions } from "./Actions.js";
 import { NewResourceModal } from "./NewResourceModal.js";
@@ -21,6 +19,9 @@ export class SidebarUi {
     this.data = data;
     this.window = window;
     
+    this.openTypes = [];
+    this.loadOpenTypes();
+    
     this.buildUi();
     this.dirtyListener = this.data.listenDirty(state => this.onDirtyStateChanged(state));
     this.tocListener = this.data.listenToc(resv => this.onTocChanged(resv));
@@ -29,6 +30,19 @@ export class SidebarUi {
   onRemoveFromDom() {
     this.data.unlistenDirty(this.dirtyListener);
     this.data.unlistenToc(this.tocListener);
+  }
+  
+  loadOpenTypes() {
+    try {
+      const openTypes = JSON.parse(this.window.localStorage.getItem("egg2.SidebarUi.openTypes"));
+      if ((openTypes instanceof Array) && !openTypes.find(t => (typeof(t) !== "string"))) {
+        this.openTypes = openTypes;
+      }
+    } catch (e) {}
+  }
+  
+  saveOpenTypes() {
+    this.window.localStorage.setItem("egg2.SidebarUi.openTypes", JSON.stringify(this.openTypes));
   }
   
   buildUi() {
@@ -75,7 +89,8 @@ export class SidebarUi {
     toc.innerHTML = "";
     for (const type of types) {
       const bucket = buckets[type];
-      const details = this.dom.spawn(toc, "DETAILS", ["type"], { "data-type": type });
+      const details = this.dom.spawn(toc, "DETAILS", ["type"], { "data-type": type, "on-toggle": () => this.onDetailsToggled() });
+      if (this.openTypes.includes(type)) details.open = true;
       this.dom.spawn(details, "SUMMARY", ["type"], type);
       for (const res of bucket) {
         this.dom.spawn(details, "DIV", ["res"], {
@@ -143,5 +158,10 @@ export class SidebarUi {
         this.actions.editResource(res.path, rsp.editor?.name);
       }
     }).catch(e => this.dom.modalError(e));
+  }
+  
+  onDetailsToggled() {
+    this.openTypes = Array.from(this.element.querySelectorAll("details.type[open]")).map(e => e.getAttribute("data-type")).filter(v => v);
+    this.saveOpenTypes();
   }
 }

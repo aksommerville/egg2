@@ -85,6 +85,7 @@ Planned differences from Egg v1:
 - - - [x] Actions
 - - - [x] Neighbors
 - - [ ] SongEditor
+- - - [ ] Post
 - - [x] Acquire shared symbols.
 - - [ ] Standard actions... what's needed?
 - - [ ] Verify overrides
@@ -108,14 +109,14 @@ Planned differences from Egg v1:
 - - [ ] HexEditor: Paging, offset, ASCII, multi-byte edits.
 - - [ ] ImageEditor: Animation preview like we had in v1.
 - - [ ] StringsEditor: Side-by-side editing across languages, like we had in v1.
-- - [ ] SidebarUi: Persist open panels.
-- - [ ] TilesheetEditor: Persist toolbar.
+- - [x] SidebarUi: Persist open panels.
+- - [x] TilesheetEditor: Persist toolbar.
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] POI icons for sprite and custom overrides.
 - - [ ] SongEditor: Playback (From SongEditor top, and also within ModecfgDrumModal)
 - - [ ] SongEditor: Live MIDI-In. Requires web synthesizer.
 - - [x] SongEditor: Channel names per MIDI file.
-- - [ ] SongEditor: Preserve payload where possible on a channel mode change.
+- - [x] SongEditor: Preserve payload where possible on a channel mode change.
 - - [ ] SongEditor:WaveUi: Have wave preview printed by synthesizer. Currently calling out to the server for each render.
 - - [x] SongEditor:EnvUi: Place new points proportionately in the alternate line.

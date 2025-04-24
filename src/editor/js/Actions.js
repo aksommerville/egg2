@@ -81,7 +81,7 @@ export class Actions {
   }
   
   editResource(path, editorName) {
-    let url = "#path=" + encodeURIComponent(path);
+    let url = "#path=" + encodeURIComponent(path).replace(/%2[fF]/g, "/"); // Slashes are OK in the fragment, and there will always be some. Keep it legible.
     if (editorName) url += "&editor=" + encodeURIComponent(editorName);
     this.window.location = url;
   }

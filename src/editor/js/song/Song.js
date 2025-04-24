@@ -9,6 +9,7 @@ import { eauSongEncode, eauSongDecode } from "./eauSong.js";
 import { eautSongEncode, eautSongDecode } from "./eautSong.js";
 import { midiSongEncode, midiSongDecode } from "./midiSong.js";
 import { Encoder } from "../Encoder.js";
+import { eauGuessInitialChannelConfig } from "./eauSong.js";
  
 export class Song {
   constructor(src) {
@@ -173,6 +174,7 @@ export class SongChannel {
     this.payload = []; // Uint8Array if not empty.
     this.post = []; // Uint8Array if not empty.
     this.name = "";
+    this.stashedPayloads = []; // Sparse Uint8Array keyed by mode, so we can preserve config when you toggle mode around.
   }
   
   _copy(src) {
@@ -211,10 +213,12 @@ export class SongChannel {
   }
   
   changeMode(nmode) {
-    //TODO If changing to noop, preserve the payload why not. Changing between fm and sub, preserve the level envelope.
-    //TODO Extra credit: Can we stash the dropped config somewhere local and recover it if they change back to the old mode?
+    const fromMode = this.mode;
+    const fromSerial = this.payload;
+    const toSerial = this.stashedPayloads[nmode];
+    this.stashedPayloads[fromMode] = fromSerial;
     this.mode = nmode;
-    this.payload = new Uint8Array(0);
+    this.payload = eauGuessInitialChannelConfig(nmode, toSerial, fromMode, fromSerial);
   }
 }
 
