@@ -29,6 +29,7 @@ High bits of the first byte tell you how to process each command:
 EOF is required.
 Decoders must check (tid) and (rid) for overflow. Limited to 255 and 65535 respectively.
 Per this format, it is impossible for resources not to be sorted by (tid,rid), and IDs of zero are also impossible.
+Zero-length resources are not possible.
 Longest possible resource is exactly 4 MB.
 
 ## Loose Directory

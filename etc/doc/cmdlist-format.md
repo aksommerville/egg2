@@ -74,3 +74,8 @@ Just cmdlist, but binary includes a signature first:
 ```
    4 Signature: "\0ESP"
 ```
+
+Some text commands will be digested by the editor if present:
+- `image`: imageid
+- `tile`: tileid, xform
+- `decal`: decalid, xform

@@ -234,7 +234,14 @@ int builder_schedule_compile(struct builder *builder,struct builder_step *step) 
   struct builder_file *cfile=builder_file_req_with_hint(ofile,BUILDER_FILE_HINT_C);
   if (!cfile) return builder_error(builder,"%s: Expected a '.c' prereq\n",ofile->path);
   char cmd[1024];
-  int cmdc=snprintf(cmd,sizeof(cmd),"%.*s -o%.*s %.*s",ofile->target->ccc,ofile->target->cc,ofile->pathc,ofile->path,cfile->pathc,cfile->path);
+  int cmdc=snprintf(cmd,sizeof(cmd),
+    "%.*s -I%.*s/mid -I%s/src -o%.*s %.*s",
+    ofile->target->ccc,ofile->target->cc,
+    builder->rootc,builder->root,
+    g.sdkpath,
+    ofile->pathc,ofile->path,
+    cfile->pathc,cfile->path
+  );
   if ((cmdc<1)||(cmdc>=sizeof(cmd))) return -1;
   return builder_begin_command(builder,step,cmd,cmdc,0,0);
 }

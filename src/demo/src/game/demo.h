@@ -5,6 +5,7 @@
 #include "opt/stdlib/egg-stdlib.h"
 #include "opt/graf/graf.h"
 #include "shared_symbols.h"
+#include "egg_res_toc.h"
 
 #define FBW 320
 #define FBH 180

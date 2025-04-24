@@ -28,6 +28,7 @@ The main reason `--unsafe-external` is even an option is for testing on mobile d
 If you're going to use it, please first be sure that there's no untrusted parties on your network,
 and that your network is not reachable from beyond your router.
 If you don't feel competent to ensure that, **don't use it**.
+You can always build the artifacts separately, then serve them with a tool better suited to the task (eg npm http-server).
 
 ## Endpoints
 
@@ -47,7 +48,7 @@ If no project was specified at launch, or anything else goes wrong, returns an e
 ### GET /api/instruments
 
 Returns the synth instruments config file verbatim (EAU-Text).
-That should stored at `EGG_SDK/src/eggdev/instruments.eaut`.
+That should be stored at `EGG_SDK/src/eggdev/instruments.eaut`.
 This is read from scratch every time you call it; no need to restart the server if you change the underlying file.
 Beware that regular conversion against the default instruments does cache, and you do have to restart to get that.
 
