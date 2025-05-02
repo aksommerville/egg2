@@ -60,6 +60,8 @@ Planned differences from Egg v1:
 - - - [ ] Persist mappings.
 - - - [ ] egg_gamepad_get_button: Need to cache full capability reports in inmgr.
 - - - [ ] Interactive reconfig.
+- - - - [ ] Let the client declare which buttons it uses, so when configuring we don't ask for all 15 buttons.
+- - - - - Maybe a metadata field "incfgMask" containing characters "dswne123lrLR". "d" being the dpad, all others correspond to one button.
 - - [x] Persistence.
 - - [ ] Record and playback session.
 - [ ] Web runtime.
@@ -84,8 +86,8 @@ Planned differences from Egg v1:
 - - - [x] POI
 - - - [x] Actions
 - - - [x] Neighbors
-- - [ ] SongEditor
-- - - [ ] Post
+- - [x] SongEditor
+- - - [x] Post
 - - [x] Acquire shared symbols.
 - - [ ] Standard actions... what's needed?
 - - [ ] Verify overrides

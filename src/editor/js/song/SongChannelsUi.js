@@ -6,11 +6,13 @@ import { PidModal } from "./PidModal.js";
 import { Dom } from "../Dom.js";
 import { SharedSymbols } from "../SharedSymbols.js";
 import { getChannelColor } from "./songDisplayBits.js";
-import { eauPostForEach, EAU_POST_STAGE_NAMES } from "./eauSong.js";
+import { eauPostForEach, eauPostDecode, eauPostEncode, EAU_POST_STAGE_NAMES, eauPostDefaultBody } from "./eauSong.js";
 import { ModecfgGenericModal } from "./ModecfgGenericModal.js";
 import { ModecfgDrumModal } from "./ModecfgDrumModal.js";
 import { ModecfgFmModal } from "./ModecfgFmModal.js";
 import { ModecfgSubModal } from "./ModecfgSubModal.js";
+import { SongPostTypeModal } from "./SongPostTypeModal.js";
+import { SongPostBodyModal } from "./SongPostBodyModal.js";
 
 export class SongChannelsUi {
   static getDependencies() {
@@ -204,14 +206,51 @@ export class SongChannelsUi {
   }
   
   onDeletePostStage(chid, p) {
-    console.log(`SongChannelUi.onDeletePostStage ${chid}@${p}`);
+    const channel = this.songService.song?.channels[chid];
+    if (!channel) return;
+    const stages = [];
+    let got = false;
+    eauPostForEach(channel.post, (stageid, body, sp) => {
+      if (sp === p) {
+        got = true;
+      } else {
+        stages.push({ stageid, body });
+      }
+    });
+    if (!got) return;
+    channel.post = eauPostEncode(stages);
+    this.songService.broadcast({ type: "channelChanged", chid });
   }
   
   onEditPostStage(chid, p) {
-    console.log(`SongChannelUi.onEditPostStage ${chid}@${p}`);
+    const channel = this.songService.song?.channels[chid];
+    if (!channel) return;
+    const stages = eauPostDecode(channel.post);
+    const stage = stages.find(s => (s.p === p));
+    if (!stage) return;
+    const modal = this.dom.spawnModal(SongPostBodyModal);
+    modal.setup(stage.stageid, stage.body);
+    modal.result.then(rsp => {
+      if (!rsp) return;
+      stage.body = rsp;
+      delete stage.p;
+      channel.post = eauPostEncode(stages);
+      this.songService.broadcast({ type: "channelChanged", chid });
+    });
   }
   
   onAddPostStage(chid) {
-    console.log(`SongChannelUi.onAddPostStage ${chid}`);
+    const channel = this.songService.song?.channels[chid];
+    if (!channel) return;
+    const modal = this.dom.spawnModal(SongPostTypeModal);
+    modal.result.then(stageid => {
+      if (typeof(stageid) !== "number") return;
+      const p = channel.post.length;
+      const stages = eauPostDecode(channel.post);
+      stages.push({ stageid, body: eauPostDefaultBody(stageid) });
+      channel.post = eauPostEncode(stages);
+      this.songService.broadcast({ type: "channelChanged", chid });
+      this.onEditPostStage(chid, p);
+    });
   }
 }

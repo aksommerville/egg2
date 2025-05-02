@@ -454,6 +454,7 @@ export function eauModecfgEncodeSub(src) {
  * (p) is the offset to the start of the stage, ie its "stageid" byte.
  */
 export function eauPostForEach(serial, cb) {
+  if (!serial) return;
   for (let srcp=0; srcp<serial.length; ) {
     const startp = srcp;
     const stageid = serial[srcp++];
@@ -463,6 +464,28 @@ export function eauPostForEach(serial, cb) {
     srcp += len;
     cb(stageid, body, startp);
   }
+}
+
+/* Returns [{stageid, body, p}], just a flattened version of eauPostForEach.
+ */
+export function eauPostDecode(serial) {
+  const stages = [];
+  eauPostForEach(serial, (stageid, body, p) => stages.push({ stageid, body, p }));
+  return stages;
+}
+
+/* Reverse of eauPostDecode; (stages) is [{stageid, body}], returns Uint8Array.
+ */
+export function eauPostEncode(stages) {
+  const encoder = new Encoder();
+  for (const { stageid, body } of stages) {
+    if ((typeof(stageid) !== "number") || (stageid < 0) || (stageid > 0xff)) throw new Error(`Invalid stageid: ${JSON.stringify(stageid)}`);
+    if (body.length > 0xff) throw new Error(`Invalid length ${body.length} for post stage ${stageid}`);
+    encoder.u8(stageid);
+    encoder.u8(body.length);
+    encoder.raw(body);
+  }
+  return encoder.finish();
 }
 
 export const EAU_POST_STAGE_NAMES = [
@@ -477,7 +500,21 @@ export const EAU_POST_STAGE_NAMES = [
   "tremolo",
 ];
 
-//TODO Models for each named stage.
+export function eauPostDefaultBody(stageid) {
+  switch (stageid) {
+    case 1: return new Uint8Array([ 0x01,0x00, 0xff ]); // gain (gain,clip)
+    case 2: return new Uint8Array([ 0x01,0x00, 0x80,0x80,0x80,0x80 ]); // delay (period,dry,wet,store,feedback)
+    case 3: return new Uint8Array([ 0x02,0x00 ]); // lopass (hz)
+    case 4: return new Uint8Array([ 0x02,0x00 ]); // hipass (hz)
+    case 5: return new Uint8Array([ 0x02,0x00, 0x01,0x00 ]); // bpass (mid,width)
+    case 6: return new Uint8Array([ 0x02,0x00, 0x01,0x00 ]); // notch (mid,width)
+    case 7: return new Uint8Array([ 0x80,0x00, 0xff,0xff ]); // waveshaper (level...)
+    case 8: return new Uint8Array([ 0x01,0x00, 0x80, 0x00 ]); // tremolo (period,depth,phase)
+  }
+  return new Uint8Array(0);
+}
+
+// We're not providing models for the specific post stages. All of that knowledge is hard-coded in SongPostBodyModal.js.
 
 /* Encode.
  ******************************************************************************/

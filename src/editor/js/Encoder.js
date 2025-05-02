@@ -108,6 +108,13 @@ export class Encoder {
     this.v[this.c++] = src;
   }
   
+  u0_16(src) {
+    src = Math.max(0, Math.min(0xffff, Math.round(src * 0xffff)));
+    this.require(2);
+    this.v[this.c++] = src >> 8;
+    this.v[this.c++] = src;
+  }
+  
   raw(src) {
     if (typeof(src) === "string") src = new TextEncoder("utf8").encode(src);
     if (src instanceof ArrayBuffer) src = new Uint8Array(src);

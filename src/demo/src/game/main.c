@@ -45,7 +45,7 @@ int egg_client_init() {
     egg_log("Saved game.");
   }
   
-  egg_play_song(RID_song_eternal_torment,0,1);
+  egg_play_song(RID_song_in_thru_the_window,0,1);
 
   //TODO
 
