@@ -282,6 +282,7 @@ int egg_texture_load_raw(int texid,int w,int h,int stride,const void *src,int sr
 
 /* Copy RGBA image data out of an image.
  * (dsta) must be at least (w*h*4).
+ * Fails if (dst) too small (does not return actual length, as you might expect).
  */
 int egg_texture_get_pixels(void *dst,int dsta,int texid);
 

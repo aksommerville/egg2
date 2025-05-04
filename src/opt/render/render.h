@@ -10,17 +10,26 @@
 struct render;
 struct egg_render_uniform;
 
+/* Texture 1 is implicitly reserved but not actually created at init.
+ * You must call render_set_framebuffer_size() before using a new context.
+ */
 void render_del(struct render *render);
 struct render *render_new();
 
 void render_begin(struct render *render);
 void render_commit(struct render *render);
 
+/* We permit the framebuffer to be resized.
+ * Egg's API will not.
+ */
 int render_set_framebuffer_size(struct render *render,int fbw,int fbh);
 void render_set_size(struct render *render,int winw,int winh);
 void render_coords_win_from_fb(struct render *render,int *x,int *y);
 void render_coords_fb_from_win(struct render *render,int *x,int *y);
 
+/* Texture ID here is what you should report to Egg's client.
+ * It is not the OpenGL texture ID.
+ */
 void render_texture_del(struct render *render,int texid);
 int render_texture_new(struct render *render);
 void render_texture_get_size(int *w,int *h,struct render *render,int texid);

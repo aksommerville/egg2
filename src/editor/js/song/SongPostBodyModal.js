@@ -302,7 +302,7 @@ export class SongPostBodyModal {
         )
       ),
       this.dom.spawn(null, "TR",
-        this.dom.spawn(null, "TD", ["key"], "Depth"),
+        this.dom.spawn(null, "TD", ["key"], "Phase"),
         this.dom.spawn(null, "TD",
           this.dom.spawn(null, "INPUT", { type: "number", min: 0, max: 1, step: 1/256, value: phase, name: "phase" })
         )
