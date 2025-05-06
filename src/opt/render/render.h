@@ -40,6 +40,9 @@ int render_texture_get_pixels(void *dst,int dsta,struct render *render,int texid
 
 void render_texture_clear(struct render *render,int texid);
 
+/* We DO allow (uniform->dsttexid==0) to render to the real main output; we use that internally.
+ * Calls from the client must never have (dsttexid==0).
+ */
 void render_render(struct render *render,const struct egg_render_uniform *uniform,const void *vtxv,int vtxc);
 
 #endif

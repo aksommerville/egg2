@@ -294,13 +294,15 @@ void egg_texture_clear(int texid);
 #define EGG_XFORM_YREV 2
 #define EGG_XFORM_SWAP 4
 
+/* The raw shaders use (srctexid,tx,ty) or (r,g,b,a), never both.
+ */
 #define EGG_RENDER_POINTS           1 /* egg_render_raw */
 #define EGG_RENDER_LINES            2 /* egg_render_raw */
 #define EGG_RENDER_LINE_STRIP       3 /* egg_render_raw */
 #define EGG_RENDER_TRIANGLES        4 /* egg_render_raw */
 #define EGG_RENDER_TRIANGLE_STRIP   5 /* egg_render_raw */
-#define EGG_RENDER_TILE             6 /* egg_render_tile */
-#define EGG_RENDER_FANCY            7 /* egg_render_fancy */
+#define EGG_RENDER_TILE             6 /* egg_render_tile, srctexid mandatory */
+#define EGG_RENDER_FANCY            7 /* egg_render_fancy, srctexid mandatory */
 
 struct egg_render_uniform {
   int mode;

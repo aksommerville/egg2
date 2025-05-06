@@ -7,8 +7,11 @@
 #include "shared_symbols.h"
 #include "egg_res_toc.h"
 
+//XXX Temporarily ridiculously small to test client-side software framebuffer.
 #define FBW 320
 #define FBH 180
+//#define FBW 32
+//#define FBH 32
 
 extern struct g {
   void *rom;

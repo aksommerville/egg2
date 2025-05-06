@@ -55,6 +55,8 @@ Planned differences from Egg v1:
 - - - [x] Sub channel
 - - - [x] Post
 - - [ ] Render.
+- - - [ ] Even though we don't need it yet, confirm everything works with `render_texture.border` before moving on.
+- - - [ ] TILE and FANCY shaders.
 - - [ ] Input.
 - - - [ ] Device mapping.
 - - - [ ] Persist mappings.

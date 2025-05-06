@@ -45,7 +45,7 @@ int egg_client_init() {
     egg_log("Saved game.");
   }
   
-  egg_play_song(RID_song_in_thru_the_window,0,1);
+  egg_play_song(RID_song_around_here_somewhere,0,1);
 
   //TODO
 
@@ -56,12 +56,26 @@ void egg_client_update(double elapsed) {
   //TODO
 }
 
+static uint32_t fb[FBW*FBH]={0};
+#define SETPIXEL(x,y,r,g,b,a) fb[((y)*FBW)+(x)]=(r)|((g)<<8)|((b)<<16)|((a)<<24);
+
 void egg_client_render() {
   //graf_reset(&g.graf);
   //TODO Eventually the demo should use "graf", all Egg games should. But while building out the platform, I'll call the Egg Platform API directly.
   //graf_flush(&g.graf);
   
   egg_texture_clear(1);
+  
+  if (0) { //XXX TEMP Upload from a client-side RGBA framebuffer.
+    int i=32; while (i-->0) {
+      SETPIXEL(i,0    ,0x00,0x00,0xff,0xff) // blue on top
+      SETPIXEL(i,FBH-1,0x00,0xff,0x00,0xff) // green on bottom
+      SETPIXEL(0    ,i,0xff,0x00,0x00,0xff) // red left
+      SETPIXEL(FBW-1,i,0xff,0xff,0xff,0xff) // white right
+    }
+    egg_texture_load_raw(1,FBW,FBH,FBW<<2,fb,sizeof(fb));
+    return;
+  }
   
   // Fill the framebuffer with brown. And you can see why "graf" needs to exist, this is way too much ceremony!
   {

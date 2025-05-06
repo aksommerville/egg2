@@ -1,4 +1,5 @@
 fb=320x180
+#fb=32x32
 players=1
 lang=en,fr
 title=Egg Demo

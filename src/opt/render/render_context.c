@@ -10,6 +10,9 @@ void render_del(struct render *render) {
     free(render->texturev);
   }
   if (render->scratch) free(render->scratch);
+  struct render_program *program=render->programv;
+  int i=RENDER_PROGRAM_COUNT;
+  for (;i-->0;program++) render_program_cleanup(render,program);
   free(render);
 }
 
@@ -35,6 +38,11 @@ struct render *render_new() {
     return 0;
   }
   
+  if (render_programs_init(render)<0) {
+    render_del(render);
+    return 0;
+  }
+  
   return render;
 }
 
@@ -54,7 +62,10 @@ int render_scratch_require(struct render *render,int c) {
  */
 
 void render_begin(struct render *render) {
-  //TODO
+  render->current_dsttexid=0;
+  render->current_srctexid=0;
+  render->current_programid=0;
+  glEnable(GL_BLEND);
 }
 
 /* End frame, and draw the main.
@@ -62,6 +73,7 @@ void render_begin(struct render *render) {
  
 void render_commit(struct render *render) {
   render_require_projection(render);
+  render_to_texture(render,0);
   
   /* If the framebuffer doesn't fill the output, black out.
    */
@@ -70,7 +82,27 @@ void render_commit(struct render *render) {
     glClear(GL_COLOR_BUFFER_BIT);
   }
   
-  //TODO Draw a textured quad, texture 1.
+  /* Render with the public API.
+   */
+  if ((render->texturec<1)||(render->texturev[0].texid!=1)) return;
+  int srcw=render->texturev[0].w;
+  int srch=render->texturev[0].h;
+  struct egg_render_uniform uniform={
+    .mode=EGG_RENDER_TRIANGLE_STRIP,
+    .dsttexid=0,
+    .srctexid=1,
+    .tint=0,
+    .alpha=0xff,
+  };
+  struct egg_render_raw vtxv[]={
+    {render->dstx             ,render->dsty             ,0   ,srch},
+    {render->dstx             ,render->dsty+render->dsth,0   ,0   },
+    {render->dstx+render->dstw,render->dsty             ,srcw,srch},
+    {render->dstx+render->dstw,render->dsty+render->dsth,srcw,0   },
+  };
+  glDisable(GL_BLEND);
+  render_render(render,&uniform,vtxv,sizeof(vtxv));
+  glEnable(GL_BLEND);
 }
 
 /* Final projection.
@@ -96,13 +128,26 @@ void render_require_projection(struct render *render) {
   int xscale=render->winw/render->fbw;
   int yscale=render->winh/render->fbh;
   int scale=(xscale<yscale)?xscale:yscale;
-  if (scale<1) scale=1;
   
-  //TODO Should we enable interpolation and scale down, when the window is smaller than the framebuffer?
-  //TODO Should we scale up at fractional rates above a certain scale (fourish)?
+  // If either axis is too small, fit it. We use linear min filter, so just keep the aspect reasonably close and fill one axis.
+  // Likewise, if it's at least 4x, allow that it needn't be an integer scale-up.
+  if ((scale<1)||(scale>=4)) {
+    int wforh=(render->fbw*render->winh)/render->fbh;
+    if (wforh<=render->winw) {
+      render->dstw=wforh;
+      render->dsth=render->winh;
+    } else {
+      render->dstw=render->winw;
+      render->dsth=(render->fbh*render->winw)/render->fbw;
+    }
   
-  render->dstw=render->fbw*scale;
-  render->dsth=render->fbh*scale;
+  // Output at least as large as framebuffer, and less than 4x, use an integer multiple of the framebuffer size.
+  } else {
+    render->dstw=render->fbw*scale;
+    render->dsth=render->fbh*scale;
+  }
+  
+  // And however we scaled it, center in the output.
   render->dstx=(render->winw>>1)-(render->dstw>>1);
   render->dsty=(render->winh>>1)-(render->dsth>>1);
 }

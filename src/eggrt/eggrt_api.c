@@ -281,5 +281,6 @@ void egg_texture_clear(int texid) {
 }
 
 void egg_render(const struct egg_render_uniform *uniform,const void *vtxv,int vtxc) {
+  if (!uniform||!uniform->dsttexid) return;
   render_render(eggrt.render,uniform,vtxv,vtxc);
 }

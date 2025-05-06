@@ -94,7 +94,7 @@ struct render_texture *render_texturev_insert(struct render *render,int p,int te
   glBindTexture(GL_TEXTURE_2D,gltexid);
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
   
   // Create our wrapper object.
@@ -268,4 +268,18 @@ void render_texture_clear(struct render *render,int texid) {
   glViewport(0,0,texture->w+texture->border*2,texture->h+texture->border*2);
   glClearColor(0.0f,0.0f,0.0f,0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
+}
+
+/* Set current target.
+ */
+ 
+int render_to_texture(struct render *render,struct render_texture *texture) {
+  if (texture) {
+    glBindFramebuffer(GL_FRAMEBUFFER,texture->fbid);
+    glViewport(0,0,texture->w+texture->border*2,texture->h+texture->border*2);
+  } else {
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    glViewport(0,0,render->winw,render->winh);
+  }
+  return 0;
 }
