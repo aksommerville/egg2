@@ -71,19 +71,50 @@ static const char render_vshader_TILE[]=
   "attribute vec2 apos;\n"
   "attribute float atileid;\n"
   "attribute float axform;\n"
+  "varying vec2 vsrcp;\n"
+  "varying mat2 vmat;\n"
   "void main() {\n"
     "vec2 npos=vec2(\n"
       "((udstborder+apos.x)*2.0)/(udstborder*2.0+uscreensize.x)-1.0,\n"
       "((udstborder+apos.y)*2.0)/(udstborder*2.0+uscreensize.y)-1.0\n"
     ");\n"
     "gl_Position=vec4(npos,0.0,1.0);\n"
-    //TODO
+    "gl_PointSize=usrcsize.x/16.0;\n"
+    "vsrcp=vec2(\n"
+      "mod(atileid,16.0),\n"
+      "floor(atileid/16.0)\n"
+    ")/16.0;\n"
+         "if (axform<0.5) vmat=mat2( 1.0, 0.0, 0.0, 1.0);\n" // no xform
+    "else if (axform<1.5) vmat=mat2(-1.0, 0.0, 0.0, 1.0);\n" // XREV
+    "else if (axform<2.5) vmat=mat2( 1.0, 0.0, 0.0,-1.0);\n" // YREV
+    "else if (axform<3.5) vmat=mat2(-1.0, 0.0, 0.0,-1.0);\n" // XREV|YREV
+    "else if (axform<4.5) vmat=mat2( 0.0, 1.0, 1.0, 0.0);\n" // SWAP
+    "else if (axform<5.5) vmat=mat2( 0.0, 1.0,-1.0, 0.0);\n" // SWAP|XREV
+    "else if (axform<6.5) vmat=mat2( 0.0,-1.0, 1.0, 0.0);\n" // SWAP|YREV
+    "else if (axform<7.5) vmat=mat2( 0.0,-1.0,-1.0, 0.0);\n" // SWAP|XREV|YREV
+                    "else vmat=mat2( 1.0, 0.0, 0.0, 1.0);\n" // invalid; use identity
   "}\n"
 "";
 
 static const char render_fshader_TILE[]=
+  "uniform sampler2D usampler;\n"
+  "uniform float ualpha;\n"
+  "uniform vec4 utint;\n"
+  "uniform float usrcborder;\n"
+  "uniform vec2 usrcsize;\n"
+  "varying vec2 vsrcp;\n"
+  "varying mat2 vmat;\n"
   "void main() {\n"
-    "gl_FragColor=vec4(0.0,0.0,0.0,1.0);\n"//TODO
+    "vec2 texcoord=gl_PointCoord;\n"
+    "texcoord.y=1.0-texcoord.y;\n"
+    "texcoord=vmat*(texcoord-0.5)+0.5;\n"
+    "texcoord=vsrcp+texcoord/16.0;\n"
+    "texcoord=vec2(\n"
+      "texcoord.x*(1.0-(usrcborder*2.0)/usrcsize.x)+usrcborder/usrcsize.x,\n"
+      "texcoord.y*(1.0-(usrcborder*2.0)/usrcsize.y)+usrcborder/usrcsize.y\n"
+    ");\n"
+    "gl_FragColor=texture2D(usampler,texcoord);\n"
+    "gl_FragColor=vec4(mix(gl_FragColor.rgb,utint.rgb,utint.a),gl_FragColor.a*ualpha);\n"
   "}\n"
 "";
 
@@ -100,19 +131,67 @@ static const char render_vshader_FANCY[]=
   "attribute float asize;\n"
   "attribute vec4 atint;\n"
   "attribute vec4 aprimary;\n"
+  "varying vec2 vsrcp;\n"
+  "varying mat2 vmat;\n"
+  "varying vec4 vtint;\n"
+  "varying vec4 vprimary;\n"
   "void main() {\n"
     "vec2 npos=vec2(\n"
       "((udstborder+apos.x)*2.0)/(udstborder*2.0+uscreensize.x)-1.0,\n"
       "((udstborder+apos.y)*2.0)/(udstborder*2.0+uscreensize.y)-1.0\n"
     ");\n"
     "gl_Position=vec4(npos,0.0,1.0);\n"
-    //TODO
+    "gl_PointSize=asize;\n"
+    "vsrcp=vec2(\n"
+      "mod(atileid,16.0),\n"
+      "floor(atileid/16.0)\n"
+    ")/16.0;\n"
+    "if (arotation>0.0) {\n"
+      "float scale=(asize/(usrcsize.x/16.0));\n"
+      "float t=arotation*-3.14159*2.0;\n"
+      "scale*=sqrt(2.0);\n"
+      "float cost=cos(t)*scale;\n"
+      "float sint=sin(t)*scale;\n"
+      "vmat=mat2(cost,sint,-sint,cost);\n"
+      "gl_PointSize*=sqrt(2.0);\n"
+    "} else {\n"
+      "vmat=mat2(1.0,0.0,0.0,1.0);\n"
+    "}\n"
+    "vtint=atint;\n"
+    "vprimary=aprimary;\n"
   "}\n"
 "";
 
 static const char render_fshader_FANCY[]=
+  "uniform sampler2D usampler;\n"
+  "uniform float ualpha;\n"
+  "uniform vec4 utint;\n"
+  "uniform float usrcborder;\n"
+  "uniform vec2 usrcsize;\n"
+  "varying vec2 vsrcp;\n"
+  "varying mat2 vmat;\n"
+  "varying vec4 vtint;\n"
+  "varying vec4 vprimary;\n"
   "void main() {\n"
-    "gl_FragColor=vec4(0.0,0.0,0.0,1.0);\n"//TODO
+    "vec2 texcoord=gl_PointCoord;\n"
+    "texcoord.y=1.0-texcoord.y;\n"
+    "texcoord=vmat*(texcoord-0.5)+0.5;\n"
+    "if ((texcoord.x<0.0)||(texcoord.y<0.0)||(texcoord.x>=1.0)||(texcoord.y>=1.0)) discard;\n"
+    "texcoord=vsrcp+texcoord/16.0;\n"
+    "texcoord=vec2(\n"
+      "texcoord.x*(1.0-(usrcborder*2.0)/usrcsize.x)+usrcborder/usrcsize.x,\n"
+      "texcoord.y*(1.0-(usrcborder*2.0)/usrcsize.y)+usrcborder/usrcsize.y\n"
+    ");\n"
+    "gl_FragColor=texture2D(usampler,texcoord);\n"
+    "if ((gl_FragColor.r==gl_FragColor.g)&&(gl_FragColor.g==gl_FragColor.b)) {\n"
+      "if (gl_FragColor.r<0.5) {\n"
+        "gl_FragColor=vec4(vprimary.rgb*(gl_FragColor.r*2.0),gl_FragColor.a);\n"
+      "} else {\n"
+        "gl_FragColor=vec4(mix(vprimary.rgb,vec3(1.0,1.0,1.0),(gl_FragColor.r-0.5)*2.0),gl_FragColor.a);\n"
+      "}\n"
+    "}\n"
+    "gl_FragColor=vec4(mix(gl_FragColor.rgb,vtint.rgb,vtint.a),gl_FragColor.a*vprimary.a);\n"
+    "gl_FragColor=vec4(mix(gl_FragColor.rgb,utint.rgb,utint.a),gl_FragColor.a*ualpha);\n"
   "}\n"
 "";
 
@@ -291,7 +370,7 @@ void render_render(struct render *render,const struct egg_render_uniform *unifor
     case EGG_RENDER_FANCY: {
         if (!uniform->srctexid) return;
         program=render->programv+RENDER_PROGRAM_FANCY;
-        vtxc/=sizeof(struct egg_render_tile);
+        vtxc/=sizeof(struct egg_render_fancy);
       } break;
   }
   if (!program||(vtxc<1)) return;

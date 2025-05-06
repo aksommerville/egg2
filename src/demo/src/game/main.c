@@ -45,7 +45,13 @@ int egg_client_init() {
     egg_log("Saved game.");
   }
   
-  egg_play_song(RID_song_around_here_somewhere,0,1);
+  egg_play_song(RID_song_eternal_torment,0,1);
+  
+  g.texid_tiles=egg_texture_new();
+  if (egg_texture_load_image(g.texid_tiles,RID_image_tiles)<0) {
+    egg_log("Failed to decode tiles.");
+    return -1;
+  }
 
   //TODO
 
@@ -58,6 +64,8 @@ void egg_client_update(double elapsed) {
 
 static uint32_t fb[FBW*FBH]={0};
 #define SETPIXEL(x,y,r,g,b,a) fb[((y)*FBW)+(x)]=(r)|((g)<<8)|((b)<<16)|((a)<<24);
+
+static uint8_t keyt=0;
 
 void egg_client_render() {
   //graf_reset(&g.graf);
@@ -105,6 +113,66 @@ void egg_client_render() {
       {    FBW>>1,    margin,0,0,0xff,0x00,0x00,0xff},
       {    margin,FBH-margin,0,0,0x00,0xff,0x00,0xff},
       {FBW-margin,FBH-margin,0,0,0x00,0x00,0xff,0xff},
+    };
+    egg_render(&un,vtxv,sizeof(vtxv));
+  }
+  
+  // Draw a textured quad.
+  {
+    struct egg_render_uniform un={
+      .mode=EGG_RENDER_TRIANGLE_STRIP,
+      .dsttexid=1,
+      .srctexid=g.texid_tiles,
+      .alpha=0xff,
+    };
+    int16_t x=NS_sys_tilesize*2,y=NS_sys_tilesize*5,w=NS_sys_tilesize*3,h=NS_sys_tilesize*3;
+    struct egg_render_raw vtxv[]={
+      { 10, 10, x  ,y  },
+      { 10, 58, x  ,y+h},
+      { 58, 10, x+w,y  },
+      { 58, 58, x+w,y+h},
+    };
+    egg_render(&un,vtxv,sizeof(vtxv));
+  }
+  
+  // Draw a couple plain tiles.
+  {
+    struct egg_render_uniform un={
+      .mode=EGG_RENDER_TILE,
+      .dsttexid=1,
+      .srctexid=g.texid_tiles,
+      .tint=0,
+      .alpha=0xff,
+    };
+    struct egg_render_tile vtxv[]={
+      { 80, 20, 0x01,0},
+      {100, 20, 0x02,0},
+      {120, 20, 0x01,EGG_XFORM_XREV},
+      {140, 20, 0x01,EGG_XFORM_YREV},
+      {160, 20, 0x01,EGG_XFORM_XREV|EGG_XFORM_YREV},
+      {180, 20, 0x01,EGG_XFORM_SWAP},
+      {200, 20, 0x01,EGG_XFORM_SWAP|EGG_XFORM_XREV},
+      {220, 20, 0x01,EGG_XFORM_SWAP|EGG_XFORM_YREV},
+      {240, 20, 0x01,EGG_XFORM_SWAP|EGG_XFORM_XREV|EGG_XFORM_YREV},
+    };
+    egg_render(&un,vtxv,sizeof(vtxv));
+  }
+  
+  // Draw a couple fancy tiles.
+  if (1) {
+    struct egg_render_uniform un={
+      .mode=EGG_RENDER_FANCY,
+      .dsttexid=1,
+      .srctexid=g.texid_tiles,
+      .alpha=0xff,
+    };
+    keyt++;
+    // x,y,tileid,rotation,size,tr,tg,tb,ta,pr,pg,pb,a
+    struct egg_render_fancy vtxv[]={
+      { 80, 60,0x51,0x00,NS_sys_tilesize,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0xff},
+      {100, 60,0x51,0x00,12             ,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0xff},
+      {120, 60,0x51,0x00,20             ,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff},
+      {140, 60,0x51,keyt,NS_sys_tilesize,0x00,0x00,0x00,0x00,0xff,0x00,0x80,0xff},
     };
     egg_render(&un,vtxv,sizeof(vtxv));
   }
