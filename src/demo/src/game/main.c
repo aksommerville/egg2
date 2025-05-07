@@ -45,21 +45,114 @@ int egg_client_init() {
     egg_log("Saved game.");
   }
   
-  egg_play_song(RID_song_eternal_torment,0,1);
+  egg_play_song(RID_song_hold_your_fire,0,1);
   
   g.texid_tiles=egg_texture_new();
   if (egg_texture_load_image(g.texid_tiles,RID_image_tiles)<0) {
     egg_log("Failed to decode tiles.");
     return -1;
   }
+  
+  egg_event_enable(EGG_EVENT_KEY,0);
+  egg_event_enable(EGG_EVENT_TEXT,0);
+  egg_event_enable(EGG_EVENT_MMOTION,0);
+  egg_event_enable(EGG_EVENT_MBUTTON,0);
+  egg_event_enable(EGG_EVENT_MWHEEL,0);
+  egg_event_enable(EGG_EVENT_TOUCH,0);
+  egg_event_enable(EGG_EVENT_GAMEPAD,0);
+  // Additional input features enabled like events (but are not really events per se):
+  egg_event_enable(EGG_EVENT_HIDECURSOR,0);
+  egg_event_enable(EGG_EVENT_LOCKCURSOR,0);
+  egg_event_enable(EGG_EVENT_NOMAPCURSOR,0);
 
   //TODO
 
   return 0;
 }
 
+static int decsint_repr(char *dst,int v) {
+  int dstc=0;
+  if (v<0) {
+    dst[dstc++]='-';
+    int limit=-10,digitc=1;
+    while (v<=limit) { digitc++; if (limit<INT_MIN/10) break; limit*=10; }
+    int i=digitc; for (;i-->0;v/=10) dst[dstc+i]='0'-v%10;
+    dstc+=digitc;
+  } else {
+    int limit=10,digitc=1;
+    while (v>=limit) { digitc++; if (limit>INT_MAX/10) break; limit*=10; }
+    int i=digitc; for (;i-->0;v/=10) dst[dstc+i]='0'+v%10;
+    dstc+=digitc;
+  }
+  dst[dstc++]=' ';
+  return dstc;
+}
+
+static void log_event(const char *name,int a,int b,int c,int d) {
+  char msg[256];
+  int msgc=0;
+  for (;*name;name++) msg[msgc++]=*name;
+  msg[msgc++]=' ';
+  if (a||b||c||d) msgc+=decsint_repr(msg+msgc,a);
+  if (b||c||d) msgc+=decsint_repr(msg+msgc,b);
+  if (c||d) msgc+=decsint_repr(msg+msgc,c);
+  if (d) msgc+=decsint_repr(msg+msgc,d);
+  msg[msgc]=0;
+  egg_log(msg);
+}
+
+static int pvinput=0;
+
 void egg_client_update(double elapsed) {
-  //TODO
+
+  // Report aggregate input state.
+  int input=egg_input_get_one(0);
+  if (input!=pvinput) {
+    char msg[32]="INPUT: ";
+    int msgc=7;
+    if (input&EGG_BTN_SOUTH) msg[msgc++]='s'; else msg[msgc++]='.';
+    if (input&EGG_BTN_EAST ) msg[msgc++]='e'; else msg[msgc++]='.';
+    if (input&EGG_BTN_WEST ) msg[msgc++]='w'; else msg[msgc++]='.';
+    if (input&EGG_BTN_NORTH) msg[msgc++]='n'; else msg[msgc++]='.';
+    if (input&EGG_BTN_L1   ) msg[msgc++]='l'; else msg[msgc++]='.';
+    if (input&EGG_BTN_R1   ) msg[msgc++]='r'; else msg[msgc++]='.';
+    if (input&EGG_BTN_L2   ) msg[msgc++]='L'; else msg[msgc++]='.';
+    if (input&EGG_BTN_R2   ) msg[msgc++]='R'; else msg[msgc++]='.';
+    if (input&EGG_BTN_AUX2 ) msg[msgc++]='2'; else msg[msgc++]='.';
+    if (input&EGG_BTN_AUX1 ) msg[msgc++]='1'; else msg[msgc++]='.';
+    if (input&EGG_BTN_AUX3 ) msg[msgc++]='3'; else msg[msgc++]='.';
+    if (input&EGG_BTN_CD   ) msg[msgc++]='#'; else msg[msgc++]='.';
+    if (input&EGG_BTN_UP   ) msg[msgc++]='u'; else msg[msgc++]='.';
+    if (input&EGG_BTN_DOWN ) msg[msgc++]='d'; else msg[msgc++]='.';
+    if (input&EGG_BTN_LEFT ) msg[msgc++]='l'; else msg[msgc++]='.';
+    if (input&EGG_BTN_RIGHT) msg[msgc++]='r'; else msg[msgc++]='.';
+    msg[msgc]=0;
+    egg_log(msg);
+    pvinput=input;
+  }
+  
+  // Pop and log events.
+  struct egg_event eventv[32];
+  int eventc;
+  for (;;) {
+    eventc=egg_event_get(eventv,32);
+    if (eventc<1) break;
+    const struct egg_event *event=eventv;
+    int i=eventc;
+    for (;i-->0;event++) {
+      switch (event->type) {
+        case EGG_EVENT_KEY: log_event("KEY",event->key.keycode,event->key.value,0,0); break;
+        case EGG_EVENT_TEXT: log_event("TEXT",event->text.codepoint,0,0,0); break;
+        case EGG_EVENT_MMOTION: log_event("MMOTION",event->mmotion.x,event->mmotion.y,0,0); break;
+        case EGG_EVENT_MBUTTON: log_event("MBUTTON",event->mbutton.x,event->mbutton.y,event->mbutton.btnid,event->mbutton.value); break;
+        case EGG_EVENT_MWHEEL: log_event("MWHEEL",event->mwheel.x,event->mwheel.y,event->mwheel.dx,event->mwheel.dy); break;
+        case EGG_EVENT_TOUCH: log_event("TOUCH",event->touch.x,event->touch.y,event->touch.touchid,event->touch.state); break;
+        case EGG_EVENT_GAMEPAD: log_event("GAMEPAD",event->gamepad.devid,event->gamepad.btnid,event->gamepad.value,0); break;
+        default: log_event("???",event->type,0,0,0); break;
+      }
+    }
+    if (eventc<32) break;
+  }
 }
 
 static uint32_t fb[FBW*FBH]={0};

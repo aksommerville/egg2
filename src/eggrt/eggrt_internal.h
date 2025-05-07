@@ -2,11 +2,11 @@
 #define EGGRT_INTERNAL_H
 
 #include "egg/egg.h"
-#include "inmgr/inmgr.h"
 #include "opt/res/res.h"
 #include "opt/hostio/hostio.h"
 #include "opt/synth/synth.h"
 #include "opt/render/render.h"
+#include "inmgr/inmgr.h"
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -41,6 +41,7 @@ extern struct eggrt {
   struct render *render;
   void *titlestorage,*iconstorage;
   struct inmgr inmgr;
+  int focus; // Current state of window manager focus. Hard-pause when blurred.
   
 // eggrt_rom.c:
   void *rom;
@@ -126,14 +127,16 @@ int eggrt_call_client_render();
 void eggrt_cb_close(struct hostio_video *driver);
 void eggrt_cb_focus(struct hostio_video *driver,int focus);
 void eggrt_cb_resize(struct hostio_video *driver,int w,int h);
+void eggrt_cb_pcm_out(int16_t *v,int c,struct hostio_audio *driver);
+/*XXX
 int eggrt_cb_key(struct hostio_video *driver,int keycode,int value);
 void eggrt_cb_text(struct hostio_video *driver,int codepoint);
 void eggrt_cb_mmotion(struct hostio_video *driver,int x,int y);
 void eggrt_cb_mbutton(struct hostio_video *driver,int btnid,int value);
 void eggrt_cb_mwheel(struct hostio_video *driver,int dx,int dy);
-void eggrt_cb_pcm_out(int16_t *v,int c,struct hostio_audio *driver);
 void eggrt_cb_connect(struct hostio_input *driver,int devid);
 void eggrt_cb_disconnect(struct hostio_input *driver,int devid);
 void eggrt_cb_button(struct hostio_input *driver,int devid,int btnid,int value);
+/**/
 
 #endif

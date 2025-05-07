@@ -54,8 +54,9 @@ Planned differences from Egg v1:
 - - - [x] Drum channel
 - - - [x] Sub channel
 - - - [x] Post
-- - [ ] Render.
-- - - [ ] Even though we don't need it yet, confirm everything works with `render_texture.border` before moving on.
+- - [x] Render.
+- - - [x] Even though we don't need it yet, confirm everything works with `render_texture.border` before moving on.
+- - - - ...tried. Not certain it actually did anything, but all seems in order i guess.
 - - - [x] TILE and FANCY shaders.
 - - - [x] FANCY probably needs an xform too.
 - - [ ] Input.
@@ -125,3 +126,4 @@ Planned differences from Egg v1:
 - - [x] SongEditor: Preserve payload where possible on a channel mode change.
 - - [ ] SongEditor:WaveUi: Have wave preview printed by synthesizer. Currently calling out to the server for each render.
 - - [x] SongEditor:EnvUi: Place new points proportionately in the alternate line.
+- - [ ] SongEditor: Must be able to change order of post steps.

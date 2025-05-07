@@ -24,23 +24,23 @@ int inmgr_init(struct inmgr *inmgr) {
   if (eggrt.hostio&&eggrt.hostio->video) {
     if (eggrt.hostio->video->type->provides_input) {
       inmgr->evtmask_capable|=(
-        EGG_EVENT_KEY|
-        EGG_EVENT_TEXT|
-        EGG_EVENT_MMOTION|
-        EGG_EVENT_MBUTTON|
-        EGG_EVENT_MWHEEL|
-        EGG_EVENT_NOMAPCURSOR|
+        (1<<EGG_EVENT_KEY)|
+        (1<<EGG_EVENT_TEXT)|
+        (1<<EGG_EVENT_MMOTION)|
+        (1<<EGG_EVENT_MBUTTON)|
+        (1<<EGG_EVENT_MWHEEL)|
+        (1<<EGG_EVENT_NOMAPCURSOR)|
       0);
       if (eggrt.hostio->video->type->show_cursor) {
-        inmgr->evtmask_capable|=EGG_EVENT_HIDECURSOR;
+        inmgr->evtmask_capable|=(1<<EGG_EVENT_HIDECURSOR);
       }
       if (eggrt.hostio->video->type->lock_cursor) {
-        inmgr->evtmask_capable|=EGG_EVENT_LOCKCURSOR;
+        inmgr->evtmask_capable|=(1<<EGG_EVENT_LOCKCURSOR);
       }
     }
   }
   if (eggrt.hostio&&eggrt.hostio->inputc) {
-    inmgr->evtmask_capable|=EGG_EVENT_GAMEPAD;
+    inmgr->evtmask_capable|=(1<<EGG_EVENT_GAMEPAD);
   }
   // Never set: TOUCH
   //TODO evdev does deal with touch devices. Get equipped to test that, and implement it.
@@ -61,7 +61,7 @@ int inmgr_update(struct inmgr *inmgr) {
  */
  
 struct egg_event *inmgr_evtq_push(struct inmgr *inmgr,int type) {
-  if ((type<0)||(type>=32)||!(inmgr->evtmask_capable&(1<<type))) return 0;
+  if ((type<0)||(type>=32)||!(inmgr->evtmask&(1<<type))) return 0;
   int p=inmgr->evtp+inmgr->evtc;
   if (p>=EGGRT_EVTQ_SIZE) p-=EGGRT_EVTQ_SIZE;
   struct egg_event *event=inmgr->evtq+p;

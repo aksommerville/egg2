@@ -193,19 +193,19 @@ static int eggrt_init_drivers() {
     .cb_close=eggrt_cb_close,
     .cb_focus=eggrt_cb_focus,
     .cb_resize=eggrt_cb_resize,
-    .cb_key=eggrt_cb_key,
-    .cb_text=eggrt_cb_text,
-    .cb_mmotion=eggrt_cb_mmotion,
-    .cb_mbutton=eggrt_cb_mbutton,
-    .cb_mwheel=eggrt_cb_mwheel,
+    .cb_key=inmgr_key,
+    .cb_text=inmgr_text,
+    .cb_mmotion=inmgr_mmotion,
+    .cb_mbutton=inmgr_mbutton,
+    .cb_mwheel=inmgr_mwheel,
   };
   struct hostio_audio_delegate adelegate={
     .cb_pcm_out=eggrt_cb_pcm_out,
   };
   struct hostio_input_delegate idelegate={
-    .cb_connect=eggrt_cb_connect,
-    .cb_disconnect=eggrt_cb_disconnect,
-    .cb_button=eggrt_cb_button,
+    .cb_connect=inmgr_connect,
+    .cb_disconnect=inmgr_disconnect,
+    .cb_button=inmgr_button,
   };
   if (!(eggrt.hostio=hostio_new(&vdelegate,&adelegate,&idelegate))) return -1;
   // Video must initialize before input.
@@ -221,6 +221,8 @@ static int eggrt_init_drivers() {
  
 int eggrt_init() {
   int err;
+  
+  eggrt.focus=1;
   
   // ROM must initialize before drivers, drivers before prefs, and prefs before client.
   if ((err=eggrt_rom_init())<0) {
@@ -279,6 +281,9 @@ int eggrt_update() {
     return -2;
   }
   if (eggrt.terminate) return 0;
+  
+  // If we're hard-paused, get out.
+  if (!eggrt.focus) return 0;
   
   // Update client.
   if ((err=eggrt_call_client_update(elapsed))<0) return err;

@@ -150,6 +150,10 @@ static const char render_vshader_FANCY[]=
     "if (arotation>0.0) {\n"
       "float scale=(asize/(usrcsize.x/16.0));\n"
       "float t=arotation*-3.14159*2.0;\n"
+      "if (((axform>0.5)&&(axform<2.5))||((axform>4.5)&&(axform<7.5))) {\n"
+        // In certain xform cases, effecting the xform will reverse the rotation.
+        "t=-t;\n"
+      "}\n"
       "scale*=sqrt(2.0);\n"
       "float cost=cos(t)*sqrt(2.0);\n"
       "float sint=sin(t)*sqrt(2.0);\n"

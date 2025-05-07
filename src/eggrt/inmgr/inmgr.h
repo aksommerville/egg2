@@ -30,6 +30,9 @@ struct inmgr {
    */
   uint32_t evtmask;
   uint32_t evtmask_capable;
+  
+  // Most recent mouse position, unmapped.
+  int mousex,mousey;
 };
 
 void inmgr_quit(struct inmgr *inmgr);
@@ -52,6 +55,19 @@ int inmgr_evtq_pop(struct egg_event *dst,int dsta,struct inmgr *inmgr);
  */
 int inmgr_event_enable(struct inmgr *inmgr,int evttype,int enable);
 
+/* hostio event hooks.
+ * These can be assigned directly to the video and input drivers.
+ * We'll use globals (eggrt.inmgr).
+ */
+int inmgr_key(struct hostio_video *driver,int keycode,int value);
+void inmgr_text(struct hostio_video *driver,int codepoint);
+void inmgr_mmotion(struct hostio_video *driver,int x,int y);
+void inmgr_mbutton(struct hostio_video *driver,int btnid,int value);
+void inmgr_mwheel(struct hostio_video *driver,int dx,int dy);
+void inmgr_connect(struct hostio_input *driver,int devid);
+void inmgr_disconnect(struct hostio_input *driver,int devid);
+void inmgr_button(struct hostio_input *driver,int devid,int btnid,int value);
+
 /* Internal use only.
  ***************************************************************************************************/
  
@@ -61,5 +77,7 @@ void inmgr_map_gamepads(struct inmgr *inmgr);
 void inmgr_unmap_gamepads(struct inmgr *inmgr);
 void inmgr_show_cursor(struct inmgr *inmgr,int show);
 void inmgr_lock_cursor(struct inmgr *inmgr,int lock);
+
+void inmgr_mappable_event(struct inmgr *inmgr,int devid,int btnid,int value);
 
 #endif

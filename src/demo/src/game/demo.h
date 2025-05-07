@@ -6,6 +6,7 @@
 #include "opt/graf/graf.h"
 #include "shared_symbols.h"
 #include "egg_res_toc.h"
+#include <limits.h>
 
 //XXX Temporarily ridiculously small to test client-side software framebuffer.
 #define FBW 320
