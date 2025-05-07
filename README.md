@@ -57,7 +57,7 @@ Planned differences from Egg v1:
 - - [ ] Render.
 - - - [ ] Even though we don't need it yet, confirm everything works with `render_texture.border` before moving on.
 - - - [x] TILE and FANCY shaders.
-- - - [ ] FANCY probably needs an xform too.
+- - - [x] FANCY probably needs an xform too.
 - - [ ] Input.
 - - - [ ] Device mapping.
 - - - [ ] Persist mappings.

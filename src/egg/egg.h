@@ -310,6 +310,7 @@ struct egg_render_uniform {
   int srctexid;
   uint32_t tint;
   uint8_t alpha;
+  uint8_t filter; // Nonzero for linear texture filter, zero for nearest-neighbor.
 };
 
 struct egg_render_raw {
@@ -327,6 +328,7 @@ struct egg_render_tile {
 struct egg_render_fancy {
   int16_t x,y;
   uint8_t tileid;
+  uint8_t xform;
   uint8_t rotation;
   uint8_t size;
   uint8_t tr,tg,tb,ta; // Tint.

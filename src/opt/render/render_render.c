@@ -127,6 +127,7 @@ static const char render_vshader_FANCY[]=
   "uniform float ualpha;\n"
   "attribute vec2 apos;\n"
   "attribute float atileid;\n"
+  "attribute float axform;\n"
   "attribute float arotation;\n"
   "attribute float asize;\n"
   "attribute vec4 atint;\n"
@@ -150,13 +151,21 @@ static const char render_vshader_FANCY[]=
       "float scale=(asize/(usrcsize.x/16.0));\n"
       "float t=arotation*-3.14159*2.0;\n"
       "scale*=sqrt(2.0);\n"
-      "float cost=cos(t)*scale;\n"
-      "float sint=sin(t)*scale;\n"
+      "float cost=cos(t)*sqrt(2.0);\n"
+      "float sint=sin(t)*sqrt(2.0);\n"
       "vmat=mat2(cost,sint,-sint,cost);\n"
       "gl_PointSize*=sqrt(2.0);\n"
     "} else {\n"
       "vmat=mat2(1.0,0.0,0.0,1.0);\n"
     "}\n"
+         "if (axform<0.5) ;\n" // no xform
+    "else if (axform<1.5) vmat=mat2(-vmat[0][0],-vmat[0][1], vmat[1][0], vmat[1][1]);\n" // XREV
+    "else if (axform<2.5) vmat=mat2( vmat[0][0], vmat[0][1],-vmat[1][0],-vmat[1][1]);\n" // YREV
+    "else if (axform<3.5) vmat=mat2(-vmat[0][0],-vmat[0][1],-vmat[1][0],-vmat[1][1]);\n" // XREV|YREV
+    "else if (axform<4.5) vmat=mat2( vmat[0][1], vmat[0][0], vmat[1][1], vmat[1][0]);\n" // SWAP
+    "else if (axform<5.5) vmat=mat2(-vmat[0][1],-vmat[0][0], vmat[1][1], vmat[1][0]);\n" // SWAP|XREV
+    "else if (axform<6.5) vmat=mat2( vmat[0][1], vmat[0][0],-vmat[1][1],-vmat[1][0]);\n" // SWAP|YREV
+    "else if (axform<7.5) vmat=mat2( vmat[0][1],-vmat[0][0],-vmat[1][1], vmat[1][0]);\n" // SWAP|XREV|YREV
     "vtint=atint;\n"
     "vprimary=aprimary;\n"
   "}\n"
@@ -333,7 +342,7 @@ int render_programs_init(struct render *render) {
   INIT1(RAW,"apos","acolor")
   INIT1(TEX,"apos","atexcoord")
   INIT1(TILE,"apos","atileid","axform")
-  INIT1(FANCY,"apos","atileid","arotation","asize","atint","aprimary")
+  INIT1(FANCY,"apos","atileid","axform","arotation","asize","atint","aprimary")
   #undef INIT1
   return 0;
 }
@@ -434,6 +443,13 @@ void render_render(struct render *render,const struct egg_render_uniform *unifor
     glUniform1i(program->u_sampler,0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,srctex->gltexid);
+    if (uniform->filter) {
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    } else {
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    }
   }
   if (uniform->tint) {
     const uint8_t r=uniform->tint>>24,g=uniform->tint>>16,b=uniform->tint>>8,a=uniform->tint;
@@ -490,12 +506,14 @@ void render_render(struct render *render,const struct egg_render_uniform *unifor
         glEnableVertexAttribArray(3);
         glEnableVertexAttribArray(4);
         glEnableVertexAttribArray(5);
+        glEnableVertexAttribArray(6);
         glVertexAttribPointer(0,2,GL_SHORT,0,sizeof(struct egg_render_fancy),&V->x);
         glVertexAttribPointer(1,1,GL_UNSIGNED_BYTE,0,sizeof(struct egg_render_fancy),&V->tileid);
-        glVertexAttribPointer(2,1,GL_UNSIGNED_BYTE,1,sizeof(struct egg_render_fancy),&V->rotation);
-        glVertexAttribPointer(3,1,GL_UNSIGNED_BYTE,0,sizeof(struct egg_render_fancy),&V->size);
-        glVertexAttribPointer(4,4,GL_UNSIGNED_BYTE,1,sizeof(struct egg_render_fancy),&V->tr);
-        glVertexAttribPointer(5,4,GL_UNSIGNED_BYTE,1,sizeof(struct egg_render_fancy),&V->pr);
+        glVertexAttribPointer(2,1,GL_UNSIGNED_BYTE,0,sizeof(struct egg_render_fancy),&V->xform);
+        glVertexAttribPointer(3,1,GL_UNSIGNED_BYTE,1,sizeof(struct egg_render_fancy),&V->rotation);
+        glVertexAttribPointer(4,1,GL_UNSIGNED_BYTE,0,sizeof(struct egg_render_fancy),&V->size);
+        glVertexAttribPointer(5,4,GL_UNSIGNED_BYTE,1,sizeof(struct egg_render_fancy),&V->tr);
+        glVertexAttribPointer(6,4,GL_UNSIGNED_BYTE,1,sizeof(struct egg_render_fancy),&V->pr);
         glDrawArrays(GL_POINTS,0,vtxc);
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
@@ -503,6 +521,7 @@ void render_render(struct render *render,const struct egg_render_uniform *unifor
         glDisableVertexAttribArray(3);
         glDisableVertexAttribArray(4);
         glDisableVertexAttribArray(5);
+        glDisableVertexAttribArray(6);
       } break;
   }
 }
