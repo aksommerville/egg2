@@ -1,8 +1,22 @@
 #include "res.h"
 
+#if USE_real_stdlib
+  #include <string.h>
+#endif
+
 #define SIGCK(v,sig) { \
   const char *_v=(v); \
   if ((_v[0]!=(sig)[0])||(_v[1]!=(sig)[1])||(_v[2]!=(sig)[2])||(_v[3]!=(sig)[3])) return -1; \
+}
+
+static inline void res_memcpy(void *dst,const void *src,int c) {
+  #if USE_real_stdlib
+    memcpy(dst,src,c);
+  #else
+    unsigned char *DST=dst;
+    const unsigned char *SRC=src;
+    for (;c-->0;DST++,SRC++) *DST=*SRC;
+  #endif
 }
 
 /* ROM.

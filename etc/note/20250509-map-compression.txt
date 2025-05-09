@@ -1,0 +1,241 @@
+2025-05-09
+
+DECISION: Do not compress.
+
+Map resources are uncompressed and my gut says we could shrink them substantially with some trivial compression.
+Basically, if the code to decompress maps is smaller than the expected savings, it's worth it.
+"Expected savings" is hard to define, since we don't know much about the client games.
+So copy all the maps from all my Egg v1 games and consider that collection representative.
+...copied. 60 maps from 7 games, all commands erased. Initially 57365 bytes uncompressed.
+The outlier is 34-apothecary1, 25206 bytes, it's really big. All the rest are under 2 kB apiece.
+
+ls -l mid/web/opt/res
+BEFORE: -rw-rw-r-- 1 andy andy 1968 May  9 15:32 res.o
+ AFTER: -rw-rw-r-- 1 andy andy 2932 May  9 17:54 res.o
+ 
+out/eggdev list -fsummary src/demo/out/demo-web.egg
+BEFORE: map    60   57365
+
+----------------------------------------------------------------------------------
+COMPRESSED MAP FORMAT
+
+Add a two-byte "Cells Length" field to the header. If zero, cells are uncompressed and length is (Width*Height).
+  4 Signature
+  1 Width
+  1 Height
+> 2 Cells Length
+... Cells
+... Commands
+
+Filter raw cells in-place to exploit vertical repetition.
+Operate with an FSM in *column-major* order.
+Iterate columns left to right. Order matters, because the expectation table is preserved across columns.
+FILTER:
+  let expect[256]={0};
+  for each column:
+    let raw0=0;
+    let raw1=col[0];
+    for rows 1..:
+      raw0=raw1;
+      raw1=(cell-expect[raw0])&255;
+      cell=raw1
+      expect[raw0]=raw1;
+UNFILTER:
+  let expect[256]={0};
+  for each column:
+    let raw0=0;
+    let raw1=col[0];
+    for rows 1..:
+      raw0=raw1
+      raw1=(expect[raw0]+cell)&255
+      expect[raw0]=raw1
+      cell=raw1
+
+Trivial RLE on filtered cells: If there are two identical cells in a row, follow them with a repetition count 0..255.
+
+Worst case: 3/2, though if it goes above 1 we can just turn off compression for the map.
+Best case: 3/257.
+1- and 3-cell runs break even.
+
+yknow... even without trying it, I don't think this will win us very much.
+And it will make a generic map decoder both more necessary and more complicated. eg it would probably need malloc.
+No... we can do it without malloc, at least. One call to read the resource header, caller allocates buffer, then one more call to decompress the cells. That's manageable.
+
+Tested against 60 maps, cells only, mostly from real games:
+Total: 56948 => 38445 (67%)
+...2/3 compression is not enough to justify the extra complexity, regardless of how much code it adds.
+The added code is just under 1 kB of Wasm, so at least we're pretty good there.
+
+Is it crazy to try LZW?
+...it's an option. Consider fixed 12-bit words, a dictionary that saturates against large maps but is big enough for smaller ones. Vertical filters would still probably be a good idea.
+I really don't think we'll see enough compression to justify the extra complexity.
+
+----------------------------------------------------------------------------------
+
+
+
+/* Map.
+ */
+
+int map_res_decode(struct map_res *map,const void *src,int srcc) {
+  if (!src||(srcc<8)) return -1;
+  SIGCK(src,"\0EMP")
+  const unsigned char *SRC=src;
+  map->w=SRC[4];
+  map->h=SRC[5];
+  if (!map->w||!map->h) return -1;
+  map->cdc=(SRC[6]<<8)|SRC[7];
+  int cellslen=map->cdc?map->cdc:(map->w*map->h);
+  int srcp=8;
+  if (srcp>srcc-cellslen) return -1;
+  map->cd=SRC+srcp;
+  srcp+=cellslen;
+  map->cmd=SRC+srcp;
+  map->cmdc=srcc-srcp;
+  return 0;
+}
+
+static int map_res_decompress(unsigned char *dst,const struct map_res *map) {
+  int dsta=map->w*map->h;
+
+  // Expand RLE.
+  int dstc=0,cdp=0,prev=-1;
+  while (cdp<map->cdc) {
+    if (dstc>=dsta) break;
+    int next=map->cd[cdp++];
+    dst[dstc++]=next;
+    if (next==prev) {
+      if (cdp>=map->cdc) return -1;
+      int repc=map->cd[cdp++];
+      if (dstc>dsta-repc) return -1;
+      while (repc-->0) dst[dstc++]=next;
+      prev=-1;
+    } else {
+      prev=next;
+    }
+  }
+  // Trailing zeroes may be omitted; restore them.
+  while (dstc<dsta) dst[dstc++]=0;
+  
+  // Unfilter.
+  unsigned char expect[256]={0};
+  int col=0; for (;col<map->w;col++) {
+    unsigned char *v=dst+col;
+    unsigned char raw0=0;
+    unsigned char raw1=v[0];
+    v+=map->w;
+    int yi=map->h-1;
+    for (;yi-->0;v+=map->w) {
+      raw0=raw1;
+      raw1=expect[raw0]+(*v);
+      expect[raw0]=raw1;
+      *v=raw1;
+    }
+  }
+  
+  return 0;
+}
+
+int map_res_decode_cells(unsigned char *dst,int dsta,const struct map_res *map) {
+  if (!dst||(dsta<0)||!map) return -1;
+  int dstc=map->w*map->h;
+  if (dstc>dsta) return -1;
+  if (map->cdc) {
+    if (map_res_decompress(dst,map)<0) return -1;
+  } else {
+    res_memcpy(dst,map->cd,dstc);
+  }
+  return dstc;
+}
+
+
+
+
+
+
+
+
+
+
+
+static void dump_map(const uint8_t *v,int w,int h,const char *comment) {
+  fprintf(stderr,"dump_map: %s -------------------------------------------\n",comment);
+  int yi=h; for (;yi-->0;) {
+    int xi=w; for (;xi-->0;v++) fprintf(stderr,"%4d",*v);
+    fprintf(stderr,"\n");
+  }
+  fprintf(stderr,"end of dump --------------------------------------\n");
+}
+
+/* Apply filter and compression to raw map cells.
+ * (dsta) must be at least (w*h).
+ * This encoder will never increase the content size.
+ * Emits encoded length, zero if we emitted uncompressed, or <0 for errors.
+ */
+
+static int map_encode_cells(void *dst,int dsta,const void *src,int w,int h) {
+  if (!dst||!src||(w<1)||(w>0xff)||(h<1)||(h>0xff)) return -1;
+  int rawlen=w*h;
+  if (dsta<rawlen) return -1;
+  
+  //dump_map(src,w,h,"input");
+  
+  // Copy cells into a scratch buffer so we can rewrite in place.
+  uint8_t *tmp=malloc(rawlen);
+  if (!tmp) return -1;
+  memcpy(tmp,src,rawlen);
+  
+  // Apply filter.
+  uint8_t expect[256]={0};
+  int col=0; for (;col<w;col++) {
+    uint8_t *v=tmp+col;
+    uint8_t raw0=0;
+    uint8_t raw1=*v;
+    v+=w;
+    int yi=h-1;
+    for (;yi-->0;v+=w) {
+      raw0=raw1;
+      raw1=*v;
+      *v=(*v)-expect[raw0];
+      expect[raw0]=raw1;
+    }
+  }
+  
+  //dump_map(tmp,w,h,"filtered");
+  
+  // Trim trailing zeroes from (tmp).
+  int tmpc=rawlen;
+  while (tmpc&&!tmp[tmpc-1]) tmpc--;
+  
+  // Encode RLE into (dst).
+  // Monitor output size! It can exceed (rawlen), and before that happens, return raw instead.
+  uint8_t *DST=dst;
+  int dstc=0,tmpp=0,prev=-1;
+  while (tmpp<tmpc) {
+    int next=tmp[tmpp++];
+    if (dstc>=rawlen) goto _raw_;
+    DST[dstc++]=next;
+    if (prev==next) {
+      if (dstc>=rawlen) goto _raw_;
+      int runlen=0;
+      while ((tmpp<tmpc)&&(tmp[tmpp]==next)&&(runlen<0xff)) { tmpp++; runlen++; }
+      DST[dstc++]=runlen;
+      prev=-1;
+    } else {
+      prev=next;
+    }
+  }
+  
+  if (0) {
+    fprintf(stderr,"encoded rle -----------------------------\n");
+    int i=0; for (;i<dstc;i++) fprintf(stderr," %d",DST[i]);
+    fprintf(stderr,"\n------------------------------------------\n");
+  }
+  
+  free(tmp);
+  return dstc;
+ _raw_:
+  memcpy(dst,src,rawlen);
+  free(tmp);
+  return 0;
+}

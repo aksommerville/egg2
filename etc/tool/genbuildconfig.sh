@@ -51,8 +51,8 @@ int main(int argc,char **argv) { return 0; }
 EOF
 ) ; then
   EGG_TARGETS="$EGG_TARGETS web"
-  web_OPT_ENABLE=
-  web_AR=
+  web_OPT_ENABLE="stdlib res graf"
+  web_AR=ar
   web_CC="clang -c -MMD -O3 --target=wasm32 -nostdlib -Werror -Wno-comment -Wno-parentheses -Isrc -Wno-incompatible-library-redeclaration -Wno-builtin-requires-header"
   web_LD="wasm-ld --no-entry -z stack-size=4194304 --no-gc-sections --allow-undefined --export-table   --export=egg_client_init --export=egg_client_quit --export=egg_client_update --export=egg_client_render"
   web_LDPOST=

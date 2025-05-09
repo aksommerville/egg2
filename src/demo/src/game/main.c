@@ -5,6 +5,8 @@ struct g g={0};
 void egg_client_quit(int status) {
 }
 
+char rom_tmp[128<<10];//TODO really need stdlib
+
 int egg_client_init() {
 
   int fbw=0,fbh=0;
@@ -15,6 +17,12 @@ int egg_client_init() {
   }
 
   g.romc=egg_rom_get(0,0);
+  if (g.romc>sizeof(rom_tmp)) {
+    egg_log("rom too large");
+    return -1;
+  }
+  g.rom=rom_tmp;
+  egg_rom_get(g.rom,g.romc);
   //if (!(g.rom=malloc(g.romc))) return -1;//TODO need stdlib
   //egg_rom_get(g.rom,g.romc);
   

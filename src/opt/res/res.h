@@ -73,4 +73,7 @@ struct map_res {
 };
 int map_res_decode(struct map_res *map,const void *src,int srcc);
 
+//TODO tilesheet
+//TODO decalsheet
+
 #endif
