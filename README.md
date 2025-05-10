@@ -60,9 +60,9 @@ Planned differences from Egg v1:
 - - - [x] TILE and FANCY shaders.
 - - - [x] FANCY probably needs an xform too.
 - - [ ] Input.
-- - - [ ] Device mapping.
+- - - [x] Device mapping.
 - - - [ ] Persist mappings.
-- - - [ ] egg_gamepad_get_button: Need to cache full capability reports in inmgr.
+- - - [x] egg_gamepad_get_button: Need to cache full capability reports in inmgr.
 - - - [ ] Interactive reconfig.
 - - - - [ ] Let the client declare which buttons it uses, so when configuring we don't ask for all 15 buttons.
 - - - - - Maybe a metadata field "incfgMask" containing characters "dswne123lrLR". "d" being the dpad, all others correspond to one button.
@@ -127,3 +127,5 @@ Planned differences from Egg v1:
 - - [ ] SongEditor:WaveUi: Have wave preview printed by synthesizer. Currently calling out to the server for each render.
 - - [x] SongEditor:EnvUi: Place new points proportionately in the alternate line.
 - - [ ] SongEditor: Must be able to change order of post steps.
+- - [ ] native inmgr: Select player
+- - [ ] native inmgr: map/unmap as event masks change

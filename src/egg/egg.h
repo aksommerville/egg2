@@ -209,6 +209,7 @@ int egg_event_get(struct egg_event *dst,int dsta);
  * If any keyboard event is enabled, keyboards will not map to standard gamepads.
  * If any gamepad event is enabled, raw gamepads will not map to standard gamepads.
  * (In general, use standard gamepads or events, not both).
+ * All events are initially disabled. In that state, there's no need to poll egg_event_get(), it will always return zero.
  */
 int egg_event_enable(int evttype,int enable);
 int egg_event_is_enabled(int evttype);

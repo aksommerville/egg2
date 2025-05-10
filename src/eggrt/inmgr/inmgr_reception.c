@@ -66,7 +66,7 @@ void inmgr_mwheel(struct hostio_video *driver,int dx,int dy) {
 }
 
 void inmgr_connect(struct hostio_input *driver,int devid) {
-  //TODO Internal gamepad bookkeeping.
+  if (inmgr_device_connect(&eggrt.inmgr,driver,devid)<0) return;
   struct egg_event *event=inmgr_evtq_push(&eggrt.inmgr,EGG_EVENT_GAMEPAD);
   if (event) {
     event->gamepad.devid=devid;
@@ -76,7 +76,7 @@ void inmgr_connect(struct hostio_input *driver,int devid) {
 }
 
 void inmgr_disconnect(struct hostio_input *driver,int devid) {
-  //TODO Tear down internal gamepad bookkeeping
+  if (inmgr_device_disconnect(&eggrt.inmgr,driver,devid)<0) return;
   struct egg_event *event=inmgr_evtq_push(&eggrt.inmgr,EGG_EVENT_GAMEPAD);
   if (event) {
     event->gamepad.devid=devid;

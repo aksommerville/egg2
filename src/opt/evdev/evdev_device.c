@@ -110,6 +110,7 @@ static void evdev_prepbtn_abs(int *lo,int *hi,int *value,int fd,int code) {
     *hi=32767;
     *value=0;
   } else {
+    // (value) is expected to be the resting value. evdev does not have any such concept, so we assume the axis at rest when connected.
     *lo=ai.minimum;
     *hi=ai.maximum;
     *value=ai.value;

@@ -8,6 +8,13 @@
 #define EGGRT_PLAYER_LIMIT 8
 #define EGGRT_EVTQ_SIZE 256 /* Arbitrary. If the event queue doesn't get read, we overwrite after so many. */
 
+#define INMGR_ACTION_QUIT                 0x00010001
+#define INMGR_ACTION_FULLSCREEN           0x00010002 /* toggle */
+
+struct inmgr;
+
+#include "inmgr_device.h"
+
 struct inmgr {
 
   /* (playerclo,playerchi) are declared in metadata:1.
@@ -33,6 +40,9 @@ struct inmgr {
   
   // Most recent mouse position, unmapped.
   int mousex,mousey;
+  
+  struct inmgr_device **devicev;
+  int devicec,devicea;
 };
 
 void inmgr_quit(struct inmgr *inmgr);
@@ -68,6 +78,11 @@ void inmgr_connect(struct hostio_input *driver,int devid);
 void inmgr_disconnect(struct hostio_input *driver,int devid);
 void inmgr_button(struct hostio_input *driver,int devid,int btnid,int value);
 
+/* Device inspection, matching Egg Platform API exactly.
+ */
+int inmgr_get_device_name(char *dst,int dsta,int *vid,int *pid,int *version,struct inmgr *inmgr,int devid);
+int inmgr_get_device_button(int *btnid,int *hidusage,int *lo,int *hi,int *rest,struct inmgr *inmgr,int devid,int btnix);
+
 /* Internal use only.
  ***************************************************************************************************/
  
@@ -79,5 +94,19 @@ void inmgr_show_cursor(struct inmgr *inmgr,int show);
 void inmgr_lock_cursor(struct inmgr *inmgr,int lock);
 
 void inmgr_mappable_event(struct inmgr *inmgr,int devid,int btnid,int value);
+
+/* If either of these fails, don't report the event to the client.
+ * Disconnect will fail if the device isn't registered (which would be the case if its connect had failed).
+ * Any inmgr_mappable_event() on a device whose inmgr_device_connect() failed will quietly noop.
+ * The system keyboard should have (0,0) for (driver,devid); these must be nonzero for all other devices.
+ * Connecting or disconnecting DOES NOT queue an event. Caller should if appropriate.
+ */
+int inmgr_device_connect(struct inmgr *inmgr,struct hostio_input *driver,int devid);
+int inmgr_device_disconnect(struct inmgr *inmgr,struct hostio_input *driver,int devid);
+
+int inmgr_find_device_by_devid(struct inmgr *inmgr,int devid);
+struct inmgr_device *inmgr_get_device_by_devid(struct inmgr *inmgr,int devid);
+
+void inmgr_device_require_player(struct inmgr *inmgr,struct inmgr_device *device);
 
 #endif

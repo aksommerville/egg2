@@ -4,6 +4,10 @@
  */
  
 void inmgr_quit(struct inmgr *inmgr) {
+  if (inmgr->devicev) {
+    while (inmgr->devicec-->0) inmgr_device_del(inmgr->devicev[inmgr->devicec]);
+    free(inmgr->devicev);
+  }
 }
 
 /* Init.
@@ -23,6 +27,7 @@ int inmgr_init(struct inmgr *inmgr) {
   inmgr->evtmask_capable=0;
   if (eggrt.hostio&&eggrt.hostio->video) {
     if (eggrt.hostio->video->type->provides_input) {
+      if (inmgr_device_connect(inmgr,0,0)<0) return -1;
       inmgr->evtmask_capable|=(
         (1<<EGG_EVENT_KEY)|
         (1<<EGG_EVENT_TEXT)|
@@ -182,26 +187,6 @@ int inmgr_event_enable(struct inmgr *inmgr,int evttype,int enable) {
   return 0;
 }
 
-/* Drop or reapply maps for all devices of source type.
- * (in response to an event mask change).
- */
- 
-void inmgr_map_keyboard(struct inmgr *inmgr) {
-  fprintf(stderr,"TODO %s\n",__func__);
-}
-
-void inmgr_unmap_keyboard(struct inmgr *inmgr) {
-  fprintf(stderr,"TODO %s\n",__func__);
-}
-
-void inmgr_map_gamepads(struct inmgr *inmgr) {
-  fprintf(stderr,"TODO %s\n",__func__);
-}
-
-void inmgr_unmap_gamepads(struct inmgr *inmgr) {
-  fprintf(stderr,"TODO %s\n",__func__);
-}
-
 /* Cursor state changes.
  */
  
@@ -215,4 +200,60 @@ void inmgr_lock_cursor(struct inmgr *inmgr,int lock) {
   if (eggrt.hostio->video&&eggrt.hostio->video->type->lock_cursor) {
     eggrt.hostio->video->type->lock_cursor(eggrt.hostio->video,lock);
   }
+}
+
+/* Device list.
+ */
+ 
+int inmgr_find_device_by_devid(struct inmgr *inmgr,int devid) {
+  int i=0;
+  struct inmgr_device **p=inmgr->devicev;
+  for (;i<inmgr->devicec;i++,p++) {
+    if ((*p)->devid!=devid) continue;
+    return i;
+  }
+  return -1;
+}
+ 
+struct inmgr_device *inmgr_get_device_by_devid(struct inmgr *inmgr,int devid) {
+  int i=0;
+  struct inmgr_device **p=inmgr->devicev;
+  for (;i<inmgr->devicec;i++,p++) {
+    if ((*p)->devid!=devid) continue;
+    return *p;
+  }
+  return 0;
+}
+
+/* Get device IDs.
+ */
+ 
+int inmgr_get_device_name(char *dst,int dsta,int *vid,int *pid,int *version,struct inmgr *inmgr,int devid) {
+  struct inmgr_device *device=inmgr_get_device_by_devid(inmgr,devid);
+  if (!device) return -1;
+  if (dst&&(device->namec<=dsta)) {
+    memcpy(dst,device->name,device->namec);
+    if (device->namec<dsta) dst[device->namec]=0;
+  }
+  if (vid) *vid=device->vid;
+  if (pid) *pid=device->pid;
+  if (version) *version=device->version;
+  return device->namec;
+}
+
+/* Get device button declaration.
+ */
+ 
+int inmgr_get_device_button(int *btnid,int *hidusage,int *lo,int *hi,int *rest,struct inmgr *inmgr,int devid,int btnix) {
+  if (btnix<0) return -1;
+  struct inmgr_device *device=inmgr_get_device_by_devid(inmgr,devid);
+  if (!device) return -1;
+  if (btnix>=device->buttonc) return -1;
+  struct inmgr_button *button=device->buttonv+btnix;
+  if (btnid) *btnid=button->btnid;
+  if (hidusage) *hidusage=button->hidusage;
+  if (lo) *lo=button->lo;
+  if (hi) *hi=button->hi;
+  if (rest) *rest=button->rest;
+  return 0;
 }

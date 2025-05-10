@@ -160,35 +160,11 @@ int egg_event_is_enabled(int evttype) {
 }
 
 int egg_gamepad_get_name(char *dst,int dsta,int *vid,int *pid,int *version,int devid) {
-  if (!dst||(dsta<0)) dsta=0;
-  int i=0;
-  for (;i<eggrt.hostio->inputc;i++) {
-    struct hostio_input *driver=eggrt.hostio->inputv[i];
-    if (!driver->type->get_ids) continue;
-    const char *name=driver->type->get_ids(vid,pid,version,driver,devid);
-    if (!name) continue;
-    int namec=0;
-    while (name[namec]) namec++;
-    if (namec<=dsta) {
-      memcpy(dst,name,namec);
-      if (namec<dsta) dst[namec]=0;
-    } else {
-      memcpy(dst,name,dsta);
-    }
-    return namec;
-  }
-  if (vid) *vid=0;
-  if (pid) *pid=0;
-  if (version) *version=0;
-  if (dsta) dst[0]=0;
-  return 0;
+  return inmgr_get_device_name(dst,dsta,vid,pid,version,&eggrt.inmgr,devid);
 }
 
 int egg_gamepad_get_button(int *btnid,int *hidusage,int *lo,int *hi,int *rest,int devid,int btnix) {
-  fprintf(stderr,"TODO %s\n",__func__);
-  //TODO We need inmgr to cache the entire capability report for each device. Drivers expose an iterator, but Platform API exposes an index accessor.
-  // (and it is unreasonable for drivers to work on index, or wasm apps to provide a callback).
-  return -1;
+  return inmgr_get_device_button(btnid,hidusage,lo,hi,rest,&eggrt.inmgr,devid,btnix);
 }
 
 /* Audio.
