@@ -70,7 +70,7 @@ Planned differences from Egg v1:
 - - [ ] Record and playback session.
 - [ ] Web runtime.
 - - [ ] Load binary.
-- - [ ] Load base64.
+- - [x] Load base64.
 - - [ ] Synth.
 - - [ ] Render.
 - - [ ] Input.
@@ -129,3 +129,4 @@ Planned differences from Egg v1:
 - - [ ] SongEditor: Must be able to change order of post steps.
 - - [ ] native inmgr: Select player
 - - [ ] native inmgr: map/unmap as event masks change
+- - [ ] eggdev build: Replace `<title>` in HTMLs.

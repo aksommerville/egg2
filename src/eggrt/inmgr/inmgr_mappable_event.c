@@ -4,7 +4,11 @@
  */
  
 static void inmgr_dispatch_action(struct inmgr *inmgr,int action) {
-  fprintf(stderr,"TODO %s 0x%08x\n",__func__,action);
+  //fprintf(stderr,"TODO %s 0x%08x\n",__func__,action);
+  switch (action) {
+    case INMGR_ACTION_QUIT: eggrt.terminate=1; eggrt.status=0; break;
+    case INMGR_ACTION_FULLSCREEN: hostio_toggle_fullscreen(eggrt.hostio); break;
+  }
 }
 
 /* Set mapped button on some device.
@@ -31,7 +35,7 @@ static void inmgr_set_button(struct inmgr *inmgr,struct inmgr_device *device,int
  */
  
 void inmgr_mappable_event(struct inmgr *inmgr,int devid,int btnid,int value) {
-  fprintf(stderr,"%s %d.0x%08x=%d\n",__func__,devid,btnid,value);
+  //fprintf(stderr,"%s %d.0x%08x=%d\n",__func__,devid,btnid,value);
   
   // Find the device and button.
   struct inmgr_device *device=inmgr_get_device_by_devid(inmgr,devid);

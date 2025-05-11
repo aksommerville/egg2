@@ -89,6 +89,32 @@ static int builder_infer_outputs_c(struct builder *builder,struct builder_file *
   return 0;
 }
 
+/* Add the separate and standalone HTML templates as prereqs for the appropriate outputs.
+ * This isn't strictly necessary, but it does force a rebuild when the templates change.
+ */
+ 
+static int builder_add_standalone_html_source(struct builder *builder,struct builder_file *output) {
+  char path[1024];
+  int pathc=snprintf(path,sizeof(path),"%s/out/standalone.html",g.sdkpath);
+  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+  struct builder_file *file=builder_add_file(builder,path,pathc);
+  if (!file) return -1;
+  file->ready=1; // eggdev will not build anything under egg itself
+  if (builder_file_add_req(output,file)<0) return -1;
+  return 0;
+}
+
+static int builder_add_separate_html_source(struct builder *builder,struct builder_file *output) {
+  char path[1024];
+  int pathc=snprintf(path,sizeof(path),"%s/out/separate.html",g.sdkpath);
+  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+  struct builder_file *file=builder_add_file(builder,path,pathc);
+  if (!file) return -1;
+  file->ready=1; // eggdev will not build anything under egg itself
+  if (builder_file_add_req(output,file)<0) return -1;
+  return 0;
+}
+
 /* Singleton outputs for "web" packaging.
  */
  
@@ -128,6 +154,7 @@ static int builder_infer_target_outputs_web(struct builder *builder,struct build
   standalone->target=target;
   standalone->hint=BUILDER_FILE_HINT_STANDALONE;
   if (builder_file_add_req(standalone,romfile)<0) return -1;
+  if (builder_add_standalone_html_source(builder,standalone)<0) return -1;
   
   // Separate HTML in a Zip archive.
   pathc=snprintf(path,sizeof(path),"%.*s/out/%.*s-%.*s.zip",builder->rootc,builder->root,builder->projnamec,builder->projname,target->namec,target->name);
@@ -137,6 +164,7 @@ static int builder_infer_target_outputs_web(struct builder *builder,struct build
   separate->target=target;
   separate->hint=BUILDER_FILE_HINT_SEPARATE;
   if (builder_file_add_req(separate,romfile)<0) return -1;
+  if (builder_add_separate_html_source(builder,separate)<0) return -1;
   
   return 0;
 }

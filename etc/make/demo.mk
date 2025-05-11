@@ -16,6 +16,13 @@ $(demo_EXE):$(eggdev_EXE) $(demo_EGGRT) $(demo_SRCFILES);rm -rf $(demo_SRCDIR)/m
 #demo-run:$(eggdev_EXE) $(demo_EGGRT) $(demo_SRCFILES);rm -rf $(demo_SRCDIR)/mid $(demo_SRCDIR)/out ; $(eggdev_EXE) run $(demo_SRCDIR)
 demo-run:$(demo_EXE);$(demo_EXE)
 
+# http://localhost:8080/api/buildfirst/index.html
+# Note that changes to the runtime will not get picked up automatically; you have to restart the server if you change any Egg things.
+# The demo itself can be modified while running, just refresh in the browser.
+demo-serve:$(eggdev_EXE) $(eggdev_SEPARATE_TEMPLATE);$(eggdev_EXE) serve \
+  --project=src/demo \
+  --htdocs=src/demo/out/demo-web.zip
+
 # demo-edit is just like the skeleton project, but builds eggdev first and points to "src/demo" instead of "."
 demo-edit:$(eggdev_EXE);$(eggdev_EXE) serve \
   --writeable=src/demo/src/data \

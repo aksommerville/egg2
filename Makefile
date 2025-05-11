@@ -27,6 +27,7 @@ include etc/make/demo.mk
 all:demo-all
 run:demo-run
 edit:demo-edit
+serve:demo-serve
 
 include etc/make/test.mk
 # test.mk puts its outputs in regular "all", since "test-ANYTHING" is reserved for running tests with a filter.
