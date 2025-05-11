@@ -130,3 +130,4 @@ Planned differences from Egg v1:
 - - [ ] native inmgr: Select player
 - - [ ] native inmgr: map/unmap as event masks change
 - - [ ] eggdev build: Replace `<title>` in HTMLs.
+- - [ ] web: Detect loss of focus. At a minimum, pause audio. Maybe pause everything?

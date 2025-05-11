@@ -3,16 +3,50 @@
  * We don't create the canvas (that's Runtime), but we do everything else that happens to it.
  */
  
+const TEX_SIZE_LIMIT = 4096;
+ 
 export class Video {
   constructor(rt) {
     this.rt = rt;
+    this.texv = []; // {gltexid,border,w,h,fbid}. Sparse, indexed by texid.
+    this.canvas = null;
+    this.ctx = null;
+  }
+  
+  start() {
+    this.texv = [];
+    this.canvas = document.getElementById("eggfb");
+    if (this.canvas?.tagName !== "CANVAS") throw new Error(`Canvas not found.`);
+    const [w, h] = (this.rt.rom.getMeta("fb") || "640x360").split("x").map(v => +v);
+    if (isNaN(w) || (w < 1) || (w > TEX_SIZE_LIMIT) || isNaN(h) || (h < 1) || (h > TEX_SIZE_LIMIT)) {
+      throw new Error(`Invalid framebuffer size.`);
+    }
+    console.log(`framebuffer size ${w} ${h}`);
+    this.canvas.width = w;
+    this.canvas.height = h;
+    this.ctx = this.canvas.getContext("webgl");
+    this.texv[1] = {
+      gltexid: 0,//TODO
+      border: 0,
+      w, h,
+      fbid: 0,//TODO
+    };
+  }
+  
+  stop() {
   }
   
   /* Egg Platform API.
    ******************************************************************************************/
    
   egg_video_get_screen_size(wp, hp) {
-    console.log(`TODO Video.egg_video_get_screen_size ${wp},${hp}`);
+    wp >>= 2;
+    hp >>= 2;
+    const m32 = this.rt.exec.mem32;
+    if ((wp < 0) || (wp >= m32.length) || (hp < 0) || (hp >= m32.length)) return;
+    const bounds = this.canvas.getBoundingClientRect();
+    m32[wp] = bounds.width;
+    m32[hp] = bounds.height;
   }
   
   egg_video_fb_from_screen(xp, yp) {
@@ -33,7 +67,14 @@ export class Video {
   }
   
   egg_texture_get_size(wp, hp, texid) {
-    console.log(`TODO Video.egg_texture_get_size ${wp},${hp},${texid}`);
+    wp >>= 2;
+    hp >>= 2;
+    const m32 = this.rt.exec.mem32;
+    if ((wp < 0) || (wp >= m32.length) || (hp < 0) || (hp >= m32.length)) return;
+    const tex = this.texv[texid];
+    if (!tex) return;
+    m32[wp] = tex.w;
+    m32[hp] = tex.h;
   }
   
   egg_texture_load_image(texid, imgid) {

@@ -25,14 +25,21 @@ export class Runtime {
     this.selectLanguage();
     this.populateDocument();
     this.loadWasmAndImages().then(() => {
+      this.video.start();
+      this.audio.start();
+      this.input.start();
       const err = this.exec.egg_client_init();
       if (err < 0) throw `Error ${err} from game's initializer.`;
     }).catch(e => {
       this.reportError(e);
+      this.stop();
     });
   }
   
   stop() {
+    this.video.stop();
+    this.audio.stop();
+    this.input.stop();
   }
   
   reportError(error) {
@@ -133,7 +140,8 @@ export class Runtime {
   }
   
   egg_log(msgp) {
-    console.log(`TODO Runtime.egg_log ${msgp}`);
+    const msg = this.exec.getString(msgp, 1024);
+    console.log(`GAME: ${msg}`);
   }
   
   egg_time_real() {

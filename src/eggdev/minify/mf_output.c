@@ -292,6 +292,10 @@ static int mf_js_output_OP(struct sr_encoder *dst,struct eggdev_minify_js *ctx,s
         if (popcls>opcls) return mf_js_output_OP_parens(dst,ctx,node);
         //TODO This is probably not the whole story. What about RTL operators?
       } break;
+    case MF_NODE_TYPE_INDEX: {
+        int popcls=MF_OPCLS_MEMBER;
+        if (popcls>opcls) return mf_js_output_OP_parens(dst,ctx,node);
+      } break;
     //TODO We are probably responsible for the "if", "while", and "do" parentheses.
   }
   return mf_js_output_OP_naked(dst,ctx,node);
@@ -358,7 +362,18 @@ static int mf_js_output_CALL(struct sr_encoder *dst,struct eggdev_minify_js *ctx
 static int mf_js_output_INDEX(struct sr_encoder *dst,struct eggdev_minify_js *ctx,struct mf_node *node) {
   if (node->childc!=2) return mf_jserr(ctx,&node->token,"%s: childc=%d",__func__,node->childc);
   int err;
+  
+  int opcls=MF_OPCLS_MEMBER,need_parens=0;
+  if (node->parent) switch (node->parent->type) {
+    case MF_NODE_TYPE_OP: {
+        int popcls=node->parent->argv[0];
+        if (popcls>opcls) need_parens=1;
+      } break;
+  }
+  
+  if (need_parens&&((err=mf_js_output_token(dst,ctx,"(",1))<0)) return err;
   if ((err=mf_js_output(dst,ctx,node->childv[0]))<0) return err;
+  if (need_parens&&((err=mf_js_output_token(dst,ctx,")",1))<0)) return err;
   if (mf_js_output_token(dst,ctx,node->token.v,node->token.c)<0) return -1;
   if ((err=mf_js_output(dst,ctx,node->childv[1]))<0) return err;
   if (mf_js_output_token(dst,ctx,"]",1)<0) return -1;

@@ -41,7 +41,10 @@ int eggdev_read_stdin(void *dstpp) {
       free(dst);
       return -1;
     }
-    if (!err) return dstc;
+    if (!err) {
+      *(void**)dstpp=dst;
+      return dstc;
+    }
     dstc+=err;
   }
 }

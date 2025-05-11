@@ -129,26 +129,18 @@ int eggdev_minify_inner(struct sr_encoder *dst,const char *src,int srcc,const ch
  */
  
 int eggdev_main_minify() {
-  if (!g.dstpath) {
-    fprintf(stderr,"%s: Output path required.\n",g.exename);
+  if (g.srcpathc>1) {
+    fprintf(stderr,"%s: Minify expects exactly 1 input file (or stdin), found %d.\n",g.exename,g.srcpathc);
     return -2;
   }
-  if (g.srcpathc!=1) {
-    fprintf(stderr,"%s: Minify expects exactly 1 input file, found %d.\n",g.exename,g.srcpathc);
-    return -2;
-  }
-  const char *srcpath=g.srcpathv[0],*dstpath=g.dstpath;
   void *src=0;
-  int srcc=file_read(&src,srcpath);
-  if (srcc<0) {
-    fprintf(stderr,"%s: Failed to read file.\n",srcpath);
-    return -2;
-  }
+  int srcc=eggdev_read_input(&src,g.srcpathc?g.srcpathv[0]:0);
+  if (srcc<0) return srcc;
   struct sr_encoder dst={0};
-  int err=eggdev_minify_inner(&dst,src,srcc,srcpath,0);
+  int err=eggdev_minify_inner(&dst,src,srcc,g.srcpathc?g.srcpathv[0]:"<stdin>",0);
   free(src);
   if (err<0) {
-    if (err!=-2) fprintf(stderr,"%s: Unspecified error minifying.\n",srcpath);
+    if (err!=-2) fprintf(stderr,"%s: Unspecified error minifying.\n",g.srcpathc?g.srcpathv[0]:"<stdin>");
     sr_encoder_cleanup(&dst);
     return -2;
   }
@@ -156,10 +148,9 @@ int eggdev_main_minify() {
   // Not important, but add an LF to non-empty files, so I can cat them without fear.
   if (dst.c) sr_encode_u8(&dst,0x0a);
   
-  if (file_write(dstpath,dst.v,dst.c)<0) {
-    fprintf(stderr,"%s: Failed to write file, %d bytes\n",dstpath,dst.c);
+  if ((err=eggdev_write_output(g.dstpath,dst.v,dst.c))<0) {
     sr_encoder_cleanup(&dst);
-    return -2;
+    return err;
   }
   sr_encoder_cleanup(&dst);
   return 0;

@@ -9,8 +9,43 @@ char rom_tmp[128<<10];//TODO really need stdlib
 
 int egg_client_init() {
 
+  {
+    int screenw=0,screenh=0;
+    egg_video_get_screen_size(&screenw,&screenh);
+    char msg[]={
+      's','c','r','e','e','n',':',' ',
+      '0'+(screenw/1000)%10,
+      '0'+(screenw/ 100)%10,
+      '0'+(screenw/  10)%10,
+      '0'+(screenw     )%10,
+      'x',
+      '0'+(screenh/1000)%10,
+      '0'+(screenh/ 100)%10,
+      '0'+(screenh/  10)%10,
+      '0'+(screenh     )%10,
+      0,
+    };
+    egg_log(msg);
+  }
+
   int fbw=0,fbh=0;
   egg_texture_get_size(&fbw,&fbh,1);
+  {
+    char msg[]={
+      'f','b',':',' ',
+      '0'+(fbw/1000)%10,
+      '0'+(fbw/ 100)%10,
+      '0'+(fbw/  10)%10,
+      '0'+(fbw     )%10,
+      'x',
+      '0'+(fbh/1000)%10,
+      '0'+(fbh/ 100)%10,
+      '0'+(fbh/  10)%10,
+      '0'+(fbh     )%10,
+      0,
+    };
+    egg_log(msg);
+  }
   if ((fbw!=FBW)||(fbh!=FBH)) {
     fprintf(stderr,"Framebuffer size mismatch! metadata=%dx%d header=%dx%d\n",fbw,fbh,FBW,FBH);
     return -1;

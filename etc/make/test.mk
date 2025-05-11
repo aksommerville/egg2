@@ -29,5 +29,5 @@ $(test_MIDDIR)/%.o:src/test/%.c|$(test_TOC_INT);$(PRECMD) $(test_CC) -o$@ $<
 $(test_EXE_INT):$(test_OFILES_INT);$(PRECMD) $(test_LD) -o$@ $^ $(test_LDPOST)
 $(test_OUTDIR)/unit/%:$(test_MIDDIR)/unit/%.o $(test_OFILES_COMMON);$(PRECMD) $(test_LD) -o$@ $^ $(test_LDPOST)
 
-test:$(test_EXES);etc/tool/runtests.sh $(test_EXES)
-test-%:$(test_EXES);EGG_TEST_FILTER="$*" etc/tool/runtests.sh $(test_EXES)
+test:$(test_EXES) $(eggdev_EXE);etc/tool/runtests.sh $(test_EXES)
+test-%:$(test_EXES) $(eggdev_EXE);EGG_TEST_FILTER="$*" etc/tool/runtests.sh $(test_EXES)
