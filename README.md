@@ -69,7 +69,7 @@ Planned differences from Egg v1:
 - - [x] Persistence.
 - - [ ] Record and playback session.
 - [ ] Web runtime.
-- - [ ] Load binary.
+- - [x] Load binary.
 - - [x] Load base64.
 - - [ ] Synth.
 - - [ ] Render.

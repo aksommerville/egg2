@@ -3,6 +3,18 @@ html {
   color: #fff;
 }
 
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
 egg-rom {
   display: none;
+}
+
+canvas#eggfb {
+  width: 100vw;
+  height: 100vh;
+  object-fit: contain;
+  image-rendering: pixelated;
 }

@@ -135,6 +135,7 @@ int eggdev_minify_html(struct eggdev_minify_html *ctx) {
   eggdev_html_reader_init(&reader,ctx->src,ctx->srcc,ctx->srcpath);
   const char *expr;
   int exprc,err;
+  int dstc0=ctx->dst->c;
   while ((exprc=eggdev_html_reader_next(&expr,&reader))>0) {
     switch (eggdev_html_expression_type(expr,exprc)) {
     
@@ -176,7 +177,16 @@ int eggdev_minify_html(struct eggdev_minify_html *ctx) {
           while (exprc&&((unsigned char)expr[0]<=0x20)) { exprc--; expr++; }
           if (sr_encode_raw(ctx->dst,expr,exprc)<0) return -1;
         } break;
-      // Ignore SPACE, COMMENT, and anything unknown.
+      
+      // COMMENT usually gets ignored, but a DOCTYPE at the very start of the file gets emitted verbatim, with a newline.
+      case EGGDEV_HTML_EXPR_COMMENT: {
+          if ((ctx->dst->c==dstc0)&&(exprc>=9)&&!memcmp(expr,"<!DOCTYPE",9)) {
+            if (sr_encode_raw(ctx->dst,expr,exprc)<0) return -1;
+            if (sr_encode_u8(ctx->dst,0x0a)<0) return -1;
+          }
+        } break;
+        
+      // Ignore SPACE and anything unknown.
     }
   }
   return 0;
