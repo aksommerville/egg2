@@ -74,7 +74,8 @@ Planned differences from Egg v1:
 - - [ ] Synth.
 - - [ ] Render.
 - - [ ] Input.
-- - [ ] Persistence.
+- - [x] Persistence.
+- - [ ] prefs
 - [ ] Editor.
 - - [ ] `eggdev project`: Prep overrides.
 - - [x] Basic plumbing: Injector, Dom, modals, bootstrap.

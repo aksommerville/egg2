@@ -21,7 +21,6 @@ export class Video {
     if (isNaN(w) || (w < 1) || (w > TEX_SIZE_LIMIT) || isNaN(h) || (h < 1) || (h > TEX_SIZE_LIMIT)) {
       throw new Error(`Invalid framebuffer size.`);
     }
-    console.log(`framebuffer size ${w} ${h}`);
     this.canvas.width = w;
     this.canvas.height = h;
     this.ctx = this.canvas.getContext("webgl");
@@ -34,6 +33,12 @@ export class Video {
   }
   
   stop() {
+  }
+  
+  beginFrame() {
+  }
+  
+  endFrame() {
   }
   
   /* Egg Platform API.
@@ -58,12 +63,25 @@ export class Video {
   }
   
   egg_texture_del(texid) {
-    console.log(`TODO Video.egg_texture_del ${texid}`);
+    if (texid <= 1) return; // Deleting framebuffer not allowed.
+    const tex = this.texv[texid];
+    if (!tex) return;
+    this.texv[texid] = null;
+    //TODO Delete GL texture and framebuffer if present
   }
   
   egg_texture_new() {
-    console.log(`TODO Video.egg_texture_new`);
-    return -1;
+    let texid = 2;
+    for (;this.texv[texid]; texid++) ;
+    const tex = {
+      gltexid: 0,
+      border: 0,
+      w: 0,
+      h: 0,
+      fbid: 0,
+    };
+    this.texv[texid] = tex;
+    return texid;
   }
   
   egg_texture_get_size(wp, hp, texid) {
@@ -78,8 +96,20 @@ export class Video {
   }
   
   egg_texture_load_image(texid, imgid) {
-    console.log(`TODO Video.egg_texture_load_image ${texid},${imgid}`);
-    return -1;
+    const tex = this.texv[texid];
+    if (!tex) return -1;
+    const image = this.rt.images[imgid];
+    if (!image) return -1;
+    if (texid === 1) {
+      // Loading images to texture 1 is allowed, but dimensions must match.
+      if ((tex.w !== image.naturalWidth) || (tex.h !== image.naturalHeight)) return -1;
+    } else {
+      //TODO Drop framebuffer
+    }
+    //TODO Upload image to GL texture.
+    tex.w = image.naturalWidth;
+    tex.h = image.naturalHeight;
+    return 0;
   }
   
   egg_texture_load_raw(texid, w, h, stride, srcp, srcc) {

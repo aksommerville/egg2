@@ -271,6 +271,7 @@ int egg_texture_new();
 void egg_texture_get_size(int *w,int *h,int texid);
 
 /* Replace a texture with an image resource and mark it read-only.
+ * We do allow this against texture 1, tho the image would have to match its dimensions.
  */
 int egg_texture_load_image(int texid,int imageid);
 

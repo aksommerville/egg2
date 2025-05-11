@@ -15,6 +15,7 @@ export const
  
 export class Rom {
   constructor(src) {
+    this.serial = src;
   
     /* Decode serial into an array of resources.
      */
