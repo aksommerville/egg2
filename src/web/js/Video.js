@@ -10,7 +10,10 @@ export class Video {
     this.rt = rt;
     this.texv = []; // {gltexid,border,w,h,fbid}. Sparse, indexed by texid.
     this.canvas = null;
-    this.ctx = null;
+    this.gl = null;
+    this.buffer = null;
+    this.vbuf = new Uint8Array(48).buffer; // struct egg_render raw: 12 bytes, 4 of them.
+    this.vbufs16 = new Uint16Array(this.vbuf);
   }
   
   start() {
@@ -23,22 +26,138 @@ export class Video {
     }
     this.canvas.width = w;
     this.canvas.height = h;
-    this.ctx = this.canvas.getContext("webgl");
+    this.gl = this.canvas.getContext("webgl");
     this.texv[1] = {
-      gltexid: 0,//TODO
+      gltexid: 0,
       border: 0,
       w, h,
-      fbid: 0,//TODO
+      fbid: 0,
     };
+    this.requireTexture(this.texv[1]);
+    this.gl.blendFunc(this.gl.SRC_ALPHA,this.gl.ONE_MINUS_SRC_ALPHA);
+    this.gl.enable(this.gl.BLEND);
+    if (!(this.buffer = this.gl.createBuffer())) throw new Error(`Failed to create WebGL vertex buffer.`);
+    this.compileShaders();
   }
   
   stop() {
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
   }
   
   beginFrame() {
   }
   
   endFrame() {
+    const srctex = this.texv[1];
+    if (!srctex) return;
+
+    const fbw=this.canvas.width, fbh=this.canvas.height;
+    const sv = this.vbufs16;
+    sv[ 0] = 0;   sv[ 1] = 0;   sv[ 2] =        0; sv[ 3] = srctex.h;
+    sv[ 6] = 0;   sv[ 7] = fbh; sv[ 8] =        0; sv[ 9] =        0;
+    sv[12] = fbw; sv[13] = 0;   sv[14] = srctex.w; sv[15] = srctex.h;
+    sv[18] = fbw; sv[19] = fbh; sv[20] = srctex.w; sv[21] =        0;
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, this.vbuf, this.gl.STREAM_DRAW);
+    
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    this.gl.viewport(0, 0, fbw, fbh);
+    this.gl.useProgram(this.pgm_tex);
+    this.gl.uniform2f(this.u_tex.uscreensize, fbw, fbh);
+    this.gl.uniform2f(this.u_tex.usrcsize, fbw + srctex.border * 2, fbh + srctex.border * 2);
+    this.gl.uniform1f(this.u_tex.udstborder, 0);
+    this.gl.uniform1f(this.u_tex.usrcborder, srctex.border);
+    this.gl.uniform1i(this.u_tex.usampler, 0);
+    this.gl.activeTexture(this.gl.TEXTURE0);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, srctex.gltexid);
+    this.gl.uniform4f(this.u_tex.utint, 0.0, 0.0, 0.0, 0.0);
+    this.gl.uniform1f(this.u_tex.ualpha, 1.0);
+    this.gl.disable(this.gl.BLEND);
+    this.gl.enableVertexAttribArray(0);
+    this.gl.enableVertexAttribArray(1);
+    this.gl.vertexAttribPointer(0, 2, this.gl.SHORT, false, 12, 0);
+    this.gl.vertexAttribPointer(1, 2, this.gl.SHORT, false, 12, 4);
+    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+    this.gl.disableVertexAttribArray(0);
+    this.gl.disableVertexAttribArray(1);
+    this.gl.enable(this.gl.BLEND);
+  }
+  
+  /* Shaders.
+   *******************************************************************************************/
+   
+  compileShaders() {
+    // Program and attribute names match the native GLES implementation exactly.
+    this.pgm_raw = this.compileShader("raw", ["apos", "acolor"], ["uscreensize", "udstborder", "utint", "ualpha"]);
+    this.pgm_tex = this.compileShader("tex", ["apos", "atexcoord"], ["uscreensize", "usrcsize", "udstborder", "usrcborder", "utint", "ualpha", "usampler"]);
+    this.pgm_tile = this.compileShader("tile", ["apos", "atileid", "axform"], ["uscreensize", "usrcsize", "udstborder", "usrcborder", "utint", "ualpha", "usampler"]);
+    this.pgm_fancy = this.compileShader("fancy", ["apos", "atileid", "axform", "arotation", "asize", "atint", "aprimary"], ["uscreensize", "usrcsize", "udstborder", "usrcborder", "utint", "ualpha", "usampler"]);
+  }
+  
+  compileShader(name, aNames, uNames) {
+    const pid = this.gl.createProgram();
+    if (!pid) throw new Error(`Failed to create new WebGL program for ${JSON.stringify(name)}`);
+    try {
+      this.compileShader1(name, pid, this.gl.VERTEX_SHADER, Video.glsl[name + "_v"]);
+      this.compileShader1(name, pid, this.gl.FRAGMENT_SHADER, Video.glsl[name + "_f"]);
+      for (let i=0; i<aNames.length; i++) {
+        this.gl.bindAttribLocation(pid, i, aNames[i]);
+      }
+      this.gl.linkProgram(pid);
+      if (!this.gl.getProgramParameter(pid, this.gl.LINK_STATUS)) {
+        const log = this.gl.getProgramInfoLog(pid);
+        throw new Error(`Failed to link program ${JSON.stringify(name)}:\n${log}`);
+      }
+      this.gl.useProgram(pid);
+      const udst = this["u_" + name] = {};
+      for (const uName of uNames) {
+        udst[uName] = this.gl.getUniformLocation(pid, uName);
+      }
+    } catch (e) {
+      this.gl.deleteProgram(pid);
+      throw e;
+    }
+    return pid;
+  }
+  
+  compileShader1(name, pid, type, src) {
+    const sid = this.gl.createShader(type);
+    if (!sid) throw new Error(`Failed to create new WebGL shader for ${JSON.stringify(name)}`);
+    try {
+      this.gl.shaderSource(sid, src);
+      this.gl.compileShader(sid);
+      if (!this.gl.getShaderParameter(sid, this.gl.COMPILE_STATUS)) {
+        const log = this.gl.getShaderInfoLog(sid);
+        throw new Error(`Failed to link ${(type === this.gl.VERTEX_SHADER) ? "vertex" : "fragment"} shader for ${JSON.stringify(name)}:\n${log}`);
+      }
+      this.gl.attachShader(pid, sid);
+    } finally {
+      this.gl.deleteShader(sid);
+    }
+  }
+  
+  requireTexture(tex) {
+    if (tex.gltexid) return 1;
+    if (!(tex.gltexid = this.gl.createTexture())) return 0;
+    this.gl.bindTexture(this.gl.TEXTURE_2D, tex.gltexid);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+    return 1;
+  }
+  
+  requireFramebuffer(tex) {
+    if (tex.fbid) return 1;
+    this.requireTexture(tex);
+    if (!(tex.fbid = this.gl.createFramebuffer())) return 0;
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, tex.fbid);
+    this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, tex.gltexid, 0);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    return 1;
   }
   
   /* Egg Platform API.
@@ -55,6 +174,7 @@ export class Video {
   }
   
   egg_video_fb_from_screen(xp, yp) {
+    //TODO We currently have "object-fit:contain" on the canvas. That might not be OK, we might need to handle the final scale-up more deliberately.
     console.log(`TODO Video.egg_video_fb_from_screen ${xp},${yp}`);
   }
   
@@ -67,7 +187,8 @@ export class Video {
     const tex = this.texv[texid];
     if (!tex) return;
     this.texv[texid] = null;
-    //TODO Delete GL texture and framebuffer if present
+    if (tex.gltexid) this.gl.deleteTexture(tex.gltexid);
+    if (tex.fbid) this.gl.deleteFramebuffer(tex.fbid);
   }
   
   egg_texture_new() {
@@ -80,6 +201,7 @@ export class Video {
       h: 0,
       fbid: 0,
     };
+    if (!this.requireTexture(tex)) return -1;
     this.texv[texid] = tex;
     return texid;
   }
@@ -113,8 +235,38 @@ export class Video {
   }
   
   egg_texture_load_raw(texid, w, h, stride, srcp, srcc) {
-    console.log(`TODO Video.egg_texture_load_raw ${texid},${w},${h},${stride},${srcp},${srcc}`);
-    return -1;
+    if ((w < 1) || (w > TEX_SIZE_LIMIT) || (h < 1) || (h > TEX_SIZE_LIMIT)) return -1;
+    const tex = this.texv[texid];
+    if (!tex) return -1;
+    if (texid === 1) {
+      // Uploading to texture 1 is allowed only if the dimensions match.
+      if ((tex.w !== w) || (tex.h !== h)) return -1;
+    }
+    const minstride = w * 4;
+    if (stride < 1) stride = minstride;
+    else if (stride < minstride) return -1;
+    const reqlen = stride * h;
+    if (srcc < reqlen) return -1;
+    let src = null;
+    if (srcp || srcc) {
+      if (!(src = this.rt.exec.getMemory(srcp, srcc))) return -1;
+    }
+    if (!this.requireTexture(tex)) return -1;
+    this.gl.bindTexture(this.gl.TEXTURE_2D, tex.gltexid);
+    if (src) {
+      if (stride > minstride) {
+        console.error(`TODO Video.egg_texture_load_raw: Rewrite with minimum stride`);
+        return -1;
+      }
+      tex.border = 0;
+      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, w, h, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, src);
+    } else {
+      tex.border = 32; // TODO Decide more carefully whether we need a border.
+      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, w + tex.border * 2, h + tex.border * 2, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+    }
+    tex.w = w;
+    tex.h = h;
+    return 0;
   }
   
   egg_texture_get_pixels(dstp, dsta, texid) {
@@ -130,3 +282,217 @@ export class Video {
     console.log(`TODO Video.egg_render ${unp},${vtxp},${vtxc}`);
   }
 }
+
+Video.glsl = {
+
+raw_v: `
+precision mediump float;
+uniform vec2 uscreensize;
+uniform vec2 usrcsize;
+uniform float udstborder;
+uniform float usrcborder;
+uniform vec4 utint;
+uniform float ualpha;
+attribute vec2 apos;
+attribute vec4 acolor;
+varying vec4 vcolor;
+void main() {
+vec2 npos=vec2(
+((udstborder+apos.x)*2.0)/(udstborder*2.0+uscreensize.x)-1.0,
+((udstborder+apos.y)*2.0)/(udstborder*2.0+uscreensize.y)-1.0
+);
+gl_Position=vec4(npos,0.0,1.0);
+vcolor=vec4(mix(acolor.rgb,utint.rgb,utint.a),acolor.a*ualpha);
+}
+`,
+    
+raw_f: `
+precision mediump float;
+varying vec4 vcolor;
+void main() {
+gl_FragColor=vcolor;
+}
+`,
+    
+tex_v: `
+uniform vec2 uscreensize;
+uniform vec2 usrcsize;
+uniform float udstborder;
+uniform float usrcborder;
+uniform vec4 utint;
+uniform float ualpha;
+attribute vec2 apos;
+attribute vec2 atexcoord;
+varying vec2 vtexcoord;
+void main() {
+vec2 npos=vec2(
+((udstborder+apos.x)*2.0)/(udstborder*2.0+uscreensize.x)-1.0,
+((udstborder+apos.y)*2.0)/(udstborder*2.0+uscreensize.y)-1.0
+);
+gl_Position=vec4(npos,0.0,1.0);
+vtexcoord=atexcoord/usrcsize;
+}
+`,
+    
+tex_f: `
+precision mediump float;
+uniform sampler2D usampler;
+uniform vec4 utint;
+uniform float ualpha;
+varying vec2 vtexcoord;
+void main() {
+vec4 tcolor=texture2D(usampler,vtexcoord);
+gl_FragColor=vec4(mix(tcolor.rgb,utint.rgb,utint.a),tcolor.a*ualpha);
+}
+`,
+    
+tile_v: `
+precision mediump float;
+uniform vec2 uscreensize;
+uniform vec2 usrcsize;
+uniform float udstborder;
+uniform float usrcborder;
+uniform vec4 utint;
+uniform float ualpha;
+attribute vec2 apos;
+attribute float atileid;
+attribute float axform;
+varying vec2 vsrcp;
+varying mat2 vmat;
+void main() {
+vec2 npos=vec2(
+((udstborder+apos.x)*2.0)/(udstborder*2.0+uscreensize.x)-1.0,
+((udstborder+apos.y)*2.0)/(udstborder*2.0+uscreensize.y)-1.0
+);
+gl_Position=vec4(npos,0.0,1.0);
+gl_PointSize=usrcsize.x/16.0;
+vsrcp=vec2(
+mod(atileid,16.0),
+floor(atileid/16.0)
+)/16.0;
+if (axform<0.5) vmat=mat2( 1.0, 0.0, 0.0, 1.0); // no xform
+else if (axform<1.5) vmat=mat2(-1.0, 0.0, 0.0, 1.0); // XREV
+else if (axform<2.5) vmat=mat2( 1.0, 0.0, 0.0,-1.0); // YREV
+else if (axform<3.5) vmat=mat2(-1.0, 0.0, 0.0,-1.0); // XREV|YREV
+else if (axform<4.5) vmat=mat2( 0.0, 1.0, 1.0, 0.0); // SWAP
+else if (axform<5.5) vmat=mat2( 0.0, 1.0,-1.0, 0.0); // SWAP|XREV
+else if (axform<6.5) vmat=mat2( 0.0,-1.0, 1.0, 0.0); // SWAP|YREV
+else if (axform<7.5) vmat=mat2( 0.0,-1.0,-1.0, 0.0); // SWAP|XREV|YREV
+else vmat=mat2( 1.0, 0.0, 0.0, 1.0); // invalid; use identity
+}
+`,
+  
+tile_f: `
+precision mediump float;
+uniform sampler2D usampler;
+uniform float ualpha;
+uniform vec4 utint;
+uniform float usrcborder;
+uniform vec2 usrcsize;
+varying vec2 vsrcp;
+varying mat2 vmat;
+void main() {
+vec2 texcoord=gl_PointCoord;
+texcoord.y=1.0-texcoord.y;
+texcoord=vmat*(texcoord-0.5)+0.5;
+texcoord=vsrcp+texcoord/16.0;
+texcoord=vec2(
+texcoord.x*(1.0-(usrcborder*2.0)/usrcsize.x)+usrcborder/usrcsize.x,
+texcoord.y*(1.0-(usrcborder*2.0)/usrcsize.y)+usrcborder/usrcsize.y
+);
+gl_FragColor=texture2D(usampler,texcoord);
+gl_FragColor=vec4(mix(gl_FragColor.rgb,utint.rgb,utint.a),gl_FragColor.a*ualpha);
+}
+`,
+
+fancy_v: `
+precision mediump float;
+uniform vec2 uscreensize;
+uniform vec2 usrcsize;
+uniform float udstborder;
+uniform float usrcborder;
+uniform vec4 utint;
+uniform float ualpha;
+attribute vec2 apos;
+attribute float atileid;
+attribute float axform;
+attribute float arotation;
+attribute float asize;
+attribute vec4 atint;
+attribute vec4 aprimary;
+varying vec2 vsrcp;
+varying mat2 vmat;
+varying vec4 vtint;
+varying vec4 vprimary;
+void main() {
+vec2 npos=vec2(
+((udstborder+apos.x)*2.0)/(udstborder*2.0+uscreensize.x)-1.0,
+((udstborder+apos.y)*2.0)/(udstborder*2.0+uscreensize.y)-1.0
+);
+gl_Position=vec4(npos,0.0,1.0);
+gl_PointSize=asize;
+vsrcp=vec2(
+mod(atileid,16.0),
+floor(atileid/16.0)
+)/16.0;
+if (arotation>0.0) {
+float scale=(asize/(usrcsize.x/16.0));
+float t=arotation*-3.14159*2.0;
+if (((axform>0.5)&&(axform<2.5))||((axform>4.5)&&(axform<7.5))) {
+t=-t;
+}
+scale*=sqrt(2.0);
+float cost=cos(t)*sqrt(2.0);
+float sint=sin(t)*sqrt(2.0);
+vmat=mat2(cost,sint,-sint,cost);
+gl_PointSize*=sqrt(2.0);
+} else {
+vmat=mat2(1.0,0.0,0.0,1.0);
+}
+if (axform<0.5) ; // no xform
+else if (axform<1.5) vmat=mat2(-vmat[0][0],-vmat[0][1], vmat[1][0], vmat[1][1]); // XREV
+else if (axform<2.5) vmat=mat2( vmat[0][0], vmat[0][1],-vmat[1][0],-vmat[1][1]); // YREV
+else if (axform<3.5) vmat=mat2(-vmat[0][0],-vmat[0][1],-vmat[1][0],-vmat[1][1]); // XREV|YREV
+else if (axform<4.5) vmat=mat2( vmat[0][1], vmat[0][0], vmat[1][1], vmat[1][0]); // SWAP
+else if (axform<5.5) vmat=mat2(-vmat[0][1],-vmat[0][0], vmat[1][1], vmat[1][0]); // SWAP|XREV
+else if (axform<6.5) vmat=mat2( vmat[0][1], vmat[0][0],-vmat[1][1],-vmat[1][0]); // SWAP|YREV
+else if (axform<7.5) vmat=mat2( vmat[0][1],-vmat[0][0],-vmat[1][1], vmat[1][0]); // SWAP|XREV|YREV
+vtint=atint;
+vprimary=aprimary;
+}
+`,
+
+fancy_f: `
+precision mediump float;
+uniform sampler2D usampler;
+uniform float ualpha;
+uniform vec4 utint;
+uniform float usrcborder;
+uniform vec2 usrcsize;
+varying vec2 vsrcp;
+varying mat2 vmat;
+varying vec4 vtint;
+varying vec4 vprimary;
+void main() {
+vec2 texcoord=gl_PointCoord;
+texcoord.y=1.0-texcoord.y;
+texcoord=vmat*(texcoord-0.5)+0.5;
+if ((texcoord.x<0.0)||(texcoord.y<0.0)||(texcoord.x>=1.0)||(texcoord.y>=1.0)) discard;
+texcoord=vsrcp+texcoord/16.0;
+texcoord=vec2(
+texcoord.x*(1.0-(usrcborder*2.0)/usrcsize.x)+usrcborder/usrcsize.x,
+texcoord.y*(1.0-(usrcborder*2.0)/usrcsize.y)+usrcborder/usrcsize.y
+);
+gl_FragColor=texture2D(usampler,texcoord);
+if ((gl_FragColor.r==gl_FragColor.g)&&(gl_FragColor.g==gl_FragColor.b)) {
+if (gl_FragColor.r<0.5) {
+gl_FragColor=vec4(vprimary.rgb*(gl_FragColor.r*2.0),gl_FragColor.a);
+} else {
+gl_FragColor=vec4(mix(vprimary.rgb,vec3(1.0,1.0,1.0),(gl_FragColor.r-0.5)*2.0),gl_FragColor.a);
+}
+}
+gl_FragColor=vec4(mix(gl_FragColor.rgb,vtint.rgb,vtint.a),gl_FragColor.a*vprimary.a);
+gl_FragColor=vec4(mix(gl_FragColor.rgb,utint.rgb,utint.a),gl_FragColor.a*ualpha);
+}
+`,
+};

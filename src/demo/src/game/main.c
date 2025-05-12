@@ -210,7 +210,7 @@ void egg_client_render() {
   
   egg_texture_clear(1);
   
-  if (0) { //XXX TEMP Upload from a client-side RGBA framebuffer.
+  if (1) { //XXX TEMP Upload from a client-side RGBA framebuffer.
     int i=32; while (i-->0) {
       SETPIXEL(i,0    ,0x00,0x00,0xff,0xff) // blue on top
       SETPIXEL(i,FBH-1,0x00,0xff,0x00,0xff) // green on bottom

@@ -81,7 +81,7 @@ export class Runtime {
     if (this.terminated) return this.stop();
     
     if (!this.panicFramec) this.panicFramec=1;
-    else if (++this.panicFramec>20) {
+    else if (++this.panicFramec>200) { // Careful with this! I had 20 initially, and it never started rendering.
       console.log(`Runtime.update terminating since you might not be able to stop easily.`);
       return this.stop();
     }
