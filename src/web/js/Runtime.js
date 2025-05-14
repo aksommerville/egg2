@@ -30,14 +30,6 @@ export class Runtime {
     this.minUpdateTime     = 0.012000; // 83 hz; if we update faster than this, we'll deliberately skip frames.
     this.defaultUpdateTime = 0.016666; // 60 hz; if we need to make something up.
     this.maxUpdateTime     = 0.020000; // 50 hz; if we update slower than this, we'll lie about the elapsed time.
-    
-    //XXX TEMP
-    window.addEventListener("keydown", e => {
-      console.log(`keydown: ${e.code}`);
-      if (e.code === "Escape") {
-        this.stop();
-      }
-    });
   }
   
   start() {
@@ -64,6 +56,7 @@ export class Runtime {
   stop() {
     if (this.clientInit && this.exec.egg_client_quit) {
       this.exec.egg_client_quit(this.exitStatus);
+      this.clientInit = false;
     }
     this.video.stop();
     this.audio.stop();

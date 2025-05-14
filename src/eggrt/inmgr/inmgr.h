@@ -8,6 +8,9 @@
 #define EGGRT_PLAYER_LIMIT 8
 #define EGGRT_EVTQ_SIZE 256 /* Arbitrary. If the event queue doesn't get read, we overwrite after so many. */
 
+/* Stateless actions mappable to keyboard.
+ * There's no technical need for it, but for my sanity, keep these the same as src/web/js/Input.js:ACTION_*.
+ */
 #define INMGR_ACTION_QUIT                 0x00010001
 #define INMGR_ACTION_FULLSCREEN           0x00010002 /* toggle */
 

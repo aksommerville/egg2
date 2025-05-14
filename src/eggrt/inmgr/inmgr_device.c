@@ -108,6 +108,8 @@ struct inmgr_button *inmgr_device_buttonv_get(struct inmgr_device *device,int bt
  *   kp 7,9,1,3 => triggers
  *   kp 0,enter,plus,dot => thumbs
  *   kp slash,star,dash => aux
+ *
+ * Keep this the same as src/web/js/Input.js.
  */
  
 static const struct inmgr_keymap { int hidusage,dstbtnid; } inmgr_keymapv[]={

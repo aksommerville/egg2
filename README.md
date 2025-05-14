@@ -74,6 +74,12 @@ Planned differences from Egg v1:
 - - [ ] Synth.
 - - [x] Render.
 - - [ ] Input.
+- - - [x] Keyboard.
+- - - [ ] Pointer.
+- - - [ ] Gamepad.
+- - - [ ] Fine-grained events.
+- - - [ ] Mapping.
+- - - [ ] Live config.
 - - [x] Persistence.
 - - [ ] prefs
 - [ ] Editor.
@@ -136,3 +142,4 @@ Planned differences from Egg v1:
 - - [ ] web `egg_texture_get_pixels`
 - - [ ] web Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
 - - [ ] web: Quantize final scale-up, don't use `object-fit:contain`. Then implement `egg_video_fb_from_screen`
+- - [ ] web: Player count 
