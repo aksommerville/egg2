@@ -1,5 +1,5 @@
 /* inmgr_device.h
- * We record extensive details for all connected devices, because we must be ready to report these to the client on demand.
+ * Record of a connected device, its mapping details, and its live state.
  * System keyboard and joysticks both get represented as devices.
  */
  
@@ -28,9 +28,6 @@ struct inmgr_button {
 struct inmgr_device {
   int devid;
   struct hostio_input *driver; // WEAK, null for (devid) zero.
-  char *name; // Sanitized UTF-8.
-  int namec;
-  int vid,pid,version;
   struct inmgr_button *buttonv;
   int buttonc,buttona;
   int playerid; // Zero if unassigned.

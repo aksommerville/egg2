@@ -146,27 +146,6 @@ int egg_input_get_one(int playerid) {
   return eggrt.inmgr.playerv[playerid];
 }
 
-int egg_event_get(struct egg_event *dst,int dsta) {
-  return inmgr_evtq_pop(dst,dsta,&eggrt.inmgr);
-}
-
-int egg_event_enable(int evttype,int enable) {
-  return inmgr_event_enable(&eggrt.inmgr,evttype,enable);
-}
-
-int egg_event_is_enabled(int evttype) {
-  if ((evttype<0)||(evttype>=32)) return 0;
-  return (eggrt.inmgr.evtmask&(1<<evttype))?1:0;
-}
-
-int egg_gamepad_get_name(char *dst,int dsta,int *vid,int *pid,int *version,int devid) {
-  return inmgr_get_device_name(dst,dsta,vid,pid,version,&eggrt.inmgr,devid);
-}
-
-int egg_gamepad_get_button(int *btnid,int *hidusage,int *lo,int *hi,int *rest,int devid,int btnix) {
-  return inmgr_get_device_button(btnid,hidusage,lo,hi,rest,&eggrt.inmgr,devid,btnix);
-}
-
 /* Audio.
  */
  

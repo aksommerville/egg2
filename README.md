@@ -14,7 +14,7 @@ Planned differences from Egg v1:
 - Custom build tool, similar to berry. Arbitrary targets selected at eggdev's build time, and web is not special.
 - Direct access to data conversion a la carte via eggdev.
 - Synth: Post pipes, LFOs, and stereo output.
-- More input options: Keyboard, mouse, touch. Maybe accelerometer?
+- ~More input options: Keyboard, mouse, touch. Maybe accelerometer?~ Decided against this, after getting partway in.
 - Single render call taking a struct of uniforms and a GPU-ready vertex buffer.
 - No image decoder at runtime (egg 1 used to do this; it's actually been removed already).
 - Rich built-in menu. Quit, input config, toggle music, toggle sound, language.
@@ -66,6 +66,7 @@ Planned differences from Egg v1:
 - - - [ ] Interactive reconfig.
 - - - - [ ] Let the client declare which buttons it uses, so when configuring we don't ask for all 15 buttons.
 - - - - - Maybe a metadata field "incfgMask" containing characters "dswne123lrLR". "d" being the dpad, all others correspond to one button.
+- - - [ ] Nix queue.
 - - [x] Persistence.
 - - [ ] Record and playback session.
 - [ ] Web runtime.
@@ -75,9 +76,7 @@ Planned differences from Egg v1:
 - - [x] Render.
 - - [ ] Input.
 - - - [x] Keyboard.
-- - - [ ] Pointer.
 - - - [ ] Gamepad.
-- - - [ ] Fine-grained events.
 - - - [ ] Mapping.
 - - - [ ] Live config.
 - - [x] Persistence.
@@ -135,7 +134,6 @@ Planned differences from Egg v1:
 - - [x] SongEditor:EnvUi: Place new points proportionately in the alternate line.
 - - [ ] SongEditor: Must be able to change order of post steps.
 - - [ ] native inmgr: Select player
-- - [ ] native inmgr: map/unmap as event masks change
 - - [ ] eggdev build: Replace `<title>` in HTMLs.
 - - [ ] web: Detect loss of focus. At a minimum, pause audio. Maybe pause everything?
 - - [ ] web Video: Load raw pixels with non-minimum stride

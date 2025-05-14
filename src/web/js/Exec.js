@@ -30,11 +30,6 @@ export class Exec {
       egg_input_configure: () => this.rt.input.egg_input_configure(),
       egg_input_get_all: (dst, dsta) => this.rt.input.egg_input_get_all(dst, dsta),
       egg_input_get_one: playerid => this.rt.input.egg_input_get_one(playerid),
-      egg_event_get: (dstp, dsta) => this.rt.input.egg_event_get(dstp, dsta),
-      egg_event_enable: (ev, en) => this.rt.input.egg_event_enable(ev, en),
-      egg_event_is_enabled: (ev) => this.rt.input.egg_event_is_enabled(ev),
-      egg_gamepad_get_name: (dstp, dsta, vidp, pidp, verp, devid) => this.rt.input.egg_gamepad_get_name(dstp, dsta, vidp, pidp, verp, devid),
-      egg_gamepad_get_button: (btnidp, hidusagep, lop, hip, restp, devid, btnix) => this.rt.input.egg_gamepad_get_button(btnidp, hidusagep, lop, hip, restp, devid, btnix),
       
       egg_play_sound: (soundid, trim, pan) => this.rt.audio.egg_play_sound(soundid, trim, pan),
       egg_play_song: (songid, force, repeat) => this.rt.audio.egg_play_song(songid, force, repeat),

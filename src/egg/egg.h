@@ -143,84 +143,28 @@ int egg_store_key_by_index(char *k,int ka,int p);
  */
 void egg_input_configure();
 
-/* Recommended input method is mapped gamepads.
- * These can be sourced from the keyboard too.
- * Devices are indexed by playerid, with playerid zero being an aggregate of all the other states.
- * Each state is 16 independent bits.
+/* Devices are indexed by playerid, with playerid zero being an aggregate of all the other states.
+ * Each state is 11 independent bits.
  */
 void egg_input_get_all(int *statev,int statea);
 int egg_input_get_one(int playerid);
 
-/* Buttons for mapped gamepads are defined in very nearly the same order as the W3C Standard Mapping Gamepad.
- * We don't have LP or RP buttons, so I moved AUX3 and CD into those positions.
+/* The Egg gamepad is 11 buttons, all 2-state.
+ * It's the SNES gamepad minus Select.
+ * I'm deliberately not defining the entire Standard Mapping Gamepad, to leave some available for global actions.
+ * The triggers and aux button are numbered per convention, but the number is only 1.
  */
-#define EGG_BTN_SOUTH     0x0001 /* Right thumb... */
-#define EGG_BTN_EAST      0x0002
-#define EGG_BTN_WEST      0x0004
-#define EGG_BTN_NORTH     0x0008
-#define EGG_BTN_L1        0x0010 /* Triggers... 1 is nearer the face. */
-#define EGG_BTN_R1        0x0020
-#define EGG_BTN_L2        0x0040
-#define EGG_BTN_R2        0x0080
-#define EGG_BTN_AUX2      0x0100 /* Select. Left-side auxiliary. */
-#define EGG_BTN_AUX1      0x0200 /* Start. Right-side auxiliary. */
-#define EGG_BTN_AUX3      0x0400 /* Heart. Center auxiliary. NB 16 in standard mapping; this slot is LP in the spec. */
-#define EGG_BTN_CD        0x0800 /* Carrier detect, always nonzero if connected. NB not part of standard mapping; this slot in RP in the spec. */
-#define EGG_BTN_UP        0x1000 /* Dpad... */
-#define EGG_BTN_DOWN      0x2000
-#define EGG_BTN_LEFT      0x4000
-#define EGG_BTN_RIGHT     0x8000
-
-struct egg_event {
-  int type;
-  union {
-    struct { int keycode,value; } key;
-    struct { int codepoint; } text;
-    struct { int x,y; } mmotion;
-    struct { int x,y,btnid,value; } mbutton;
-    struct { int x,y,dx,dy; } mwheel;
-    struct { int x,y,touchid,state; } touch;
-    struct { int devid,btnid,value; } gamepad;
-  };
-};
-
-#define EGG_EVENT_KEY          1 /* Raw keyboard events (HID page 7). (value) 2 for auto-repeat. */
-#define EGG_EVENT_TEXT         2 /* Keyboard events mapped to Unicode text. */
-#define EGG_EVENT_MMOTION      3 /* Mouse motion. */
-#define EGG_EVENT_MBUTTON      4 /* Mouse buttons. */
-#define EGG_EVENT_MWHEEL       5 /* Mouse wheel. */
-#define EGG_EVENT_TOUCH        6 /* Touch. (state) is (0,1,2)=(end,begin,continue) per (touchid). */
-#define EGG_EVENT_GAMEPAD      7 /* Raw gamepads. (btnid) zero signals connect and disconnect. */
-#define EGG_EVENT_HIDECURSOR   8 /* Not an event. Enable to hide the cursor, even if events are enabled. */
-#define EGG_EVENT_LOCKCURSOR   9 /* Not an event. Hides the cursor and causes motion to report only in relative terms. */
-#define EGG_EVENT_NOMAPCURSOR 10 /* Not an event. Enable to get mouse and touch events in window coordinates instead of framebuffer. */
-
-/* Copy events off the queue.
- * This never returns more than (dsta).
- * If it returns exactly (dsta), you should process them then check for more.
- * Never blocks.
- * The event queue will not refill during an update.
- */
-int egg_event_get(struct egg_event *dst,int dsta);
-
-/* Enable or disable an event type or feature.
- * Enabling returns <0 if it's definitely not available.
- * If any mouse event is enabled, but not EGG_EVENT_HIDECURSOR or EGG_EVENT_LOCKCURSOR, the cursor will be visible.
- * If any keyboard event is enabled, keyboards will not map to standard gamepads.
- * If any gamepad event is enabled, raw gamepads will not map to standard gamepads.
- * (In general, use standard gamepads or events, not both).
- * All events are initially disabled. In that state, there's no need to poll egg_event_get(), it will always return zero.
- */
-int egg_event_enable(int evttype,int enable);
-int egg_event_is_enabled(int evttype);
-
-/* Get the name and IDs for a gamepad device.
- * Or fetch its button declarations by index.
- * I really really advise you to use the standard mapping gamepads instead, it's so much easier.
- * But if you need analogue controls, or something exotic, here it is.
- */
-int egg_gamepad_get_name(char *dst,int dsta,int *vid,int *pid,int *version,int devid);
-int egg_gamepad_get_button(int *btnid,int *hidusage,int *lo,int *hi,int *rest,int devid,int btnix);
+#define EGG_BTN_LEFT   0x0001
+#define EGG_BTN_RIGHT  0x0002
+#define EGG_BTN_UP     0x0004
+#define EGG_BTN_DOWN   0x0008
+#define EGG_BTN_SOUTH  0x0010
+#define EGG_BTN_WEST   0x0020
+#define EGG_BTN_EAST   0x0040
+#define EGG_BTN_NORTH  0x0080
+#define EGG_BTN_L1     0x0100
+#define EGG_BTN_R1     0x0200
+#define EGG_BTN_AUX1   0x0400
 
 /* Audio.
  **********************************************************************************************/

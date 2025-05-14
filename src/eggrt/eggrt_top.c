@@ -194,10 +194,6 @@ static int eggrt_init_drivers() {
     .cb_focus=eggrt_cb_focus,
     .cb_resize=eggrt_cb_resize,
     .cb_key=inmgr_key,
-    .cb_text=inmgr_text,
-    .cb_mmotion=inmgr_mmotion,
-    .cb_mbutton=inmgr_mbutton,
-    .cb_mwheel=inmgr_mwheel,
   };
   struct hostio_audio_delegate adelegate={
     .cb_pcm_out=eggrt_cb_pcm_out,

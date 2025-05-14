@@ -115,26 +115,6 @@ void inmgr_mappable_event(struct inmgr *inmgr,int devid,int btnid,int value) {
   }
 }
 
-/* Drop or reapply maps for all devices of source type.
- * (in response to an event mask change).
- */
- 
-void inmgr_map_keyboard(struct inmgr *inmgr) {
-  fprintf(stderr,"TODO %s\n",__func__);
-}
-
-void inmgr_unmap_keyboard(struct inmgr *inmgr) {
-  fprintf(stderr,"TODO %s\n",__func__);
-}
-
-void inmgr_map_gamepads(struct inmgr *inmgr) {
-  fprintf(stderr,"TODO %s\n",__func__);
-}
-
-void inmgr_unmap_gamepads(struct inmgr *inmgr) {
-  fprintf(stderr,"TODO %s\n",__func__);
-}
-
 /* Connect device.
  */
  

@@ -6,7 +6,6 @@
  
 void inmgr_device_del(struct inmgr_device *device) {
   if (!device) return;
-  if (device->name) free(device->name);
   if (device->buttonv) free(device->buttonv);
   free(device);
 }
@@ -18,48 +17,6 @@ struct inmgr_device *inmgr_device_new() {
   struct inmgr_device *device=calloc(1,sizeof(struct inmgr_device));
   if (!device) return 0;
   return device;
-}
-
-/* Sanitize and store name.
- */
- 
-static int inmgr_device_set_name(struct inmgr_device *device,const char *src,int srcc) {
-  if (!src) srcc=0; else if (srcc<0) { srcc=0; while (src[srcc]) srcc++; }
-  // Sanitize agressively: Must be UTF-8, trim leading and trailing space, and condense inner space.
-  // If the length goes beyond 64, cut it off hard.
-  char tmp[64];
-  int tmpc=0,srcp=0,space=1;
-  while (srcp<srcc) {
-    int seqlen,codepoint;
-    if ((seqlen=sr_utf8_decode(&codepoint,src+srcp,srcc-srcp))<1) {
-      srcp++;
-      continue;
-    }
-    srcp+=seqlen;
-    if (codepoint<=0x20) {
-      if (!space) {
-        if (tmpc>=sizeof(tmp)) break;
-        tmp[tmpc++]=0x20;
-        space=1;
-      }
-      continue;
-    }
-    space=0;
-    int addc=sr_utf8_encode(tmp+tmpc,sizeof(tmp)-tmpc,codepoint);
-    if (tmpc>(int)sizeof(tmp)-addc) break;
-    tmpc+=addc;
-  }
-  if (space&&tmpc) tmpc--;
-  char *nv=0;
-  if (tmpc) {
-    if (!(nv=malloc(tmpc+1))) return -1;
-    memcpy(nv,tmp,tmpc);
-    nv[tmpc]=0;
-  }
-  if (device->name) free(device->name);
-  device->name=nv;
-  device->namec=tmpc;
-  return 0;
 }
 
 /* Search buttons.
@@ -91,23 +48,42 @@ struct inmgr_button *inmgr_device_buttonv_get(struct inmgr_device *device,int bt
   return 0;
 }
 
+/* Remove any buttons that aren't mapped.
+ */
+ 
+static void inmgr_device_remove_unmapped_buttons(struct inmgr_device *device) {
+  int i=device->buttonc;
+  while (i>0) {
+    int rmc=0;
+    while (i&&!device->buttonv[i-1].dstbtnid) { i--; rmc++; }
+    if (rmc) {
+      device->buttonc-=rmc;
+      memmove(device->buttonv+i,device->buttonv+i+rmc,sizeof(struct inmgr_button)*(device->buttonc-i));
+    }
+    i--;
+  }
+}
+
 /* Map buttons for the default keyboard.
  * These must be sorted by HID Usage, which breaks up the groups.
  * In a more sensible order:
  *
  *   w,a,s,d => dpad
- *   e,q,r => south,west,east
+ *   e,q,r,f => south,west,east,north
  *   space,comma,dot,slash => thumbs
  *
  *   arrows => dpad
  *   z,x,c,v => thumbs
- *   tab,backslash,grave,backspace => triggers
- *   enter,rightbracket,leftbracket => aux
+ *   grave,backspace => triggers
+ *   enter => aux
  *
  *   kp 8,4,5,6,2 => dpad
- *   kp 7,9,1,3 => triggers
+ *   kp 7,9 => triggers
  *   kp 0,enter,plus,dot => thumbs
- *   kp slash,star,dash => aux
+ *   kp dash => aux
+ *
+ *   esc => quit
+ *   f11 => fullscreen
  *
  * Keep this the same as src/web/js/Input.js.
  */
@@ -117,6 +93,7 @@ static const struct inmgr_keymap { int hidusage,dstbtnid; } inmgr_keymapv[]={
   {0x00070006,EGG_BTN_EAST}, // c
   {0x00070007,EGG_BTN_RIGHT}, // d
   {0x00070008,EGG_BTN_SOUTH}, // e
+  {0x00070009,EGG_BTN_NORTH}, // f
   {0x00070014,EGG_BTN_WEST}, // q
   {0x00070015,EGG_BTN_EAST}, // r
   {0x00070016,EGG_BTN_DOWN}, // s
@@ -126,13 +103,9 @@ static const struct inmgr_keymap { int hidusage,dstbtnid; } inmgr_keymapv[]={
   {0x0007001d,EGG_BTN_SOUTH}, // z
   {0x00070028,EGG_BTN_AUX1}, // enter
   {0x00070029,INMGR_ACTION_QUIT}, // escape
-  {0x0007002a,EGG_BTN_R2}, // backspace
-  {0x0007002b,EGG_BTN_L1}, // tab
+  {0x0007002a,EGG_BTN_R1}, // backspace
   {0x0007002c,EGG_BTN_SOUTH}, // space
-  {0x0007002f,EGG_BTN_AUX3}, // left bracket
-  {0x00070030,EGG_BTN_AUX2}, // right bracket
-  {0x00070031,EGG_BTN_R1}, // backslash
-  {0x00070035,EGG_BTN_L2}, // grave
+  {0x00070035,EGG_BTN_L1}, // grave
   {0x00070036,EGG_BTN_WEST}, // comma
   {0x00070037,EGG_BTN_EAST}, // dot
   {0x00070038,EGG_BTN_NORTH}, // slash
@@ -141,14 +114,10 @@ static const struct inmgr_keymap { int hidusage,dstbtnid; } inmgr_keymapv[]={
   {0x00070050,EGG_BTN_LEFT}, // left
   {0x00070051,EGG_BTN_DOWN}, // down
   {0x00070052,EGG_BTN_UP}, // up
-  {0x00070054,EGG_BTN_AUX1}, // kp slash
-  {0x00070055,EGG_BTN_AUX2}, // kp star
-  {0x00070056,EGG_BTN_AUX3}, // kp dash
+  {0x00070056,EGG_BTN_AUX1}, // kp dash
   {0x00070057,EGG_BTN_EAST}, // kp plus
   {0x00070058,EGG_BTN_WEST}, // kp enter
-  {0x00070059,EGG_BTN_L2}, // kp 1
   {0x0007005a,EGG_BTN_DOWN}, // kp 2
-  {0x0007005b,EGG_BTN_R2}, // kp 3
   {0x0007005c,EGG_BTN_LEFT}, // kp 4
   {0x0007005d,EGG_BTN_DOWN}, // kp 5
   {0x0007005e,EGG_BTN_RIGHT}, // kp 6
@@ -176,6 +145,7 @@ static int inmgr_device_map_default_keyboard(struct inmgr *inmgr,struct inmgr_de
     if (!keymap) continue;
     button->dstbtnid=keymap->dstbtnid;
   }
+  inmgr_device_remove_unmapped_buttons(device);
   return 0;
 }
 
@@ -183,7 +153,7 @@ static int inmgr_device_map_default_keyboard(struct inmgr *inmgr,struct inmgr_de
  */
  
 static int inmgr_device_map(struct inmgr *inmgr,struct inmgr_device *device) {
-  fprintf(stderr,"%s %04x:%04x:%04x '%.*s' buttonc=%d...\n",__func__,device->vid,device->pid,device->version,device->namec,device->name,device->buttonc);
+  //fprintf(stderr,"%s %04x:%04x:%04x '%.*s' buttonc=%d...\n",__func__,device->vid,device->pid,device->version,device->namec,device->name,device->buttonc);
   
   //TODO Search templates. Apply if we find one. Otherwise synthesize a new template, save it, then apply it.
   // The logic below should be adapted for that synthesize case.
@@ -252,20 +222,19 @@ static int inmgr_device_map(struct inmgr *inmgr,struct inmgr_device *device) {
     
       case CLS_KEY: case CLS_BTN: {
           int candidatev[16]={
-            0,1,2,3, // SOUTH,WEST,EAST,NORTH
-            9,8, // AUX1,AUX2
-            4,5,6,7, // L1,R1,L2,R2
-            10, // AUX3
+            4,5,6,7, // SOUTH,WEST,EAST,NORTH
+            10, // AUX1
+            8,9, // L1,R1
           };
-          int candidatec=11;
+          int candidatec=7;
           if (!hatc&&(axisc<2)) {
             // If we don't have any axes or hats, the first four buttons map to a dpad.
             memmove(candidatev+4,candidatev,sizeof(int)*candidatec);
             candidatec+=4;
-            candidatev[0]=12; // UP
-            candidatev[1]=13; // DOWN
-            candidatev[2]=14; // LEFT
-            candidatev[3]=15; // RIGHT
+            candidatev[0]=0; // LEFT
+            candidatev[1]=1; // RIGHT
+            candidatev[2]=2; // UP
+            candidatev[3]=3; // DOWN
           }
           int bestscore=999,bestix=0;
           int ii=0; for (;ii<candidatec;ii++) {
@@ -287,8 +256,8 @@ static int inmgr_device_map(struct inmgr *inmgr,struct inmgr_device *device) {
             case 0x00050024:
             case 0x00050027: {
                 button->dstbtnid=EGG_BTN_HORZ;
-                count_by_btnix[14]++; // LEFT
-                count_by_btnix[15]++; // RIGHT
+                count_by_btnix[0]++; // LEFT
+                count_by_btnix[1]++; // RIGHT
               } break;
             case 0x00010031:
             case 0x00010034:
@@ -297,18 +266,18 @@ static int inmgr_device_map(struct inmgr *inmgr,struct inmgr_device *device) {
             case 0x00050026:
             case 0x00050028: {
                 button->dstbtnid=EGG_BTN_VERT;
-                count_by_btnix[12]++; // UP
-                count_by_btnix[13]++; // DOWN
+                count_by_btnix[2]++; // UP
+                count_by_btnix[3]++; // DOWN
               } break;
             default: {
-                if (count_by_btnix[14]<=count_by_btnix[12]) {
+                if (count_by_btnix[0]<=count_by_btnix[2]) {
                   button->dstbtnid=EGG_BTN_HORZ;
-                  count_by_btnix[14]++;
-                  count_by_btnix[15]++;
+                  count_by_btnix[0]++;
+                  count_by_btnix[1]++;
                 } else {
                   button->dstbtnid=EGG_BTN_VERT;
-                  count_by_btnix[12]++;
-                  count_by_btnix[13]++;
+                  count_by_btnix[2]++;
+                  count_by_btnix[3]++;
                 }
               }
           }
@@ -316,10 +285,10 @@ static int inmgr_device_map(struct inmgr *inmgr,struct inmgr_device *device) {
 
       case CLS_HAT: {
           button->dstbtnid=EGG_BTN_DPAD;
-          count_by_btnix[12]++; // UP
-          count_by_btnix[13]++; // DOWN
-          count_by_btnix[14]++; // LEFT
-          count_by_btnix[15]++; // RIGHT
+          count_by_btnix[0]++; // LEFT
+          count_by_btnix[1]++; // RIGHT
+          count_by_btnix[2]++; // UP
+          count_by_btnix[3]++; // DOWN
         } break;
     }
     button->srcvalue=button->rest;
@@ -330,6 +299,7 @@ static int inmgr_device_map(struct inmgr *inmgr,struct inmgr_device *device) {
   #undef CLS_BTN
   #undef CLS_AXIS
   #undef CLS_HAT
+  inmgr_device_remove_unmapped_buttons(device);
   return 0;
 }
 
@@ -387,8 +357,9 @@ int inmgr_device_query_config(struct inmgr *inmgr,struct inmgr_device *device) {
   if (!device->driver) return -1;
   
   if (device->driver->type->get_ids) {
-    const char *name=device->driver->type->get_ids(&device->vid,&device->pid,&device->version,device->driver,device->devid);
-    if (inmgr_device_set_name(device,name,-1)<0) return -1;
+    //TODO Fetch name and IDs, but don't store in device. We only need them during setup.
+    //const char *name=device->driver->type->get_ids(&device->vid,&device->pid,&device->version,device->driver,device->devid);
+    //if (inmgr_device_set_name(device,name,-1)<0) return -1;
   }
   
   if (device->driver->type->for_each_button) {
@@ -408,10 +379,6 @@ static const struct inmgr_keyrange { uint8_t lo,hi; } inmgr_keyrangev[]={
 };
  
 int inmgr_device_init_keyboard(struct inmgr *inmgr,struct inmgr_device *device) {
-  
-  // Hard-coded IDs.
-  device->vid=device->pid=device->version=0;
-  if (inmgr_device_set_name(device,"System keyboard",15)<0) return -1;
   
   // Add button records for the entire set of reasonably-expected keys.
   const struct inmgr_keyrange *keyrange=inmgr_keyrangev;
