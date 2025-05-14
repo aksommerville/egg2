@@ -35,7 +35,7 @@ export class Video {
       fbid: 0,
     };
     this.egg_texture_load_raw(1, w, h, 0, null);
-    this.gl.blendFunc(this.gl.SRC_ALPHA,this.gl.ONE_MINUS_SRC_ALPHA);
+    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     this.gl.enable(this.gl.BLEND);
     if (!(this.buffer = this.gl.createBuffer())) throw new Error(`Failed to create WebGL vertex buffer.`);
     this.compileShaders();
@@ -380,8 +380,8 @@ export class Video {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
       }
     }
-    this.gl.uniform4f(ul.utint, un.tr, un.tg, un.tb, un.ta);
-    this.gl.uniform1f(ul.ualpha, un.alpha);
+    this.gl.uniform4f(ul.utint, un.tr / 255.0, un.tg / 255.0, un.tb / 255.0, un.ta / 255.0);
+    this.gl.uniform1f(ul.ualpha, un.alpha / 255.0);
   
     // Prepare vertex pointers, and do it.
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);

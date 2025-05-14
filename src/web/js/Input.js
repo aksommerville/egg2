@@ -22,6 +22,21 @@ const BTN_UP    = 0x1000;
 const BTN_DOWN  = 0x2000;
 const BTN_LEFT  = 0x4000;
 const BTN_RIGHT = 0x8000;
+
+// From egg/egg.h
+const EVENT_KEY         =  1;
+const EVENT_TEXT        =  2;
+const EVENT_MMOTION     =  3;
+const EVENT_MBUTTON     =  4;
+const EVENT_MWHEEL      =  5;
+const EVENT_TOUCH       =  6;
+const EVENT_GAMEPAD     =  7;
+const EVENT_HIDECURSOR  =  8;
+const EVENT_LOCKCURSOR  =  9;
+const EVENT_NOMAPCURSOR = 10;
+
+const EVTQ_SIZE = 256;
+const EVT_SIZE = 20; // struct egg_event, in egg/egg.h
  
 export class Input {
   constructor(rt) {
@@ -36,6 +51,11 @@ export class Input {
     this.gamepadListener = e => this.onGamepad(e);
     window.addEventListener("gamepadconnected", this.gamepadListener);
     window.addEventListener("gamepaddisconnected", this.gamepadListener);
+    
+    this.evtmask = 0;
+    this.evtq = new Uint8Array(EVT_SIZE * EVTQ_SIZE); // Preencoded, ring buffer, 20 bytes each.
+    this.evtqp = 0;
+    this.evtqc = 0;
     
     // Default keyMap should match src/eggrt/inmgr/inmgr_device.c:inmgr_keymapv
     this.keyMap = {
@@ -143,7 +163,32 @@ export class Input {
    ******************************************************************************/
    
   onKey(event) {
-    //TODO Different handling if client requested KEY or TEXT events.
+    let handled = false;
+    
+    // If the client requested raw keyboard events, queue it and remember that we've handled.
+    let dstevent = this.pushEvent(EVENT_KEY);
+    if (dstevent) {
+      handled = true;
+      dstevent[1] = this.keycodeFromEvent(event);
+      if (event.type === "keydown") {
+        dstevent[2] = event.repeat ? 2 : 1;
+      } else {
+        dstevent[2] = 0;
+      }
+    }
+    
+    // If it's a "down" and user wants text events, check for that.
+    if ((event.type === "keydown") && (event.key.length === 1) && (dstevent = this.pushEvent(EVENT_TEXT))) {
+      handled = true;
+      dstevent[1] = event.key.charCodeAt(0);
+    }
+    
+    // Did we handle it?
+    if (handled) {
+      event.stopPropagation();
+      event.preventDefault();
+      return;
+    }
   
     // If a modifier key is down, ignore it and do not consume.
     if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) return;
@@ -180,6 +225,10 @@ export class Input {
     }
   }
   
+  keycodeFromEvent(event) {
+    return 0x00070004;//TODO
+  }
+  
   /* Pointer.
    *****************************************************************************/
    
@@ -192,6 +241,69 @@ export class Input {
    
   onGamepad(event) {
     console.log(`Input.onGamepad ${event.type}`, event);
+  }
+  
+  /* Event queue.
+   *****************************************************************************/
+  
+  /* true if (ev) is valid, enablable, and turning it on worked.
+   * We don't check or update (this.evtmask).
+   */
+  enableEvent(ev) {
+    switch (ev) {
+      case EVENT_KEY:
+      case EVENT_TEXT:
+      case EVENT_MMOTION://TODO pointer visibility
+      case EVENT_MBUTTON://''
+      case EVENT_MWHEEL://''
+      case EVENT_TOUCH:
+      case EVENT_GAMEPAD:
+        return true;
+      case EVENT_HIDECURSOR://TODO
+      case EVENT_LOCKCURSOR://TODO
+      case EVENT_NOMAPCURSOR:
+        return true;
+    }
+    return false;
+  }
+  
+  /* true if (ev) is valid, enablable, and turning it off worked.
+   * We don't check or update (this.evtmask).
+   */
+  disableEvent(ev) {
+    switch (ev) {
+      case EVENT_KEY://TODO unmap devices
+      case EVENT_TEXT:
+      case EVENT_MMOTION://TODO pointer visibility
+      case EVENT_MBUTTON://''
+      case EVENT_MWHEEL://''
+      case EVENT_TOUCH:
+      case EVENT_GAMEPAD://TODO unmap devices
+      case EVENT_HIDECURSOR://TODO
+      case EVENT_LOCKCURSOR://TODO
+      case EVENT_NOMAPCURSOR:
+        return true;
+    }
+    return false;
+  }
+  
+  /* null if disabled, otherwise a Uint32Array with the type set, and 4 zeroes after.
+   * Events are 5 integers: Type, then 4 type-specific ints. Always 32 bits each.
+   * See egg/egg.h:struct egg_event.
+   */
+  pushEvent(ev) {
+    if (!(this.evtmask & (1 << ev))) return null;
+    let p = this.evtqp + this.evtqc;
+    if (p >= EVTQ_SIZE) p -= EVTQ_SIZE;
+    if (this.evtqc >= EVTQ_SIZE) this.evtqp++; // Should we log a warning about dropped events?
+    else this.evtqc++;
+    const event = new Uint32Array(this.evtq.buffer, this.evtq.byteOffset + p * EVT_SIZE, 5);
+    event[0] = ev;
+    event[1] = 0;
+    event[2] = 0;
+    event[3] = 0;
+    event[4] = 0;
+    return event;
   }
   
   /* Platform API.
@@ -214,18 +326,49 @@ export class Input {
   }
   
   egg_event_get(dstp, dsta) {
-    //console.log(`TODO Input.egg_event_get ${dstp},${dsta}`);
-    return 0;
+    const cpc = Math.min(this.evtqc, dsta);
+    if (cpc < 1) return cpc;
+    const dst = this.rt.exec.getMemory(dstp, cpc * EVT_SIZE);
+    if (!dst) return -1;
+    const headc = EVTQ_SIZE - this.evtqp;
+    if (headc >= cpc) { // The whole run is contiguous in (evtq).
+      dst.set(new Uint8Array(this.evtq.buffer, this.evtq.byteOffset + this.evtqp * EVT_SIZE, cpc * EVT_SIZE));
+      if (this.evtqc -= cpc) {
+        if ((this.evtqp += cpc) >= EVTQ_SIZE) this.evtqp = 0;
+      } else {
+        this.evtqp = 0;
+      }
+    } else { // Straddles end of ring buffer; two copies.
+      const tailc = cpc - headc;
+      const dsthead = new Uint8Array(dst.buffer, dst.byteOffset, EVT_SIZE * headc);
+      const dsttail = new Uint8Array(dst.buffer, dst.byteOffset + EVT_SIZE * headc, EVT_SIZE * tailc);
+      const srchead = new Uint8Array(this.evtq.buffer, this.evtq.byteOffset + this.evtqp * EVT_SIZE, headc * EVT_SIZE);
+      const srctail = new Uint8Array(this.evtq.buffer, this.evtq.byteOffset, tailc * EVT_SIZE);
+      dsthead.set(srchead);
+      dsttail.set(srctail);
+      this.evtqc -= cpc;
+      this.evtqp = this.evtqp + cpc - EVTQ_SIZE;
+    }
+    return cpc;
   }
   
   egg_event_enable(ev, en) {
-    console.log(`TODO Input.egg_event_enable ${ev},${en}`);
-    return -1;
+    const bit = 1 << ev;
+    if (!bit) return -1;
+    if (en) {
+      if (this.evtmask & bit) return 0;
+      if (!this.enableEvent(ev)) return -1;
+      this.evtmask |= bit;
+    } else {
+      if (!(this.evtmask & bit)) return 0;
+      if (!this.disableEvent(ev)) return -1;
+      this.evtmask &= ~bit;
+    }
+    return 0;
   }
   
   egg_event_is_enabled(ev) {
-    console.log(`TODO Input.egg_event_is_enabled ${ev}`);
-    return 0;
+    return (this.evtmask & (1 << ev)) ? 1 : 0;
   }
   
   egg_gamepad_get_name(dstp, dsta, vidp, pidp, verp, devid) {

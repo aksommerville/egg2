@@ -96,8 +96,8 @@ int egg_client_init() {
     return -1;
   }
   
-  egg_event_enable(EGG_EVENT_KEY,0);
-  egg_event_enable(EGG_EVENT_TEXT,0);
+  egg_event_enable(EGG_EVENT_KEY,1);
+  egg_event_enable(EGG_EVENT_TEXT,1);
   egg_event_enable(EGG_EVENT_MMOTION,0);
   egg_event_enable(EGG_EVENT_MBUTTON,0);
   egg_event_enable(EGG_EVENT_MWHEEL,0);
@@ -338,6 +338,23 @@ void egg_client_render() {
       {220,100,0x51,5,t,NS_sys_tilesize*3,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff},
       {260,100,0x51,6,t,NS_sys_tilesize*3,0x00,0x00,0x00,0x00,0xff,0x00,0xff,0xff},
       {300,100,0x51,7,t,NS_sys_tilesize*3,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff},
+    };
+    egg_render(&un,vtxv,sizeof(vtxv));
+  }
+  
+  // Blending is broken initially in the web runtime. Draw a quad to expose it.
+  {
+    struct egg_render_uniform un={
+      .mode=EGG_RENDER_TRIANGLE_STRIP,
+      .dsttexid=1,
+      .alpha=0x80,
+    };
+    const int margin=10;
+    struct egg_render_raw vtxv[]={
+      {  0,  0, 0,0,0xff,0x00,0x00,0xaf},
+      {  0,FBH, 0,0,0x00,0xff,0x00,0xaf},
+      {FBW,  0, 0,0,0x00,0x00,0xff,0xaf},
+      {FBW,FBH, 0,0,0xff,0x00,0x00,0xaf},
     };
     egg_render(&un,vtxv,sizeof(vtxv));
   }

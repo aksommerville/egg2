@@ -1,0 +1,32 @@
+2025-05-14
+Egg 1 had very simple input: Gamepads only, in a layout defined by the platform, close to SNES and Standard Mapping.
+Egg 2, I was planning to support that, and also an optional queue of raw input events.
+Now that I'm actually writing it for web, the queue strategy looks really complicated and I'm having doubts.
+
+Mapped gamepads only:
+ - PRO: Simple platform and API.
+ - PRO: No doubt about how to handle them on the client side.
+ - PRO: Guaranteed compatibility. (eg an Egg game can always run on my consoles, since we know mouse, keyboard, and touch aren't even possible).
+ - CON: Text entry. High score lists and such, we need to create UI client-side. Games that really require text might simply not be possible.
+ - CON: Mobile. We can do it, with an overlay gamepad, but it probably won't be ideal.
+
+Input queue:
+ - PRO: Great for text entry.
+ - PRO: Great for point-and-click interfaces.
+ - CON: Compatibility: We either have to assume that keyboard and pointer exist, or allow that games may or may not work for the user.
+ - CON: Complex platform, any way you slice it.
+ - CON: Extra bookkeeping in the platform and lots of opportunity for error.
+ - CON: Keycodes for web. We have to hard-code the whole mapping from DOM KeyEvent to USB-HID 7.
+ - CON: Weirdness as events enable and disable, when that turns platform features and mapping on or off.
+
+What kind of games are possible with the queue but inconvenient with mapped-only?
+ - Point-and-click, eg Maniac Mansion.
+ - Text console.
+ - Survival shooters where you shoot with the mouse.
+ - First-person.
+
+Platformers, adventures, puzzles, RPGs, generally work best with the mapped gamepads.
+I can't see us ever doing text games or first-person, those just aren't good fits for Egg even beyond input.
+Visual novels and survival shooters are a real thing, but I really don't like either genre. So there.
+
+Decision: Nix the input queue, take it back to the v1 mapped-gamepads-only approach.
