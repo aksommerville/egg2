@@ -76,7 +76,7 @@ Planned differences from Egg v1:
 - - [x] Render.
 - - [ ] Input.
 - - - [x] Keyboard.
-- - - [ ] Gamepad.
+- - - [x] Gamepad.
 - - - [ ] Mapping.
 - - - [ ] Live config.
 - - [x] Persistence.

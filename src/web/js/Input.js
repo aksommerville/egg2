@@ -24,6 +24,7 @@ export class Input {
     this.statev = [0]; // Player states, including player zero.
     this.playerc = 1;
     this.keyListener = null;
+    this.gamepads = []; // Sparse, indexed by (gamepad.index). {id,index,axes:(-1,0,1)[],buttons:(0,1)[],playerid,state}
     
     // Keyboard, only listen when running.
     // Gamepads, we listen always:
@@ -75,6 +76,16 @@ export class Input {
       Escape: ACTION_QUIT,
       F11: ACTION_FULLSCREEN,
     };
+    
+    // Indexed by Standard Mapping gamepad button index.
+    this.joyMap = [
+      BTN_SOUTH, BTN_EAST, BTN_WEST, BTN_NORTH,
+      BTN_L1, BTN_R1, BTN_L1, BTN_R1, // L1, R1, L2, R2: Map them all to '1'.
+      BTN_AUX1, BTN_AUX1, // Select, Start: Call them both AUX1.
+      0, 0, // Plungers
+      BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT,
+      ACTION_QUIT,
+    ];
   }
   
   start() {
@@ -104,6 +115,12 @@ export class Input {
   }
   
   update() {
+    for (const device of navigator?.getGamepads?.() || []) {
+      if (!device) continue;
+      const record = this.gamepads[device.index];
+      if (!record) continue;
+      this.updateGamepad(record, device);
+    }
   }
   
   dispatchAction(action) {
@@ -158,7 +175,84 @@ export class Input {
    *******************************************************************************/
    
   onGamepad(event) {
-    console.log(`Input.onGamepad ${event.type}`, event);
+    if (!event?.gamepad) return;
+    if (event.type === "gamepadconnected") {
+      //TODO Generic gamepad mapping. For now assuming Standard Mapping.
+      //console.log(`connected gamepad`, event.gamepad);
+      const record = {
+        id: event.gamepad.id,
+        index: event.gamepad.index,
+        axes: [0, 0], // Two axes, regardless of what the device has.
+        buttons: event.gamepad.buttons.map(v => 0), // Buttons match the device.
+        playerid: 0, // Zero until the first significant event.
+        state: 0,
+      };
+      // Standard Mapping only describes 17 buttons. If there are more, ignore the excess.
+      if (record.buttons.length > 17) record.buttons = record.buttons.slice(0, 17);
+      this.gamepads[event.gamepad.index] = record;
+      
+    } else if (event.type === "gamepaddisconnected") {
+      const gamepad = this.gamepads[event.gamepad.index];
+      if (!gamepad) return;
+      delete this.gamepads[event.gamepad.index];
+      if (gamepad.playerid) {
+        this.statev[gamepad.playerid] &= ~gamepad.state;
+        this.statev[0] &= ~gamepad.state;
+      }
+    }
+  }
+  
+  /* (record) lives in (this.gamepads); (device) is from the browser.
+   */
+  updateGamepad(record, device) {
+    const AXTHRESH = 0.250;
+    for (let i=0; i<2; i++) {
+      let nv = device.axes[i] || 0;
+      if (nv > AXTHRESH) nv = 1;
+      else if (nv < -AXTHRESH) nv = -1;
+      else nv = 0;
+      if (nv === record.axes[i]) continue;
+      const btnidlo = i ? BTN_UP : BTN_LEFT;
+      const btnidhi = i ? BTN_DOWN : BTN_RIGHT;
+      if (record.axes[i] < 0) this.setGamepadButton(record, btnidlo, 0);
+      else if (record.axes[i] > 0) this.setGamepadButton(record, btnidhi, 0);
+      record.axes[i] = nv;
+      if (nv < 0) this.setGamepadButton(record, btnidlo, 1);
+      else if (nv > 0) this.setGamepadButton(record, btnidhi, 1);
+    }
+    for (let i=record.buttons.length; i-->0; ) {
+      const nv = device.buttons[i]?.value ? 1 : 0;
+      if (record.buttons[i] === nv) continue;
+      record.buttons[i] = nv;
+      const dstbtnid = this.joyMap[i];
+      if (dstbtnid & ~0xffff) {
+        if (nv) this.dispatchAction(dstbtnid);
+      } else if (dstbtnid) {
+        this.setGamepadButton(record, dstbtnid, nv);
+      }
+    }
+  }
+  
+  setGamepadButton(record, btnid, value) {
+    if (value) {
+      if (record.state & btnid) return;
+      record.state |= btnid;
+      this.requireGamepadPlayer(record);
+      this.statev[record.playerid] |= btnid;
+      this.statev[0] |= btnid;
+    } else {
+      if (!(record.state & btnid)) return;
+      record.state &= ~btnid;
+      if (record.playerid) {
+        this.statev[record.playerid] &= ~btnid;
+        this.statev[0] &= ~btnid;
+      }
+    }
+  }
+  
+  requireGamepadPlayer(record) {
+    if (record.playerid) return;
+    record.playerid = 1;
   }
   
   /* Platform API.
