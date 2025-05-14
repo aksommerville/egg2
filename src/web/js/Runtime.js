@@ -30,6 +30,14 @@ export class Runtime {
     this.minUpdateTime     = 0.012000; // 83 hz; if we update faster than this, we'll deliberately skip frames.
     this.defaultUpdateTime = 0.016666; // 60 hz; if we need to make something up.
     this.maxUpdateTime     = 0.020000; // 50 hz; if we update slower than this, we'll lie about the elapsed time.
+    
+    //XXX TEMP
+    window.addEventListener("keydown", e => {
+      console.log(`keydown: ${e.code}`);
+      if (e.code === "Escape") {
+        this.stop();
+      }
+    });
   }
   
   start() {
@@ -79,12 +87,6 @@ export class Runtime {
   update() {
     this.pendingFrame = null;
     if (this.terminated) return this.stop();
-    
-    if (!this.panicFramec) this.panicFramec=1;
-    else if (++this.panicFramec>200) { // Careful with this! I had 20 initially, and it never started rendering.
-      console.log(`Runtime.update terminating since you might not be able to stop easily.`);
-      return this.stop();
-    }
 
     this.audio.update();
     this.input.update();

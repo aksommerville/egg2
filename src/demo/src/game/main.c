@@ -88,7 +88,7 @@ int egg_client_init() {
     egg_log("Saved game.");
   }
   
-  egg_play_song(RID_song_hold_your_fire,0,1);
+  egg_play_song(RID_song_eternal_torment,0,1);
   
   g.texid_tiles=egg_texture_new();
   if (egg_texture_load_image(g.texid_tiles,RID_image_tiles)<0) {
@@ -210,7 +210,7 @@ void egg_client_render() {
   
   egg_texture_clear(1);
   
-  if (1) { //XXX TEMP Upload from a client-side RGBA framebuffer.
+  if (0) { //XXX TEMP Upload from a client-side RGBA framebuffer.
     int i=32; while (i-->0) {
       SETPIXEL(i,0    ,0x00,0x00,0xff,0xff) // blue on top
       SETPIXEL(i,FBH-1,0x00,0xff,0x00,0xff) // green on bottom
@@ -218,6 +218,11 @@ void egg_client_render() {
       SETPIXEL(FBW-1,i,0xff,0xff,0xff,0xff) // white right
     }
     egg_texture_load_raw(1,FBW,FBH,FBW<<2,fb,sizeof(fb));
+    return;
+  }
+  
+  if (0) { //XXX TEMP Drop an image into the framebuffer. This is really not a normal thing to do.
+    egg_texture_load_image(1,RID_image_smallbanner);
     return;
   }
   

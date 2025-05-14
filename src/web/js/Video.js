@@ -8,12 +8,13 @@ const TEX_SIZE_LIMIT = 4096;
 export class Video {
   constructor(rt) {
     this.rt = rt;
-    this.texv = []; // {gltexid,border,w,h,fbid}. Sparse, indexed by texid.
+    this.texv = []; // {gltexid,border,w,h,fbid,fbready}. Sparse, indexed by texid.
     this.canvas = null;
     this.gl = null;
     this.buffer = null;
     this.vbuf = new Uint8Array(48).buffer; // struct egg_render raw: 12 bytes, 4 of them.
     this.vbufs16 = new Uint16Array(this.vbuf);
+    this.tex_current = null;
   }
   
   start() {
@@ -33,7 +34,7 @@ export class Video {
       w, h,
       fbid: 0,
     };
-    this.requireTexture(this.texv[1]);
+    this.egg_texture_load_raw(1, w, h, 0, null);
     this.gl.blendFunc(this.gl.SRC_ALPHA,this.gl.ONE_MINUS_SRC_ALPHA);
     this.gl.enable(this.gl.BLEND);
     if (!(this.buffer = this.gl.createBuffer())) throw new Error(`Failed to create WebGL vertex buffer.`);
@@ -48,6 +49,7 @@ export class Video {
   }
   
   beginFrame() {
+    this.tex_current = null;
   }
   
   endFrame() {
@@ -56,10 +58,10 @@ export class Video {
 
     const fbw=this.canvas.width, fbh=this.canvas.height;
     const sv = this.vbufs16;
-    sv[ 0] = 0;   sv[ 1] = 0;   sv[ 2] =        0; sv[ 3] = srctex.h;
-    sv[ 6] = 0;   sv[ 7] = fbh; sv[ 8] =        0; sv[ 9] =        0;
-    sv[12] = fbw; sv[13] = 0;   sv[14] = srctex.w; sv[15] = srctex.h;
-    sv[18] = fbw; sv[19] = fbh; sv[20] = srctex.w; sv[21] =        0;
+    sv[ 0] = 0;   sv[ 1] = 0;   sv[ 2] = srctex.border; sv[ 3] = srctex.border + srctex.h;
+    sv[ 6] = 0;   sv[ 7] = fbh; sv[ 8] = srctex.border; sv[ 9] = srctex.border;
+    sv[12] = fbw; sv[13] = 0;   sv[14] = srctex.border + srctex.w; sv[15] = srctex.border + srctex.h;
+    sv[18] = fbw; sv[19] = fbh; sv[20] = srctex.border + srctex.w; sv[21] = srctex.border;
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, this.vbuf, this.gl.STREAM_DRAW);
     
@@ -151,13 +153,23 @@ export class Video {
   }
   
   requireFramebuffer(tex) {
-    if (tex.fbid) return 1;
+    if (tex.fbready) return 1;
     this.requireTexture(tex);
-    if (!(tex.fbid = this.gl.createFramebuffer())) return 0;
+    if (!tex.fbid) {
+      if (!(tex.fbid = this.gl.createFramebuffer())) return 0;
+    }
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, tex.fbid);
     this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, tex.gltexid, 0);
+    const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
+    if (status !== this.gl.FRAMEBUFFER_COMPLETE) return 0;
+    tex.fbready = true;
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     return 1;
+  }
+  
+  dropFramebuffer(tex) {
+    if (tex.fbid) this.gl.deleteFramebuffer(tex.fbid);
+    tex.fbready = false;
   }
   
   /* Egg Platform API.
@@ -226,9 +238,11 @@ export class Video {
       // Loading images to texture 1 is allowed, but dimensions must match.
       if ((tex.w !== image.naturalWidth) || (tex.h !== image.naturalHeight)) return -1;
     } else {
-      //TODO Drop framebuffer
+      this.dropFramebuffer(tex);
     }
-    //TODO Upload image to GL texture.
+    if (!this.requireTexture(tex)) return -1;
+    this.gl.bindTexture(this.gl.TEXTURE_2D, tex.gltexid);
+    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
     tex.w = image.naturalWidth;
     tex.h = image.naturalHeight;
     return 0;
@@ -270,16 +284,162 @@ export class Video {
   }
   
   egg_texture_get_pixels(dstp, dsta, texid) {
-    console.log(`TODO Video.egg_texture_get_pixels ${dstp},${dsta},${texid}`);
+    console.log(`TODO Video.egg_texture_get_pixels ${dstp},${dsta},${texid}`);//TODO
     return 0;
   }
   
   egg_texture_clear(texid) {
-    console.log(`TODO Video.egg_texture_clear ${texid}`);
+    const tex = this.texv[texid];
+    if (!tex) return;
+    if (!this.requireFramebuffer(tex)) return;
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, tex.fbid);
+    this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+  }
+
+  readUniforms(p) {
+    if (!p) return null;
+    const src = this.rt.exec.getMemory(p, 18);
+    return {
+      mode: src[0] | (src[1] << 8) | (src[2] << 16) | (src[3] << 24),
+      dsttexid: src[4] | (src[5] << 8) | (src[6] << 16) | (src[7] << 24),
+      srctexid: src[8] | (src[9] << 8) | (src[10] << 16) | (src[11] << 24),
+      ta: src[12], // (tint) is 32 bits little-endian, ie MSB is Red.
+      tb: src[13],
+      tg: src[14],
+      tr: src[15],
+      alpha: src[16],
+      filter: src[17],
+    };
   }
   
   egg_render(unp, vtxp, vtxc) {
-    console.log(`TODO Video.egg_render ${unp},${vtxp},${vtxc}`);
+  
+    // Acquire uniforms and vertices.
+    const un = this.readUniforms(unp);
+    if (!un) return;
+    if (!un.dsttexid) return;
+    const vtxv = this.rt.exec.getMemory(vtxp, vtxc);
+    if (!vtxv) return;
+    
+    // Determine program, vertex size, and vertex count.
+    let glmode = this.gl.POINTS;
+    let vtxsize, pgm, ul;
+    switch (un.mode) {
+      case 1: vtxsize = 12; break;
+      case 2: vtxsize = 12; glmode = this.gl.LINES; break;
+      case 3: vtxsize = 12; glmode = this.gl.LINE_STRIP; break;
+      case 4: vtxsize = 12; glmode = this.gl.TRIANGLES; break;
+      case 5: vtxsize = 12; glmode = this.gl.TRIANGLE_STRIP; break;
+      case 6: vtxsize = 6; pgm = this.pgm_tile; break;
+      case 7: vtxsize = 16; pgm = this.pgm_fancy; break;
+      default: return;
+    }
+    if ((vtxc = Math.floor(vtxc / vtxsize)) < 1) return;
+    if (!pgm) {
+      if (un.srctexid) pgm = this.pgm_tex;
+      else pgm = this.pgm_raw;
+    }
+    if (pgm === this.pgm_raw) ul = this.u_raw;
+    else if (pgm === this.pgm_tex) ul = this.u_tex;
+    else if (pgm === this.pgm_tile) ul = this.u_tile;
+    else ul = this.u_fancy;
+  
+    // If a source texture is requested, acquire it.
+    let srctex = null;
+    if (un.srctexid) {
+      if (!(srctex = this.texv[un.srctexid])) return;
+    }
+  
+    // Acquire destination texture and ensure it can accept output.
+    let dsttex = this.texv[un.dsttexid];
+    if (!dsttex || !this.requireFramebuffer(dsttex)) return;
+  
+    // Bind to the output texture if it's not currently bound.
+    if (dsttex !== this.tex_current) {
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, dsttex.fbid);
+      this.gl.viewport(dsttex.border, dsttex.border, dsttex.w, dsttex.h);
+      this.tex_current = dsttex;
+    }
+  
+    // Bind to the program if it's not currently bound, and set uniforms.
+    this.gl.useProgram(pgm);
+    this.gl.uniform2f(ul.uscreensize, dsttex.w, dsttex.h);
+    this.gl.uniform1f(ul.udstborder, 0);
+    if (srctex) {
+      this.gl.uniform2f(ul.usrcsize, srctex.w, srctex.h);
+      this.gl.uniform1f(ul.usrcborder, srctex.border);
+      this.gl.uniform1i(ul.usampler, 0);
+      this.gl.activeTexture(this.gl.TEXTURE0);
+      this.gl.bindTexture(this.gl.TEXTURE_2D, srctex.gltexid);
+      if (un.filter) {
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+      } else {
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+      }
+    }
+    this.gl.uniform4f(ul.utint, un.tr, un.tg, un.tb, un.ta);
+    this.gl.uniform1f(ul.ualpha, un.alpha);
+  
+    // Prepare vertex pointers, and do it.
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, vtxv, this.gl.STREAM_DRAW);
+    if (pgm === this.pgm_raw) {
+      this.gl.enableVertexAttribArray(0);
+      this.gl.enableVertexAttribArray(1);
+      this.gl.vertexAttribPointer(0, 2, this.gl.SHORT, false, 12, 0);
+      this.gl.vertexAttribPointer(1, 4, this.gl.UNSIGNED_BYTE, true, 12, 8);
+      this.gl.drawArrays(glmode, 0, vtxc);
+      this.gl.disableVertexAttribArray(0);
+      this.gl.disableVertexAttribArray(1);
+      
+    } else if (pgm === this.pgm_tex) {
+      this.gl.enableVertexAttribArray(0);
+      this.gl.enableVertexAttribArray(1);
+      this.gl.vertexAttribPointer(0, 2, this.gl.SHORT, false, 12, 0);
+      this.gl.vertexAttribPointer(1, 2, this.gl.SHORT, false, 12, 4);
+      this.gl.drawArrays(glmode, 0, vtxc);
+      this.gl.disableVertexAttribArray(0);
+      this.gl.disableVertexAttribArray(1);
+      
+    } else if (pgm === this.pgm_tile) {
+      this.gl.enableVertexAttribArray(0);
+      this.gl.enableVertexAttribArray(1);
+      this.gl.enableVertexAttribArray(2);
+      this.gl.vertexAttribPointer(0, 2, this.gl.SHORT, false, 6, 0);
+      this.gl.vertexAttribPointer(1, 1, this.gl.UNSIGNED_BYTE, false, 6, 4);
+      this.gl.vertexAttribPointer(2, 1, this.gl.UNSIGNED_BYTE, false, 6, 5);
+      this.gl.drawArrays(glmode, 0, vtxc);
+      this.gl.disableVertexAttribArray(0);
+      this.gl.disableVertexAttribArray(1);
+      this.gl.disableVertexAttribArray(2);
+      
+    } else if (pgm === this.pgm_fancy) {
+      this.gl.enableVertexAttribArray(0);
+      this.gl.enableVertexAttribArray(1);
+      this.gl.enableVertexAttribArray(2);
+      this.gl.enableVertexAttribArray(3);
+      this.gl.enableVertexAttribArray(4);
+      this.gl.enableVertexAttribArray(5);
+      this.gl.enableVertexAttribArray(6);
+      this.gl.vertexAttribPointer(0, 2, this.gl.SHORT, false, 16, 0); // apos
+      this.gl.vertexAttribPointer(1, 1, this.gl.UNSIGNED_BYTE, false, 16, 4); // atileid
+      this.gl.vertexAttribPointer(2, 1, this.gl.UNSIGNED_BYTE, false, 16, 5); // axform
+      this.gl.vertexAttribPointer(3, 1, this.gl.UNSIGNED_BYTE, true, 16, 6); // arotation
+      this.gl.vertexAttribPointer(4, 1, this.gl.UNSIGNED_BYTE, false, 16, 7); // asize
+      this.gl.vertexAttribPointer(5, 4, this.gl.UNSIGNED_BYTE, true, 16, 8); // atint
+      this.gl.vertexAttribPointer(6, 4, this.gl.UNSIGNED_BYTE, true, 16, 12); // aprimary
+      this.gl.drawArrays(glmode, 0, vtxc);
+      this.gl.disableVertexAttribArray(0);
+      this.gl.disableVertexAttribArray(1);
+      this.gl.disableVertexAttribArray(2);
+      this.gl.disableVertexAttribArray(3);
+      this.gl.disableVertexAttribArray(4);
+      this.gl.disableVertexAttribArray(5);
+      this.gl.disableVertexAttribArray(6);
+    }
   }
 }
 

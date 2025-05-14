@@ -72,7 +72,7 @@ Planned differences from Egg v1:
 - - [x] Load binary.
 - - [x] Load base64.
 - - [ ] Synth.
-- - [ ] Render.
+- - [x] Render.
 - - [ ] Input.
 - - [x] Persistence.
 - - [ ] prefs
@@ -132,3 +132,7 @@ Planned differences from Egg v1:
 - - [ ] native inmgr: map/unmap as event masks change
 - - [ ] eggdev build: Replace `<title>` in HTMLs.
 - - [ ] web: Detect loss of focus. At a minimum, pause audio. Maybe pause everything?
+- - [ ] web Video: Load raw pixels with non-minimum stride
+- - [ ] web `egg_texture_get_pixels`
+- - [ ] web Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
+- - [ ] web: Quantize final scale-up, don't use `object-fit:contain`. Then implement `egg_video_fb_from_screen`

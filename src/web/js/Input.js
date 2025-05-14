@@ -27,12 +27,12 @@ export class Input {
   }
   
   egg_input_get_one(playerid) {
-    console.log(`TODO Input.egg_input_get_one ${playerid}`);
+    //console.log(`TODO Input.egg_input_get_one ${playerid}`);
     return 0;
   }
   
   egg_event_get(dstp, dsta) {
-    console.log(`TODO Input.egg_event_get ${dstp},${dsta}`);
+    //console.log(`TODO Input.egg_event_get ${dstp},${dsta}`);
     return 0;
   }
   

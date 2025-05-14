@@ -308,7 +308,7 @@ void egg_texture_clear(int texid);
 
 struct egg_render_uniform {
   int mode;
-  int dsttexid;
+  int dsttexid; // 1 for the main framebuffer, or any texid. Never zero.
   int srctexid;
   uint32_t tint;
   uint8_t alpha;
