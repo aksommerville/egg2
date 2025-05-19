@@ -114,8 +114,10 @@ Planned differences from Egg v1:
 - - [ ] synth: Brief blackout on song transitions? Not sure whether it's needed.
 - - [ ] Decide whether to allow WAV for sound resources.
 - - [ ] Add phase to FM LFO. I think. Maybe?
-- - [ ] FM pitch wheel.
+- - [ ] Native FM pitch wheel.
+- - [ ] Web FM pitch wheel.
 - - [ ] FM: Should we adjust the modulator too, when pitchenv in play? Currently keeping it fixed.
+- - [ ] Web SongChannel: Respect tremolo phase.
 - - [ ] Finish default instruments and drums. Punt until there's a good editor with MIDI-In.
 - - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
 - - [ ] HexEditor: Paging, offset, ASCII, multi-byte edits.
@@ -141,3 +143,4 @@ Planned differences from Egg v1:
 - - [ ] web Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
 - - [ ] web: Quantize final scale-up, don't use `object-fit:contain`. Then implement `egg_video_fb_from_screen`
 - - [ ] web: Player count 
+- - [ ] Synth early termination of Channel Header payload. Document expected behavior, defaults for each field, and ensure both implementations actually do it. (web at least does not)

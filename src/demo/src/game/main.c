@@ -88,7 +88,15 @@ int egg_client_init() {
     egg_log("Saved game.");
   }
   
-  egg_play_song(RID_song_eternal_torment,0,1);
+  /* around_here_somewhere
+   * eternal_torment
+   * hold_your_fire
+   * bakers_dozen
+   * in_thru_the_window
+   * tiny
+   * tiny2
+   */
+  egg_play_song(RID_song_hold_your_fire,0,1);
   
   g.texid_tiles=egg_texture_new();
   if (egg_texture_load_image(g.texid_tiles,RID_image_tiles)<0) {

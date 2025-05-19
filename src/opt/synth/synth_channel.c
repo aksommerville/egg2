@@ -118,7 +118,6 @@ struct synth_channel *synth_channel_new(struct synth *synth,const struct eau_cha
   
   /* Let the mode-specific controller do its thing.
    */
-  fprintf(stderr,"%s: chid=%d mode=%d payloadc=%d\n",__func__,src->chid,src->mode,src->payloadc);
   int err=-1;
   switch (src->mode) {
     case EAU_CHANNEL_MODE_DRUM: err=synth_channel_drum_init(channel,src->payload,src->payloadc); break;
