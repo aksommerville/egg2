@@ -35,7 +35,7 @@ export class Song {
   play(ctx) {
     console.log(`TODO Song.play`);
     this.ctx = ctx;
-    this.songStartTime = ctx.currentTime;
+    this.startTime = ctx.currentTime;
     for (const channel of this.channels) {
       channel?.play(ctx);
     }
@@ -117,7 +117,33 @@ export class Song {
   }
   
   setPlayhead(ph) {
-    console.log(`TODO Song.setPlayhead ${ph}`);//TODO This is going to be complicated.
+    for (const channel of this.channels) {
+      channel?.stopVoices();
+    }
+    // Read from the beginning until we accumulate (ph) delays.
+    this.eventp = 0;
+    this.eventTime = 0;
+    this.loopTime = 0;
+    while (this.eventTime < ph) {
+      if (this.eventp >= this.events.length) break;
+      const lead = this.events[this.eventp++];
+      if (!lead) break;
+      if (lead < 0x80) { // Short Delay.
+        this.eventTime += lead / 1000;
+        continue;
+      }
+      switch (lead & 0xf0) { // All other events have a 4-bit opcode similar to MIDI.
+        case 0x80: { // Long Delay.
+            const ms = ((lead & 0x0f) + 1) << 7;
+            this.eventTime += ms / 1000;
+          } break;
+        case 0x90: // Short Note.
+        case 0xa0: // Medium Note.
+        case 0xb0: this.eventp += 2; break; // Long Note.
+        case 0xc0: this.eventp += 1; break; // Wheel.
+      }
+    }
+    this.startTime = this.ctx.currentTime - this.eventTime;
   }
   
   /* Private.

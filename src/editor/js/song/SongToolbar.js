@@ -4,17 +4,20 @@
 import { SongService } from "./SongService.js";
 import { SongChartUi } from "./SongChartUi.js";
 import { SongListUi } from "./SongListUi.js";
+import { eauSongEncode } from "./eauSong.js";
 import { Dom } from "../Dom.js";
+import { Audio } from "../Audio.js"; // rt
 
 export class SongToolbar {
   static getDependencies() {
-    return [HTMLElement, Dom, SongService, "nonce"];
+    return [HTMLElement, Dom, SongService, "nonce", Audio];
   }
-  constructor(element, dom, songService, nonce) {
+  constructor(element, dom, songService, nonce, audio) {
     this.element = element;
     this.dom = dom;
     this.songService = songService;
     this.nonce = nonce;
+    this.audio = audio;
     
     this.songServiceListener = this.songService.listen(e => this.onSongServiceEvent(e));
   }
@@ -32,7 +35,7 @@ export class SongToolbar {
     /* Playback controls.
      */
     this.dom.spawn(this.element, "DIV", ["playhead"]);//TODO playhead indicator
-    this.dom.spawn(this.element, "INPUT", { type: "button", value: ">", name: "playPause", "on-click": () => this.onPlayPause() });
+    this.dom.spawn(this.element, "INPUT", { type: "button", value: ">", name: "play", "on-click": () => this.onPlay() });
     this.dom.spawn(this.element, "INPUT", { type: "button", value: "|<", "on-click": () => this.onPlayheadZero() });
     this.dom.spawn(this.element, "INPUT", { type: "button", value: "!!!", "on-click": () => this.onStop() });
     
@@ -92,16 +95,18 @@ export class SongToolbar {
     }
   }
   
-  onPlayPause() {
-    console.log(`TODO SongToolbar.onPlayPause`);
+  onPlay() {
+    const serial = eauSongEncode(this.songService.song);
+    this.audio.start();
+    this.audio.playEauSong(serial, this.songService.res.rid);
   }
   
   onPlayheadZero() {
-    console.log(`TODO SongToolbar.onPlayheadZero`);
+    this.audio.egg_song_set_playhead(0);
   }
   
   onStop() {
-    console.log(`TODO SongToolbar.onStop`);
+    this.audio.stop();
   }
   
   onEditorClassChanged() {

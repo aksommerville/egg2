@@ -24,10 +24,12 @@ demo-serve:$(eggdev_EXE) $(eggdev_SEPARATE_TEMPLATE);$(eggdev_EXE) serve \
   --htdocs=src/demo/out/demo-web.zip
 
 # demo-edit is just like the skeleton project, but builds eggdev first and points to "src/demo" instead of "."
+# "--htdocs=src/www" enables us to load the web runtime, necessary for audio.
 demo-edit:$(eggdev_EXE);$(eggdev_EXE) serve \
   --writeable=src/demo/src/data \
   --project=src/demo \
   --htdocs=/data:src/demo/src/data \
   --htdocs=/out:src/demo/out \
+  --htdocs=src/web \
   --htdocs=src/editor \
   --htdocs=src/demo/src/editor

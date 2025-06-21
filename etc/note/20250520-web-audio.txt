@@ -1,0 +1,18 @@
+2025-05-20
+Having some difficulty adapting the synthesizer for WebAudio.
+In particular, I can't figure out how to do coherent modulation on an AudioBufferSourceNode.
+And that's huge; that's one of the main voicing strategies for this synth.
+
+Can we use AudioWorkletNode, and run the exact same synthesizer in WebAssembly that we use natively?
+- [ ] 1. MDN says AWN is only available in secure contexts. Is that true? And is it acceptable?
+- [ ] 2. Would a Wasm implementation still use the AudioWorkletProcessor interface, and we just call out to the Wasm module for each block?
+- [ ] 3. How does it work to pass the channel headers and events in?
+- [ ] 4. How close is our "synth" unit to freestanding? Can we push it the rest of the way?
+
+Do a POC, not within egg2.
+- Synth core must be freestanding. No libc or libm.
+- Compile both native and Wasm.
+- Confirm we can generate and play a signal sanely both native and Wasm.
+- Confirm we can pass data in.
+- No need for a full event interface. The synth core should read the song on its own.
+- Obviously don't need the full bells and whistles that we'll want for Egg, just prove it out.

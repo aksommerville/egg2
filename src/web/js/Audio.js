@@ -11,7 +11,7 @@ import { requireFrequencies } from "./songBits.js";
 export class Audio {
   constructor(rt) {
     console.log(`Audio.constructor`);
-    this.rt = rt;
+    this.rt = rt; // Will be undefined when loaded in editor.
     this.songid = 0; // 0 if stopped or invalid
     this.song = null;
     this.sounds = [];
@@ -62,6 +62,26 @@ export class Audio {
     }
   }
   
+  /* For editor.
+   * If (songid) nonzero and matches the current song, we'll start at the prior playhead.
+   */
+  playEauSong(serial, songid) {
+    let playhead = 0;
+    if (this.song) {
+      if (songid && (songid === this.songid)) playhead = this.song.getPlayhead();
+      this.song.stop();
+      this.song = null;
+      this.songid = 0;
+    }
+    if (serial) {
+      console.log(`Audio.playEauSong`, { serial, songid, playhead });
+      this.song = new Song(serial, 1.0, 0.0, false);
+      this.song.play(this.ctx);
+      if (playhead > 0) this.song.setPlayhead(playhead);
+      this.songid = songid;
+    }
+  }
+  
   /* Egg Platform API.
    ********************************************************************************/
    
@@ -105,3 +125,5 @@ export class Audio {
     if (this.song) this.song.setPlayhead(ph);
   }
 }
+
+Audio.singleton = true; // Not required by Egg Runtime, but necessary for the editor.

@@ -7,17 +7,20 @@ import { Song } from "./Song.js";
 import { SongService } from "./SongService.js";
 import { SongToolbar } from "./SongToolbar.js";
 import { SongChannelsUi } from "./SongChannelsUi.js";
+import { Audio } from "../Audio.js"; // rt
 
 export class SongEditor {
   static getDependencies() {
-    return [HTMLElement, Dom, Data, SongService];
+    return [HTMLElement, Dom, Data, SongService, Audio, Window];
   }
-  constructor(element, dom, data, songService) {
+  constructor(element, dom, data, songService, audio, window) {
     this.element = element;
     this.dom = dom;
     this.data = data;
     this.songService = songService;
     this.songService.songEditor = this;
+    this.audio = audio;
+    this.window = window;
     
     this.res = null;
     this.song = null;
@@ -26,10 +29,16 @@ export class SongEditor {
     this.detailEditor = null; // SongChartUi or SongListUi
     
     this.songServiceListener = this.songService.listen(e => this.onSongServiceEvent(e));
+    this.audioInterval = this.window.setInterval(() => this.audio.update(), 200);
   }
   
   onRemoveFromDom() {
     this.songService.unlisten(this.songServiceListener);
+    this.audio.stop();
+    if (this.audioInterval) {
+      this.window.clearInterval(this.audioInterval);
+      this.audioInterval = null;
+    }
   }
   
   static checkResource(res) {

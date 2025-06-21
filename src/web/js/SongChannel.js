@@ -54,7 +54,7 @@ export class SongChannel {
     this.nodes.push(trimNode);
     this.lastNode = trimNode;
     
-    this.postStart = this.preparePost(this.post, trimNode);
+    //this.postStart = this.preparePost(this.post, trimNode);
     if (!this.postStart) this.postStart = trimNode;
     
     let panNode = null;
@@ -79,6 +79,16 @@ export class SongChannel {
     this.lastNode = null;
     this.postStart = null;
     this.ctx = null;
+  }
+  
+  stopVoices() {
+    for (const t of this.terminables) {
+      t.node.stop?.();
+      t.node.disconnect?.();
+      const p = this.nodes.indexOf(t.node);
+      if (p >= 0) this.nodes.splice(p, 1);
+    }
+    this.terminables = [];
   }
   
   /* True if all voices have stopped playing.
@@ -216,10 +226,19 @@ export class SongChannel {
         type: "sine",
       });
       modulator.start(when);
-      const modgain = new GainNode(this.ctx, { gain: frequency });
-      this.rangeEnv.mltapply(modgain.gain, frequency, velocity, when, dur);
-      modulator.connect(modgain);
-      modgain.connect(osc.frequency || osc.detune);//TODO (osc.detune) exists for AudioBufferSourceNode, but we're scaled wrong for it
+      let modgain;
+      if (osc instanceof AudioBufferSourceNode) {
+        modgain = new GainNode(this.ctx, { gain: this.modRange });
+        //this.rangeEnv.mltapply(modgain.gain, (frequency * WAVE_SIZE_SAMPLES) / this.ctx.sampleRate, velocity, when, dur);
+        this.rangeEnv.apply(modgain.gain, velocity, when, dur);
+        modulator.connect(modgain);
+        modgain.connect(osc.detune);
+      } else {
+        modgain = new GainNode(this.ctx, { gain: frequency });
+        this.rangeEnv.mltapply(modgain.gain, frequency, velocity, when, dur);
+        modulator.connect(modgain);
+        modgain.connect(osc.frequency);
+      }
       this.nodes.push(modgain);
       this.nodes.push(modulator);
       this.terminables.push({ node: modgain, time: termTime });
