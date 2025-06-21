@@ -6,11 +6,15 @@
 #include "eau.h"
 #include "synth_stage.h"
 #include "synth_channel.h"
+#if 0 /*XXX*/
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
 #include <math.h>
+#else
+#include "opt/stdlib/egg-stdlib.h"
+#endif
 
 #define SYNTH_RATE_MIN 200
 #define SYNTH_RATE_MAX 200000

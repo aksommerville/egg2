@@ -1,5 +1,4 @@
-#include <stdint.h>
-#include <string.h>
+#include "opt/stdlib/egg-stdlib.h"
 #include "eau.h"
 
 /* Split file.

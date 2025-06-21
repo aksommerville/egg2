@@ -4,11 +4,15 @@
 #ifndef EGG_TEST_H
 #define EGG_TEST_H
 
+#if 0 /*XXX*/
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 #include <limits.h>
 #include <stdlib.h>
+#else
+#include "opt/stdlib/egg-stdlib.h"
+#endif
 
 #define EGG_ITEST(name,...) int name()
 #define XXX_EGG_ITEST(name,...) int name()
