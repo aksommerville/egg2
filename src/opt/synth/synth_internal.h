@@ -85,7 +85,18 @@ struct synth_song {
   int tempo; // frames/qnote, established at construction.
   int loopp;
   int terminated;
+  struct synth_channel **channelv;
+  int channelc,channela;
   //TODO voicing etc
+  
+  //XXX World's Cheapest Synthesizer, entirely temporary, because I'm impatient to hear something.
+  struct synth_voice {
+    int ttl;
+    uint32_t p;
+    uint32_t dp;
+    float level;
+  } voicev[64];
+  int voicec;
 };
 
 void synth_song_del(struct synth_song *song);
@@ -118,6 +129,8 @@ struct synth {
   int rate,chanc;
   float *qbuf;
   int qbufa;
+  float ratefv[128];
+  uint32_t rateiv[128];
   
   struct synth_res {
     int id;

@@ -140,13 +140,6 @@ int eggdev_wav_from_eau(struct eggdev_convert_context *ctx) {
   synth_updatei(samplev,samplec,synth); // <-- All the interesting work happens here.
   synth_del(synth);
   
-  // Remove trailing zeroes, but preserve at least one frame.
-  if (chanc==2) {
-    while ((samplec>2)&&!samplev[samplec-1]&&!samplev[samplec-2]) samplec-=2;
-  } else if (chanc==1) {
-    while ((samplec>1)&&!samplev[samplec-1]) samplec-=1;
-  }
-  
   // Emit WAV header.
   int headersize=44; // From the RIFF header thru the "data" introducer, ie everything except the PCM.
   int filesize=headersize-8+samplec*2;

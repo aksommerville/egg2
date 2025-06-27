@@ -27,6 +27,38 @@ void synth_del(struct synth *synth) {
   free(synth);
 }
 
+/* Populate (ratefv,rateiv).
+ */
+ 
+static void synth_calculate_rates(struct synth *synth) {
+
+  // A4 (0x45) is 440 Hz. From that, we can build everything else.
+  const uint8_t noteid_ref=0x45;
+  const float freq_ref=440.0f;
+  const float TWELFTH_ROOT_TWO=1.0594630943592953f;
+  
+  // First calculate the floating-point rates.
+  synth->ratefv[noteid_ref]=freq_ref/(float)synth->rate;;
+  int noteid=noteid_ref+1;
+  int i=11;
+  for (;i-->0;noteid++) synth->ratefv[noteid]=synth->ratefv[noteid-1]*TWELFTH_ROOT_TWO;
+  for (noteid=noteid_ref+12;noteid<0x80;noteid++) synth->ratefv[noteid]=synth->ratefv[noteid-12]*2.0f;
+  for (noteid=noteid_ref;noteid-->0;) synth->ratefv[noteid]=synth->ratefv[noteid+12]*0.5f;
+  
+  // Limit to the Nyquist frequency. They're in order, so work top-down until we hit a valid frequency.
+  for (i=0x80;i-->0;) {
+    if (synth->ratefv[i]>0.5f) synth->ratefv[i]=0.5f;
+    else break;
+  }
+  
+  // Quantize to 32 bits.
+  const float *src=synth->ratefv;
+  uint32_t *dst=synth->rateiv;
+  for (i=0x80;i-->0;src++,dst++) {
+    *dst=(uint32_t)((*src)*4294967296.0f);
+  }
+}
+
 /* New.
  */
 
@@ -37,7 +69,7 @@ struct synth *synth_new(int rate,int chanc) {
   if (!synth) return 0;
   synth->rate=rate;
   synth->chanc=chanc;
-  //TODO Precalculate rates.
+  synth_calculate_rates(synth);
   return synth;
 }
 

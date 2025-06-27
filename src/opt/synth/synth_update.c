@@ -5,7 +5,6 @@
  */
  
 static void synth_loop_or_terminate(struct synth *synth,struct synth_song *song) {
-  fprintf(stderr,"%s around %d/%d\n",__func__,song->p,song->c);
   if (song->repeat) {
     if (song->loopp) {
       song->p=song->loopp;
@@ -50,8 +49,8 @@ static int synth_update_song(struct synth *synth,int limit) {
     uint8_t lead=synth->song->v[synth->song->p++];
     if (!(lead&0x80)) { // Both delay events have the high bit unset, and no others do. Collect multiple delays.
       for (;;) {
-        if (lead&0x40) synth->song->delay=synth_frames_from_ms(synth,((lead&0x3f)+1)<<6);
-        else synth->song->delay=synth_frames_from_ms(synth,lead);
+        if (lead&0x40) synth->song->delay+=synth_frames_from_ms(synth,((lead&0x3f)+1)<<6);
+        else synth->song->delay+=synth_frames_from_ms(synth,lead);
         if ((synth->song->p>=synth->song->c)||(synth->song->v[synth->song->p]&0x80)) {
           if (synth->song->delay<limit) return synth->song->delay;
           return limit;

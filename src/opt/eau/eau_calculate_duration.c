@@ -1,5 +1,6 @@
 #include "eau.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 /* DELAY method, dead simple.
  */

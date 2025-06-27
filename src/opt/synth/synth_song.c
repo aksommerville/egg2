@@ -183,7 +183,25 @@ int synth_song_measure_frames(const struct synth_song *song) {
 
 void synth_song_note(struct synth_song *song,uint8_t chid,uint8_t noteid,float velocity,int durframes) {
   if (song->terminated) return;
-  fprintf(stderr,"TODO %s chid=%d noteid=%d velocity=%.03f durframes=%d\n",__func__,chid,noteid,velocity,durframes);//TODO
+  fprintf(stderr,"TODO %s chid=%d noteid=%d velocity=%.03f durframes=%d starttime=%f\n",__func__,chid,noteid,velocity,durframes,(double)song->phframes/(double)song->synth->rate);//TODO
+  if (noteid&0x80) return;
+  
+  //XXX very temp
+  struct synth_voice *voice;
+  if (song->voicec<64) {
+    voice=song->voicev+song->voicec++;
+  } else {
+    voice=song->voicev;
+    struct synth_voice *q=voice;
+    int i=64;
+    for (;i-->0;q++) {
+      if (q->ttl<voice->ttl) voice=q;
+    }
+  }
+  voice->ttl=durframes+1000;
+  voice->p=0;
+  voice->dp=song->synth->rateiv[noteid];
+  voice->level=0.0125f;
 }
 
 void synth_song_wheel(struct synth_song *song,uint8_t chid,int v) {

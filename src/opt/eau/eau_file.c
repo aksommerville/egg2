@@ -137,7 +137,7 @@ int eau_event_reader_next(struct eau_event *event,struct eau_event_reader *reade
           event->note.chid=(lead>>2)&15;
           event->note.noteid=((lead&3)<<5)|(a>>3);
           event->note.velocity=((a&7)<<4)|(b>>4);
-          event->note.durms=(((b&15)<<8)|c)<<4;
+          event->note.durms=(((b&15)<<8)|c)<<2;
         } return 1;
       case 0xc0: { // Wheel.
           if (delay) { reader->p--; goto _ready_; }
