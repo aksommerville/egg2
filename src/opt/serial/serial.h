@@ -95,6 +95,7 @@ struct sr_encoder {
 
 void sr_encoder_cleanup(struct sr_encoder *encoder);
 
+static inline int sr_encoder_assert(struct sr_encoder *encoder) { return (encoder->jsonctx<0)?-1:0; }
 int sr_encoder_require(struct sr_encoder *encoder,int addc);
 int sr_encoder_terminate(struct sr_encoder *encoder);
 int sr_encoder_insert(struct sr_encoder *encoder,int p,const void *src,int srcc);

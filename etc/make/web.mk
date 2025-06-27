@@ -15,10 +15,3 @@ web-all:$(web_LIB_HEADLESS)
 web_OFILES_HEADLESS:=$(filter-out $(web_MIDDIR)/eggrt/eggrt_main.o,$(web_OFILES))
 $(web_LIB_HEADLESS):$(web_OFILES_HEADLESS);$(PRECMD) $(web_AR) rc $@ $^
 
-web_SYNTH:=$(web_OUTDIR)/synth.wasm
-web-all:$(web_SYNTH)
-# web_OFILES_SYNTH is allowed to overlap with web_OFILES; they don't need to build separate.
-web_CFILES_SYNTH:=$(filter $(addprefix src/opt/,$(addsuffix /%.c,synth stdlib)),$(SRCFILES))
-web_OFILES_SYNTH:=$(patsubst src/%.c,$(web_MIDDIR)/%.o,$(web_CFILES_SYNTH))
--include $(web_OFILES_SYNTH:.o=.d)
-$(web_SYNTH):$(web_OFILES_SYNTH);$(PRECMD) $(web_LD) -o$@ $^ $(web_LDPOST)

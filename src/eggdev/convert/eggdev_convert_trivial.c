@@ -52,22 +52,6 @@ int eggdev_html_from_exe(struct eggdev_convert_context *ctx) {
   return eggdev_convert_with_intermediate(ctx,eggdev_html_from_egg,eggdev_egg_from_exe);
 }
 
-int eggdev_wav_from_eaut(struct eggdev_convert_context *ctx) {
-  return eggdev_convert_with_intermediate(ctx,eggdev_wav_from_eau,eggdev_eau_from_eaut);
-}
-
-int eggdev_wav_from_mid(struct eggdev_convert_context *ctx) {
-  return eggdev_convert_with_intermediate(ctx,eggdev_wav_from_eau,eggdev_eau_from_mid);
-}
-
-int eggdev_eaut_from_mid(struct eggdev_convert_context *ctx) {
-  return eggdev_convert_with_intermediate(ctx,eggdev_eaut_from_eau,eggdev_eau_from_mid);
-}
-
-int eggdev_mid_from_eaut(struct eggdev_convert_context *ctx) {
-  return eggdev_convert_with_intermediate(ctx,eggdev_mid_from_eau,eggdev_eau_from_eaut);
-}
-
 /* sprite is just cmdlist with a signature and a specific namespace.
  */
 

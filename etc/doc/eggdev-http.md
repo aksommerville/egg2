@@ -79,12 +79,6 @@ Equivalent to `eggdev convert`.
 Response may contain two headers `X-srcfmt` and `X-dstfmt`. (errors as well as successes).
 If the converter produced contextual error messages, we'll put them in the status message.
 
-### POST /api/synthwave
-
-Request body is a binary EAU wave, 3..258 bytes. See eau-format.md.
-Responds with raw signed 16-bit PCM, little-endian.
-Output is a fixed length determined by `src/opt/synth/synth_pcm.h:SYNTH_WAVE_SIZE_BITS`. Currently 2048 (ie 1024 samples).
-
 ### PUT /**
 
 If `--writeable` was provided, write the request contents to a new file or overwrite an existing file.

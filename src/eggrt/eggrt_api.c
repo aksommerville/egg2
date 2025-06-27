@@ -162,7 +162,7 @@ void egg_play_song(int songid,int force,int repeat) {
 }
 
 int egg_song_get_id() {
-  return synth_get_song_id(eggrt.synth);
+  return synth_get_songid(eggrt.synth);
 }
 
 double egg_song_get_playhead() {

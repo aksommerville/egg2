@@ -19,9 +19,10 @@ void sr_encoder_cleanup(struct sr_encoder *encoder) {
  */
 
 int sr_encoder_require(struct sr_encoder *encoder,int addc) {
+  if (encoder->jsonctx<0) return -1;
   if (addc<1) return 0;
   if (encoder->c<=encoder->a-addc) return 0;
-  if (encoder->c>INT_MAX-addc) return -1;
+  if (encoder->c>INT_MAX-addc) return encoder->jsonctx=-1;
   int na=encoder->c+addc;
   if (na<INT_MAX-256) na=(na+256)&~255;
   void *nv=realloc(encoder->v,na);
@@ -71,12 +72,13 @@ int sr_encode_raw(struct sr_encoder *encoder,const void *src,int srcc) {
  */
  
 int sr_encode_fmt(struct sr_encoder *encoder,const char *fmt,...) {
+  if (encoder->jsonctx<0) return -1;
   if (!fmt||!fmt[0]) return 0;
   while (1) {
     va_list vargs;
     va_start(vargs,fmt);
     int err=vsnprintf(ENCV+encoder->c,encoder->a-encoder->c,fmt,vargs);
-    if ((err<0)||(err>=INT_MAX)) return -1;
+    if ((err<0)||(err>=INT_MAX)) return encoder->jsonctx=-1;
     if (encoder->c<encoder->a-err) { // sic < not <=
       encoder->c+=err;
       return 0;
@@ -168,11 +170,12 @@ int sr_encode_vlqlen(struct sr_encoder *encoder,const void *src,int srcc) {
  */
  
 int sr_encode_base64(struct sr_encoder *encoder,const void *src,int srcc) {
+  if (encoder->jsonctx<0) return -1;
   for (;;) {
     char *dst=((char*)encoder->v)+encoder->c;
     int dsta=encoder->a-encoder->c;
     int err=sr_base64_encode(dst,dsta,src,srcc);
-    if (err<0) return -1;
+    if (err<0) return encoder->jsonctx=-1;
     if (encoder->c<=encoder->a-err) {
       encoder->c+=err;
       return 0;

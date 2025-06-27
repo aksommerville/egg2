@@ -48,20 +48,7 @@ Planned differences from Egg v1:
 - - [ ] graf
 - - [ ] font
 - Minor things punted:
-- - [ ] Loop position in MIDI.
-- - [ ] Also need to manage loop in editor Song.
-- - [ ] WAV from EAU, can we get rate and chanc from the caller somehow?
 - - [ ] System language, for MacOS and Windows.
-- - [ ] Expose a GM names service, using text ripped from eggdev/instruments.eaut dynamically. <-- have it for instruments in editor... can we get drums too?
-- - [ ] synth: Brief blackout on song transitions? Not sure whether it's needed.
-- - [ ] Decide whether to allow WAV for sound resources.
-- - [ ] Add phase to FM LFO. I think. Maybe?
-- - [ ] Native FM pitch wheel.
-- - [ ] Web FM pitch wheel.
-- - [ ] FM: Should we adjust the modulator too, when pitchenv in play? Currently keeping it fixed.
-- - [ ] Web SongChannel: Respect tremolo phase.
-- - [ ] Web synth: First note seems to get dropped sometimes?
-- - [ ] Finish default instruments and drums. Punt until there's a good editor with MIDI-In.
 - - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
 - - [ ] HexEditor: Paging, offset, ASCII, multi-byte edits.
 - - [ ] ImageEditor: Animation preview like we had in v1.
@@ -70,10 +57,6 @@ Planned differences from Egg v1:
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] POI icons for sprite and custom overrides.
-- - [x] SongEditor: Playback (From SongEditor top, and also within ModecfgDrumModal)
-- - [ ] SongEditor: Live MIDI-In. Requires web synthesizer.
-- - [ ] SongEditor:WaveUi: Have wave preview printed by synthesizer. Currently calling out to the server for each render.
-- - [ ] SongEditor: Must be able to change order of post steps.
 - - [ ] native inmgr: Select player
 - - [ ] eggdev build: Replace `<title>` in HTMLs.
 - - [ ] web: Detect loss of focus. At a minimum, pause audio. Maybe pause everything?
@@ -82,4 +65,33 @@ Planned differences from Egg v1:
 - - [ ] web Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
 - - [ ] web: Quantize final scale-up, don't use `object-fit:contain`. Then implement `egg_video_fb_from_screen`
 - - [ ] web: Player count 
-- - [ ] Synth early termination of Channel Header payload. Document expected behavior, defaults for each field, and ensure both implementations actually do it. (web at least does not)
+
+## 2025-06-23 resynth
+
+I stepped away from this project for a while to play with AudioWorkletNode.
+It's enticing... In theory, we could write one synthesizer in C, and use it in both web and native.
+It does work, but it makes the plumbing quite a bit more complex (also it requires games to be served HTTPS, which is sure to be a problem).
+Anyhoo, gave up on that idea (for now) and returning to Egg 2, and I'm going to scrap its current synth and rewrite.
+
+The broad outline:
+ - Separate web and native implementations. :(
+ - One format, "EAU", for delivery at runtime. Source from MIDI or EAU-Text.
+ - Stereo.
+ - Per-channel post, LFO, trim, pan.
+ - Limited set of post stages, only things we can reliably implement on both sides: Delay, Waveshaper, Tremolo
+ - No SUB voices. Too hard to maintain parity across implementations.
+ - No IIR post stages, same reason.
+ - Implicit PCM printing.
+ 
+TODO:
+- [x] Define data formats.
+- [x] Portable data converter unit.
+- [x] Define native synth API.
+- [x] Update eggdev.
+- [ ] Native synth implementation.
+- [ ] Web synth implementation.
+- [ ] Update editor.
+- [ ] Define some instruments.
+- [ ] Test perceptually.
+- [ ] `eggdev_convert_audio.c:eggdev_wav_from_eau`: Arbitrary params from user for conversion? (rate,chanc,method) in this case.
+- [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.

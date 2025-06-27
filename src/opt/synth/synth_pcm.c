@@ -1,13 +1,8 @@
-/* synth_pcm.c
- * synth_pcm, synth_pcmplay, synth_ring, and synth_printer are all pretty simple, so I'm lumping them together here.
- * Nothing particularly interesting happens here.
- */
-
 #include "synth_internal.h"
 
-/* Plain PCM dump.
+/* PCM object.
  */
- 
+
 void synth_pcm_del(struct synth_pcm *pcm) {
   if (!pcm) return;
   if (pcm->refc-->1) return;
@@ -23,8 +18,8 @@ int synth_pcm_ref(struct synth_pcm *pcm) {
 }
 
 struct synth_pcm *synth_pcm_new(int c) {
-  if (c<1) return 0;
-  if (c>SYNTH_PCM_LENGTH_LIMIT) return 0;
+  if (c<0) return 0;
+  if (c>SYNTH_PCM_LIMIT_SAMPLES) return 0;
   struct synth_pcm *pcm=calloc(1,sizeof(struct synth_pcm)+sizeof(float)*c);
   if (!pcm) return 0;
   pcm->refc=1;
@@ -32,42 +27,60 @@ struct synth_pcm *synth_pcm_new(int c) {
   return pcm;
 }
 
-/* PCM printer.
+/* Wave object.
  */
- 
+
+void synth_wave_del(struct synth_wave *wave) {
+  if (!wave) return;
+  if (wave->refc-->1) return;
+  free(wave);
+}
+
+int synth_wave_ref(struct synth_wave *wave) {
+  if (!wave) return -1;
+  if (wave->refc<1) return -1;
+  if (wave->refc>=INT_MAX) return -1;
+  wave->refc++;
+  return 0;
+}
+
+struct synth_wave *synth_wave_new() {
+  struct synth_wave *wave=calloc(1,sizeof(struct synth_wave));
+  if (!wave) return 0;
+  wave->refc=1;
+  return wave;
+}
+
+/* Printer object.
+ */
+
 void synth_printer_del(struct synth_printer *printer) {
   if (!printer) return;
+  synth_song_del(printer->song);
   synth_pcm_del(printer->pcm);
-  synth_del(printer->synth);
   free(printer);
 }
 
 struct synth_printer *synth_printer_new(struct synth *synth,const void *src,int srcc) {
-  if (!synth||!src) return 0;
-  int durms=eau_estimate_duration(src,srcc);
-  if (durms<0) return 0;
-  int framec=(int)(((double)durms*(double)synth->rate)/1000.0);
-  if (framec<1) framec=1;
+  if (!synth) return 0;
   struct synth_printer *printer=calloc(1,sizeof(struct synth_printer));
   if (!printer) return 0;
-  if (
-    !(printer->pcm=synth_pcm_new(framec))||
-    !(printer->synth=synth_new(synth->rate,1))||
-    (synth_load_song(printer->synth,1,src,srcc)<0)
-  ) {
+  if (!(printer->song=synth_song_new(synth,src,srcc,0,1))) {
     synth_printer_del(printer);
     return 0;
   }
-  synth_play_song(printer->synth,1,0,0);
+  if (!(printer->pcm=synth_pcm_new(synth_song_measure_frames(printer->song)))) {
+    synth_printer_del(printer);
+    return 0;
+  }
   return printer;
 }
 
-int synth_printer_update(struct synth_printer *printer,int framec) {
-  if (!printer||!printer->pcm) return 0;
+int synth_printer_update(struct synth_printer *printer,int c) {
   int updc=printer->pcm->c-printer->p;
-  if (updc>framec) updc=framec;
+  if (updc>c) updc=c;
   if (updc>0) {
-    synth_updatef(printer->pcm->v+printer->p,updc,printer->synth);
+    synth_song_update(printer->pcm->v+printer->p,updc,printer->song);
     printer->p+=updc;
   }
   return (printer->p>=printer->pcm->c)?0:1;
@@ -81,112 +94,31 @@ void synth_pcmplay_cleanup(struct synth_pcmplay *pcmplay) {
   pcmplay->pcm=0;
 }
 
-int synth_pcmplay_setup(struct synth_pcmplay *pcmplay,int chanc,struct synth_pcm *pcm,double trim,double pan) {
-  if ((chanc<SYNTH_CHANC_MIN)||(chanc>SYNTH_CHANC_MAX)) return -1;
+int synth_pcmplay_init(struct synth_pcmplay *pcmplay,struct synth_pcm *pcm,int chanc,float trim,float pan) {
   if (synth_pcm_ref(pcm)<0) return -1;
   pcmplay->pcm=pcm;
   pcmplay->chanc=chanc;
   pcmplay->p=0;
-  if (chanc==1) {
-    pcmplay->gainl=pcmplay->gainr=trim;
-  } else if (pan<=-1.0) {
-    pcmplay->gainl=trim;
-    pcmplay->gainr=0.0f;
-  } else if (pan>=1.0) {
-    pcmplay->gainl=0.0f;
-    pcmplay->gainr=trim;
-  } else if (pan<0.0) {
-    pcmplay->gainl=trim;
-    pcmplay->gainr=(1.0+pan)*trim;
-  } else if (pan>0.0) {
-    pcmplay->gainl=(1.0-pan)*trim;
-    pcmplay->gainr=trim;
-  } else {
-    pcmplay->gainl=pcmplay->gainr=trim;
-  }
+  if (chanc==1) pcmplay->triml=pcmplay->trimr=trim;
+  else synth_apply_pan(&pcmplay->triml,&pcmplay->trimr,trim,pan);
   return 0;
 }
 
 int synth_pcmplay_update(float *v,int framec,struct synth_pcmplay *pcmplay) {
-  if (!pcmplay||!pcmplay->pcm) return 0;
   int updc=pcmplay->pcm->c-pcmplay->p;
   if (updc>framec) updc=framec;
-  if (updc>0) {
-    int i=updc;
-    const float *src=pcmplay->pcm->v+pcmplay->p;
-    pcmplay->p+=updc;
-    if (pcmplay->chanc==1) {
-      for (;i-->0;v++,src++) (*v)+=(*src)*pcmplay->gainl;
-    } else {
-      for (;i-->0;v+=pcmplay->chanc,src++) {
-        v[0]+=(*src)*pcmplay->gainl;
-        v[1]+=(*src)*pcmplay->gainr;
-      }
+  int i=updc;
+  const float *src=pcmplay->pcm->v+pcmplay->p;
+  pcmplay->p+=updc;
+  if (pcmplay->chanc>1) {
+    for (;i-->0;v+=pcmplay->chanc,src++) {
+      v[0]+=(*src)*pcmplay->triml;
+      v[1]+=(*src)*pcmplay->trimr;
+    }
+  } else {
+    for (;i-->0;v++,src++) {
+      (*v)+=(*src)*pcmplay->triml;
     }
   }
   return (pcmplay->p>=pcmplay->pcm->c)?0:1;
-}
-
-/* Ring buffer.
- */
- 
-void synth_ring_cleanup(struct synth_ring *ring) {
-  if (!ring) return;
-  if (ring->v) free(ring->v);
-  memset(ring,0,sizeof(struct synth_ring));
-}
-
-int synth_ring_init(struct synth_ring *ring,int framec) {
-  if (framec<1) return -1;
-  if (framec>INT_MAX/sizeof(float)) return -1;
-  if (!(ring->v=calloc(sizeof(float),framec))) return -1;
-  ring->p=0;
-  ring->c=framec;
-  return 0;
-}
-
-/* IIR setup.
- * I don't really understand how these work. Copied from the Blue Book:
- *   Steven W Smith: The Scientist and Engineer's Guide to Digital Signal Processing
- *   Ch 19, p 322..326
- */
- 
-void synth_iir3_init_lopass(struct synth_iir3 *iir,float freq) {
-  float x=powf(M_E,-2.0f*M_PI*freq);
-  iir->dcv[0]=1.0f-x;
-  iir->dcv[1]=0.0f;
-  iir->dcv[2]=0.0f;
-  iir->wcv[0]=x;
-  iir->wcv[1]=0.0f;
-}
-
-void synth_iir3_init_hipass(struct synth_iir3 *iir,float freq) {
-  float x=powf(M_E,-2.0f*M_PI*freq);
-  iir->dcv[0]=(1.0f+x)/2.0f;
-  iir->dcv[1]=-(1.0f+x)/2.0f;
-  iir->dcv[2]=0.0f;
-  iir->wcv[0]=x;
-  iir->wcv[1]=0.0f;
-}
-
-void synth_iir3_init_bpass(struct synth_iir3 *iir,float mid,float wid) {
-  float r=1.0f-3.0f*wid;
-  float cosfreq=cosf(M_PI*2.0f*mid);
-  float k=(1.0f-2.0f*r*cosfreq+r*r)/(2.0f-2.0f*cosfreq);
-  iir->dcv[0]=1.0f-k;
-  iir->dcv[1]=2.0f*(k-r)*cosfreq;
-  iir->dcv[2]=r*r-k;
-  iir->wcv[0]=2.0f*r*cosfreq;
-  iir->wcv[1]=-r*r;
-}
-
-void synth_iir3_init_notch(struct synth_iir3 *iir,float mid,float wid) {
-  float r=1.0f-3.0f*wid;
-  float cosfreq=cosf(M_PI*2.0f*mid);
-  float k=(1.0f-2.0f*r*cosfreq+r*r)/(2.0f-2.0f*cosfreq);
-  iir->dcv[0]=k;
-  iir->dcv[1]=-2.0f*k*cosfreq;
-  iir->dcv[2]=k;
-  iir->wcv[0]=2.0f*r*cosfreq;
-  iir->wcv[1]=-r*r;
 }

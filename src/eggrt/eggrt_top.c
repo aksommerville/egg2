@@ -121,9 +121,9 @@ static int eggrt_load_synth_resources() {
   int i=eggrt.resc,err;
   for (;i-->0;res++) {
     if (res->tid==EGG_TID_song) {
-      if ((err=synth_load_song(eggrt.synth,res->rid,res->v,res->c))<0) return err;
+      if ((err=synth_install_song(eggrt.synth,res->rid,res->v,res->c))<0) return err;
     } else if (res->tid==EGG_TID_sound) {
-      if ((err=synth_load_sound(eggrt.synth,res->rid,res->v,res->c))<0) return err;
+      if ((err=synth_install_sound(eggrt.synth,res->rid,res->v,res->c))<0) return err;
     }
   }
   return 0;
