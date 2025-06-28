@@ -22,13 +22,13 @@ void synth_channel_del(struct synth_channel *channel) {
 /* New.
  */
 
-struct synth_channel *synth_channel_new(struct synth *synth,int tempo,const uint8_t *src,int srcc) {
+struct synth_channel *synth_channel_new(struct synth *synth,int chanc,int tempo,const uint8_t *src,int srcc) {
   if (srcc<1) return 0;
   struct synth_channel *channel=calloc(1,sizeof(struct synth_channel));
   if (!channel) return 0;
   channel->synth=synth;
   channel->rate=synth->rate;
-  channel->chanc=synth->chanc;
+  channel->chanc=chanc;
   channel->tempo=tempo;
   
   // Read the front matter.

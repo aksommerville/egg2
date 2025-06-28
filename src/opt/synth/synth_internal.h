@@ -203,7 +203,7 @@ void synth_channel_del(struct synth_channel *channel);
 
 /* (src) is a full EAU "CHDR" chunk.
  */
-struct synth_channel *synth_channel_new(struct synth *synth,int tempo,const uint8_t *src,int srcc);
+struct synth_channel *synth_channel_new(struct synth *synth,int chanc,int tempo,const uint8_t *src,int srcc);
 
 /* Adds to (v).
  */
@@ -248,10 +248,10 @@ void synth_song_set_playhead(struct synth_song *song,float s);
 int synth_song_frames_for_bytes(const struct synth_song *song,int p);
 int synth_song_measure_frames(const struct synth_song *song); // => sum of delays only
 
-/* Update signal for the given frame count -- (song->chanc) must be respected.
+/* Advance song's clock by the given frame count, reading new events and generating a signal.
+ * You must be aware of (song->chanc) and provide an agreeable buffer.
  * Adds to (v).
- * Advances time. Do not call with more than (song->delay).
- * Returns 0 if terminated.
+ * Returns >0 if still running.
  */
 int synth_song_update(float *v,int framec,struct synth_song *song);
 
@@ -290,5 +290,7 @@ struct synth {
 
 int synth_frames_from_ms(const struct synth *synth,int ms);
 void synth_apply_pan(float *triml,float *trimr,float trim,float pan);
+
+struct synth_pcm *synth_begin_print(struct synth *synth,const void *v,int c); // => STRONG
 
 #endif

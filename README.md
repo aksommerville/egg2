@@ -88,7 +88,7 @@ TODO:
 - [x] Portable data converter unit.
 - [x] Define native synth API.
 - [x] Update eggdev.
-- [ ] Native synth implementation.
+- [x] Native synth implementation.
 - [ ] Web synth implementation.
 - [ ] Update editor.
 - [ ] Define some instruments.

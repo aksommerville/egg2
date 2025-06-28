@@ -27,7 +27,7 @@ static int synth_song_decode_CHDR(struct synth_song *song,const uint8_t *src,int
     song->channelv=nv;
     song->channela=na;
   }
-  struct synth_channel *channel=synth_channel_new(song->synth,song->tempo,src,srcc);
+  struct synth_channel *channel=synth_channel_new(song->synth,song->chanc,song->tempo,src,srcc);
   if (!channel) return -1;
   if (channel->mode==0) { // MODE_NOOP, either naturally or faked by the channel decoder, we can drop it.
     synth_channel_del(channel);
@@ -177,7 +177,6 @@ int synth_song_measure_frames(const struct synth_song *song) {
 
 void synth_song_note(struct synth_song *song,uint8_t chid,uint8_t noteid,float velocity,int durframes) {
   if (song->terminated) return;
-  //fprintf(stderr,"TODO %s chid=%d noteid=%d velocity=%.03f durframes=%d starttime=%f\n",__func__,chid,noteid,velocity,durframes,(double)song->phframes/(double)song->synth->rate);//TODO
   if (noteid&0x80) return;
   if (chid&0xf0) return;
   struct synth_channel *channel=song->channel_by_chid[chid];
@@ -187,19 +186,17 @@ void synth_song_note(struct synth_song *song,uint8_t chid,uint8_t noteid,float v
 
 void synth_song_wheel(struct synth_song *song,uint8_t chid,int v) {
   if (song->terminated) return;
-  //fprintf(stderr,"TODO %s chid=%d v=%d\n",__func__,chid,v);//TODO
   if (chid&0xf0) return;
   struct synth_channel *channel=song->channel_by_chid[chid];
   if (!channel) return;
   synth_channel_wheel(channel,v);
 }
 
-/* Update song's signal graph, main entry point.
+/* Update song, signal only.
  * Add to (v).
- * Return >0 to stay alive.
  */
   
-int synth_song_update(float *v,int framec,struct synth_song *song) {
+static void synth_song_update_signal(float *v,int framec,struct synth_song *song) {
   if ((song->delay-=framec)<0) song->delay=0;
   song->phframes+=framec;
   
@@ -209,7 +206,7 @@ int synth_song_update(float *v,int framec,struct synth_song *song) {
    */
   if (song->terminated) {
     for (;framec-->0;v+=song->chanc) {
-      if ((song->fade+=song->dfade)<=0.0f) return 0;
+      if ((song->fade+=song->dfade)<=0.0f) return;
       struct synth_channel **p=song->channelv;
       int i=song->channelc;
       for (;i-->0;p++) {
@@ -231,5 +228,88 @@ int synth_song_update(float *v,int framec,struct synth_song *song) {
       synth_channel_update(v,framec,*p);
     }
   }
+}
+
+/* Update song, events only.
+ * Caller provides a positive (limit) in frames. We return 1..limit, or <0 to bail out.
+ * This generally will set (delay) and will never advance time.
+ */
+ 
+static int synth_song_update_events(struct synth_song *song,int limit) {
+  for (;;) {
+  
+    if (song->delay>0) {
+      if (song->delay<limit) return song->delay;
+      return limit;
+    }
+    
+    if (song->p>=song->c) {
+      if (song->repeat) {
+        if (song->loopp) {
+          song->p=song->loopp;
+          song->phframes=synth_song_frames_for_bytes(song,song->loopp);
+        } else {
+          song->p=0;
+          song->phframes=0;
+        }
+        song->delay=1;
+      } else {
+        synth_song_terminate(song);
+      }
+      return song->delay;
+    }
+    
+    uint8_t lead=song->v[song->p++];
+    if (!(lead&0x80)) { // Both delay events have the high bit unset, and no others do. Collect multiple delays.
+      for (;;) {
+        if (lead&0x40) song->delay+=synth_frames_from_ms(song->synth,((lead&0x3f)+1)<<6);
+        else song->delay+=synth_frames_from_ms(song->synth,lead);
+        if ((song->p>=song->c)||(song->v[song->p]&0x80)) {
+          if (song->delay<limit) return song->delay;
+          return limit;
+        }
+        lead=song->v[song->p++];
+      }
+    }
+    switch (lead&0xc0) {
+      case 0x80: {
+          if (song->p>song->c-3) return -1;
+          uint8_t a=song->v[song->p++];
+          uint8_t b=song->v[song->p++];
+          uint8_t c=song->v[song->p++];
+          uint8_t chid=(lead>>2)&15;
+          uint8_t noteid=((lead&3)<<5)|(a>>3);
+          float velocity=(((a&7)<<4)|(b>>4))/127.0f;
+          int dur=synth_frames_from_ms(song->synth,(((b&15)<<8)|c)<<2);
+          synth_song_note(song,chid,noteid,velocity,dur);
+        } break;
+      case 0xc0: {
+          if (song->p>song->c-1) return -1;
+          int w=song->v[song->p++];
+          w|=(lead&3)<<8;
+          w-=512;
+          uint8_t chid=(lead>>2)&15;
+          synth_song_wheel(song,chid,w);
+        } break;
+    }
+  }
+}
+
+/* Update song, main entry point.
+ * Add to (v).
+ * Return >0 to stay alive.
+ */
+  
+int synth_song_update(float *v,int framec,struct synth_song *song) {
+  if (!song) return 0;
+  while (framec>0) {
+    int updframec=synth_song_update_events(song,framec);
+    if (updframec<=0) return -1;
+    if (updframec>framec) updframec=framec;
+    synth_song_update_signal(v,updframec,song);
+    framec-=updframec;
+    v+=updframec*song->chanc;
+  }
+  if (song->terminated&&(song->fade<=0.0f)) return 0;
   return 1;
 }

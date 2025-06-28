@@ -259,7 +259,7 @@ void synth_set_playhead(struct synth *synth,float s) {
  * Returns STRONG pcm object on success.
  */
  
-static struct synth_pcm *synth_begin_print(struct synth *synth,const void *v,int c) {
+struct synth_pcm *synth_begin_print(struct synth *synth,const void *v,int c) {
   if (synth->printerc>=synth->printera) {
     int na=synth->printera+16;
     if (na>INT_MAX/sizeof(void*)) return 0;

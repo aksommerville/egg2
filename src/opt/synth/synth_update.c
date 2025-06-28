@@ -1,95 +1,5 @@
 #include "synth_internal.h"
 
-/* If the song is repeating, return playhead to the start and fake a tiny delay.
- * Otherwise uninstall it.
- */
- 
-static void synth_loop_or_terminate(struct synth *synth,struct synth_song *song) {
-  if (song->repeat) {
-    if (song->loopp) {
-      song->p=song->loopp;
-      song->phframes=synth_song_frames_for_bytes(song,song->loopp);
-    } else {
-      song->p=0;
-      song->phframes=0;
-    }
-    song->delay=1;
-  } else if (song==synth->song) {
-    synth_song_terminate(song);
-    if (synth->pvsong) synth_song_del(synth->pvsong);
-    synth->pvsong=song;
-    synth->song=0;
-  }
-}
-
-/* Fire any song events at time zero, advance until we acquire a delay.
- * (limit) in frames and must be >0.
- * Never returns <1 or >limit.
- * Enforces SYNTH_UPDATE_LIMIT too.
- * Song player will acquire a delay but will not actually advance time. The signal updates do that.
- * Fine if no song is playing.
- */
- 
-static int synth_update_song(struct synth *synth,int limit) {
-  if (limit>SYNTH_UPDATE_LIMIT) limit=SYNTH_UPDATE_LIMIT;
-  for (;;) {
-  
-    if (!synth->song) return limit;
-    
-    if (synth->song->delay>0) {
-      if (synth->song->delay<limit) return synth->song->delay;
-      return limit;
-    }
-    
-    if (synth->song->p>=synth->song->c) {
-      synth_loop_or_terminate(synth,synth->song);
-      continue;
-    }
-    
-    uint8_t lead=synth->song->v[synth->song->p++];
-    if (!(lead&0x80)) { // Both delay events have the high bit unset, and no others do. Collect multiple delays.
-      for (;;) {
-        if (lead&0x40) synth->song->delay+=synth_frames_from_ms(synth,((lead&0x3f)+1)<<6);
-        else synth->song->delay+=synth_frames_from_ms(synth,lead);
-        if ((synth->song->p>=synth->song->c)||(synth->song->v[synth->song->p]&0x80)) {
-          if (synth->song->delay<limit) return synth->song->delay;
-          return limit;
-        }
-        lead=synth->song->v[synth->song->p++];
-      }
-    }
-    switch (lead&0xc0) {
-      case 0x80: {
-          if (synth->song->p>synth->song->c-3) {
-            synth->song->repeat=0;
-            synth_loop_or_terminate(synth,synth->song);
-            break;
-          }
-          uint8_t a=synth->song->v[synth->song->p++];
-          uint8_t b=synth->song->v[synth->song->p++];
-          uint8_t c=synth->song->v[synth->song->p++];
-          uint8_t chid=(lead>>2)&15;
-          uint8_t noteid=((lead&3)<<5)|(a>>3);
-          float velocity=(((a&7)<<4)|(b>>4))/127.0f;
-          int dur=synth_frames_from_ms(synth,(((b&15)<<8)|c)<<2);
-          synth_song_note(synth->song,chid,noteid,velocity,dur);
-        } break;
-      case 0xc0: {
-          if (synth->song->p>synth->song->c-1) {
-            synth->song->repeat=0;
-            synth_loop_or_terminate(synth,synth->song);
-            break;
-          }
-          int w=synth->song->v[synth->song->p++];
-          w|=(lead&3)<<8;
-          w-=512;
-          uint8_t chid=(lead>>2)&15;
-          synth_song_wheel(synth->song,chid,w);
-        } break;
-    }
-  }
-}
-
 /* Update signal graph, adding to (v).
  */
  
@@ -154,9 +64,10 @@ void synth_updatef(float *v,int c,struct synth *synth) {
     }
   }
   
-  // Let the song and SYNTH_UPDATE_LIMIT drive slicing of the buffer.
+  // Update no more than SYNTH_UPDATE_LIMIT at a time.
   while (framec>0) {
-    int updframec=synth_update_song(synth,framec);
+    int updframec=framec;
+    if (updframec>SYNTH_UPDATE_LIMIT) updframec=SYNTH_UPDATE_LIMIT;
     int samplec=updframec*synth->chanc;
     synth_update_signal(v,updframec,synth);
     v+=samplec;

@@ -104,7 +104,8 @@ static void synth_voice_update_fm_basic(float *v,int c,struct synth_voice *voice
   uint32_t moddp=(uint32_t)((float)voice->cardp*EXTRA->modrate);
   for (;c-->0;v++) {
     float sample=EXTRA->wavefv[voice->carp>>SYNTH_WAVE_SHIFT];
-    (*v)+=sample*synth_env_update(&voice->levelenv);
+    float level=synth_env_update(&voice->levelenv);
+    (*v)+=sample*level;
   
     uint32_t dp=voice->cardp;
     
@@ -229,6 +230,7 @@ int synth_channel_init_FM(struct synth_channel *channel,const uint8_t *src,int s
   int srcp=0,err;
   int modrate=0,modrange=0; // Both u8.8, read initially as integers.
   EXTRA->wheelrange=200;
+  EXTRA->wheelm=1.0f;
   int lforate=0,lfodepth=0xff,lfophase=0;
   FLD_U16(modrate)
   FLD_U16(modrange)
@@ -301,6 +303,7 @@ int synth_channel_init_HARSH(struct synth_channel *channel,const uint8_t *src,in
   int srcp=0,err;
   uint8_t shape=0;
   EXTRA->wheelrange=200;
+  EXTRA->wheelm=1.0f;
   FLD_U8(shape)
   FLD_ENV(EXTRA->levelenv,level,1.0f/65535.0f,0.0f)
   FLD_ENV(EXTRA->pitchenv,pitch,1.0f,-32768.0f)
@@ -338,6 +341,7 @@ int synth_channel_init_HARM(struct synth_channel *channel,const uint8_t *src,int
   // Decode serial.
   int srcp=0,err,harmc=0;
   EXTRA->wheelrange=200;
+  EXTRA->wheelm=1.0f;
   FLD_U8(harmc)
   if (!harmc) {
     EXTRA->wavefv=channel->synth->sine;
