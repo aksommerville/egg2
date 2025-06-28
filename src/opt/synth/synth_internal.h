@@ -49,6 +49,14 @@ void synth_wave_del(struct synth_wave *wave);
 int synth_wave_ref(struct synth_wave *wave);
 struct synth_wave *synth_wave_new();
 
+// There isn't a "sine". Use (synth->sine), precalculated at context init.
+struct synth_wave *synth_wave_new_square();
+struct synth_wave *synth_wave_new_saw();
+struct synth_wave *synth_wave_new_triangle();
+
+// To build up harmonics, you must supply us the sine.
+struct synth_wave *synth_wave_new_harmonics(const float *ref,const float *v,int c);
+
 struct synth_printer {
   struct synth_song *song;
   struct synth_pcm *pcm;
@@ -69,6 +77,75 @@ struct synth_pcmplay {
 void synth_pcmplay_cleanup(struct synth_pcmplay *pcmplay);
 int synth_pcmplay_init(struct synth_pcmplay *pcmplay,struct synth_pcm *pcm,int chanc,float trim,float pan);
 int synth_pcmplay_update(float *v,int framec,struct synth_pcmplay *pcmplay); // adds; >0 if still running
+
+/* Envelope.
+ * The (synth_env) object can be either a configuration or a runner.
+ * For runners, only the 'lo' values are applicable.
+ *******************************************************************************/
+ 
+#define SYNTH_ENV_POINT_LIMIT 16 /* Not negotiable; mandated by spec. */
+#define SYNTH_ENV_FLAG_INITIALS 0x01
+#define SYNTH_ENV_FLAG_VELOCITY 0x02
+#define SYNTH_ENV_FLAG_SUSTAIN  0x04
+#define SYNTH_ENV_FLAG_DEFAULT  0x80 /* Not encoded. Added to envelopes that received their default. */
+
+struct synth_env {
+  uint8_t flags;
+  float initlo,inithi;
+  int susp;
+  int pointc;
+  struct synth_env_point {
+    int tlo,thi;
+    float vlo,vhi;
+  } pointv[SYNTH_ENV_POINT_LIMIT];
+// Only for runner:
+  float v;
+  float dv;
+  int c;
+  int pointp;
+  int finished;
+};
+
+/* Decode a config and return length consumed.
+ * The default env [0,0] is treated literally; caller should manage those separate.
+ * Freshly-decoded values are in 0..65535 just as encoded, but floating-point.
+ * (rate) in Hz is required, so we can phrase times in frames rather than the encoded milliseconds.
+ */
+int synth_env_decode(struct synth_env *env,const void *src,int srcc,int rate);
+
+/* If you encounter [0,0], call one of these defaulters instead of decode, and consume the two zeroes.
+ */
+void synth_env_default_level(struct synth_env *env,int rate);
+void synth_env_default_range(struct synth_env *env,int rate);
+void synth_env_default_pitch(struct synth_env *env,int rate);
+
+void synth_env_scale(struct synth_env *env,float mlt);
+void synth_env_bias(struct synth_env *env,float add);
+
+/* Initialize an envelope runner from a configuration, with velocity and hold time.
+ */
+void synth_env_apply(struct synth_env *runner,const struct synth_env *config,float velocity,int durframes);
+
+/* If this runner has a sustain point and we haven't reached it yet, or are in the middle of it,
+ * force it to release immediately.
+ * Noop if there's no sustain point or we're already past it.
+ */
+void synth_env_release(struct synth_env *env);
+
+// Internal use only.
+void synth_env_advance(struct synth_env *env);
+
+/* Advance envelope runner by one frame and return the next value.
+ */
+static inline float synth_env_update(struct synth_env *env) {
+  if (env->c>0) {
+    env->c--;
+    env->v+=env->dv;
+  } else {
+    synth_env_advance(env);
+  }
+  return env->v;
+}
 
 /* Post pipe.
  ******************************************************************************/

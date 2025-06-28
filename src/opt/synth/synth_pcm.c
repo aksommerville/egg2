@@ -51,6 +51,68 @@ struct synth_wave *synth_wave_new() {
   return wave;
 }
 
+/* Calculate a simple ramp.
+ */
+ 
+static void synth_wave_ramp(float *v,int c,float a,float z) {
+  if (c<1) return;
+  float d=(z-a)/c;
+  for (;c-->0;v++,a+=d) *v=a;
+}
+
+/* New wave with primitive shapes.
+ */
+ 
+struct synth_wave *synth_wave_new_square() {
+  struct synth_wave *wave=synth_wave_new();
+  if (!wave) return 0;
+  int halflen=SYNTH_WAVE_SIZE_SAMPLES>>1;
+  int p=0;
+  for (;p<halflen;p++) wave->v[p]=1.0f;
+  for (;p<SYNTH_WAVE_SIZE_SAMPLES;p++) wave->v[p]=-1.0f;
+  return wave;
+}
+
+struct synth_wave *synth_wave_new_saw() {
+  struct synth_wave *wave=synth_wave_new();
+  if (!wave) return 0;
+  synth_wave_ramp(wave->v,SYNTH_WAVE_SIZE_SAMPLES,1.0f,-1.0f);
+  return wave;
+}
+
+struct synth_wave *synth_wave_new_triangle() {
+  struct synth_wave *wave=synth_wave_new();
+  if (!wave) return 0;
+  int halflen=SYNTH_WAVE_SIZE_SAMPLES>>1;
+  // We kick the triangle out of phase to make it two neat ramps. Proper phase would start at zero and proceed positive.
+  synth_wave_ramp(wave->v,halflen,-1.0f,1.0f);
+  synth_wave_ramp(wave->v+halflen,SYNTH_WAVE_SIZE_SAMPLES-halflen,1.0f,-1.0f);
+  return wave;
+}
+
+/* New wave from harmonics.
+ */
+ 
+static void synth_wave_add_harmonic(float *dst,const float *src,int step,float level) {
+  if (step<1) return;
+  if (step>=SYNTH_WAVE_SIZE_SAMPLES) return;
+  int i=SYNTH_WAVE_SIZE_SAMPLES,srcp=0;
+  for (;i-->0;srcp+=step,dst++) {
+    if (srcp>=SYNTH_WAVE_SIZE_SAMPLES) srcp-=SYNTH_WAVE_SIZE_SAMPLES;
+    (*dst)+=src[srcp]*level;
+  }
+}
+ 
+struct synth_wave *synth_wave_new_harmonics(const float *ref,const float *v,int c) {
+  struct synth_wave *wave=synth_wave_new();
+  if (!wave) return 0;
+  int i=0; for (;i<c;i++,v++) {
+    if (*v<=0.0f) continue;
+    synth_wave_add_harmonic(wave->v,ref,i+1,*v);
+  }
+  return wave;
+}
+
 /* Printer object.
  */
 

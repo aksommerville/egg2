@@ -200,7 +200,7 @@ If we were implementing native only, they'd be one mode. But I'm trying to keep 
 These should share most of their internal plumbing, and might use the same editor UI.
 
 ```
-  u7.8 Rate, or u8.8|0x8000 Absolute rate hz = 0.
+  u7.8 Rate, or u8.8|0x8000 Absolute rate qnotes = 0.
   u8.8 Range = 0.
   ... Level env. Complex default.
   ... Range env. Default constant 0xffff.
