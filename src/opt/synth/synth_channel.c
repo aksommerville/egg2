@@ -160,7 +160,6 @@ void synth_channel_update(float *v,int framec,struct synth_channel *channel) {
  */
 
 void synth_channel_note(struct synth_channel *channel,uint8_t noteid,float velocity,int durframes) {
-  //fprintf(stderr,"%s chid=%d note=0x%02x velocity=%.03f dur=%d\n",__func__,channel->chid,noteid,velocity,durframes);//TODO
   switch (channel->mode) {
     case 1: synth_channel_note_drum(channel,noteid,velocity); break;
     case 2: case 3: case 4: synth_channel_note_tuned(channel,noteid,velocity,durframes); break;
@@ -171,7 +170,6 @@ void synth_channel_note(struct synth_channel *channel,uint8_t noteid,float veloc
  */
  
 void synth_channel_wheel(struct synth_channel *channel,int v) {
-  fprintf(stderr,"%s chid=%d v=%d\n",__func__,channel->chid,v);//TODO
   switch (channel->mode) {
     case 2: case 3: case 4: synth_channel_wheel_tuned(channel,v); break;
   }
@@ -181,7 +179,6 @@ void synth_channel_wheel(struct synth_channel *channel,int v) {
  */
  
 void synth_channel_release_all(struct synth_channel *channel) {
-  fprintf(stderr,"%s chid=%d\n",__func__,channel->chid);//TODO
   switch (channel->mode) {
     case 2: case 3: case 4: synth_channel_release_tuned(channel); break;
   }

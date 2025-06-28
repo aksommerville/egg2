@@ -13,6 +13,8 @@ struct synth_tuned_extra {
   float *lfobuf;
   uint32_t lfop,lfodp;
   float lfoscale,lfobias;
+  int wheeli; // Most recent value from the bus. -512..511
+  float wheelm; // Multiplier.
 
   int modabs; // boolean
   float modrate; // multiplier; relative only
@@ -77,7 +79,6 @@ CHUPDATE(wave)
 
 /* Update from stored wave with pitch envelope.
  */
- static int XXX_logged=0;
  
 static void synth_voice_update_wave_bend(float *v,int c,struct synth_voice *voice,struct synth_channel *channel) {
   for (;c-->0;v++) {
@@ -393,19 +394,25 @@ void synth_channel_note_tuned(struct synth_channel *channel,uint8_t noteid,float
   synth_env_apply(&voice->rangeenv,&EXTRA->rangeenv,velocity,durframes);
   synth_env_apply(&voice->pitchenv,&EXTRA->pitchenv,velocity,durframes);
   voice->carp=0;
-  voice->cardp=channel->synth->rateiv[noteid];
-  voice->cardp_base=voice->cardp;
+  voice->cardp_base=channel->synth->rateiv[noteid];
+  voice->cardp=(uint32_t)((float)voice->cardp_base*EXTRA->wheelm);
   voice->modp=0;
-  
-  //TODO wheel initial value
-  //TODO other voice prep
 }
 
 /* Adjust wheel.
  */
  
 void synth_channel_wheel_tuned(struct synth_channel *channel,int v) {
-  //TODO
+  if (!EXTRA->wheelrange) return;
+  if (v==EXTRA->wheeli) return;
+  EXTRA->wheeli=v;
+  float cents=((float)v*(float)EXTRA->wheelrange)/512.0f;
+  EXTRA->wheelm=powf(2.0f,cents/1200.0f);
+  struct synth_voice *voice=EXTRA->voicev;
+  int i=EXTRA->voicec;
+  for (;i-->0;voice++) {
+    voice->cardp=(uint32_t)((float)voice->cardp_base*EXTRA->wheelm);
+  }
 }
 
 /* Release all notes.

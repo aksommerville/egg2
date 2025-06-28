@@ -82,7 +82,7 @@ static int synth_update_song(struct synth *synth,int limit) {
           }
           int w=synth->song->v[synth->song->p++];
           w|=(lead&3)<<8;
-          w+=512;
+          w-=512;
           uint8_t chid=(lead>>2)&15;
           synth_song_wheel(synth->song,chid,w);
         } break;
