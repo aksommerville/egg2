@@ -277,7 +277,7 @@ static int eaut_eau_post(struct eaut_eau_context *ctx,const uint8_t *src,int src
     if (stagename) sr_encode_raw(ctx->dst,stagename,-1);
     else sr_encode_fmt(ctx->dst,"%02x",stageid);
     sr_encode_raw(ctx->dst," len(1) { ",-1);
-    int i=0; for (;i<len;i++) sr_encode_raw(ctx->dst,"%02x ",body[i]);
+    int i=0; for (;i<len;i++) sr_encode_fmt(ctx->dst,"%02x ",body[i]);
     sr_encode_raw(ctx->dst,"}\n",2);
   }
   return 0;

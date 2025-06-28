@@ -19,6 +19,7 @@
 #define SYNTH_ID_SOUND 0x20000
 #define SYNTH_UPDATE_LIMIT 1024 /* Longest update of the signal graph, in frames. */
 #define SYNTH_PCM_LIMIT_SAMPLES (1<<20) /* Sanity limit. Keep it way too long, since it doesn't account for rate. */
+#define SYNTH_SONG_FADE_TIME 0.500f
 
 struct synth_pcm;
 struct synth_wave;
@@ -69,6 +70,72 @@ void synth_pcmplay_cleanup(struct synth_pcmplay *pcmplay);
 int synth_pcmplay_init(struct synth_pcmplay *pcmplay,struct synth_pcm *pcm,int chanc,float trim,float pan);
 int synth_pcmplay_update(float *v,int framec,struct synth_pcmplay *pcmplay); // adds; >0 if still running
 
+/* Post pipe.
+ ******************************************************************************/
+ 
+struct synth_pipe {
+  struct synth *synth;
+  int rate,chanc,tempo; // tempo in frames
+  struct synth_stage {
+    void (*del)(struct synth_stage *stage);
+    // Both update hooks are required:
+    void (*update_mono)(float *v,int c,struct synth_stage *stage);
+    void (*update_stereo)(float *v,int framec,struct synth_stage *stage);
+  } **stagev;
+  int stagec,stagea;
+};
+
+void synth_pipe_del(struct synth_pipe *pipe);
+
+/* (chanc) must be 1 or 2; we'll force to 2 if higher.
+ */
+struct synth_pipe *synth_pipe_new(struct synth *synth,int chanc,int tempo,const uint8_t *src,int srcc);
+
+/* 1 or 2 samples per frame, according to (chanc).
+ */
+void synth_pipe_update(float *v,int framec,struct synth_pipe *pipe);
+
+/* Channel.
+ ********************************************************************************/
+ 
+struct synth_channel {
+  struct synth *synth; // WEAK, REQUIRED
+  int rate,chanc,tempo; // tempo in frames
+  float pan;
+  float triml,trimr; // (pan) expressed as two trims. At least one of these is 1.0.
+  float trim; // For mono=>stereo, normalized trim for pan, then we run post, then main trim.
+  uint8_t mode;
+  uint8_t chid;
+  struct synth_pipe *post;
+  
+  /* Prepared by mode-specific initialization.
+   * All voicing modes must set update_mono.
+   * Ones that do their own stereo placement (DRUM) should also set update_stereo.
+   * There is no generic application of (pan) when update_stereo in use; voices should respect it on their own if possible.
+   * Both updates get a zeroed buffer initially.
+   */
+  void (*del)(struct synth_channel *channel);
+  void (*update_mono)(float *v,int framec,struct synth_channel *channel);
+  void (*update_stereo)(float *v,int framec,struct synth_channel *channel);
+  void *extra;
+  
+  float tmp[SYNTH_UPDATE_LIMIT*2]; // Channel always has enough scratch space for a stereo update.
+};
+
+void synth_channel_del(struct synth_channel *channel);
+
+/* (src) is a full EAU "CHDR" chunk.
+ */
+struct synth_channel *synth_channel_new(struct synth *synth,int tempo,const uint8_t *src,int srcc);
+
+/* Adds to (v).
+ */
+void synth_channel_update(float *v,int framec,struct synth_channel *channel);
+
+void synth_channel_note(struct synth_channel *channel,uint8_t noteid,float velocity,int durframes);
+void synth_channel_wheel(struct synth_channel *channel,int v); // -512..0..511
+void synth_channel_release_all(struct synth_channel *channel);
+
 /* Song player.
  *******************************************************************************/
  
@@ -85,18 +152,10 @@ struct synth_song {
   int tempo; // frames/qnote, established at construction.
   int loopp;
   int terminated;
+  float fade,dfade; // In play once (terminated).
   struct synth_channel **channelv;
   int channelc,channela;
-  //TODO voicing etc
-  
-  //XXX World's Cheapest Synthesizer, entirely temporary, because I'm impatient to hear something.
-  struct synth_voice {
-    int ttl;
-    uint32_t p;
-    uint32_t dp;
-    float level;
-  } voicev[64];
-  int voicec;
+  struct synth_channel *channel_by_chid[16]; // WEAK, SPARSE. Addressable channels.
 };
 
 void synth_song_del(struct synth_song *song);
@@ -131,6 +190,7 @@ struct synth {
   int qbufa;
   float ratefv[128];
   uint32_t rateiv[128];
+  float sine[SYNTH_WAVE_SIZE_SAMPLES];
   
   struct synth_res {
     int id;

@@ -5,20 +5,11 @@
  
 void synth_song_del(struct synth_song *song) {
   if (!song) return;
+  if (song->channelv) {
+    while (song->channelc-->0) synth_channel_del(song->channelv[song->channelc]);
+    free(song->channelv);
+  }
   free(song);
-}
-
-/* Add channel from decoded CHDR.
- */
- 
-static int synth_song_add_channel(
-  struct synth_song *song,
-  uint8_t chid,uint8_t trim,uint8_t pan,uint8_t mode,
-  const uint8_t *modecfg,int modecfgc,
-  const uint8_t *post,int postc
-) {
-  fprintf(stderr,"%s:%d:%s: TODO chid=%d\n",__FILE__,__LINE__,__func__,chid);//TODO
-  return 0;
 }
 
 /* Receive CHDR chunk.
@@ -26,29 +17,25 @@ static int synth_song_add_channel(
  
 static int synth_song_decode_CHDR(struct synth_song *song,const uint8_t *src,int srcc) {
   if (srcc<1) return 0;
-  uint8_t chid=src[0],trim=0x40,pan=0x80,mode=0;
-  if (chid>=0x10) return 0; // High chid are legal but there's nothing for us to do with them.
-  int srcp=1;
-  if (srcp<srcc) trim=src[srcp++];
-  if (srcp<srcc) pan=src[srcp++];
-  if (srcp<srcc) mode=src[srcp++];
-  const void *modecfg=0,*post=0;
-  int modecfgc=0,postc=0;
-  if (srcp<srcc-2) {
-    modecfgc=(src[srcp]<<8)|src[srcp+1];
-    srcp+=2;
-    if (srcp>srcc-modecfgc) return -1;
-    modecfg=src+srcp;
-    srcp+=modecfgc;
+  if (src[0]>=0x10) return 0; // Ignore unaddressable channels.
+  if (song->channel_by_chid[src[0]]) return 0; // Duplicate chid. Illegal but allow it, whatever.
+  if (song->channelc>=song->channela) {
+    int na=song->channela+8;
+    if (na>INT_MAX/sizeof(void*)) return -1;
+    void *nv=realloc(song->channelv,sizeof(void*)*na);
+    if (!nv) return -1;
+    song->channelv=nv;
+    song->channela=na;
   }
-  if (srcp<srcc-2) {
-    postc=(src[srcp]<<8)|src[srcp+1];
-    srcp+=2;
-    if (srcp>srcc-postc) return -1;
-    post=src+srcp;
-    srcp+=postc;
+  struct synth_channel *channel=synth_channel_new(song->synth,song->tempo,src,srcc);
+  if (!channel) return -1;
+  if (channel->mode==0) { // MODE_NOOP, either naturally or faked by the channel decoder, we can drop it.
+    synth_channel_del(channel);
+    return 0;
   }
-  return synth_song_add_channel(song,chid,trim,pan,mode,modecfg,modecfgc,post,postc);
+  song->channelv[song->channelc++]=channel;
+  song->channel_by_chid[src[0]]=channel;
+  return 0;
 }
 
 /* Decode new song.
@@ -80,6 +67,7 @@ static int synth_song_decode(struct synth_song *song,const uint8_t *src,int srcc
       }
       
     } else if (!memcmp(chunkid,"CHDR",4)) {
+      if (!song->tempo) return -1; // "\0EAU" required before "CHDR".
       if (synth_song_decode_CHDR(song,chunk,chunklen)<0) return -1;
       
     } else if (!memcmp(chunkid,"EVTS",4)) {
@@ -118,9 +106,14 @@ struct synth_song *synth_song_new(struct synth *synth,const void *v,int c,int re
  */
  
 void synth_song_terminate(struct synth_song *song) {
+  if (song->terminated) return;
+  song->fade=1.0f;
+  song->dfade=-1.0f/(SYNTH_SONG_FADE_TIME*(float)song->synth->rate);
   song->terminated=1;
   song->delay=INT_MAX; // Prevent further event activity, if we're the current song.
-  //TODO Release all notes.
+  memset(song->channel_by_chid,0,sizeof(song->channel_by_chid)); // Another way to prevent further events.
+  int i=song->channelc;
+  while (i-->0) synth_channel_release_all(song->channelv[i]);
 }
 
 /* Playhead.
@@ -131,7 +124,8 @@ float synth_song_get_playhead(const struct synth_song *song) {
 }
 
 void synth_song_set_playhead(struct synth_song *song,float s) {
-  //TODO Release all notes.
+  int i=song->channelc;
+  while (i-->0) synth_channel_release_all(song->channelv[i]);
   int ms=(int)(s*1000.0f);
   song->delay=0;
   song->p=0;
@@ -183,28 +177,59 @@ int synth_song_measure_frames(const struct synth_song *song) {
 
 void synth_song_note(struct synth_song *song,uint8_t chid,uint8_t noteid,float velocity,int durframes) {
   if (song->terminated) return;
-  fprintf(stderr,"TODO %s chid=%d noteid=%d velocity=%.03f durframes=%d starttime=%f\n",__func__,chid,noteid,velocity,durframes,(double)song->phframes/(double)song->synth->rate);//TODO
+  //fprintf(stderr,"TODO %s chid=%d noteid=%d velocity=%.03f durframes=%d starttime=%f\n",__func__,chid,noteid,velocity,durframes,(double)song->phframes/(double)song->synth->rate);//TODO
   if (noteid&0x80) return;
-  
-  //XXX very temp
-  struct synth_voice *voice;
-  if (song->voicec<64) {
-    voice=song->voicev+song->voicec++;
-  } else {
-    voice=song->voicev;
-    struct synth_voice *q=voice;
-    int i=64;
-    for (;i-->0;q++) {
-      if (q->ttl<voice->ttl) voice=q;
-    }
-  }
-  voice->ttl=durframes+1000;
-  voice->p=0;
-  voice->dp=song->synth->rateiv[noteid];
-  voice->level=0.0125f;
+  if (chid&0xf0) return;
+  struct synth_channel *channel=song->channel_by_chid[chid];
+  if (!channel) return;
+  synth_channel_note(channel,noteid,velocity,durframes);
 }
 
 void synth_song_wheel(struct synth_song *song,uint8_t chid,int v) {
   if (song->terminated) return;
-  fprintf(stderr,"TODO %s chid=%d v=%d\n",__func__,chid,v);//TODO
+  //fprintf(stderr,"TODO %s chid=%d v=%d\n",__func__,chid,v);//TODO
+  if (chid&0xf0) return;
+  struct synth_channel *channel=song->channel_by_chid[chid];
+  if (!channel) return;
+  synth_channel_wheel(channel,v);
+}
+
+/* Update song's signal graph, main entry point.
+ * Add to (v).
+ * Return >0 to stay alive.
+ */
+  
+int synth_song_update(float *v,int framec,struct synth_song *song) {
+  if ((song->delay-=framec)<0) song->delay=0;
+  song->phframes+=framec;
+  
+  /* When fading out, we painstakingly adjust trims and update channels one frame at a time.
+   * Once fade reaches zero, we're done.
+   * Could be done more efficiently if we implemented in channel, but that feels risky to me.
+   */
+  if (song->terminated) {
+    for (;framec-->0;v+=song->chanc) {
+      if ((song->fade+=song->dfade)<=0.0f) return 0;
+      struct synth_channel **p=song->channelv;
+      int i=song->channelc;
+      for (;i-->0;p++) {
+        struct synth_channel *channel=*p;
+        float l0=channel->triml;
+        float r0=channel->trimr;
+        channel->triml*=song->fade;
+        channel->trimr*=song->fade;
+        synth_channel_update(v,1,*p);
+        channel->triml=l0;
+        channel->trimr=r0;
+      }
+    }
+  
+  } else {
+    struct synth_channel **p=song->channelv;
+    int i=song->channelc;
+    for (;i-->0;p++) {
+      synth_channel_update(v,framec,*p);
+    }
+  }
+  return 1;
 }

@@ -263,10 +263,10 @@ Zero or more stages:
 ```
 
 - `0x00 NOOP`: All params legal, does nothing.
-- `0x01 DELAY`: u8.8 period qnotes, u0.8 mix, u0.8 feedback, u0.8 sparkle=0.
+- `0x01 DELAY`: u8.8 period qnotes=1.0, u0.8 dry=0.5, u0.8 wet=0.5, u0.8 store=0.5, u0.8 feedback=0.5, u8 sparkle(0..128..255)=0x80.
 - - Sparkle adjusts the rate slightly for the two stereo channels, noop for mono.
 - `0x02 WAVESHAPER`: u0.16... levels. Positive half only and no zero. ie a single 0xffff is noop.
-- `0x03 TREMOLO`: u8.8 period qnotes, u0.8 depth=1, u0.8 phase=0.
+- `0x03 TREMOLO`: u8.8 period qnotes=1, u0.8 depth=1, u0.8 phase=0.
 
 ## EAU Text
 

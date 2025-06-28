@@ -27,7 +27,7 @@ void synth_del(struct synth *synth) {
   free(synth);
 }
 
-/* Populate (ratefv,rateiv).
+/* Populate (ratefv,rateiv,sine).
  */
  
 static void synth_calculate_rates(struct synth *synth) {
@@ -57,6 +57,11 @@ static void synth_calculate_rates(struct synth *synth) {
   for (i=0x80;i-->0;src++,dst++) {
     *dst=(uint32_t)((*src)*4294967296.0f);
   }
+  
+  // Calculate the sine table. Nothing to do with rate tables, just as long as we're here...
+  float *p=synth->sine;
+  float t=0.0f,dt=(M_PI*2.0f)/SYNTH_WAVE_SIZE_SAMPLES;
+  for (i=SYNTH_WAVE_SIZE_SAMPLES;i-->0;p++,t+=dt) *p=sinf(t);
 }
 
 /* New.

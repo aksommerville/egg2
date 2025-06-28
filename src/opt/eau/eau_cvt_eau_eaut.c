@@ -93,7 +93,7 @@ int eaut_tokenizer_next(void *dstpp,struct eaut_tokenizer *t) {
     
     // Blocks.
     if (t->v[t->p]=='{') {
-      struct eaut_tokenizer sub={.v=t->v+t->p+1,.c=t->c-t->p-1};
+      struct eaut_tokenizer sub={.v=t->v,.c=t->c,.p=t->p+1};
       const char *token;
       for (;;) {
         int tokenc=eaut_tokenizer_next(&token,&sub);
@@ -102,14 +102,34 @@ int eaut_tokenizer_next(void *dstpp,struct eaut_tokenizer *t) {
           return 1;
         }
         if ((tokenc==1)&&(token[0]=='}')) {
-          t->p+=sub.p;
-          return sub.p;
+          tokenc=sub.p-t->p;
+          t->p=sub.p;
+          return tokenc;
         }
       }
     }
     
+    // A few explicit single-byte tokens.
+    if (
+      (t->v[t->p]=='(')||
+      (t->v[t->p]=='{')||
+      (t->v[t->p]==',')||
+      (t->v[t->p]=='}')||
+      (t->v[t->p]==')')
+    ) {
+      t->p+=1;
+      return 1;
+    }
+    
     // Space-delimited token.
-    while ((t->p<t->c-c)&&((unsigned char)t->v[t->p+c]<=0x20)) c++;
+    while (t->p<t->c-c) {
+      char ch=t->v[t->p+c];
+      if ((unsigned char)ch<=0x20) break;
+      if (ch=='(') break;
+      if (ch=='{') break;
+      if (ch==',') break;
+      c++;
+    }
     t->p+=c;
     return c;
   }
@@ -149,13 +169,9 @@ static int eau_eaut_params(int *dstv,int dsta,struct eau_eaut_context *ctx,const
   for (;;) {
     const char *token;
     int tokenc=eaut_tokenizer_next(&token,&t);
-    if (tokenc<1) return fail(ctx,src,"Unclosed parameter list.");
+    if (tokenc<1) return dstc;
     // Don't bother checking that commas are in the right place (or even present). They're decorative.
     if ((tokenc==1)&&(token[0]==',')) continue;
-    if ((tokenc==1)&&(token[0]==')')) {
-      if (eaut_tokenizer_next(&token,&t)>0) return fail(ctx,token,"Unexpected extra tokens."); // not possible
-      return dstc;
-    }
     if (dstc>=dsta) return fail(ctx,token,"Expected no more than %d parameters.",dsta);
     // Anything else must be an integer.
     if (sr_int_eval(dstv+dstc,token,tokenc)<2) {
@@ -213,9 +229,9 @@ static int eau_eaut_fn_delay(struct eau_eaut_context *ctx,const char *params,int
     sr_encode_u8(ctx->dst,0x7f);
     ms-=4096;
   }
-  if (ms>=128) {
-    sr_encode_u8(ctx->dst,0x40|((ms>>7)-1));
-    ms&=0x7f;
+  if (ms>=64) {
+    sr_encode_u8(ctx->dst,0x40|((ms>>6)-1));
+    ms&=0x3f;
   }
   if (ms>0) {
     sr_encode_u8(ctx->dst,ms);
@@ -317,7 +333,7 @@ static int eau_cvt_eau_eaut_inner(struct eau_eaut_context *ctx,const char *src,i
         return fail(ctx,params,"Expected parenthesized parameters after 'len'.");
       }
       const char *body=params;
-      int bodyc=eaut_tokenizer_next(&params,&t);
+      int bodyc=eaut_tokenizer_next(&body,&t);
       if ((bodyc<2)||(body[0]!='{')||(body[bodyc-1]!='}')) {
         return fail(ctx,body,"Expected bracketted body after 'len(...)'.");
       }
