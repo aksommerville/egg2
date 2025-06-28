@@ -210,7 +210,7 @@ void synth_play_song(struct synth *synth,int songid,int force,int repeat) {
    */
   if (!force) {
     if (!songid&&!res) return;
-    if (res&&synth->song&&((res->id&0xffff)==songid)) return;
+    if (res&&synth->song&&(synth->song->songid==songid)) return;
     //TODO Should we consider swapping (song,pvsong) when the new request matches (pvsong)? Seems logical, but would take some awkward gymnastics.
   }
   

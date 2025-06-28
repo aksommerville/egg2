@@ -20,6 +20,7 @@ extern struct g {
   int romc;
   struct graf graf;
   int texid_tiles;
+  int songid;
 } g;
 
 #endif

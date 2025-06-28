@@ -132,10 +132,8 @@ int eggstra_main_play() {
     usleep(100000);
     if (!synth_get_songid(play.synth)) break; // non-repeat playback finished.
     float nph=synth_get_playhead(play.synth);
-    if (nph<play.playhead) {
-      fprintf(stderr,"%s: Looped. Approximate duration %f s.\n",play.srcpath,play.playhead);
-      play.playhead=nph;
-    }
+    if (nph<play.playhead) fprintf(stderr,"%s: Looped. Approximate duration %f s.\n",play.srcpath,play.playhead);
+    play.playhead=nph;
   }
   //TODO Show CPU consumption.
   play_quit();

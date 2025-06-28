@@ -1,6 +1,18 @@
 #include "demo.h"
 
-struct g g={0};
+  /* around_here_somewhere
+   * eternal_torment
+   * hold_your_fire
+   * bakers_dozen
+   * in_thru_the_window
+   * tiny
+   * tiny2
+   * wheeltest
+   * drumtest
+   */
+struct g g={
+  .songid=RID_song_around_here_somewhere,
+};
 
 void egg_client_quit(int status) {
 }
@@ -88,15 +100,7 @@ int egg_client_init() {
     egg_log("Saved game.");
   }
   
-  /* around_here_somewhere
-   * eternal_torment
-   * hold_your_fire
-   * bakers_dozen
-   * in_thru_the_window
-   * tiny
-   * tiny2
-   */
-  egg_play_song(RID_song_hold_your_fire,0,1);
+  egg_play_song(g.songid,0,1);
   
   g.texid_tiles=egg_texture_new();
   if (egg_texture_load_image(g.texid_tiles,RID_image_tiles)<0) {
@@ -131,6 +135,14 @@ void egg_client_update(double elapsed) {
     if (input&EGG_BTN_RIGHT) msg[msgc++]='r'; else msg[msgc++]='.';
     msg[msgc]=0;
     egg_log(msg);
+    if ((input&EGG_BTN_SOUTH)&&!(pvinput&EGG_BTN_SOUTH)) {
+      g.songid++;
+      if (g.songid>RID_song_drumtest) g.songid=1;
+      char tmp[]="Play song 000";
+      tmp[12]='0'+g.songid;
+      egg_log(tmp);
+      egg_play_song(g.songid,0,1);
+    }
     pvinput=input;
   }
 }
