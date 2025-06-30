@@ -5,18 +5,16 @@
  */
  
 import { EGG_TID_song, EGG_TID_sound } from "./Rom.js";
-import { Song } from "./Song.js";
-import { requireFrequencies } from "./songBits.js";
+import { SongPlayer } from "./SongPlayer.js";
  
 export class Audio {
   constructor(rt) {
     console.log(`Audio.constructor`);
     this.rt = rt; // Will be undefined when loaded in editor.
-    this.songid = 0; // 0 if stopped or invalid
-    this.song = null;
-    this.sounds = [];
+    this.song = null; // SongPlayer, target for songid and playhead.
+    this.pvsong = null; // SongPlayer, winding down.
+    this.sounds = []; // SongPlayer. TODO Maybe something else, once we get printing implemented.
     this.ctx = null; // AudioContext
-    requireFrequencies();
   }
   
   //TODO I think we need a softer concept of "pause", to temporarily stop output eg when the page loses focus.
@@ -40,7 +38,10 @@ export class Audio {
     if (this.song) {
       this.song.stop();
       this.song = null;
-      this.songid = 0;
+    }
+    if (this.pvsong) {
+      this.pvsong.stop();
+      this.pvsong = null;
     }
     if (this.ctx) {
       this.ctx.suspend();
@@ -54,12 +55,8 @@ export class Audio {
         this.sounds.splice(i, 1);
       }
     }
-    if (this.song) {
-      if (!this.song.update()) {
-        this.song = null;
-        this.songid = 0;
-      }
-    }
+    if (this.song && !this.song.update()) this.song = null;
+    if (this.pvsong && !this.pvsong.update()) this.pvsong = null;
   }
   
   /* For editor.
@@ -68,17 +65,15 @@ export class Audio {
   playEauSong(serial, songid) {
     let playhead = 0;
     if (this.song) {
-      if (songid && (songid === this.songid)) playhead = this.song.getPlayhead();
+      if (songid && (songid === this.song.id)) playhead = this.song.getPlayhead();
       this.song.stop();
       this.song = null;
-      this.songid = 0;
     }
     if (serial) {
       console.log(`Audio.playEauSong`, { serial, songid, playhead });
-      this.song = new Song(serial, 1.0, 0.0, false);
-      this.song.play(this.ctx);
+      this.song = new Song(this.ctx, serial, 1.0, 0.0, false, songid);
+      this.song.play();
       if (playhead > 0) this.song.setPlayhead(playhead);
-      this.songid = songid;
     }
   }
   
@@ -91,29 +86,30 @@ export class Audio {
     //TODO Print and cache.
     const serial = this.rt.rom.getRes(EGG_TID_sound, soundid);
     if (!serial) return;
-    const song = new Song(serial, trim, pan, false);
-    song.play(this.ctx);
+    const song = new SongPlayer(this.ctx, serial, trim, pan, false, 0);
+    song.play();
     this.sounds.push(song);
   }
   
   egg_play_song(songid, force, repeat) {
     console.log(`Audio.egg_play_song ${songid}`);
     if (!this.ctx) return;
-    if (!force && (songid === this.songid)) return;
+    if (!force && (songid === this.song?.id)) return;
     const serial = this.rt.rom.getRes(EGG_TID_song, songid);
     if (!serial) songid = 0;
     if (this.song) {
-      this.song.stop();
+      if (this.pvsong) this.pvsong.stop();
+      this.pvsong = this.song;
+      this.song.stopSoon();
       this.song = null;
     }
-    this.songid = songid;
     if (!serial) return;
-    this.song = new Song(serial, 1.0, 0.0, repeat);
-    this.song.play(this.ctx);
+    this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid);
+    this.song.play();
   }
   
   egg_song_get_id() {
-    return this.songid;
+    return this.song?.id || 0;
   }
   
   egg_song_get_playhead() {

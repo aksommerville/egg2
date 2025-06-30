@@ -151,11 +151,13 @@ Required, once only, and must be the first chunk.
 Optional. Forbidden after "EVTS".
 Events for a channel with no header will get a non-silent default instrument.
 Decoder behavior re duplicate chid is undefined. Use the first or last or fail.
+An empty CHDR is technically legal but meaningless.
+CHDR for channels 16 and above are perfectly legal. We may use EAU and EAU-Text as instrument repositories.
 
 ```
   1 Channel ID 0..255, but only 0..15 are addressable.
   1 Trim 0..255 =0x40.
-  1 Pan 0..128..255 = left..center..right =0.
+  1 Pan 0..128..255 = left..center..right =128.
   1 Mode =2.
   2 Modecfg length.
   ... Modecfg.
@@ -167,6 +169,7 @@ Decoder behavior re duplicate chid is undefined. Use the first or last or fail.
 
 May only appear once, and only after "\0EAU" and all "CHDR".
 Single-appearance is a strict rule on technical grounds: the runtime wants to point directly into the ROM for this and read it live.
+It is legal to omit EVTS, in which case our runtime will insert a long delay. (4096 ms in both implementations, but let's not mandate that exact number).
 
 Zero or more events, distinguishable from high bits of the first byte:
 ```

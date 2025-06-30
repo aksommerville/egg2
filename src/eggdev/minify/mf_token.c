@@ -288,6 +288,7 @@ int mf_measure_js_operator(const char *src,int srcc,int *cls) {
       case '*': OK(EXP,2)
       case '&': OK(LAN,2)
       case '|': OK(LOR,2)
+      case '?': OK(LOR,2)
     } else if (src[1]=='=') switch (src[0]) {
       case '>': OK(CMP,2)
       case '<': OK(CMP,2)

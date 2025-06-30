@@ -90,8 +90,16 @@ TODO:
 - [x] Update eggdev.
 - [x] Native synth implementation.
 - [ ] Web synth implementation.
+- - [x] Print PCM.
+- - [ ] Soft pause.
+- - [ ] Correct getPlayhead (currently not wrapping)
 - [ ] Update editor.
 - [ ] Define some instruments.
 - [ ] Test perceptually.
+- [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
 - [ ] `eggdev_convert_audio.c:eggdev_wav_from_eau`: Arbitrary params from user for conversion? (rate,chanc,method) in this case.
 - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
+- [ ] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.
+- - We're not. And if it seems burdensome, we can change the spec to require CHDR.
+- - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
+- [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.

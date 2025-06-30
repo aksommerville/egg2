@@ -48,6 +48,6 @@ addEventListener("load", () => {
   try {
     new Runtime(acquireRomFromUi()).start();
   } catch (e) {
-    alert(e?.message || e?.toString() || e);
+    console.error(e?.message || e?.toString() || e);
   }
 }, { once: true });

@@ -11,7 +11,7 @@
    * drumtest
    */
 struct g g={
-  .songid=RID_song_around_here_somewhere,
+  .songid=RID_song_drumtest,
 };
 
 void egg_client_quit(int status) {
@@ -59,7 +59,7 @@ int egg_client_init() {
     egg_log(msg);
   }
   if ((fbw!=FBW)||(fbh!=FBH)) {
-    fprintf(stderr,"Framebuffer size mismatch! metadata=%dx%d header=%dx%d\n",fbw,fbh,FBW,FBH);
+    //fprintf(stderr,"Framebuffer size mismatch! metadata=%dx%d header=%dx%d\n",fbw,fbh,FBW,FBH);
     return -1;
   }
 
