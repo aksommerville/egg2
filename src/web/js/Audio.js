@@ -6,6 +6,7 @@
  
 import { EGG_TID_song, EGG_TID_sound } from "./Rom.js";
 import { SongPlayer } from "./SongPlayer.js";
+import { eauNotevRequire } from "./songBits.js";
  
 export class Audio {
   constructor(rt) {
@@ -15,6 +16,7 @@ export class Audio {
     this.pvsong = null; // SongPlayer, winding down.
     this.sounds = []; // SongPlayer. TODO Maybe something else, once we get printing implemented.
     this.ctx = null; // AudioContext
+    eauNotevRequire();
   }
   
   //TODO I think we need a softer concept of "pause", to temporarily stop output eg when the page loses focus.

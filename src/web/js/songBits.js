@@ -2,6 +2,14 @@
  * Standalone utilities shared around the synthesizer.
  */
  
+/* Rate table, Hz by MIDI note id.
+ */
+export const eauNotev = [];
+export function eauNotevRequire() {
+  if (eauNotev.length) return;
+  for (let i=0; i<128; i++) eauNotev.push(440 * Math.pow(2, (i-0x45) / 12));
+}
+ 
 /* Duration of EAU file, based only on delays events.
  */
 export function calculateEauDuration(src, rate) {
@@ -131,4 +139,45 @@ export class EauDecoder {
     }
     return { flags: 0x80, initlo: init, inithi: init, points: [] };
   }
+}
+
+/* Apply envelope.
+ * Returns [{t,v}...] at least one.
+ */
+export function eauEnvApply(env, when, velocity, durs) {
+  const dst = [];
+  let sus = (env.flags & 0x04) ? env.susp : 99;
+  if (!(env.flags & 0x02) || (velocity <= 0)) {
+    dst.push({ t: when, v: env.initlo });
+    for (const pt of env.points) {
+      let t = pt.tlo;
+      if (!sus--) t = Math.max(0, durs);
+      t += when;
+      dst.push({ t, v: pt.vlo });
+      when = t;
+    }
+    
+  } else if (velocity >= 1) {
+    dst.push({ t: when, v: env.inithi });
+    for (const pt of env.points) {
+      let t = pt.thi;
+      if (!sus--) t = Math.max(0, durs);
+      t += when;
+      dst.push({ t, v: pt.vhi });
+      when = t;
+    }
+    
+  } else {
+    const whi = velocity;
+    const wlo = 1 - whi;
+    dst.push({ t: when, v: env.initlo * wlo + env.inithi * whi });
+    for (const pt of env.points) {
+      let t = pt.tlo * wlo + pt.thi * whi;
+      if (!sus--) t = Math.max(0, durs);
+      t += when;
+      dst.push({ t, v: pt.vlo * wlo + pt.vhi * whi });
+      when = t;
+    }
+  }
+  return dst;
 }

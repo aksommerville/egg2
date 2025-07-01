@@ -3,7 +3,7 @@
  * We're responsible both for its event bus and its signal bus.
  */
  
-import { calculateEauDuration, EauDecoder } from "./songBits.js";
+import { calculateEauDuration, EauDecoder, eauNotev, eauEnvApply } from "./songBits.js";
 
 export class SongChannel {
   
@@ -29,7 +29,13 @@ export class SongChannel {
     
     this.postStart = new GainNode(this.player.ctx, { gain: 1 }); // Voices attach here.
     this.postEnd = new GainNode(this.player.ctx, { gain: this.trim }); // Post attaches here.
-    this.postEnd.connect(player.node);
+    if (this.pan) {
+      const panNode = new StereoPannerNode(this.player.ctx, { pan: this.pan });
+      this.postEnd.connect(panNode);
+      panNode.connect(player.node);
+    } else {
+      this.postEnd.connect(player.node);
+    }
     let postTail = this.postStart; // Last node of post, or postStart.
     if (post) {
       for (let srcp=0; srcp<post.length; ) {
@@ -161,66 +167,157 @@ export class SongChannel {
    
   initFm(src) {
     const decoder = new EauDecoder(src);
-    let modrate = decoder.u16(0);
+    const modrate = decoder.u16(0);
     let modrange = decoder.u16(0);
-    let levelenv = decoder.env("level");
-    let rangeenv = decoder.env("range");
-    let pitchenv = decoder.env("pitch");
-    let wheelrange = decoder.u16(200);
+    this.levelenv = decoder.env("level");
+    this.rangeenv = decoder.env("range");
+    this.pitchenv = decoder.env("pitch");
+    this.wheelrange = decoder.u16(200);
     let lforate = decoder.u16(0);
     let lfodepth = decoder.u8(0xff);
     let lfophase = decoder.u8(0);
     
-    console.log(`SongChannel.initFm`, {
-      chid: this.chid,
-      modrate, modrange, levelenv, rangeenv, pitchenv, wheelrange, lforate, lfodepth, lfophase
-    });
-    //TODO
+    if (modrate & 0x8000) {
+      this.modabs = true;
+      this.modrate = (modrate & 0x7fff) / 256; // qnotes
+      this.modrate = 256000 / (this.modrate * this.player.tempo); // hz
+    } else {
+      this.modrate = modrate / 256;
+    }
+    
+    // If rangeenv is not default, apply the master range.
+    if (!(this.rangeenv.flags & 0x80)) {
+      modrange /= 0x100;
+      this.rangeenv.initlo *= modrange;
+      this.rangeenv.inithi *= modrange;
+      for (const pt of this.rangeenv.points) {
+        pt.vlo *= modrange;
+        pt.vhi *= modrange;
+      }
+    } else {
+      this.modrange = modrange / 256;
+    }
     
     if (lforate && lfodepth) {
       const frequency = 256000 / (lforate * this.player.tempo);
-      console.log(`LFO frequency ${frequency} Hz (${lforate}/256 qnotes/c at ${this.player.tempo} ms/qnote)`);
-      if (lfophase) {
-        console.log(`!!! LFO phase ${lfophase}/256`);
-      }
-      //this.lfo = new OscillatorNode(this.player.ctx, { frequency });
+      lfodepth /= 0xff;
+      lfophase /= 0xff;
+      lfodepth *= 0.5;
+      lfophase *= Math.PI * 2;
+      this.lfobase = 1.0 - lfodepth; // I can't seem to get a DC offset out of PeriodicWave, but we can fake it at the receiving node.
+      const real = new Float32Array([0, Math.sin(lfophase)*lfodepth]);
+      const imag = new Float32Array([0, Math.cos(lfophase)*lfodepth]);
+      const wave = new PeriodicWave(this.player.ctx, { real, imag, disableNormalization: true });
+      this.lfo = new OscillatorNode(this.player.ctx, { shape: "custom", periodicWave: wave, frequency });
+      this.lfo.start();
     }
+
+    this.osc = (a,b,c,d) => this.oscillateFm(a, b, c, d);
   }
   
   initHarsh(src) {
-    //TODO
+    const decoder = new EauDecoder(src);
+    let shape = decoder.u8(0);
+    this.levelenv = decoder.env("level");
+    this.pitchenv = decoder.env("pitch");
+    this.wheelrange = decoder.u16(200);
+    switch (shape) {
+      case 1: this.shape = "square"; break;
+      case 2: this.shape = "sawtooth"; break;
+      case 3: this.shape = "triangle"; break;
+      default: this.shape = "sine";
+    }
+    this.osc = (a,b,c,d) => this.oscillateHarsh(a,b,c,d);
   }
   
   initHarm(src) {
-    //TODO
+    const decoder = new EauDecoder(src);
+    let harmc = decoder.u8(0);
+    let imag;
+    if (harmc) {
+      imag = new Float32Array(1 + harmc);
+      for (let i=1; i<=harmc; i++) imag[i] = decoder.u16(0) / 0xffff;
+    } else {
+      imag = new Float32Array([0, 1]);
+    }
+    this.wave = new PeriodicWave(this.player.ctx, {
+      real: new Float32Array(imag.length),
+      imag,
+      disableNormalization: true,
+    });
+    this.levelenv = decoder.env("level");
+    this.pitchenv = decoder.env("pitch");
+    this.wheelrange = decoder.u16(200);
+    this.osc = (a,b,c,d) => this.oscillateHarm(a,b,c,d);
   }
    
   tunedNote(when, noteid, velocity, durs) {
-    //TODO
-    //XXX Making a very simple voice just so I can get something out the speaker, as a sanity check...
-    //...Sounds fine as far as timing and repeat. No obvious memory leaks.
-    const frequency = 440 * Math.pow(2, (noteid - 0x45) / 12);
-    const peak = 0.300;
-    if (durs < 0.040) durs = 0.040;
-    const endTime = when + durs + 0.200;
-    const osc = new OscillatorNode(this.player.ctx, { frequency });
-    osc.start();
+    const osc = this.osc(when, eauNotev[noteid & 0x7f], velocity, durs);
+    if (!osc) return;
     const env = new GainNode(this.player.ctx, { gain: 0 });
-    env.gain.setValueAtTime(0, when);
-    env.gain.linearRampToValueAtTime(peak, when + 0.020);
-    env.gain.linearRampToValueAtTime(peak * 0.250, when + 0.040);
-    env.gain.linearRampToValueAtTime(peak * 0.250, when + durs);
-    env.gain.linearRampToValueAtTime(0, endTime);
+    const pts = eauEnvApply(this.levelenv, when, velocity, durs);
+    env.gain.setValueAtTime(pts[0].v, when);
+    for (const pt of pts) env.gain.linearRampToValueAtTime(pt.v, pt.t);
     osc.connect(env);
     env.connect(this.postStart);
-    setTimeout(() => { // XXX surely there's a better way to remove after completion
-      osc.stop();
-      osc.disconnect();
-      env.disconnect();
-    }, (endTime - this.player.ctx.currentTime + 0.100) * 1000);
+    this.player.droppables.push({ node: osc });
+    this.player.droppables.push({ node: env });
+    const endTime = pts[pts.length - 1].t;
+    for (const d of this.player.droppables) if (!d.time) d.time = endTime;
   }
   
   tunedWheel(when, v) {
     //TODO
+  }
+  
+  oscillateFm(when, hz, velocity, durs) {
+    
+    const car = new OscillatorNode(this.player.ctx, { frequency: hz });
+    car.start(when);
+    
+    let mhz = this.modabs ? this.modrate : (this.modrate * hz);
+    const mod = new OscillatorNode(this.player.ctx, { frequency: mhz });
+    mod.start(when);
+    
+    const mscale = new GainNode(this.player.ctx, { gain: 0 });
+    if (this.rangeenv.flags & 0x80) {
+      mscale.gain.setValueAtTime(0, this.modrange * hz);
+    } else {
+      const pts = eauEnvApply(this.rangeenv, when, velocity, durs);
+      mscale.gain.setValueAtTime(pts[0].v, when);
+      for (const pt of pts) mscale.gain.linearRampToValueAtTime(pt.v * hz, pt.t);
+    }
+    mod.connect(mscale);
+    
+    if (this.lfo) {
+      const lfoscale = new GainNode(this.player.ctx, { gain: this.lfobase });
+      this.lfo.connect(lfoscale.gain);
+      mscale.connect(lfoscale);
+      lfoscale.connect(car.frequency);
+    } else {
+      mscale.connect(car.frequency);
+    }
+    
+    //TODO pitchenv
+    //TODO wheel
+    
+    this.player.droppables.push({ node: mod });
+    return car;
+  }
+  
+  oscillateHarsh(when, hz, velocity, durs) {
+    const osc = new OscillatorNode(this.player.ctx, { frequency: hz, shape: this.shape });
+    osc.start(when);
+    //TODO pitchenv
+    //TODO wheel
+    return osc;
+  }
+  
+  oscillateHarm(when, hz, velocity, durs) {
+    const osc = new OscillatorNode(this.player.ctx, { frequency: hz, shape: "custom", periodicWave: this.wave });
+    osc.start(when);
+    //TODO pitchenv
+    //TODO wheel
+    return osc;
   }
 }

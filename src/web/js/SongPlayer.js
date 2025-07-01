@@ -26,6 +26,7 @@ export class SongPlayer {
     this.eventsFinished = false; // True if we've processed them all, and not repeating.
     this.running = false;
     this.node = new GainNode(ctx, { gain: 1 });
+    this.droppables = []; // {node,time} TODO We should also use this to detect notes that haven't started yet, and ones with an envelope that can be truncated
     
     this.tempo = 0; // Serves as flag for "\0EAU" present.
     this.loopp = 0;
@@ -145,6 +146,13 @@ export class SongPlayer {
   // Return false when finished.
   update(forwardTime) {
     if (!this.running) return false;
+    for (let i=this.droppables.length; i-->0; ) {
+      const d = this.droppables[i];
+      if (d.time > this.ctx.currentTime) continue;
+      d.node.stop?.();
+      d.node.disconnect?.();
+      this.droppables.splice(i, 1);
+    }
     if (!this.eventsFinished) {
       if (!forwardTime) forwardTime = this.ctx.currentTime + FORWARD_TIME;
       while (this.eventTime < forwardTime) {

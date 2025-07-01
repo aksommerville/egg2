@@ -121,6 +121,7 @@ static int eaut_eau_modecfg_DRUM(struct eaut_eau_context *ctx,const uint8_t *src
 
 #define FIXED(size,label) { \
   if (srcp<=srcc-size) { \
+    eaut_eau_indent(ctx); \
     int i=size; while (i-->0) { \
       sr_encode_fmt(ctx->dst,"%02x ",src[srcp++]); \
     } \
@@ -144,24 +145,6 @@ static int eaut_eau_modecfg_DRUM(struct eaut_eau_context *ctx,const uint8_t *src
  
 static int eaut_eau_modecfg_FM(struct eaut_eau_context *ctx,const uint8_t *src,int srcc) {
   int srcp=0;
-  #define FIXED(size,label) { \
-    if (srcp<=srcc-size) { \
-      int i=size; while (i-->0) { \
-        sr_encode_fmt(ctx->dst,"%02x ",src[srcp++]); \
-      } \
-      if (label[0]) { \
-        sr_encode_fmt(ctx->dst,"# %s\n",label); \
-      } else { \
-        sr_encode_u8(ctx->dst,0x0a); \
-      } \
-    } \
-  }
-  #define ENV(label) { \
-    int size=eau_env_measure(src+srcp,srcc-srcp); \
-    if (size>0) { \
-      FIXED(size,label) \
-    } \
-  }
   FIXED(2,"rate")
   FIXED(2,"range")
   ENV("level")

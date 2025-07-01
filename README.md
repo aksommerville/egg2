@@ -93,9 +93,14 @@ TODO:
 - - [x] Print PCM.
 - - [ ] Soft pause.
 - - [ ] Correct getPlayhead (currently not wrapping)
+- - [ ] Tuned voices wheel
+- - [ ] Tuned voices pitchenv
+- - [x] Stereo
+- - [ ] Post
 - [ ] Update editor.
 - [ ] Define some instruments.
 - [ ] Test perceptually.
+- - Pay close attention to FM. I hacked it fast and loose for web, probably got it all wrong.
 - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
 - [ ] `eggdev_convert_audio.c:eggdev_wav_from_eau`: Arbitrary params from user for conversion? (rate,chanc,method) in this case.
 - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
