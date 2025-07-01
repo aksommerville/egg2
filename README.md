@@ -103,3 +103,4 @@ TODO:
 - - We're not. And if it seems burdensome, we can change the spec to require CHDR.
 - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
 - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
+- [x] !!! minify: `const frequency = 256000 / (lforate * this.player.tempo);` became `const ex=256000/eu*this[h8][hO]`, missing parens!

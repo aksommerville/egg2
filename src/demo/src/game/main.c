@@ -5,13 +5,13 @@
    * hold_your_fire
    * bakers_dozen
    * in_thru_the_window
-   * tiny
-   * tiny2
    * wheeltest
    * drumtest
    */
+#define FIRST_SONG RID_song_around_here_somewhere
+#define LAST_SONG RID_song_drumtest
 struct g g={
-  .songid=RID_song_drumtest,
+  .songid=FIRST_SONG,
 };
 
 void egg_client_quit(int status) {
@@ -137,9 +137,10 @@ void egg_client_update(double elapsed) {
     egg_log(msg);
     if ((input&EGG_BTN_SOUTH)&&!(pvinput&EGG_BTN_SOUTH)) {
       g.songid++;
-      if (g.songid>RID_song_drumtest) g.songid=1;
-      char tmp[]="Play song 000";
-      tmp[12]='0'+g.songid;
+      if (g.songid>LAST_SONG) g.songid=FIRST_SONG;
+      char tmp[]="Play song 00";
+      tmp[11]='0'+g.songid%10;
+      tmp[10]='0'+g.songid/10;
       egg_log(tmp);
       egg_play_song(g.songid,0,1);
     }

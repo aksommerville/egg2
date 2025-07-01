@@ -293,7 +293,10 @@ static int mf_js_output_OP(struct sr_encoder *dst,struct eggdev_minify_js *ctx,s
     case MF_NODE_TYPE_OP: {
         int popcls=node->parent->argv[0];
         if (popcls>opcls) return mf_js_output_OP_parens(dst,ctx,node);
-        //TODO This is probably not the whole story. What about RTL operators?
+        if (popcls==opcls) {
+          //TODO This is probably not the whole story. What about RTL operators?
+          if (opcls==MF_OPCLS_MLT) return mf_js_output_OP_parens(dst,ctx,node); // hacky and not exactly correct
+        }
       } break;
     case MF_NODE_TYPE_INDEX: {
         int popcls=MF_OPCLS_MEMBER;

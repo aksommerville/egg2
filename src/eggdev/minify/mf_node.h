@@ -62,7 +62,7 @@ struct mf_node *mf_node_ancestor_of_type(struct mf_node *descendant,int type);
 
 #define MF_NODE_TYPE_ROOT            1 /* Like BLOCK but reserved for the root node. */
 #define MF_NODE_TYPE_BLOCK           2 /* Sequential statements. */
-#define MF_NODE_TYPE_VALUE           3 /* Expression formed of this node's token. Grave strings should be treated as regular strings. */
+#define MF_NODE_TYPE_VALUE           3 /* [0]=(transient)modified ; Expression formed of this node's token. Grave strings should be treated as regular strings. */
 #define MF_NODE_TYPE_EXPWRAP         4 /* Single expression occupying the space of a statement. */
 #define MF_NODE_TYPE_CLASS           5 /* Token is name. Children are functions. */
 #define MF_NODE_TYPE_METHOD          6 /* Token is name or "constructor". argv[0]=static, [0]=paramlist, [1]=body */
@@ -105,5 +105,7 @@ int mf_nodelist_add(struct mf_nodelist *nl,struct mf_node *node);
 void mf_nodelist_remove(struct mf_nodelist *nl,struct mf_node *node);
 
 struct mf_nodelist *mf_find_nodes(struct mf_node *root,int (*filter)(struct mf_node *node,void *userdata),void *userdata);
+
+void mf_node_dump(struct mf_node *node,int indent);
 
 #endif

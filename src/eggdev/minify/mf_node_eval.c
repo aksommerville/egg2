@@ -333,7 +333,12 @@ static int mf_node_eval_binary_number(char *dst,int dsta,const char *a,int ac,co
   int afloat=0,bfloat=0;
   for (i=ac;i-->0;) if (a[i]=='.') { afloat=1; break; }
   for (i=bc;i-->0;) if (b[i]=='.') { bfloat=1; break; }
-  if (afloat||bfloat) {
+  
+  int forcefloat=0;
+  if ((opc==1)&&(op[0]=='/')) forcefloat=1; // division, obviously
+  if ((opc==1)&&(op[0]=='*')) forcefloat=1; // multiplication has a high risk of exceeding 31 bits.
+  
+  if (forcefloat||afloat||bfloat) {
     double av,bv,cv;
     if (sr_double_eval(&av,a,ac)<0) return -1;
     if (sr_double_eval(&bv,b,bc)<0) return -1;

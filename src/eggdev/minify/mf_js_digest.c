@@ -244,7 +244,7 @@ static int mf_reduce_member_names(struct eggdev_minify_js *ctx) {
  
 static int mf_rename_all_within(struct eggdev_minify_js *ctx,struct mf_node *root,const char *to,int toc,const char *from,int fromc) {
   if ((root->type==MF_NODE_TYPE_VALUE)&&(root->token.type==MF_TOKEN_TYPE_IDENTIFIER)) {
-    if ((root->token.c==fromc)&&!memcmp(root->token.v,from,fromc)) {
+    if (!root->argv[0]&&(root->token.c==fromc)&&!memcmp(root->token.v,from,fromc)) {
   
       if (root->parent) {
         struct mf_node *mom=root->parent;
@@ -295,10 +295,22 @@ static int mf_rename_all_within(struct eggdev_minify_js *ctx,struct mf_node *roo
   
       root->token.v=to;
       root->token.c=toc;
+      root->argv[0]=1;
     }
   }
   int i=0,err; for (;i<root->childc;i++) {
     if ((err=mf_rename_all_within(ctx,root->childv[i],to,toc,from,fromc))<0) return err;
+  }
+  return 0;
+}
+
+static int mf_identifier_in_use(struct mf_node *node,const char *src,int srcc) {
+  if (node->type==MF_NODE_TYPE_VALUE) {
+    if ((node->token.c==srcc)&&!memcmp(node->token.v,src,srcc)) return 1;
+  }
+  int i=node->childc;
+  while (i-->0) {
+    if (mf_identifier_in_use(node->childv[i],src,srcc)) return 1;
   }
   return 0;
 }
@@ -308,9 +320,14 @@ static int mf_rename_variable(struct eggdev_minify_js *ctx,struct mf_node *node)
   
   if (node->token.type!=MF_TOKEN_TYPE_IDENTIFIER) return 0;
 
+  // We're not bothering to check whether identifiers share a scope. I think it's ok not to, we're not doing huge code bases.
   int nnamec=0;
-  char *nname=mf_next_identifier(ctx,&nnamec);
-  if (!nname) return -1;
+  char *nname=0;
+  for (;;) {
+    nname=mf_next_identifier(ctx,&nnamec);
+    if (!nname) return -1;
+    if (!mf_identifier_in_use(ctx->root,nname,nnamec)) break;
+  }
   const char *prev=node->token.v;
   int prevc=node->token.c;
   node->token.v=nname;
@@ -388,14 +405,17 @@ static int mf_rename_local_symbols(struct eggdev_minify_js *ctx,struct mf_node *
 int mf_js_digest(struct eggdev_minify_js *ctx) {
   if (!ctx||!ctx->root) return -1;
   int err;
+  //mf_node_dump(ctx->root,0);
   //TODO Rephrase "let" as "const" if the symbol is never reassigned.
   if ((err=mf_resolve_expressions(ctx,ctx->root))<0) return err;
   //TODO Eliminate unreachable code.
+  //TODO Eliminate unused declarations (esp importatnt for constants that got inlined everywhere)
   //TODO Drop unnecessary return at end of function.
   if ((err=mf_rename_local_symbols(ctx,ctx->root))<0) return err;
   if ((err=mf_reduce_member_names(ctx))<0) return err;
   //TODO Hoist and combine declarations.
   if ((err=mf_reduce_constants(ctx,ctx->root))<0) return err;
   //TODO Validate.
+  //mf_node_dump(ctx->root,0);
   return 0;
 }

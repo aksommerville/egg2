@@ -27,3 +27,108 @@ export function calculateEauEventsDuration(src, rate) {
   }
   return (durms * rate) / 1000;
 }
+
+/* Structured decoder for EAU bits.
+ * In C I do this kind of ad-hoc with macros, but JS calls for a more structured solution.
+ */
+export class EauDecoder {
+  constructor(v) {
+    this.v = v || [];
+    this.p = 0;
+  }
+  u8(fallback) {
+    if (this.p >= this.v.length) return fallback;
+    return this.v[this.p++];
+  }
+  u16(fallback) {
+    if (this.p >= this.v.length) return fallback;
+    if (this.p > this.v.length - 2) throw new Error("Malformed EAU");
+    const v = (this.v[this.p] << 8) | this.v[this.p+1];
+    this.p += 2;
+    return v;
+  }
+  // (name) is "level", "pitch", or "range", for generating the default and applying bias and scale.
+  // Defaulted envelopes will have (flag&0x80).
+  env(name) {
+    if (this.p >= this.v.length) return this.defaultEnv(name);
+    if ((this.p <= this.v.length - 2) && !this.v[this.p] && !this.v[this.p+1]) {
+      this.p += 2;
+      return this.defaultEnv(name);
+    }
+    const flags = this.v[this.p++];
+    let initlo=0, inithi=0;
+    if (flags & 0x01) { // Initials.
+      if (this.p > this.v.length - 2) throw new Error("Malformed EAU");
+      initlo = (this.v[this.p] << 8) | this.v[this.p+1];
+      this.p += 2;
+      if (flags & 0x02) { // Velocity.
+        if (this.p > this.v.length - 2) throw new Error("Malformed EAU");
+        inithi = (this.v[this.p] << 8) | this.v[this.p+1];
+        this.p += 2;
+      } else {
+        inithi = initlo;
+      }
+    }
+    if (this.p >= this.v.length) throw new Error("Malformed EAU");
+    const susp_ptc = this.v[this.p++];
+    let susp = susp_ptc >> 4;
+    let pointc = susp_ptc & 15;
+    const ptlen = (flags & 0x02) ? 8 : 4;
+    if (this.p > this.v.length - ptlen * pointc) throw new Error("Malformed EAU");
+    const points = []; // {tlo,vlo,thi,vhi}
+    for (let i=0; i<pointc; i++) {
+      const tlo = ((this.v[this.p] << 8) | this.v[this.p+1]) / 1000;
+      this.p += 2;
+      const vlo = (this.v[this.p] << 8) | this.v[this.p+1];
+      this.p += 2;
+      let thi=tlo, vhi=vlo;
+      if (flags & 0x02) { // Velocity.
+        thi = ((this.v[this.p] << 8) | this.v[this.p+1]) / 1000;
+        this.p += 2;
+        vhi = (this.v[this.p] << 8) | this.v[this.p+1];
+        this.p += 2;
+      }
+      points.push({ tlo, vlo, thi, vhi });
+      if ((flags & 0x04) && (i === susp)) {
+        points.push({ tlo: 0, vlo, thi: 0, vhi });
+      }
+    }
+    switch (name) {
+      case "level": initlo /= 65535; inithi /= 65535; for (const pt of points) { pt.vlo /= 65535; pt.vhi /= 65535; } break;
+      case "range": initlo /= 65535; inithi /= 65535; for (const pt of points) { pt.vlo /= 65535; pt.vhi /= 65535; } break; // will be modified further by caller, with the range scale.
+      case "pitch": {
+          if (flags & 0x01) {
+            initlo = (initlo - 0x8000) / 0x8000;
+            inithi = (inithi - 0x8000) / 0x8000;
+          } else {
+            initlo = inithi = 0x8000;
+          }
+          for (const pt of points) {
+            pt.vlo = (pt.vlo - 0x8000) / 0x8000;
+            pt.vhi = (pt.vhi - 0x8000) / 0x8000;
+          }
+        } break;
+    }
+    return { flags, initlo, inithi, susp, points };
+  }
+  defaultEnv(name) {
+    let init = 0; // For a constant, just set this and pass thru.
+    switch (name) {
+      case "level": return { // The default level envelope is complex and opinionated. Match the native implementation (synth_env.c:synth_env_default_level()).
+          flags: 0x86, // Default|Velocity|Sustain.
+          susp: 1,
+          initlo: 0,
+          inithi: 0,
+          points: [
+            { tlo:0.032, vlo:0.250, thi:0.016, vhi:1.000 },
+            { tlo:0.048, vlo:0.188, thi:0.048, vhi:0.313 },
+            { tlo:0.000, vlo:0.188, thi:0.000, vhi:0.313 }, // sustain
+            { tlo:0.128, vlo:0.000, thi:0.256, vhi:0.000 },
+          ],
+        };
+      case "range": init = 1; break;
+      case "pitch": init = 0; break;
+    }
+    return { flags: 0x80, initlo: init, inithi: init, points: [] };
+  }
+}

@@ -3,7 +3,7 @@
  * We're responsible both for its event bus and its signal bus.
  */
  
-import { calculateEauDuration } from "./songBits.js";
+import { calculateEauDuration, EauDecoder } from "./songBits.js";
 
 export class SongChannel {
   
@@ -155,10 +155,36 @@ export class SongChannel {
   }
   
   /* Tuned voices: FM, HARSH, HARM.
+   * These share most plumbing. At init, a member (osc) gets created:
+   *   osc(when,hz,velocity,durs): AudioNode
    **************************************************************************/
    
   initFm(src) {
+    const decoder = new EauDecoder(src);
+    let modrate = decoder.u16(0);
+    let modrange = decoder.u16(0);
+    let levelenv = decoder.env("level");
+    let rangeenv = decoder.env("range");
+    let pitchenv = decoder.env("pitch");
+    let wheelrange = decoder.u16(200);
+    let lforate = decoder.u16(0);
+    let lfodepth = decoder.u8(0xff);
+    let lfophase = decoder.u8(0);
+    
+    console.log(`SongChannel.initFm`, {
+      chid: this.chid,
+      modrate, modrange, levelenv, rangeenv, pitchenv, wheelrange, lforate, lfodepth, lfophase
+    });
     //TODO
+    
+    if (lforate && lfodepth) {
+      const frequency = 256000 / (lforate * this.player.tempo);
+      console.log(`LFO frequency ${frequency} Hz (${lforate}/256 qnotes/c at ${this.player.tempo} ms/qnote)`);
+      if (lfophase) {
+        console.log(`!!! LFO phase ${lfophase}/256`);
+      }
+      //this.lfo = new OscillatorNode(this.player.ctx, { frequency });
+    }
   }
   
   initHarsh(src) {

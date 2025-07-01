@@ -408,3 +408,67 @@ struct mf_nodelist *mf_find_nodes(struct mf_node *root,int (*filter)(struct mf_n
   }
   return nl;
 }
+
+/* Dump node recursively to stderr.
+ */
+ 
+static const char *mf_node_name(int type) {
+  switch (type) {
+    #define _(tag) case MF_NODE_TYPE_##tag: return #tag;
+    _(ROOT)
+    _(BLOCK)
+    _(VALUE)
+    _(EXPWRAP)
+    _(CLASS)
+    _(METHOD)
+    _(PARAMLIST)
+    _(PARAM)
+    _(DSPARAM)
+    _(IF)
+    _(OP)
+    _(RETURN)
+    _(LAMBDA)
+    _(CALL)
+    _(INDEX)
+    _(DECL)
+    _(THROW)
+    _(ARRAY)
+    _(OBJECT)
+    _(SWITCH)
+    _(CASE)
+    _(TRY)
+    _(FOR1)
+    _(FOR3)
+    _(WHILE)
+    _(DO)
+    _(LOOPCTL)
+    _(POSTFIX)
+    _(FUNCTION)
+    _(FIELD)
+    #undef _
+  }
+  return 0;
+}
+ 
+void mf_node_dump(struct mf_node *node,int indent) {
+
+  char space[]="                                         ";
+  if (indent<0) indent=0;
+  else if (indent>=sizeof(space)) indent=sizeof(space)-1;
+  const char *name=mf_node_name(node->type);
+  if (name) fprintf(stderr,"%.*s%s[",indent,space,name);
+  else fprintf(stderr,"%.*s(%d)[",indent,space,node->type);
+  
+  int i=0; for (;i<MF_NODE_ARGV_SIZE;i++) {
+    fprintf(stderr,"%d,",node->argv[i]);
+  }
+  fprintf(stderr,"] '");
+  const int TOKEN_LIMIT=30;
+  if (node->token.v&&(node->token.c>0)) {
+    if (node->token.c<=TOKEN_LIMIT) fprintf(stderr,"%.*s'\n",node->token.c,node->token.v);
+    else fprintf(stderr,"%.*s...\n",TOKEN_LIMIT,node->token.v);
+  } else fprintf(stderr,"'\n");
+  
+  indent+=2;
+  for (i=0;i<node->childc;i++) mf_node_dump(node->childv[i],indent);
+}
