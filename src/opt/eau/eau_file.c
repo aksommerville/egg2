@@ -145,7 +145,7 @@ int eau_event_reader_next(struct eau_event *event,struct eau_event_reader *reade
           uint8_t a=((uint8_t*)reader->v)[reader->p++];
           event->type='w';
           event->wheel.chid=(lead>>2)&15;
-          event->wheel.v=((lead&3)<<2)|a;
+          event->wheel.v=(((lead&3)<<8)|a)-512;
         } return 1;
     }
   }

@@ -177,6 +177,10 @@ export class SongChannel {
     let lfodepth = decoder.u8(0xff);
     let lfophase = decoder.u8(0);
     
+    this.wheeli = 0;
+    this.wheelCents = 0;
+    this.tunable = []; // {node,until:seconds}
+    
     if (modrate & 0x8000) {
       this.modabs = true;
       this.modrate = (modrate & 0x7fff) / 256; // qnotes
@@ -221,6 +225,11 @@ export class SongChannel {
     this.levelenv = decoder.env("level");
     this.pitchenv = decoder.env("pitch");
     this.wheelrange = decoder.u16(200);
+    
+    this.wheeli = 0;
+    this.wheelCents = 0;
+    this.tunable = []; // {node,until:seconds}
+    
     switch (shape) {
       case 1: this.shape = "square"; break;
       case 2: this.shape = "sawtooth"; break;
@@ -248,6 +257,11 @@ export class SongChannel {
     this.levelenv = decoder.env("level");
     this.pitchenv = decoder.env("pitch");
     this.wheelrange = decoder.u16(200);
+    
+    this.wheeli = 0;
+    this.wheelCents = 0;
+    this.tunable = []; // {node,until:seconds}
+    
     this.osc = (a,b,c,d) => this.oscillateHarm(a,b,c,d);
   }
    
@@ -263,16 +277,42 @@ export class SongChannel {
     this.player.droppables.push({ node: osc });
     this.player.droppables.push({ node: env });
     const endTime = pts[pts.length - 1].t;
-    for (const d of this.player.droppables) if (!d.time) d.time = endTime;
+    for (const d of this.player.droppables) if (!d.time) {
+      d.time = endTime;
+      this.addTunable(d.node, endTime);
+    }
   }
   
   tunedWheel(when, v) {
-    //TODO
+    if (v === this.wheeli) return;
+    this.wheeli = v;
+    if (this.wheelrange < 1) return;
+    this.wheelCents = (v * this.wheelrange) / 512;
+    for (let i=this.tunable.length; i-->0; ) {
+      if (this.tunable[i].until < this.player.ctx.currentTime) {
+        this.tunable.splice(i, 1);
+      } else {
+        this.tunable[i].node.detune.value = this.wheelCents;
+      }
+    }
+  }
+  
+  addTunable(node, until) {
+    if (!this.wheelrange) return;
+    if (until <= this.player.ctx.currentTime) return;
+    if (!node.detune) return;
+    this.tunable.push({ node, until });
+    for (let i=this.tunable.length; i-->0; ) {
+      if (this.tunable[i].until < this.player.ctx.currentTime) {
+        this.tunable.splice(i, 1);
+      }
+    }
   }
   
   oscillateFm(when, hz, velocity, durs) {
     
     const car = new OscillatorNode(this.player.ctx, { frequency: hz });
+    car.detune.value = this.wheelCents;
     car.start(when);
     
     let mhz = this.modabs ? this.modrate : (this.modrate * hz);
@@ -281,7 +321,7 @@ export class SongChannel {
     
     const mscale = new GainNode(this.player.ctx, { gain: 0 });
     if (this.rangeenv.flags & 0x80) {
-      mscale.gain.setValueAtTime(0, this.modrange * hz);
+      mscale.gain.setValueAtTime(this.modrange * hz, 0);
     } else {
       const pts = eauEnvApply(this.rangeenv, when, velocity, durs);
       mscale.gain.setValueAtTime(pts[0].v, when);
@@ -298,26 +338,39 @@ export class SongChannel {
       mscale.connect(car.frequency);
     }
     
-    //TODO pitchenv
-    //TODO wheel
+    if (!(this.pitchenv.flags & 0x80)) {
+      const pts = eauEnvApply(this.pitchenv, when, velocity, durs);
+      car.detune.setValueAtTime(pts[0].v, 0);
+      for (const pt of pts) car.detune.linearRampToValueAtTime(pt.v, pt.t);
+    }
     
     this.player.droppables.push({ node: mod });
     return car;
   }
   
   oscillateHarsh(when, hz, velocity, durs) {
-    const osc = new OscillatorNode(this.player.ctx, { frequency: hz, shape: this.shape });
+    const osc = new OscillatorNode(this.player.ctx, { frequency: hz, shape: this.shape, detune: this.wheelCents });
     osc.start(when);
-    //TODO pitchenv
-    //TODO wheel
+    
+    if (!(this.pitchenv.flags & 0x80)) {
+      const pts = eauEnvApply(this.pitchenv, when, velocity, durs);
+      osc.detune.setValueAtTime(pts[0].v, 0);
+      for (const pt of pts) osc.detune.linearRampToValueAtTime(pt.v, pt.t);
+    }
+    
     return osc;
   }
   
   oscillateHarm(when, hz, velocity, durs) {
-    const osc = new OscillatorNode(this.player.ctx, { frequency: hz, shape: "custom", periodicWave: this.wave });
+    const osc = new OscillatorNode(this.player.ctx, { frequency: hz, shape: "custom", periodicWave: this.wave, detune: this.wheelCents });
     osc.start(when);
-    //TODO pitchenv
-    //TODO wheel
+    
+    if (!(this.pitchenv.flags & 0x80)) {
+      const pts = eauEnvApply(this.pitchenv, when, velocity, durs);
+      osc.detune.setValueAtTime(pts[0].v, 0);
+      for (const pt of pts) osc.detune.linearRampToValueAtTime(pt.v, pt.t);
+    }
+    
     return osc;
   }
 }

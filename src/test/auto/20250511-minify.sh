@@ -62,3 +62,17 @@ if ( grep -q '\(.\*.\);$' <<<$RESULT ) ; then
 else
   echo "EGG_TEST PASS 20250511-minify.sh: MLT vs DIV parens 'a/(b*c)'"
 fi
+
+# const gp=ge>>2&15;
+# const gq=((ge&3)<<8|go)-512;
+# console.log("wheel event ["+ge&3+","+go+"] = "+gq);
+RESULT=$($EGGDEV minify <<EOF
+function random() { return 123; }
+const a = \`abc \${random() & random()} xyz\`;
+EOF
+)
+if ( grep -q 'abc "+(' <<<$RESULT ) ; then
+  echo "EGG_TEST PASS 20250511-minify.sh: Grave string units parenthesized."
+else
+  echo "EGG_TEST FAIL 20250511-minify.sh: Need parens in grave string unit: $RESULT"
+fi

@@ -93,8 +93,8 @@ TODO:
 - - [x] Print PCM.
 - - [ ] Soft pause.
 - - [ ] Correct getPlayhead (currently not wrapping)
-- - [ ] Tuned voices wheel
-- - [ ] Tuned voices pitchenv
+- - [x] Tuned voices wheel
+- - [x] Tuned voices pitchenv
 - - [x] Stereo
 - - [ ] Post
 - [ ] Update editor.
@@ -109,3 +109,4 @@ TODO:
 - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
 - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
 - [x] !!! minify: `const frequency = 256000 / (lforate * this.player.tempo);` became `const ex=256000/eu*this[h8][hO]`, missing parens!
+- [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.

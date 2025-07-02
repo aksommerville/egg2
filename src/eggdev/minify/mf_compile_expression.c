@@ -156,6 +156,7 @@ static int mf_js_compile_gravestring(struct mf_node *node,struct eggdev_minify_j
   node->type=MF_NODE_TYPE_OP;
   node->token.v="+";
   node->token.c=1;
+  node->argv[0]=MF_OPCLS_ADD;
   if ((err=mf_js_spawn_string_node_unquoted(node,ctx,src,srcp))<0) return err;
   
   /* Keep reading to the end.

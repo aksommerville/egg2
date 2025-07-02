@@ -292,6 +292,7 @@ static int mf_js_output_OP(struct sr_encoder *dst,struct eggdev_minify_js *ctx,s
   if (node->parent) switch (node->parent->type) {
     case MF_NODE_TYPE_OP: {
         int popcls=node->parent->argv[0];
+        //fprintf(stderr,"child '%.*s' =%d, parent '%.*s' =%d\n",node->token.c,node->token.v,opcls,node->parent->token.c,node->parent->token.v,popcls);
         if (popcls>opcls) return mf_js_output_OP_parens(dst,ctx,node);
         if (popcls==opcls) {
           //TODO This is probably not the whole story. What about RTL operators?
