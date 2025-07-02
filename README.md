@@ -96,7 +96,7 @@ TODO:
 - - [x] Tuned voices wheel
 - - [x] Tuned voices pitchenv
 - - [x] Stereo
-- - [ ] Post
+- - [x] Post
 - [ ] Update editor.
 - [ ] Define some instruments.
 - [ ] Test perceptually.

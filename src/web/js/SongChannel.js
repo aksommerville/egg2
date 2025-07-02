@@ -56,14 +56,12 @@ export class SongChannel {
   
   // (when) in context seconds, (velocity) in 0..1; (durs) in seconds.
   note(when, noteid, velocity, durs) {
-    //console.log(`SongChannel[${this.uniq}].note chid=${this.chid} when=${when} noteid=${noteid} velocity=${velocity} durs=${durs}`);//TODO
     if (this.mode === 1) return this.playDrum(when, this.notes[noteid], velocity);
     if ((this.mode >= 2) && (this.mode <= 4)) return this.tunedNote(when, noteid, velocity, durs);
   }
   
   // (when) in context seconds, (v) in -512..511.
   wheel(when, v) {
-    //console.log(`SongChannel[${this.uniq}].wheel chid=${this.chid} when=${when} v=${v}`);//TODO
     if ((this.mode >= 2) && (this.mode <= 4)) return this.tunedWheel(when, v);
   }
   
@@ -82,15 +80,95 @@ export class SongChannel {
   }
   
   addPostStageDelay(body, input) {
-    //TODO Delay
+    //- `0x01 DELAY`: u8.8 period qnotes=1.0, u0.8 dry=0.5, u0.8 wet=0.5, u0.8 store=0.5, u0.8 feedback=0.5, u8 sparkle(0..128..255)=0x80.
+    let qnotes=1, dry=0.5, wet=0.5, sto=0.5, fbk=0.5, sparkle=0;
+    if (body.length >= 2) {
+      qnotes = ((body[0] << 8) | body[1]) / 256;
+      if (body.length >= 3) dry = body[2] / 255;
+      if (body.length >= 4) wet = body[3] / 255;
+      if (body.length >= 5) sto = body[4] / 255;
+      if (body.length >= 6) fbk = body[5] / 255;
+      if (body.length >= 7) sparkle = (body[6] - 128) / 128;
+    }
+    const period = (qnotes * this.player.tempo) / 1000;
+    if (period < 0.001) return null;
+    let dst;
+    if (sparkle) {
+      const mlt = Math.pow(1.125, sparkle);
+      const splitter = new ChannelSplitterNode(this.player.ctx, { numberOfOutputs: 2 });
+      const inl = new GainNode(this.player.ctx, { gain: 1 });
+      const inr = new GainNode(this.player.ctx, { gain: 1 });
+      input.connect(inl);
+      input.connect(inr);
+      splitter.connect(inl, 0);
+      splitter.connect(inr, 1);
+      const dstl = this.makeDelay(inl, period * mlt, dry, wet, sto, fbk);
+      const dstr = this.makeDelay(inr, period / mlt, dry, wet, sto, fbk);
+      dst = new ChannelMergerNode(this.player.ctx, { numberOfInputs: 2 });
+      dstl.connect(dst, 0, 0);
+      dstr.connect(dst, 0, 1);
+    } else {
+      dst = this.makeDelay(input, period, dry, wet, sto, fbk);
+    }
+    return dst;
+  }
+  
+  makeDelay(input, period, dry, wet, sto, fbk) {
+    const delay = new DelayNode(this.player.ctx, { delayTime: period, maxDelayTime: period });
+    const dryNode = new GainNode(this.player.ctx, { gain: dry });
+    const wetNode = new GainNode(this.player.ctx, { gain: wet });
+    const stoNode = new GainNode(this.player.ctx, { gain: sto });
+    const fbkNode = new GainNode(this.player.ctx, { gain: fbk });
+    const dst = new GainNode(this.player.ctx, { gain: 1 }); // Only because we need a single output node.
+    input.connect(dryNode);
+    dryNode.connect(dst);
+    input.connect(stoNode);
+    stoNode.connect(delay);
+    delay.connect(fbkNode);
+    fbkNode.connect(delay);
+    delay.connect(wetNode);
+    wetNode.connect(dst);
+    return dst;
   }
   
   addPostStageWaveshaper(body, input) {
-    //TODO Waveshaper
+    const invc = body.length >> 1;
+    if (!invc) return null; // As an edge case, the empty waveshaper is noop (not silence).
+    const ptc = invc * 2 + 1;
+    const coefv = new Float32Array(ptc);
+    let pp=invc+1, np=invc-1;
+    for (let bodyp=0; bodyp<body.length; bodyp+=2, pp++, np--) {
+      coefv[pp] = ((body[bodyp] << 8) | body[bodyp+1]) / 65535.0;
+      coefv[np] = -coefv[pp];
+    }
+    const node = new WaveShaperNode(this.player.ctx, { curve: coefv });
+    input.connect(node);
+    return node;
   }
   
   addPostStageTremolo(body, input) {
-    //TODO Tremolo
+    let qnotes=1, depth=1, phase=0;
+    if (body.length >= 2) {
+      qnotes = ((body[0] << 8) | body[1]) / 256;
+      if (body.length >= 3) {
+        depth = body[2] / 255;
+        if (body.length >= 4) {
+          phase = body[3] / 255;
+        }
+      }
+    }
+    const frequency = 1000 / (qnotes * this.player.tempo);
+    depth *= 0.5;
+    phase *= Math.PI * 2;
+    const real = new Float32Array([0, Math.sin(phase)*depth]);
+    const imag = new Float32Array([0, Math.cos(phase)*depth]);
+    const wave = new PeriodicWave(this.player.ctx, { real, imag, disableNormalization: true });
+    const osc = new OscillatorNode(this.player.ctx, { shape: "custom", periodicWave: wave, frequency });
+    const gain = new GainNode(this.player.ctx, { gain: 1.0 - depth });
+    osc.start();
+    osc.connect(gain.gain);
+    input.connect(gain);
+    return gain;
   }
   
   /* Drum mode.
