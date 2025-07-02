@@ -144,6 +144,10 @@ void egg_client_update(double elapsed) {
       egg_log(tmp);
       egg_play_song(g.songid,0,1);
     }
+    if ((input&EGG_BTN_WEST)&&!(pvinput&EGG_BTN_WEST)) {
+      egg_log("Setting playhead to 4.0");
+      egg_song_set_playhead(4.0);
+    }
     pvinput=input;
   }
 }
@@ -305,6 +309,31 @@ void egg_client_render() {
       {  0,FBH, 0,0,0x00,0xff,0x00,0xaf},
       {FBW,  0, 0,0,0x00,0x00,0xff,0xaf},
       {FBW,FBH, 0,0,0xff,0x00,0x00,0xaf},
+    };
+    egg_render(&un,vtxv,sizeof(vtxv));
+  }
+  
+  // Show the song playhead.
+  {
+    double s=egg_song_get_playhead();
+    int ms=(int)(s*1000.0);
+    int sec=ms/1000; ms%=1000;
+    int min=s/60; sec%=60;
+    struct egg_render_uniform un={
+      .mode=EGG_RENDER_TILE,
+      .dsttexid=1,
+      .srctexid=g.texid_tiles,
+      .alpha=0xff,
+    };
+    struct egg_render_tile vtxv[]={
+      { 10,160,0x80+'0'+min%10,0},
+      { 17,160,0x80+':',0},
+      { 24,160,0x80+'0'+sec/10,0},
+      { 31,160,0x80+'0'+sec%10,0},
+      { 38,160,0x80+';',0}, // dot
+      { 45,160,0x80+'0'+ms/100,0},
+      { 52,160,0x80+'0'+(ms/10)%10,0},
+      { 59,160,0x80+'0'+ms%10,0},
     };
     egg_render(&un,vtxv,sizeof(vtxv));
   }

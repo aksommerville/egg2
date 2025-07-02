@@ -101,6 +101,7 @@ export class EauDecoder {
         points.push({ tlo: 0, vlo, thi: 0, vhi });
       }
     }
+    susp++;
     switch (name) {
       case "level": initlo /= 65535; inithi /= 65535; for (const pt of points) { pt.vlo /= 65535; pt.vhi /= 65535; } break;
       case "range": initlo /= 65535; inithi /= 65535; for (const pt of points) { pt.vlo /= 65535; pt.vhi /= 65535; } break; // will be modified further by caller, with the range scale.
@@ -145,6 +146,7 @@ export class EauDecoder {
  * Returns [{t,v}...] at least one.
  */
 export function eauEnvApply(env, when, velocity, durs) {
+  const durs0=durs;
   const dst = [];
   let sus = (env.flags & 0x04) ? env.susp : 99;
   if (!(env.flags & 0x02) || (velocity <= 0)) {
@@ -173,6 +175,7 @@ export function eauEnvApply(env, when, velocity, durs) {
     dst.push({ t: when, v: env.initlo * wlo + env.inithi * whi });
     for (const pt of env.points) {
       let t = pt.tlo * wlo + pt.thi * whi;
+      durs -= t;
       if (!sus--) t = Math.max(0, durs);
       t += when;
       dst.push({ t, v: pt.vlo * wlo + pt.vhi * whi });

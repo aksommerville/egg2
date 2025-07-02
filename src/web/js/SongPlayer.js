@@ -12,7 +12,6 @@ export class SongPlayer {
    * Allow for exceptions during construction.
    */
   constructor(ctx, src, trim, pan, repeat, id) {
-    console.log(`SongPlayer.constructor id=${id}`, { ctx });
     this.ctx = ctx;
     this.serial = src;
     this.trim = trim;
@@ -23,10 +22,12 @@ export class SongPlayer {
     this.eventp = 0;
     this.eventTime = 0; // Context time at (eventp), does not wrap.
     this.startTime = 0; // Context time at start, does not wrap.
+    this.loopTime = 0; // Context time at most recent song start, only if in the past.
+    this.nextLoopTime = 0; // Assigned when we detect the loop, may be in the future.
     this.eventsFinished = false; // True if we've processed them all, and not repeating.
     this.running = false;
     this.node = new GainNode(ctx, { gain: 1 });
-    this.droppables = []; // {node,time} TODO We should also use this to detect notes that haven't started yet, and ones with an envelope that can be truncated
+    this.droppables = []; // {node,time}
     
     this.tempo = 0; // Serves as flag for "\0EAU" present.
     this.loopp = 0;
@@ -108,16 +109,14 @@ export class SongPlayer {
    ********************************************************************************/
   
   play() {
-    console.log(`SongPlayer.play ${this.id}`);//TODO
     if (this.running) return;
     this.running = true;
-    if (!this.eventTime) this.eventTime = this.startTime = this.ctx.currentTime;
+    if (!this.eventTime) this.eventTime = this.startTime = this.loopTime = this.nextLoopTime = this.ctx.currentTime;
     this.node.connect(this.ctx.destination);
   }
   
   // Hard stop immediately.
   stop() {
-    console.log(`SongPlayer.stop ${this.id}`);//TODO
     if (!this.running) return;
     this.running = false;
     this.node.disconnect();
@@ -125,7 +124,6 @@ export class SongPlayer {
   
   // Schedule fade-out if we're doing that. Some future update must return false.
   stopSoon() {
-    console.log(`SongPlayer.stopSoon ${this.id}`);//TODO
     if (!this.running) return;
     const fadeTime = 0.250;
     this.node.gain.setValueAtTime(1, this.ctx.currentTime);
@@ -135,12 +133,42 @@ export class SongPlayer {
   
   getPlayhead() {
     if (!this.running) return 0.0;
-    //TODO Need to track repeats and wrap this reported time around. Tricky...
-    return Math.max(0.0, this.ctx.currentTime - this.startTime);
+    const now = this.ctx.currentTime;
+    if (now >= this.nextLoopTime) {
+      this.loopTime = this.nextLoopTime;
+    }
+    return Math.max(0, now - this.loopTime;);
   }
   
   setPlayhead(ph) {
-    console.log(`SongPlayer.setPlayhead ${this.id} =${ph}`);//TODO
+    for (const { node } of this.droppables) {
+      node.stop?.();
+      node.disconnect?.();
+    }
+    this.droppables = [];
+    this.eventTime = 0;
+    this.eventp = 0;
+    while (ph > 0) {
+      if (this.eventp >= this.events.length) break;
+      const lead = this.events[this.eventp++];
+      switch (lead & 0xc0) {
+        case 0x00: {
+            const s = lead / 1000;
+            ph -= s;
+            this.eventTime += s;
+          } break;
+        case 0x40: {
+            const s = (((lead & 0x3f) + 1) << 6) / 1000;
+            ph -= s;
+            this.eventTime += s;
+          } break;
+        case 0x80: this.eventp += 3; break;
+        case 0xc0: this.eventp += 1; break;
+      }
+    }
+    // Lie about elapsed time to get our clocks reporting correctly:
+    this.startTime = this.loopTime = this.nextLoopTime = this.ctx.currentTime - this.eventTime;
+    this.eventTime = this.ctx.currentTime;
   }
   
   // Return false when finished.
@@ -174,6 +202,7 @@ export class SongPlayer {
       if (this.repeat) {
         this.eventp = this.loopp;
         this.eventTime += 0.001; // Must advance time by a smidgeon when looping, in case the song is empty.
+        this.nextLoopTime = this.eventTime;
       } else {
         this.eventsFinished = true;
         const fadeTime = 0.250;
@@ -198,7 +227,7 @@ export class SongPlayer {
           const chid = (lead >> 2) & 15;
           const noteid = ((lead & 3) << 5) | (a >> 3);
           const velocity = ((a & 7) << 4) | (b >> 4);
-          const durms = ((b & 15) << 8) | c;
+          const durms = (((b & 15) << 8) | c) << 2;
           const channel = this.channelsByChid[chid];
           if (!channel) break; //TODO Spec mandates a default.
           channel.note(this.eventTime, noteid, velocity / 127, durms / 1000);

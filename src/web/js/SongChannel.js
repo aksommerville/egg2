@@ -236,6 +236,7 @@ export class SongChannel {
     });
     node.connect(this.postStart);
     node.start(when);
+    this.player.droppables.push({ node, time: when + note.pcm.duration + 0.010 }); // It's silly, but we do need this in case of playhead changes.
   }
   
   /* Tuned voices: FM, HARSH, HARM.

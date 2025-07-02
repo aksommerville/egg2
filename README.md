@@ -59,7 +59,7 @@ Planned differences from Egg v1:
 - - [ ] POI icons for sprite and custom overrides.
 - - [ ] native inmgr: Select player
 - - [ ] eggdev build: Replace `<title>` in HTMLs.
-- - [ ] web: Detect loss of focus. At a minimum, pause audio. Maybe pause everything?
+- - [ ] web: Detect loss of focus. At a minimum, pause audio. Maybe pause everything? Probly needs new soft-pause support in synth.
 - - [ ] web Video: Load raw pixels with non-minimum stride
 - - [ ] web `egg_texture_get_pixels`
 - - [ ] web Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
@@ -89,10 +89,10 @@ TODO:
 - [x] Define native synth API.
 - [x] Update eggdev.
 - [x] Native synth implementation.
-- [ ] Web synth implementation.
+- [x] Web synth implementation.
 - - [x] Print PCM.
-- - [ ] Soft pause.
-- - [ ] Correct getPlayhead (currently not wrapping)
+- - [x] Soft pause. -- punt
+- - [x] Correct getPlayhead (currently not wrapping)
 - - [x] Tuned voices wheel
 - - [x] Tuned voices pitchenv
 - - [x] Stereo
@@ -110,3 +110,5 @@ TODO:
 - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
 - [x] !!! minify: `const frequency = 256000 / (lforate * this.player.tempo);` became `const ex=256000/eu*this[h8][hO]`, missing parens!
 - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
+- [ ] web synth not sustaining notes?
+- [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter.
