@@ -137,7 +137,7 @@ export class SongPlayer {
     if (now >= this.nextLoopTime) {
       this.loopTime = this.nextLoopTime;
     }
-    return Math.max(0, now - this.loopTime;);
+    return Math.max(0, now - this.loopTime);
   }
   
   setPlayhead(ph) {

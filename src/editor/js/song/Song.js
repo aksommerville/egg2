@@ -3,28 +3,27 @@
  * We can work with any of EAU, EAU-Text, and MIDI.
  * The live model will be very close to EAU. So conversion to and from MIDI is expensive and potentially lossy.
  * Because there's three separate formats, and encode/decode for all of them is non-trivial, that logic lives in separate files.
+ * Supporting all three is important, but the expectation is that we'll usually see MIDI.
  */
  
-import { eauSongEncode, eauSongDecode } from "./eauSong.js";
-import { eautSongEncode, eautSongDecode } from "./eautSong.js";
-import { midiSongEncode, midiSongDecode } from "./midiSong.js";
 import { Encoder } from "../Encoder.js";
-import { eauGuessInitialChannelConfig } from "./eauSong.js";
+import { eauSongEncode, eauSongDecode } from "./songEau.js";
+import { eautSongEncode, eautSongDecode } from "./songEaut.js";
+import { midiSongEncode, midiSongDecode } from "./songMidi.js";
  
 export class Song {
   constructor(src) {
     this._init();
     if (!src) ;
     else if (src instanceof Song) this._copy(src);
-    else if (src instanceof Uint8Array) this._decode(src);
-    else if (typeof(src) === "string") eautSongDecode(this, src);
-    else throw new Error(`Inappropriate input to Song`);
+    else this._decode(src);
   }
   
   _init() {
     this.format = "mid"; // "mid", "eau", "eaut". It's fine to change this on a live object, to encode as a different format.
     this.tempo = 500; // ms/qnote
-    this.channels = []; // SongChannel. Indexed by chid, may be sparse.
+    this.channels = []; // SongChannel. Packed.
+    this.channelsByChid = []; // Weak SongChannel. Sparse, indexed by chid.
     this.events = []; // SongEvent.
     this.rangeNames = []; // {lo,hi,name}, only relevant for the built-in instruments song.
   }
@@ -33,15 +32,20 @@ export class Song {
     this.format = src.format;
     this.tempo = src.tempo;
     this.channels = src.channels.map(c => new SongChannel(c));
+    this.rebuildChannelsByChid();
     this.events = src.events.map(e => new SongEvent(e));
     this.rangeNames = src.rangeNames.map(r => ({...r}));
   }
   
   _decode(src) {
-    if (!src.length) return;
-    if (Encoder.checkSignature(src, "\u0000EAU")) return eauSongDecode(this, src);
-    if (Encoder.checkSignature(src, "MThd\u0000\u0000\u0000\u0006")) return midiSongDecode(this, src);
-    return eautSongDecode(this, new TextDecoder("utf8").decode(src));
+    if (!src?.length) return;
+    if (typeof(src) === "string") return eautSongDecode(this, src);
+    if (src instanceof Uint8Array) {
+      if (Encoder.checkSignature(src, "\u0000EAU")) return eauSongDecode(this, src);
+      if (Encoder.checkSignature(src, "MThd\u0000\u0000\u0000\u0006")) return midiSongDecode(this, src);
+      return eautSongDecode(this, new TextDecoder("utf8").decode(src));
+    }
+    throw new Error("Inappropriate input to Song");
   }
   
   encode() {
@@ -51,6 +55,11 @@ export class Song {
       case "mid": return midiSongEncode(this);
     }
     return eauSongEncode(this);
+  }
+  
+  rebuildChannelsByChid() {
+    this.channelsByChid = [];
+    for (const channel of this.channels) this.channelsByChid[channel.chid] = channel;
   }
   
   /* Accessors.
@@ -67,15 +76,15 @@ export class Song {
   
   getChids() {
     const chids = [];
-    for (let chid=0; chid<this.channels.length; chid++) {
-      if (this.channels[chid]) chids.push(chid);
+    for (let chid=0; chid<this.channelsByChid.length; chid++) {
+      if (this.channelsByChid[chid]) chids.push(chid);
     }
     return chids;
   }
   
   unusedChid() {
     for (let chid=0; chid<16; chid++) {
-      if (!this.channels[chid]) return chid;
+      if (!this.channelsByChid[chid]) return chid;
     }
     return -1;
   }
@@ -84,7 +93,7 @@ export class Song {
    ****************************************************************************/
   
   /* If you've just changed a channel's "name" property, call this to force events to match it.
-   * Songs source from EAU or EAU-Text won't change anything here, but MIDI will.
+   * Songs sourced from EAU or EAU-Text won't change anything here, but MIDI will.
    * Returns true if anything changed.
    */
   replaceEventsForChannelName(chid) {
@@ -133,22 +142,6 @@ export class SongChannel {
     else throw new Error(`Inappropriate input to SongChannel`);
   }
   
-  /* Return an array of SongChannel indexed by chid, possibly sparse.
-   * (src) is a Uint8Array starting with a Channel ID, and not including the 0xff Channels Terminator.
-   * ie the format of our Meta 0x77 chunk.
-   */
-  static decodeHeaders(src) {
-    const channels = [];
-    for (let srcp=0; srcp<src.length; ) {
-      const nextp = SongChannel.measure(src, srcp);
-      if (nextp <= srcp) break;
-      const channel = new SongChannel(src.slice(srcp, nextp));
-      channels[channel.chid] = channel;
-      srcp = nextp;
-    }
-    return channels;
-  }
-  
   // Returns the new (srcp).
   static measure(src, srcp) {
     if (srcp > src.length - 8) return 0;
@@ -170,7 +163,7 @@ export class SongChannel {
     }
     this.trim = 0x80;
     this.pan = 0x80;
-    this.mode = 0; // (0,1,2,3) = (NOOP,DRUM,FM,SUB)
+    this.mode = 0; // (0,1,2,3,4) = (NOOP,DRUM,FM,HARSH,HARM)
     this.payload = []; // Uint8Array if not empty.
     this.post = []; // Uint8Array if not empty.
     this.name = "";
@@ -189,13 +182,13 @@ export class SongChannel {
     this.post = new Uint8Array(src.post);
   }
   
-  // From EAU format, starting at Channel ID. Caller must measure it on their own.
+  // From one EAU "CHDR" chunk.
   _decode(src) {
     let srcp = 0;
-    this.chid = src[srcp++] || 0;
-    this.trim = src[srcp++] || 0;
-    this.pan = src[srcp++] || 0;
-    this.mode = src[srcp++] || 0;
+    if (srcp < src.length) this.chid = src[srcp++]; else this.chid = 0;
+    if (srcp < src.length) this.trim = src[srcp++]; else this.trim = 0x80;
+    if (srcp < src.length) this.pan = src[srcp++]; else this.pan = 0x80;
+    if (srcp < src.length) this.mode = src[srcp++]; else this.mode = 2;
     const paylen = (src[srcp] << 8) | src[srcp+1];
     srcp += 2;
     if (srcp > src.length - paylen) throw new Error(`Unexpected EOF in Channel Header`);
@@ -205,6 +198,19 @@ export class SongChannel {
     srcp += 2;
     if (srcp > src.length - postlen) throw new Error(`Unexpected EOF in Channel Header`);
     this.post = src.slice(srcp, srcp + postlen);
+  }
+  
+  encode() {
+    const encoder = new Encoder();
+    encoder.u8(this.chid);
+    encoder.u8(this.trim);
+    encoder.u8(this.pan);
+    encoder.u8(this.mode);
+    encoder.u16be(this.payload.length);
+    encoder.raw(this.payload);
+    encoder.u16be(this.post.length);
+    encoder.raw(this.post);
+    return encoder.finish();
   }
   
   getDisplayName() {
@@ -238,19 +244,20 @@ export class SongEvent {
     this.time = 0; // Absolute ms.
     this.type = ""; // "n"=note, "w"=wheel, "m"=midi, ""=other
     this.chid = -1; // 0..15, or <0 for channelless events.
+    this.trackId = 0; // Only meaningful when sourced from MIDI. Zero-based index of MTrk.
     // If (type === "n"):
     //   this.noteid = 0x40; // 0..127
-    //   this.velocity = 7; // 0..15
+    //   this.velocity = 0x80; // 0..127
     //   this.durms = 0;
     // If (type === "w"):
-    //   this.v = 0x80; // 0..255
+    //   this.v = 0x2000; // 0..0x3fff
     // If (type === "m"):
-    //   this.trackId = 0; // Zero-based index of MTrk chunk.
     //   this.opcode = 0x00; // High 4 bits only, for channel voice events. 0xff=Meta, 0xf0=Sysex, 0xf7=Sysex. You'll never see 0x90 or 0xe0.
     //   this.a = 0x00; // 0..127 ; "type" for Meta events. Absent for Sysex.
     //   this.b = 0x00; // 0..127 ; Absent for Program Change, Channel Pressure, Meta, and Sysex.
     //   this.v = new Uint8Array(0); // Meta or Sysex.
     // We're free to add other fields willy-nilly, especially in the (type === "") case.
+    // Songs sourced from MIDI will contain 'n' and 'w' events, not their 'm' counterparts.
   }
   
   _copy(src) {

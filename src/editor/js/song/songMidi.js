@@ -1,0 +1,187 @@
+/* songMidi.js
+ */
+ 
+import { Encoder } from "../Encoder.js";
+ 
+/* Encode.
+ *****************************************************************************/
+
+/* Insert at the correct time.
+ * We guarantee that new events appear after existing events at the same time.
+ */
+function addMidiEvent(track, event) {
+  let lo=0, hi=track.length;
+  while (lo < hi) {
+    const ck = (lo + hi) >> 1;
+    const q = track[ck];
+         if (event.time < q.time) hi = ck;
+    else if (event.time > q.time) lo = ck + 1;
+    else {
+      lo = ck;
+      while ((lo < hi) && (track[lo].time === event.time)) lo++;
+      break;
+    }
+  }
+  track.splice(lo, 0, event);
+}
+
+/* Return an array of tracks, which are each an array of events:
+ *  { time, chid, opcode, a, b, v }
+ * (time) are integer ms, and events are sorted by it.
+ * Note events are split into On and Off.
+ */
+function midiEventsByTrack(song) {
+  let tracks = []; // Initially index by (trackId) or zero if missing. May be sparse.
+  for (const event of song.events) {
+    const trackId = event.trackId || 0;
+    let track = tracks[trackId];
+    if (!track) track = tracks[trackId] = [];
+    switch (event.opcode) {
+      case "n": {
+          addMidiEvent(track, { time: ~~event.time, chid: event.chid, opcode: 0x90, a: event.noteid, b: event.velocity });
+          addMidiEvent(track, { time: ~~event.time + ~~event.durms, chid: event.chid, opcode: 0x80, a: event.noteid, b: 0x40 });
+        } break;
+      case "w": {
+          addMidiEvent(track, { time: ~~event.time, chid: event.chid, opcode: 0xe0, a: event.v & 0x7f, b: event.v >> 7 });
+        } break;
+      case "m": {
+          if ((event.opcode === 0xff) && (event.a === 0x51)) continue; // Meta 0x51 Set Tempo. We'll synthesize this below.
+          if ((event.opcode === 0xff) && (event.a === 0x77)) continue; // Meta 0x77 EAU Channel Header. ''
+          addMidiEvent(track, { time: ~~event.time, chid: event.chid, opcode: event.opcode, a: event.a, b: event.b, v: event.v });
+        } break;
+      // Others eg "" get dropped, though they do cause us to create a track.
+    }
+  }
+  
+  // Drop missing tracks. Note that this changes (trackId). I feel that's ok, trackId is meant to be transient.
+  tracks = tracks.filter(v => v);
+  if (!tracks.length) return tracks;
+  
+  // For each channel in the song, prepend a Meta 0x77 EAU Channel Header to the most appropriate track.
+  for (const channel of song.channels) {
+    const v = channel.encode();
+    const track = tracks.find(t => t.find(e => e.chid === channel.chid)) || tracks[0];
+    track.splice(0, 0, { time: 0, opcode: 0xff, a: 0x77, v });
+  }
+  
+  // Append Meta 0x2f End Of Track to any non-empty track missing it.
+  for (const track of tracks) {
+    if (track.length < 1) continue;
+    const last = track[track.length - 1];
+    if ((last.opcode === 0xff) && (last.a === 0x2f)) continue;
+    track.push({ time: last.time, opcode: 0xff, a: 0x2f, v: [] });
+  }
+  
+  // Declare tempo at the start of the first track.
+  const first = tracks[0];
+  const uspq = Math.max(0, Math.min(0xffffff, song.tempo * 1000));
+  const tempobody = new Uint8Array([ uspq >> 16, uspq >> 8, uspq ]);
+  first.splice(0, 0, { time: 0, opcode: 0xff, a: 0x51, v: tempobody });
+  
+  return tracks;
+}
+
+function encodeMThd(dst, song, trackCount) {
+  dst.raw("MThd");
+  dst.u32be(6);
+  dst.u16be(1); // Format
+  dst.u16be(trackCount);
+  dst.u16be(song.tempo); // Division. We arrange for ticks and ms to be the same thing.
+}
+
+function encodeMTrk(dst, track, song) {
+  dst.raw("MTrk");
+  const lenp = dst.c;
+  dst.u32be(0); // Length placeholder.
+  let time = 0;
+  for (const event of track) {
+    dst.vlq(event.time - time);
+    time = event.time;
+    switch (event.opcode) {
+      case 0x80:
+      case 0x90:
+      case 0xa0:
+      case 0xb0:
+      case 0xe0: {
+          dst.u8(event.opcode | event.chid);
+          dst.u8(event.a);
+          dst.u8(event.b);
+        } break;
+      case 0xc0:
+      case 0xd0: {
+          dst.u8(event.opcode | event.chid);
+          dst.u8(event.a);
+        } break;
+      case 0xf0:
+      case 0xf7: {
+          dst.u8(event.opcode);
+          dst.vlq(event.v.length);
+          dst.raw(event.v);
+        } break;
+      case 0xff: {
+          dst.u8(0xff);
+          dst.u8(event.a);
+          dst.vlq(event.v.length);
+          dst.raw(event.v);
+        } break;
+      default: throw new Error(`Unexpected opcode ${event.opcode}`);
+    }
+  }
+  const len = dst.c - lenp - 4;
+  dst.v[lenp+0] = len >> 24;
+  dst.v[lenp+1] = len >> 16;
+  dst.v[lenp+2] = len >> 8;
+  dst.v[lenp+3] = len;
+}
+ 
+export function midiSongEncode(song) {
+  const dst = new Encoder();
+  const tracks = midiEventsByTrack(song);
+  encodeMThd(dst, song, tracks.length);
+  for (const track of tracks) {
+    encodeMTrk(dst, track, song);
+  }
+  return dst.finish();
+}
+
+/* Decode.
+ ***************************************************************************/
+ 
+export function midiSongDecode(song, src) {
+
+  /* Read MThd, and make a reader for each MTrk.
+   */
+  let division = 0;
+  const tracks = []; // { v, p, status, delay, chpfx, trackId }
+  let srcp = 0;
+  while (srcp < src.length) {
+    if (srcp > src.length - 8) throw new Error("Malformed MIDI");
+    const chunkid = (src[srcp] << 24) | (src[srcp+1] << 16) | (src[srcp+2] << 8) | src[srcp+3]; srcp += 4;
+    const chunklen = (src[srcp] << 24) | (src[srcp+1] << 16) | (src[srcp+2] << 8) | src[srcp+3]; srcp += 4;
+    if ((chunklen < 0) || (srcp > src.length - chunklen)) throw new Error("Malformed MIDI");
+    const chunk = new Uint8Array(src.buffer, src.byteOffset + srcp, chunklen);
+    srcp += chunklen;
+    switch (chunkid) {
+      case 0x4d546864: { // MThd
+          if (division) throw new Error("Multiple MThd in MIDI file");
+          if (chunklen < 6) throw new Error("Invalid MThd length");
+          division = (chunk[4] << 8) | chunk[5];
+          if ((division < 1) || (division >= 0x8000)) throw new Error("Invalid division");
+        } break;
+      case 0x4d54726b: { // MTrk
+          tracks.push({
+            v: chunk,
+            p: 0,
+            status: 0,
+            delay: -1,
+            chpfx: -1,
+            trackId: tracks.length,
+          });
+        } break;
+      // Ignore unknown chunks.
+    }
+  }
+  if (!division) throw new Error("Missing MThd");
+  
+  ...TODO
+}

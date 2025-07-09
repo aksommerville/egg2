@@ -98,9 +98,11 @@ TODO:
 - - [x] Stereo
 - - [x] Post
 - [ ] Update editor.
+- - [ ] New serial format.
 - [ ] Define some instruments.
 - [ ] Test perceptually.
 - - Pay close attention to FM. I hacked it fast and loose for web, probably got it all wrong.
+- - Add some editor tooling to print a song both native and web, and play them back with an easy toggle.
 - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
 - [ ] `eggdev_convert_audio.c:eggdev_wav_from_eau`: Arbitrary params from user for conversion? (rate,chanc,method) in this case.
 - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
@@ -110,5 +112,5 @@ TODO:
 - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
 - [x] !!! minify: `const frequency = 256000 / (lforate * this.player.tempo);` became `const ex=256000/eu*this[h8][hO]`, missing parens!
 - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
-- [ ] web synth not sustaining notes?
+- [x] web synth not sustaining notes?
 - [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter.

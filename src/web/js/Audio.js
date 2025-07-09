@@ -10,7 +10,6 @@ import { eauNotevRequire } from "./songBits.js";
  
 export class Audio {
   constructor(rt) {
-    console.log(`Audio.constructor`);
     this.rt = rt; // Will be undefined when loaded in editor.
     this.song = null; // SongPlayer, target for songid and playhead.
     this.pvsong = null; // SongPlayer, winding down.
@@ -22,7 +21,6 @@ export class Audio {
   //TODO I think we need a softer concept of "pause", to temporarily stop output eg when the page loses focus.
   
   start() {
-    console.log(`Audio.start`);
     if (!this.ctx) {
       this.ctx = new AudioContext({
         latencyHint: "interactive",
@@ -34,7 +32,6 @@ export class Audio {
   }
   
   stop() {
-    console.log(`Audio.stop`);
     for (const sound of this.sounds) sound.stop();
     this.sounds = [];
     if (this.song) {
@@ -73,7 +70,7 @@ export class Audio {
     }
     if (serial) {
       console.log(`Audio.playEauSong`, { serial, songid, playhead });
-      this.song = new Song(this.ctx, serial, 1.0, 0.0, false, songid);
+      this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, false, songid);
       this.song.play();
       if (playhead > 0) this.song.setPlayhead(playhead);
     }
