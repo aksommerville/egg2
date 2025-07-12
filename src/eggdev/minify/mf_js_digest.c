@@ -340,6 +340,7 @@ static int mf_rename_variable(struct eggdev_minify_js *ctx,struct mf_node *node)
     if (node->type==MF_NODE_TYPE_LAMBDA) break;
     if (node->type==MF_NODE_TYPE_METHOD) break;
     if (node->type==MF_NODE_TYPE_BLOCK) break; // I'm not sure that {} creates a namespace.
+    if (node->type==MF_NODE_TYPE_FOR3) break;
     node=node->parent;
   }
   return mf_rename_all_within(ctx,node,nname,nnamec,prev,prevc);

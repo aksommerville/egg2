@@ -65,6 +65,9 @@ Planned differences from Egg v1:
 - - [ ] web Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
 - - [ ] web: Quantize final scale-up, don't use `object-fit:contain`. Then implement `egg_video_fb_from_screen`
 - - [ ] web: Player count 
+- Defects:
+- - [x] Minify: `for (let i=0; i<2; i++) {` became `for (let h1 = 0; hZ < 2; hZ++) {`, two names from one.
+- - - repro'd: 20250712-minify.sh
 
 ## 2025-06-23 resynth
 
