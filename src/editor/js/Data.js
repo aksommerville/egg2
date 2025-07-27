@@ -161,7 +161,7 @@ export class Data {
   }
   
   /* (path) must name an existing resource. Use createResource() if it's new.
-   * (cb) must return a Uint8Array of the new encoded content.
+   * (cb) must return a Uint8Array of the new encoded content, or a Promise resolving to one.
    * (cb) will not be called immediately. We debounce for a tasteful interval.
    */
   dirty(path, cb) {
@@ -351,8 +351,15 @@ export class Data {
       const res = this.resv.find(r => r.path === path);
       if (!res) continue; // Maybe they deleted it after dirtying? Whatever.
       const serial = cb();
-      res.serial = serial;
-      promises.push(this.comm.http("PUT", res.path, null, null, serial));
+      if (serial instanceof Promise) {
+        promises.push(serial.then(realSerial => {
+          res.serial = realSerial;
+          return this.comm.http("PUT", res.path, null, null, realSerial);
+        }));
+      } else {
+        res.serial = serial;
+        promises.push(this.comm.http("PUT", res.path, null, null, serial));
+      }
     }
     Promise.all(promises).then(() => {
       this.broadcastDirty("clean");

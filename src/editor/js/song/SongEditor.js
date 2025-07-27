@@ -3,87 +3,59 @@
  
 import { Dom } from "../Dom.js";
 import { Data } from "../Data.js";
-import { Song } from "./Song.js";
 import { SongService } from "./SongService.js";
-import { SongToolbar } from "./SongToolbar.js";
+import { SongToolbarUi } from "./SongToolbarUi.js";
 import { SongChannelsUi } from "./SongChannelsUi.js";
-import { Audio } from "../Audio.js"; // rt
+import { SongEventsUi } from "./SongEventsUi.js";
 
 export class SongEditor {
   static getDependencies() {
-    return [HTMLElement, Dom, Data, SongService, Audio, Window];
+    return [HTMLElement, Dom, Data, SongService];
   }
-  constructor(element, dom, data, songService, audio, window) {
+  constructor(element, dom, data, songService) {
     this.element = element;
     this.dom = dom;
     this.data = data;
     this.songService = songService;
-    this.songService.songEditor = this;
-    this.audio = audio;
-    this.window = window;
     
+    this.toolbar = null; // SongToolbarUi
+    this.channels = null; // SongChannelsUi
+    this.events = null; // SongEventsUi
     this.res = null;
     this.song = null;
-    this.songToolbar = null;
-    this.songChannelsUi = null;
-    this.detailEditor = null; // SongChartUi or SongListUi
     
     this.songServiceListener = this.songService.listen(e => this.onSongServiceEvent(e));
-    this.audioInterval = this.window.setInterval(() => this.audio.update(), 200);
   }
   
   onRemoveFromDom() {
+    if (this.songService.song === this.song) this.songService.song = null;
     this.songService.unlisten(this.songServiceListener);
-    this.audio.stop();
-    if (this.audioInterval) {
-      this.window.clearInterval(this.audioInterval);
-      this.audioInterval = null;
-    }
   }
   
   static checkResource(res) {
-    if (res.format === "wav") return 0;
     if (res.type === "song") return 2;
-    if (res.type === "sound") return 2;
     return 0;
   }
   
   setup(res) {
-    this.res = res;
-    this.song = new Song(res.serial);
-    this.songService.defaultInstruments(this.song).then(() => {
-      this.element.innerHTML = "";
-      this.songToolbar = this.dom.spawnController(this.element, SongToolbar, [this.songService]);
-      this.songChannelsUi = this.dom.spawnController(this.element, SongChannelsUi, [this.songService]);
-      const detailContainer = this.dom.spawn(this.element, "DIV", ["detailContainer"]);
-      this.detailEditor = this.dom.spawnController(detailContainer, this.songService.getDetailEditorClass(), [this.songService]);
-      this.songService.setup(res, this.song);
+    this.songService.getSong(res.path).then(song => {
+      console.log(`SongEditor got song`, { song, res });
+      this.songService.reset(song);
+      this.res = res;
+      this.song = song;
+      this.buildUi();
     });
   }
   
-  replaceDetailEditor() {
-    const detailContainer = this.element.querySelector(".detailContainer");
-    detailContainer.innerHTML = "";
-    this.detailEditor = this.dom.spawnController(detailContainer, this.songService.getDetailEditorClass(), [this.songService]);
-    this.detailEditor.setup?.(); // They normally expect a "setup" event.
+  buildUi() {
+    this.element.innerHTML = "";
+    this.toolbar = this.dom.spawnController(this.element, SongToolbarUi);
+    const bottom = this.dom.spawn(this.element, "DIV", ["bottom"]);
+    this.channels = this.dom.spawnController(bottom, SongChannelsUi);
+    this.events = this.dom.spawnController(bottom, SongEventsUi);
   }
   
-  dirty() {
-    if (!this.res || !this.song) return;
-    this.data.dirty(this.res.path, () => this.song.encode());
-  }
-  
-  onSongServiceEvent(event) {
-    //console.log(`SongEditor.onSongServiceEvent: ${JSON.stringify(event)}`);
-    switch (event.type) {
-      case "detailEditor": this.replaceDetailEditor(); break;
-      case "channelsRemoved":
-      case "channelChanged":
-      case "channelAdded":
-      case "eventsRemoved":
-      case "eventsChanged":
-      case "eventAdded":
-      case "dirty": this.dirty(); break;
-    }
+  onSongServiceEvent(e) {
+    console.log(`SongEditor.onSongServiceEvent: ${JSON.stringify(e)}`);
   }
 }

@@ -532,267 +532,34 @@ input.toggle:checked + label.toggle.light {
   flex-direction: column;
   height: 100vh !important;
 }
-.SongEditor > .detailContainer {
+.SongEditor > .bottom {
   flex: 1;
-  overflow: scroll;
-}
-
-.SongToolbar {
   display: flex;
   flex-direction: row;
+}
+
+.SongToolbarUi {
+  height: 40px;
   border-bottom: 1px solid #000;
-}
-
-.SongChannelsUi {
-  display: flex;
-  flex-direction: row;
-  border-bottom: 1px solid #000;
-  overflow-x: scroll;
-}
-.SongChannelsUi > .channel {
-  border: 1px solid #000;
-  margin: 4px;
-  padding: 4px;
-  border-radius: 4px;
-  background-color: #222;
-  height: 200px;
-  width: 300px;
-  min-width: 300px;
-  display: flex;
-  flex-direction: column;
-}
-.SongChannelsUi > .channel > .topRow {
-  display: flex;
-  flex-direction: row;
-  justify-content: stretch;
-}
-.SongChannelsUi > .channel > .topRow > .spacer {
-  flex: 1;
-}
-.SongChannelsUi > .channel .title {
-  font-weight: bold;
-  cursor: pointer;
-}
-.SongChannelsUi .slider {
-  display: flex;
-  flex-direction: row;
-}
-.SongChannelsUi .slider > .tattle {
-  font-family: monospace;
-  white-space: pre;
-}
-.SongChannelsUi .slider > input {
-  flex: 1;
-}
-.SongChannelsUi .modeRow {
-  display: flex;
-  flex-direction: row;
-}
-.SongChannelsUi .modeRow > select {
-  flex: 1;
-}
-.SongChannelsUi .post {
-  display: flex;
-  flex-wrap: wrap;
-}
-.SongChannelsUi .post .stage {
-  border: 1px solid #000;
-  margin: 2px;
-  background-color: #333;
-  display: flex;
-  flex-direction: row;
-}
-.SongChannelsUi .post .stage .delete {
-  background-color: #faa;
-}
-.SongChannelsUi .post .stage .title {
-  margin: 0 5px;
-}
-
-.SongListUi .event {
   display: flex;
   flex-direction: row;
   align-items: center;
-  border-bottom: 1px solid #333;
 }
-.SongListUi .event:hover {
-  background-color: #333;
-}
-.SongListUi .event .time {
-  width: 50px;
-  text-align: right;
-}
-.SongListUi .event .chid {
-  width: 25px;
-  margin: 0 5px;
-  text-align: center;
-}
-.SongListUi .event .noteid {
-  width: 90px;
-  font-family: monospace;
-}
-.SongListUi .event .velocity {
-  width: 40px;
-}
-.SongListUi .event .durms {
-  width: 40px;
-}
-.SongListUi .event .wheel {
-  width: 40px;
-}
-.SongListUi .event .meta {
-  width: 250px;
-}
-.SongListUi .event .payload {
-  font-family: monospace;
-  flex: 1;
-}
-.SongListUi .event .payloadPlaceholder {
-  font-style: italic;
-  flex: 1;
-  color: #ccc;
-}
-.SongListUi .event .payloadText {
-  flex: 1;
-  color: #dfd;
-}
-.SongListUi .event .opcode {
-  width: 40px;
-}
-
-.SongEventModal {
-  min-width: 50vw;
-  min-height: 50vh;
-  display: flex;
-  flex-direction: row;
-}
-.SongEventModal form {
-  flex: 1;
-}
-.SongEventModal td.key {
-  width: 80px;
-  text-align: right;
-}
-.SongEventModal td.value > * {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.ModecfgGenericModal {
-  min-width: 40vw;
-  min-height: 40vh;
-  display: flex;
-}
-.ModecfgGenericModal form {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-.ModecfgGenericModal form textarea {
-  flex: 1;
-}
-
-.ScalarUi {
-  display: flex;
-  flex-direction: row;
-}
-.ScalarUi > .key {
-  font-weight: bold;
-  width: 100px;
-  text-align: right;
-  margin-right: 10px;
-}
-.ScalarUi > input {
-  width: 100px;
-}
-.ScalarUi > .advice {
-  margin-left: 5px;
-}
-
-.WaveUi {
-  margin: 5px 0;
-}
-.WaveUi input[name='qual'] {
-  width: 60px;
-}
-
-.EnvUi {
-  display: flex;
-  flex-direction: column;
-}
-.EnvUi .playground {
-  height: 150px;
-}
-.EnvUi .zoom {
-  width: 1lh;
-  height: 1lh;
-  cursor: pointer;
-  user-select: none;
-  background-color: #a50;
-  border-radius: 0.5lh;
-  text-align: center;
-}
-
-.ModecfgSubModal {
-  width: 450px;
-}
-
-.ModecfgDrumModal {
-  min-width: 450px;
-}
-.ModecfgDrumModal .scroller {
-  overflow-y: scroll;
-  height: 75vh;
-  margin-bottom: 10px;
-}
-.ModecfgDrumModal table.notes {
-  width: 100%;
-}
-.ModecfgDrumModal .tableHeader {
-  position: sticky;
-  top: 0;
-  background-color: #ace;
-}
-.ModecfgDrumModal .gmName {
-  min-width: 150px;
-}
-.ModecfgDrumModal td.actions {
-  min-width: 200px;
-  display: flex;
-  flex-direction: row;
-  text-align: right;
-}
-.ModecfgDrumModal .serialLength {
-  width: 40px;
-  margin-right: 5px;
-}
-.ModecfgDrumModal .spacer {
-  flex: 1;
-}
-
-.DrumsImportModal .subui {
-  width: 700px;
-  height: 400px;
-  overflow-y: scroll;
-}
-.DrumsImportModal .sourceNote {
-  align-items: baseline;
-}
-.DrumsImportModal .sourceNote.recommend {
-  background-color: #cfc;
-}
-.DrumsImportModal .sourceNote > .sourceNoteId {
+.SongToolbarUi > .playhead {
   width: 200px;
-  overflow: hidden;
+  height: 30px;
+  margin: 0 5px;
 }
-.DrumsImportModal .sourceNote > input[type='number'] {
-  width: 50px;
-  margin-right: 5px;
+
+.SongChannelsUi {
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+  border-right: 1px solid #000;
+  background-color: #0f0;
 }
-.DrumsImportModal .bottomRow {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  gap: 5px;
+
+.SongEventsUi {
+  flex: 1;
+  background-color: #00f;
 }

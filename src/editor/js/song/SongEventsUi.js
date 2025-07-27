@@ -1,11 +1,11 @@
-/* SongChannelsUi.js
- * Left side of SongEditor, shows all the channels.
+/* SongEventsUi.js
+ * Right side of SongEditor, shows all the events.
  */
  
 import { Dom } from "../Dom.js";
 import { SongService } from "./SongService.js";
 
-export class SongChannelsUi {
+export class SongEventsUi {
   static getDependencies() {
     return [HTMLElement, Dom, SongService];
   }
