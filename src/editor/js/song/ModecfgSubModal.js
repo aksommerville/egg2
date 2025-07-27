@@ -3,7 +3,7 @@
  */
  
 import { Dom } from "../Dom.js";
-import { eauModecfgDecodeSub, eauModecfgEncodeSub } from "./eauSong.js";
+//TODO import { eauModecfgDecodeSub, eauModecfgEncodeSub } from "./eauSong.js";
 import { EnvUi } from "./EnvUi.js";
 import { ScalarUi } from "./ScalarUi.js";
 
@@ -35,7 +35,7 @@ export class ModecfgSubModal {
   setup(channel, song) {
     this.channel = channel;
     this.song = song;
-    this.model = eauModecfgDecodeSub(this.channel.payload);
+    //TODO this.model = eauModecfgDecodeSub(this.channel.payload);
     
     this.element.innerHTML = "";
     let autofocus = null;
@@ -73,7 +73,7 @@ export class ModecfgSubModal {
     event.preventDefault();
     event.stopPropagation();
     // (this.model) stays fresh, just encode it.
-    const payload = eauModecfgEncodeSub(this.model);
+    //TODO const payload = eauModecfgEncodeSub(this.model);
     this.resolve(payload);
     this.element.remove();
   }

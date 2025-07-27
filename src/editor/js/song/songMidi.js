@@ -2,6 +2,7 @@
  */
  
 import { Encoder } from "../Encoder.js";
+import { SongEvent, SongChannel } from "./Song.js";
  
 /* Encode.
  *****************************************************************************/
@@ -144,15 +145,136 @@ export function midiSongEncode(song) {
   return dst.finish();
 }
 
+/* Add tempo change to an array of [time,usperqnote].
+ * New insertions will replace any at the same time, and we maintain chronological order.
+ */
+ 
+function addMidiTempoChange(tempo, time, usperqnote) {
+  let lo=0, hi=tempo.length;
+  while (lo < hi) {
+    const ck = (lo + hi) >> 1;
+    const q = tempo[ck];
+         if (time < q[0]) hi = ck;
+    else if (time > q[0]) lo = ck + 1;
+    else {
+      q[1] = usperqnote;
+      return;
+    }
+  }
+  tempo.splice(lo, 0, [time, usperqnote]);
+}
+
+/* Read from MIDI tracks, during decode.
+ * Events are returned as proper SongEvent instances.
+ * (time,trackId) are initially zero; decoder should set.
+ * (durms) is initially <0 for all Note On events, which are otherwise normal "n" events.
+ * Note Off events are reported verbatim as "m" events.
+ * (track) is { v, p, status, chpfx, trackId }.
+ */
+ 
+function readVlqFromMidiTrack(track) {
+  let v = 0;
+  for (let i=4; i-->0; ) {
+    if (track.p >= track.v.length) throw new Error("Unexpected end of track.");
+    const next = track.v[track.p++];
+    v <<= 7;
+    v |= next & 0x7f;
+    if (!(next & 0x80)) return v;
+  }
+  throw new Error("Malformed VLQ.");
+}
+
+function readEventFromMidiTrack(track) {
+  if (track.p >= track.v.length) throw new Error("Unexpected end of track.");
+  const event = new SongEvent();
+  
+  let lead = track.v[track.p];
+  if (lead & 0x80) track.p++;
+  else if (track.status) lead = track.status;
+  else throw new Error(`Unexpected leading byte ${lead}`);
+  track.status = lead;
+  
+  switch (lead & 0xf0) {
+      
+    // Note On: "n"
+    case 0x90: {
+        if (track.p > track.v.length - 2) throw new Error("Unexpected end of track.");
+        event.type = "n";
+        event.chid = lead & 0x0f;
+        event.noteid = track.v[track.p++];
+        event.velocity = track.v[track.p++];
+        event.durms = -1; // Our caller will replace this when the Note Off is reached; or default to zero.
+      } break;
+      
+    // Wheel: "w"
+    case 0xe0: {
+        if (track.p > track.v.length - 2) throw new Error("Unexpected end of track.");
+        event.type = "w";
+        event.chid = lead & 0x0f;
+        event.v = track.v[track.p] | (track.v[track.p + 1] << 7);
+        track.p += 2;
+      } break;
+  
+    // Note Off, Note Adjust, Control Change: "m"
+    // Note Off will be consumed by our immediate caller; they don't end up in the Song.
+    case 0x80: case 0xa0: case 0xb0: {
+        if (track.p > track.v.length - 2) throw new Error("Unexpected end of track.");
+        event.type = "m";
+        event.chid = lead & 0x0f;
+        event.opcode = lead & 0xf0;
+        event.a = track.v[track.p++];
+        event.b = track.v[track.p++];
+      } break;
+      
+    // Program Change, Channel Pressure: "m" (but just one data byte)
+    case 0xc0: case 0xd0: {
+        if (track.p > track.v.length - 1) throw new Error("Unexpected end of track.");
+        event.type = "m";
+        event.chid = lead & 0x0f;
+        event.opcode = lead & 0xf0;
+        event.a = track.v[track.p++];
+      } break;
+      
+    // Meta or Sysex: "m"
+    default: {
+        track.status = 0;
+        event.type = "m";
+        event.opcode = lead;
+        switch (event.opcode) {
+          case 0xff: { // Meta. Same as Sysex but for a leading "type" byte.
+              if (track.p >= track.v.length) throw new Error("Unexpected end of track.");
+              event.a = track.v[track.p++];
+            } break;
+          case 0xf0: case 0xf7: break; // Sysex.
+          default: throw new Error(`Unexpected leading byte ${lead}`);
+        }
+        const paylen = readVlqFromMidiTrack(track);
+        if (track.p > track.v.length - paylen) throw new Error("Unexpected end of track.");
+        event.v = new Uint8Array(track.v.buffer, track.v.byteOffset + track.p, paylen);
+        track.p += paylen;
+        if (event.opcode === 0xff) switch (event.a) {
+          case 0x20: { // MIDI Channel Prefix.
+              if (event.v.length >= 1) {
+                track.chpfx = event.v[0];
+              }
+            } break;
+        }
+        event.chid = track.chpfx;
+      } break;
+  }
+  return event;
+}
+
 /* Decode.
  ***************************************************************************/
  
 export function midiSongDecode(song, src) {
+  song.events = [];
 
   /* Read MThd, and make a reader for each MTrk.
    */
   let division = 0;
-  const tracks = []; // { v, p, status, delay, chpfx, trackId }
+  const tracks = []; // { v, p, status, chpfx, trackId }
   let srcp = 0;
   while (srcp < src.length) {
     if (srcp > src.length - 8) throw new Error("Malformed MIDI");
@@ -173,7 +295,6 @@ export function midiSongDecode(song, src) {
             v: chunk,
             p: 0,
             status: 0,
-            delay: -1,
             chpfx: -1,
             trackId: tracks.length,
           });
@@ -182,6 +303,80 @@ export function midiSongDecode(song, src) {
     }
   }
   if (!division) throw new Error("Missing MThd");
+  console.log(`initial decode ok`, { tracks });
   
-  ...TODO
+  /* Read the tracks serially, no need to interleave.
+   * Keep all timing initially in ticks, and we'll convert to ms after all events are captured.
+   * Have to do it like that, because a Set Tempo event on one track controls timing of all tracks.
+   */
+  const tempo = [ // Tempo changes. [time(ticks),us/qnote]. Sorted by time.
+    [0, 500000],
+  ];
+  for (let trackId=0; trackId<tracks.length; trackId++) {
+    const track = tracks[trackId];
+    let time = 0;
+    while (track.p < track.v.length) {
+      time += readVlqFromMidiTrack(track); // Every event is preceded by a VLQ delay in ticks.
+      const event = readEventFromMidiTrack(track);
+      event.time = time;
+      event.trackId = trackId;
+      
+      /* Note Off events are special.
+       * Find a Note On event for this track, channel, and note, and update its (durms).
+       * Note that we do require each On/Off pair to be on the same track, I don't think MIDI strictly requires that.
+       */
+      if ((event.type === "m") && (event.opcode === 0x80)) {
+        const onEvent = song.events.find(e => (
+          (e.trackId === trackId) &&
+          (e.chid === event.chid) &&
+          (e.type === "n") &&
+          (e.noteid === event.a) &&
+          (e.durms < 0)
+        ));
+        if (onEvent) {
+          onEvent.durms = time - onEvent.time;
+        } else {
+          console.log(`Failed to locate Note On for a Note Off. track=${trackId}/${tracks.length} time=${time} chid=${event.chid} noteid=${event.a}`);
+        }
+        continue;
+      }
+      
+      /* Set Tempo events get recorded like any other Meta event, but also we need to track them.
+       */
+      if ((event.type === "m") && (event.opcode === 0xff) && (event.a === 0x51)) {
+        if (event.v?.length >= 3) {
+          addMidiTempoChange(tempo, time, (event.v[0] << 16) | (event.v[1] << 8) | event.v[2]);
+        }
+      }
+      
+      song.insertEvent(event);
+    }
+  }
+  
+  /* Convert event times from ticks to milliseconds.
+   * And any "n" event with (durms<0), issue a warning and force it to zero.
+   */
+  let tempop=0, nowms=0, nowtick=0, mspertick=0;
+  for (const event of song.events) {
+    if ((event.type === "n") && (event.durms < 0)) {
+      console.log(`Note On unmatched by Note Off. track=${event.trackId}/${tracks.length} time=${event.time} chid=${event.chid} noteid=${event.noteid}`);
+      event.durms = 0;
+    }
+    if ((tempop < tempo.length) && (event.time <= tempo[tempop][0])) {
+      const usperqnote = tempo[tempop][1];
+      tempop++;
+      mspertick = usperqnote / (division * 1000);
+    }
+    const dtick = event.time - nowtick;
+    const dms = dtick * mspertick;
+    nowtick = event.time;
+    nowms += dms;
+    event.time = Math.round(nowms);
+  }
+  
+  /* Collect channel headers.
+   */
+  //TODO
+  
+  console.log(`Decoded MIDI song.`, { song, src, tracks, division, tempo });
 }

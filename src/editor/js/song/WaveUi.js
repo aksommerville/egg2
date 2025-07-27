@@ -4,7 +4,7 @@
 import { Dom } from "../Dom.js";
 import { Comm } from "../Comm.js";
 import { Encoder } from "../Encoder.js";
-import { eauEncodeWave } from "./eauSong.js";
+//TODO import { eauEncodeWave } from "./eauSong.js";
 
 export const SHAPE_NAMES = [ // indexed by shape value
   "sine",

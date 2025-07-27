@@ -127,6 +127,21 @@ export class Song {
   sortEvents() {
     this.events.sort((a, b) => a.time - b.time);
   }
+  
+  /* Insert an event according to its (time).
+   * Guaranteed to insert after any existing events at that exact time.
+   */
+  insertEvent(event) {
+    let lo=0, hi=this.events.length;
+    while (lo < hi) {
+      const ck = (lo + hi) >> 1;
+      const q = this.events[ck];
+      if (event.time < q.time) hi = ck;
+      else lo = ck + 1;
+    }
+    this.events.splice(lo, 0, event);
+    return lo;
+  }
 }
 
 /* Channel.
@@ -250,9 +265,9 @@ export class SongEvent {
     //   this.velocity = 0x80; // 0..127
     //   this.durms = 0;
     // If (type === "w"):
-    //   this.v = 0x2000; // 0..0x3fff
+    //   this.v = 0x2000; // 0..0x3fff, NB MIDI range, not EAU range.
     // If (type === "m"):
-    //   this.opcode = 0x00; // High 4 bits only, for channel voice events. 0xff=Meta, 0xf0=Sysex, 0xf7=Sysex. You'll never see 0x90 or 0xe0.
+    //   this.opcode = 0x00; // High 4 bits only, for channel voice events. 0xff=Meta, 0xf0=Sysex, 0xf7=Sysex. You'll never see 0x90, 0x80, or 0xe0.
     //   this.a = 0x00; // 0..127 ; "type" for Meta events. Absent for Sysex.
     //   this.b = 0x00; // 0..127 ; Absent for Program Change, Channel Pressure, Meta, and Sysex.
     //   this.v = new Uint8Array(0); // Meta or Sysex.

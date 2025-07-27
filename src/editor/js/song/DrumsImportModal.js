@@ -8,7 +8,7 @@ import { Dom } from "../Dom.js";
 import { Data } from "../Data.js";
 import { SharedSymbols } from "../SharedSymbols.js";
 import { Song, SongChannel } from "./Song.js";
-import { eauModecfgDecodeDrum, eauModecfgEncodeDrum } from "./eauSong.js";
+//TODO import { eauModecfgDecodeDrum, eauModecfgEncodeDrum } from "./eauSong.js";
 import { reprGmDrum } from "./songDisplayBits.js";
 
 export class DrumsImportModal {

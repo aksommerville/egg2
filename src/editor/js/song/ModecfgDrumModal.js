@@ -3,7 +3,7 @@
  */
  
 import { Dom } from "../Dom.js";
-import { eauModecfgEncodeDrum, eauModecfgDecodeDrum } from "./eauSong.js";
+//TODO import { eauModecfgEncodeDrum, eauModecfgDecodeDrum } from "./eauSong.js";
 import { reprGmDrum } from "./songDisplayBits.js";
 import { DrumsImportModal } from "./DrumsImportModal.js";
 
@@ -36,7 +36,7 @@ export class ModecfgDrumModal {
   setup(channel, song) {
     this.channel = channel;
     this.song = song;
-    this.model = eauModecfgDecodeDrum(channel.payload);
+    //TODO this.model = eauModecfgDecodeDrum(channel.payload);
     
     this.element.innerHTML = "";
     const form = this.dom.spawn(this.element, "FORM", { "on-submit": event => {
@@ -210,7 +210,7 @@ export class ModecfgDrumModal {
     event.preventDefault();
     event.stopPropagation();
     // (this.model) stays fresh.
-    const payload = eauModecfgEncodeDrum(this.model);
+    //TODO const payload = eauModecfgEncodeDrum(this.model);
     this.resolve(payload);
     this.element.remove();
   }

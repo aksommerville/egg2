@@ -4,7 +4,6 @@
 import { SongService } from "./SongService.js";
 import { SongChartUi } from "./SongChartUi.js";
 import { SongListUi } from "./SongListUi.js";
-import { eauSongEncode } from "./eauSong.js";
 import { Dom } from "../Dom.js";
 import { Audio } from "../Audio.js"; // rt
 
@@ -96,9 +95,11 @@ export class SongToolbar {
   }
   
   onPlay() {
+    /*TODO
     const serial = eauSongEncode(this.songService.song);
     this.audio.start();
     this.audio.playEauSong(serial, this.songService.res.rid);
+    /**/
   }
   
   onPlayheadZero() {

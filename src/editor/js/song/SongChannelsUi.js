@@ -6,7 +6,7 @@ import { PidModal } from "./PidModal.js";
 import { Dom } from "../Dom.js";
 import { SharedSymbols } from "../SharedSymbols.js";
 import { getChannelColor } from "./songDisplayBits.js";
-import { eauPostForEach, eauPostDecode, eauPostEncode, EAU_POST_STAGE_NAMES, eauPostDefaultBody } from "./eauSong.js";
+//import { eauPostForEach, eauPostDecode, eauPostEncode, EAU_POST_STAGE_NAMES, eauPostDefaultBody } from "./eauSong.js";
 import { ModecfgGenericModal } from "./ModecfgGenericModal.js";
 import { ModecfgDrumModal } from "./ModecfgDrumModal.js";
 import { ModecfgFmModal } from "./ModecfgFmModal.js";
@@ -95,6 +95,7 @@ export class SongChannelsUi {
   }
   
   populatePostUi(parent, channel) {
+    /*TODO
     eauPostForEach(channel.post, (stageid, body, p) => {
       const pill = this.dom.spawn(parent, "DIV", ["stage"]);
       this.dom.spawn(pill, "INPUT", ["delete"], { type: "button", value: "X", "on-click": () => this.onDeletePostStage(channel.chid, p) });
@@ -102,6 +103,7 @@ export class SongChannelsUi {
       this.dom.spawn(pill, "INPUT", { type: "button", value: "...", "on-click": () => this.onEditPostStage(channel.chid, p) });
     });
     this.dom.spawn(parent, "INPUT", { type: "button", value: "+", "on-click": () => this.onAddPostStage(channel.chid) });
+    /**/
   }
   
   onSongServiceEvent(event) {
@@ -210,6 +212,7 @@ export class SongChannelsUi {
     if (!channel) return;
     const stages = [];
     let got = false;
+    /*TODO
     eauPostForEach(channel.post, (stageid, body, sp) => {
       if (sp === p) {
         got = true;
@@ -220,11 +223,13 @@ export class SongChannelsUi {
     if (!got) return;
     channel.post = eauPostEncode(stages);
     this.songService.broadcast({ type: "channelChanged", chid });
+    /**/
   }
   
   onEditPostStage(chid, p) {
     const channel = this.songService.song?.channels[chid];
     if (!channel) return;
+    /*TODO
     const stages = eauPostDecode(channel.post);
     const stage = stages.find(s => (s.p === p));
     if (!stage) return;
@@ -237,11 +242,13 @@ export class SongChannelsUi {
       channel.post = eauPostEncode(stages);
       this.songService.broadcast({ type: "channelChanged", chid });
     });
+    /**/
   }
   
   onAddPostStage(chid) {
     const channel = this.songService.song?.channels[chid];
     if (!channel) return;
+    /*TODO
     const modal = this.dom.spawnModal(SongPostTypeModal);
     modal.result.then(stageid => {
       if (typeof(stageid) !== "number") return;
@@ -252,5 +259,6 @@ export class SongChannelsUi {
       this.songService.broadcast({ type: "channelChanged", chid });
       this.onEditPostStage(chid, p);
     });
+    /**/
   }
 }

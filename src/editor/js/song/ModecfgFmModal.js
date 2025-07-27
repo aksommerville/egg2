@@ -3,7 +3,7 @@
  */
  
 import { Dom } from "../Dom.js";
-import { eauModecfgDecodeFm, eauModecfgEncodeFm } from "./eauSong.js";
+//TODO import { eauModecfgDecodeFm, eauModecfgEncodeFm } from "./eauSong.js";
 import { ScalarUi } from "./ScalarUi.js";
 import { EnvUi } from "./EnvUi.js";
 import { WaveUi } from "./WaveUi.js";
@@ -37,7 +37,7 @@ export class ModecfgFmModal {
   setup(channel, song) {
     this.channel = channel;
     this.song = song;
-    this.model = eauModecfgDecodeFm(this.channel.payload);
+    //TODO this.model = eauModecfgDecodeFm(this.channel.payload);
     
     this.element.innerHTML = "";
     const form = this.dom.spawn(this.element, "FORM", { "on-submit": event => {
@@ -91,7 +91,7 @@ export class ModecfgFmModal {
     event.stopPropagation();
     if (!this.model) return;
     // No need to read anything off the UI. Field controllers update our model immediately.
-    const payload = eauModecfgEncodeFm(this.model);
+    //TODO const payload = eauModecfgEncodeFm(this.model);
     this.resolve(payload);
     this.element.remove();
   }

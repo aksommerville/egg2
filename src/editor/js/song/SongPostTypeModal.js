@@ -5,7 +5,7 @@
  */
  
 import { Dom } from "../Dom.js";
-import { EAU_POST_STAGE_NAMES } from "./eauSong.js";
+//TODO import { EAU_POST_STAGE_NAMES } from "./eauSong.js";
 
 export class SongPostTypeModal {
   static getDependencies() {
@@ -29,12 +29,14 @@ export class SongPostTypeModal {
   
   buildUi() {
     this.element.innerHTML = "";
+    /*TODO
     // No sense using an "OK" button; just submit when they pick the type.
     const select = this.dom.spawn(this.element, "SELECT", { "on-change": () => this.onSubmit() });
     for (let stageid=0; stageid<0x100; stageid++) {
       this.dom.spawn(select, "OPTION", { value: stageid }, EAU_POST_STAGE_NAMES[stageid] || stageid.toString());
     }
     //this.dom.spawn(this.element, "INPUT", { type: "button", value: "OK", "on-click": () => this.onSubmit() });
+    /**/
   }
   
   onSubmit() {
