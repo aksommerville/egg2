@@ -170,31 +170,27 @@ export class SongChannel {
   
   _init(chid) {
     this.chid = (typeof(chid) === "number") ? chid : 0;
-    this.bankhi = 0;
-    this.banklo = 0;
-    this.pid = 0;
-    if (chid === 9) { // Channel 9 is drums by default, ie program 128.
-      this.banklo = 1;
-    }
+    this.pid = 0; // Fully-qualified, ie (bankhi << 14) | (banklo << 7) | pid.
+    if (chid === 9) this.pid = 0x80; // Channel 9 is drums by default, ie program 128.
     this.trim = 0x80;
     this.pan = 0x80;
     this.mode = 0; // (0,1,2,3,4) = (NOOP,DRUM,FM,HARSH,HARM)
-    this.payload = []; // Uint8Array if not empty.
-    this.post = []; // Uint8Array if not empty.
+    this.payload = []; // READONLY. Uint8Array if not empty. Content of CHDR's modecfg.
+    this.post = []; // READONLY. Uint8Array if not empty.
     this.name = "";
     this.stashedPayloads = []; // Sparse Uint8Array keyed by mode, so we can preserve config when you toggle mode around.
+    this.explicitChdr = false; // Used by MIDI decoder to indicate Meta 0x77 EAU Channel Header has been applied.
   }
   
   _copy(src) {
     this.chid = src.chid;
-    this.bankhi = src.bankhi;
-    this.banklo = src.banklo;
     this.pid = src.pid;
     this.trim = src.trim;
     this.pan = src.pan;
     this.mode = src.mode;
     this.payload = new Uint8Array(src.payload);
     this.post = new Uint8Array(src.post);
+    this.name = src.name;
   }
   
   // From one EAU "CHDR" chunk.

@@ -38,7 +38,7 @@ export class Encoder {
   
   require(addc) {
     if (addc < 1) return;
-    if (this.c <= this.v.length - this.c) return;
+    if (this.c <= this.v.length - addc) return;
     const na = ((this.c + addc + 1024) & ~1023);
     const nv = new Uint8Array(na);
     const dstview = new Uint8Array(nv.buffer, 0, this.v.length);
@@ -121,7 +121,7 @@ export class Encoder {
     if (src.hasOwnProperty("length") && !src.length) return; // Allow things like empty array.
     if (!(src instanceof Uint8Array)) throw new Error(`Encoder.raw expected string, ArrayBuffer, or Uint8Array`);
     this.require(src.length);
-    const dstview = new Uint8Array(this.v.buffer, this.c, src.length);
+    const dstview = new Uint8Array(this.v.buffer, this.v.byteOffset + this.c, src.length);
     dstview.set(src);
     this.c += src.length;
   }

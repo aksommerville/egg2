@@ -42,6 +42,7 @@ export class SharedSymbols {
   }
   
   /* Resolves to a Song object containing hundreds of channels, derived from EGG_SDK/src/eggdev/instruments.eaut.
+   * Logs errors and never rejects.
    */
   getInstruments() {
     if (this.instruments) return Promise.resolve(this.instruments);

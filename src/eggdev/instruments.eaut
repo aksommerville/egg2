@@ -3,1477 +3,844 @@
 # This file is read by eggdev as needed. You can modify it directly.
 # Note that the channel-level trim and pan in here are ignored. Compiler will always use what's in the MIDI file, or universal defaults.
 
-# 2025-03-22: The skeleton is laid out but no instruments are actually defined yet.
-# Instruments with an explicit "noop" mode will trigger a warning at convert.
+# TODO
 
 #--- 0..7: Piano -------------------------------------------------------------------
 
-# Acoustic Grand Piano
-0x00 0x40 0x80 fm {
-  level 0x0000 30..20 0x3000..0xffff 40 0x1000..0x3000* 250..400 0x0000
-  wave square +0x84 0xa000 0x3000 0x1000 0x0400
-  pitchenv 0
-  wheel 200
+name("Acoustic Grand Piano") "CHDR" len(4) {
+00 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Bright Acoustic Piano
-0x01 0x40 0x80 fm {
-  level 0x0000 35..20 0x4000..0xffff 40 0x1000..0x2000* 300..500 0x0000
-  wave fixedfm +0x24 0x8000 0xa000 0x2000 0x0800
-  pitchenv 0
-  wheel 200
-  post {
-    bpass 800 500
-  }
+name("Bright Acoustic Piano") "CHDR" len(4) {
+01 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Electic Grand Piano
-0x02 0x40 0x80 fm {
-  level 0x0000 50..30 0x4000..0xc000 30 0x1800..0x3000* 300..500 0x0000
-  wave square +0x40
-  pitchenv 0
-  wheel 200
+name("Electic Grand Piano") "CHDR" len(4) {
+02 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Honky-Tonk Piano
-0x03 0x40 0x80 fm {
-  level 0x0000 30..15 0x4000..0xffff 25 0x1000..0x2c00* 200..400 0x0000
-  wave saw +0xc0 0x4000 0xa000 0x3000
-  pitchenv 0
-  wheel 200
-  rate 2.0
-  range 3.0
-  rangeenv 0x0000 60 0x8000..0xffff 60 0x2000..0x4000* 300 0x0000
-  post {
-    lopass 2500
-  }
+name("Honky-Tonk Piano") "CHDR" len(4) {
+03 40 80 MODE_NOOP len(2) {
+}
 }
 
-# EP 1 (Rhodes)
-0x04 0x40 0x80 fm {
-  level 0x0000 40..25 0x3000..0x8000 30 0x1800..0x4000* 300..600 0x0000
-  wave sine
-  pitchenv 0
-  wheel 200
-  rate 1.0
-  range 1.0
-  rangeenv 0xffff 80..60 0xffff* 300..600 0x4000
-  rangelforate 2.0
-  rangelfodepth 0.250
+name("EP 1 (Rhodes)") "CHDR" len(4) {
+04 40 80 MODE_NOOP len(2) {
+}
 }
 
-# EP 2 (Chorus)
-0x05 0x40 0x80 fm {
-  level 0x0000 40..25 0x3000..0x8000 30 0x1800..0x4000* 300..600 0x0000
-  wave saw +0xc0
-  pitchenv 0
-  wheel 200
-  rate 1.0
-  range 1.0
-  rangeenv 0x0000 80..60 0xffff* 300..600 0x4000
-  rangelforate 2.0
-  rangelfodepth 0.500
-  post {
-    delay 1.000 0.800 0.300 0.500 0.500
-  }
+name("EP 2 (Chorus)") "CHDR" len(4) {
+05 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Harpsichord
-0x06 0x40 0x80 fm {
-  level 0x0000 25..12 0x4000..0xffff 20 0x1000..0x2000* 200..400 0x0000
-  wave fixedfm +0x45 0x4000 0x8000 0x2000 0x0800
-  pitchenv 0
-  wheel 200
-  post {
-    bpass 900 700
-  }
+name("Harpsichord") "CHDR" len(4) {
+06 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Clavinet
-0x07 0x40 0x80 fm {
-  level 0x0000 25..15 0x4000..0xffff 20 0x1000..0x3000 300..500 0x0000
-  wave square +0x80 0x2000 0x8000 0x5000 0x1000 0x0400
-  pitchenv 0
-  wheel 200
-  rate 5.0
-  range 2.0
-  rangeenv 0x4000..0x1000 25..15 0x6000..0xffff 20 0x5000..0x4000 300..500 0x1000
-  post {
-    hipass 400
-  }
+name("Clavinet") "CHDR" len(4) {
+07 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 8..15: Chromatic --------------------------------------------------------------
 
-# Celesta
-0x08 0x40 0x80 fm {
-  level 0x0000 20..15 0x4000..0xffff 20 0x1000..0x2800 400..800 0x0000
-  wave sine
-  pitchenv 0
-  wheel 200
-  rate 6.0
-  range 4.0
-  post {
-    delay 0.500 0.825 0.125 0.500 0.800
-    hipass 600
-  }
+name("Celesta") "CHDR" len(4) {
+08 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Glockenspiel
-0x09 0x40 0x80 fm {
-  level 0x0000 25..15 0x4000..0xffff 40 0x1000..0x3000 300..500 0x0000
-  wave sine
-  pitchenv 0
-  wheel 200
-  rate 2.0
-  range 3.0
-  rangeenv 0x8000..0x1000 25..15 0xc000..0xffff 20 0x9000..0xa000 300..500 0x7000..0x4000
-  post {
-    hipass 400
-    delay 0.250 0.800 0.200 0.300 0.600
-  }
+name("Glockenspiel") "CHDR" len(4) {
+09 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Music Box
-0x0a 0x40 0x80 fm {
-  level 0x0000 25..15 0x4000..0xffff 40 0x1000..0x3000 300..500 0x0000
-  wave sine
-  pitchenv 0
-  wheel 200
-  rate 8.0
-  range 3.0
-  post {
-    hipass 300
-    delay 0.500 0.800 0.200 0.400 0.600
-  }
+name("Music Box") "CHDR" len(4) {
+0a 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Vibraphone
-0x0b 0x40 0x80 fm {
-  level 0x0000 20..15 0x3000..0xffff 30 0x0800..0x2000* 250..600 0x0000
-  wave fixedfm +0x11
-  pitchenv 0
-  wheel 200
+name("Vibraphone") "CHDR" len(4) {
+0b 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Marimba
-0x0c 0x40 0x80 fm {
-  level 0x0000 25..15 0x3000..0xffff 40 0x1000..0x1800 400..800 0x0000
-  wave sine 0x9000 0xc000 0x1000 0x4000 0x0080 0x0800
-  pitchenv 0
-  wheel 200
+name("Marimba") "CHDR" len(4) {
+0c 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Xylophone
-0x0d 0x40 0x80 fm {
-  level 0x0000 25..15 0x3000..0xffff 40 0x1000..0x1800 400..800 0x0000
-  wave sine 0x9000 0xc000 
-  pitchenv 0
-  wheel 200
-  rate 2.5
-  range 0.5
+name("Xylophone") "CHDR" len(4) {
+0d 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Tubular Bells
-0x0e 0x40 0x80 fm {
-  level 0x0000 25..15 0x3000..0xffff 40 0x1000..0x1800 400..800 0x0000
-  wave square +0xc0
-  pitchenv 0
-  wheel 200
-  rate 6.5
-  range 3.0
+name("Tubular Bells") "CHDR" len(4) {
+0e 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Dulcimer
-0x0f 0x40 0x80 fm {
-  level 0x0000 30..12 0x4000..0xffff 30 0x1000..0x3000 300..600 0x0000
-  wave saw +0x60
-  pitchenv 0
-  wheel 200
-  rate 2.0
-  range 1.0
-  rangeenv 0x4000..0x2000 30..12 0x7000..0xffff 30 0x6000..0x8000 300..600 0x4000..0x2000
-  post {
-    waveshaper 0xc000 0xf000 0xffff
-    hipass 200
-  }
+name("Dulcimer") "CHDR" len(4) {
+0f 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 16..23: Organ ----------------------------------------------------------------------------------
 
-# Drawbar Organ
-0x10 0x40 0x80 fm {
-  level 0x0000 40..20 0x4000..0xc000 50 0x3000..0x8000* 300..600 0x0000
-  wave square +0x40
-  post {
-    tremolo 0.5 0.200 0.250
-  }
+name("Drawbar Organ") "CHDR" len(4) {
+10 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Percussive Organ
-0x11 0x40 0x80 fm {
-  level 0x0000 25..15 0x4000..0xffff 20 0x0800..0x2000* 300..600 0x0000
-  wave fixedfm +0x22
-  pitchenv 0
-  wheel 200
-  rate 3.0
-  range 1.0
+name("Percussive Organ") "CHDR" len(4) {
+11 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Rock Organ
-0x12 0x40 0x80 fm {
-  level 0x0000 60..30 0x6000..0xffff 40 0x3000..0x8000* 500..800 0x0000
-  wave square +0x50 0x7000 0xa000
-  pitchenv 0
-  wheel 1200
-  rate 1.0
-  range 1.0
-  rangeenv 0xffff 50 0xffff* 500..800 0x2000
-  rangelforate 4.0
-  rangelfodepth 0.500
-  post {
-    waveshaper 0xa000 0xe000 0xf200 0xffff
-    lopass 4000
-  }
+name("Rock Organ") "CHDR" len(4) {
+12 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Church Organ
-0x13 0x40 0x80 fm {
-  level 0x0000 70..40 0x3000..0x8000 40 0x2000..0x4000* 400..1000 0x0000
-  wave square +0x80 0xc000 0x0000 0x5000 0x0000 0x1000
-  pitchenv 0
-  wheel 200
-  rate 0.5
-  range 0.25
-  rangeenv 0
-  rangelforate 4.0
-  rangelfodepth 0.100
-  post {
-    delay 0.500 0.700 0.300 0.500 0.800
-  }
+name("Church Organ") "CHDR" len(4) {
+13 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Reed Organ
-0x14 0x40 0x80 fm {
-  level 0x0000 50..30 0x5000..0xa000 40 0x3000..0x5000* 200..600 0x0000
-  wave fixedfm +0x16 0xa000 0x5000 0x2800 0x1000 0x0400
-  pitchenv 0
-  wheel 200
+name("Reed Organ") "CHDR" len(4) {
+14 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Accordion (French)
-0x15 0x40 0x80 fm {
-  level 0x0000 70..40 0x5000..0xa000 40 0x4000..0x8000* 200..600 0x0000
-  wave square +0x30 0x8000 0xa000 0x2000 0x0100
-  pitchenv 0
-  wheel 200
-  post {
-    tremolo 0.333 0.100 0
-  }
+name("Accordion (French)") "CHDR" len(4) {
+15 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Harmonica
-0x16 0x40 0x80 fm {
-  level 0x0000 60..40 0x6000..0xffff 40 0x2000..0x4000* 150..300 0x0000
-  wave square +0x20
-  pitchenv 0
-  wheel 200
+name("Harmonica") "CHDR" len(4) {
+16 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Accordion (Tango)
-0x17 0x40 0x80 fm {
-  level 0x0000 70..40 0x5000..0xa000 40 0x4000..0x8000* 200..600 0x0000
-  wave square +0x30 0x8000 0xa000 0x2000 0x0100
-  pitchenv 0
-  wheel 200
-  post {
-    notch 1000 800
-  }
+name("Accordion (Tango)") "CHDR" len(4) {
+17 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 24..31: Guitar ----------------------------------------------------------------------
 
-# Acoustic Nylon Guitar
-0x18 0x40 0x80 fm {
-  level 0x0000 25..20 0x4000..0xffff 25..10 0x2000..0x3000* 400..900 0x0000
-  wave fixedfm +0x11 0xc000 0x6000 0x3000 0x1000 0x0400
-  pitchenv 0
-  wheel 200
-  rate 1.0
-  range 0.750
-  rangeenv 0x8000..0x2000 25..20 0x9000..0xffff 40..20 0x7000..0xc000 300..600 0x6000..0x9000
-  post {
-    hipass 300
-    notch 8000 1000
-  }
+name("Acoustic Nylon Guitar") "CHDR" len(4) {
+18 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Acoustic Steel Guitar
-0x19 0x40 0x80 fm {
-  level 0x0000 25..20 0x4000..0xffff 25..10 0x2000..0x3000* 400..900 0x0000
-  wave saw +0x80 0xc000 0x6000 0x3000 0x1000 0x0400
-  pitchenv 0
-  wheel 200
-  rate 1.0
-  range 2.0
-  rangeenv 0x8000..0x2000 25..20 0x9000..0xffff 40..20 0x7000..0xc000 300..600 0x6000..0x9000
-  post {
-    hipass 300
-    notch 8000 1000
-  }
+name("Acoustic Steel Guitar") "CHDR" len(4) {
+19 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Electric Jazz Guitar
-0x1a 0x40 0x80 fm {
-  level 0x0000 25..15 0x4000..0xffff 25..20 0x2000..0x3000* 250..400 0x0000
-  wave saw +0x60
-  pitchenv 0
-  wheel 200
-  rate 1.0
-  range 1.0
-  rangeenv 0xffff 50 0xffff* 250..400 0x8000..0x0000
-  post {
-    hipass 200
-  }
+name("Electric Jazz Guitar") "CHDR" len(4) {
+1a 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Electric Clean Guitar
-0x1b 0x40 0x80 fm {
-  level 0x0000 25..15 0x4000..0xffff 25..20 0x2000..0x3000* 350..800 0x0000
-  wave saw +0x60
-  pitchenv 0
-  wheel 200
-  rate 1.0
-  range 2.0
-  rangeenv 0xffff..0xe000 25..15 0xffff* 250..400 0xc000..0x8000
-  post {
-    hipass 200
-  }
+name("Electric Clean Guitar") "CHDR" len(4) {
+1b 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Electric Muted Guitar
-0x1c 0x40 0x80 fm {
-  level 0x0000 25..15 0x4000..0xffff 25..20 0x2000..0x3000* 150..400 0x0000
-  wave saw +0x60
-  pitchenv 0
-  wheel 200
-  rate 1.0
-  range 1.0
-  rangeenv 0xffff..0xe000 25..15 0xffff* 250..400 0xc000..0x8000
-  post {
-    hipass 200
-  }
+name("Electric Muted Guitar") "CHDR" len(4) {
+1c 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Overdriven Guitar
-0x1d 0x40 0x80 fm {
-  level 0x0000 30..20 0x6000..0xffff 40 0x3000..0x4000* 300..600 0x0000
-  wave saw +0x40
-  pitchenv 0
-  wheel 1200
-  rate 1.0
-  range 1.0
-  rangeenv 0x8000..0x4000 30..20 0xa000..0xffff 40 0x9000..0x6000* 300..600 0x8000..0x2000
-  rangelforate 2.0
-  rangelfodepth 0.5
-  post {
-    waveshaper 0xd000 0xf200 0xffff 0xffff 0xffff
-    delay 1.000 0.800 0.200 0.500 0.666
-    notch 2000 1000
-  }
+name("Overdriven Guitar") "CHDR" len(4) {
+1d 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Distortion Guitar
-0x1e 0x40 0x80 fm {
-  level 0x0000 35..20 0x4000..0xffff 40 0x3000..0x4000* 200..500 0x0000
-  wave square +0x20
-  pitchenv 0
-  wheel 1200
-  rate 1.0
-  range 2.0
-  rangeenv 0xffff..0xc000 35..20 0xffff 40 0xe000..0xc000* 200..500 0xc000..0x8000
-  rangelforate 2.0
-  rangelfodepth 0.200
-  post {
-    waveshaper 0xf000 0xffff 0xffff 0xffff
-    delay 1.000 0.800 0.200 0.500 0.500
-    lopass 3000
-  }
+name("Distortion Guitar") "CHDR" len(4) {
+1e 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Guitar Harmonics
-0x1f 0x40 0x80 fm {
-  level 0x0000 50..30 0x4000..0xffff 40 0x1000..0x3000 150..300 0x0000
-  wave fixedfm +0x94 0x4000 0xa000 0x2000
-  pitchenv 0x8000 100 0x8000 400 0x8000..0x8080
-  wheel 200
-  post {
-    hipass 1000
-  }
+name("Guitar Harmonics") "CHDR" len(4) {
+1f 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 32..39: Bass ---------------------------------------------------------------------------
 
-# Acoustic Bass
-0x20 0x40 0x80 fm {
-  level 0x0000 50..30 0x4000..0xffff 40 0x3800* 200..400 0x0000
-  wave sine 0xc000 0x2000 
-  pitchenv 0x8000..0x7fc0 50..30 0x8000
-  wheel 200
-  rate 0.5
-  range 1.0
-  rangeenv 0xfff 100 0xffff 200..400 0xf000..0xc000
+name("Acoustic Bass") "CHDR" len(4) {
+20 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Electric Finger Bass
-0x21 0x40 0x80 fm {
-  level 0x0000 50..30 0x4000..0xffff 40 0x3000* 200..350 0x0000
-  wave sine 0xc000 0x3000 0x1000
-  pitchenv 0
-  wheel 200
-  rate 0.5
-  range 2.0
-  rangeenv 0xb000..0xc000 50..30 0xc000..0xffff 40 0xa000..0x8000* 200..350 0x8000..0x2000
+name("Electric Finger Bass") "CHDR" len(4) {
+21 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Electric Pick Bass
-0x22 0x40 0x80 fm {
-  level 0x0000 35..20 0x4000..0xffff 40 0x2800..0x3000* 200..350 0x0000
-  wave triangle 0xc000 0x3000 0x1000
-  pitchenv 0
-  wheel 200
-  rate 0.5
-  range 2.0
-  rangeenv 0xb000..0xc000 50..30 0xc000..0xffff 40 0xb800..0xe000* 200..350 0xa000..0x8000
+name("Electric Pick Bass") "CHDR" len(4) {
+22 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Fretless Bass
-0x23 0x40 0x80 fm {
-  level 0x0000 50..30 0x4000..0xffff 40 0x3800* 200..400 0x0000
-  wave sine
-  pitchenv 0x8000..0x7fc0 50..30 0x8000
-  wheel 200
-  rate 0.5
-  range 1.0
-  rangeenv 0xfff 100 0xffff 200..400 0xc000..0x4000
-  post {
-    lopass 1000
-  }
+name("Fretless Bass") "CHDR" len(4) {
+23 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Slap Bass 1
-0x24 0x40 0x80 fm {
-  level 0x0000 25..15 0x5000..0xffff 25 0x2000..0x3000 200..500 0x0000
-  wave sine
-  pitchenv 0
-  wheel 200
-  rate 0.5
-  range 2.0
-  rangeenv 0x4000..0x1000 25..15 0x8000..0xffff 25 0x6000..0x8000 200..500 0x4000..0x1000
+name("Slap Bass 1") "CHDR" len(4) {
+24 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Slap Bass 2
-0x25 0x40 0x80 fm {
-  level 0x0000 25..15 0x5000..0xffff 25 0x2000..0x3000 300..500 0x0000
-  wave square +0xc0
-  pitchenv 0
-  wheel 200
-  rate 0.5
-  range 3.0
-  rangeenv 0x4000..0x1000 25..15 0x8000..0xffff 25 0x6000..0x8000 200..500 0x4000..0x1000
+name("Slap Bass 2") "CHDR" len(4) {
+25 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Synth Bass 1
-0x26 0x40 0x80 fm {
-  level 0x0000 40..20 0x4000..0xffff 30 0x2000..0x3000* 200..500 0x0000
-  wave saw +0x40
-  pitchenv 0
-  wheel 1200
-  rate 0.5
-  range 2.0
-  rangeenv 0x0000 50 0x8000..0xc000* 200..500 0xffff
-  rangelforate 2.0
-  rangelfodepth 0.5
-  post {
-    lopass 1000
-  }
+name("Synth Bass 1") "CHDR" len(4) {
+26 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Synth Bass 2
-0x27 0x40 0x80 fm {
-  level 0x0000 40..20 0x4000..0xffff 30 0x2000..0x3000* 200..500 0x0000
-  wave saw +0x40
-  pitchenv 0
-  wheel 1200
-  rate 0.5
-  range 6.0
-  rangeenv 0x8000 50 0x8000..0xc000* 200..500 0x4000..0x2000
-  rangelforate 1.0
-  rangelfodepth 0.100
-  post {
-    waveshaper 0xa000 0xe000 0xffff
-    lopass 1000
-  }
+name("Synth Bass 2") "CHDR" len(4) {
+27 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 40..47: Solo String -----------------------------------------------------------
 
-# Violin
-0x28 0x40 0x80 fm {
-  level 0x0000 90..60 0x4000..0xffff 40 0x3800..0x8000* 200..400 0x0000
-  wave saw +0x40
-  pitchenv 0
-  wheel 200
-  post {
-    notch 2000 800
-  }
+name("Violin") "CHDR" len(4) {
+28 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Viola
-0x29 0x40 0x80 fm {
-  level 0x0000 90..60 0x4000..0xffff 40 0x3800..0x8000* 200..400 0x0000
-  wave saw +0x40
-  pitchenv 0
-  wheel 200
-  post {
-    lopass 4000
-  }
+name("Viola") "CHDR" len(4) {
+29 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Cello
-0x2a 0x40 0x80 fm {
-  level 0x0000 100..80 0x4000..0xffff 60 0x3800..0x8000* 350..500 0x0000
-  wave saw +0x40
-  pitchenv 0
-  wheel 200
-  rate 0.5
-  range 1.0
-  rangeenv 0x8000..0xffff 100..80 0xa000..0xc000
-  post {
-    bpass 400 350
-  }
+name("Cello") "CHDR" len(4) {
+2a 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Contrabass
-0x2b 0x40 0x80 fm {
-  level 0x0000 100..80 0x4000..0xffff 60 0x3800..0x8000* 350..500 0x0000
-  wave saw +0x80
-  pitchenv 0
-  wheel 200
-  rate 0.5
-  range 1.0
-  rangeenv 0x8000..0xffff 100..80 0xa000..0xc000
-  post {
-    lopass 1000
-  }
+name("Contrabass") "CHDR" len(4) {
+2b 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Tremolo Strings
-0x2c 0x40 0x80 fm {
-  level 0x0000 120..80 0x3000..0xffff 60 0x2000..0x6000* 300..500 0x0000
-  wave saw +0x50 0xc000 0x0000 0xa000 0x0000 0x0000 0x8000
-  pitchenv 0
-  wheel 200
-  rate 0.5
-  range 1.0
-  post {
-    tremolo 0.250 0.150 0
-    lopass 3000
-  }
+name("Tremolo Strings") "CHDR" len(4) {
+2c 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Pizzicato Strings
-0x2d 0x40 0x80 fm {
-  level 0x0000 25..15 0x4000..0xffff 30 0x1000..0x3000 200..600 0x0000
-  wave saw +0x60 0xc000 0x0000 0x5000 0x0000 0x0000 0x3000
-  pitchenv 0
-  wheel 200
-  post {
-    delay 0.250 0.800 0.200 0.500 0.700
-  }
+name("Pizzicato Strings") "CHDR" len(4) {
+2d 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Orchestral Harp
-0x2e 0x40 0x80 fm {
-  level 0x0000 25..15 0x3000..0xffff 30 0x0800..0x2000 300..800 0x0000
-  wave saw +0x40 0x4000 0xa000
-  pitchenv 0x8000..0x8060 25..15 0x8000
-  wheel 200
-  rate 2.0
-  range 1.0
-  rangeenv 0x0000..0x0000 25..15 0x2000..0xffff 30 0x1000..0x2000
-  post {
-    hipass 400
-  }
+name("Orchestral Harp") "CHDR" len(4) {
+2e 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Timpani
-0x2f 0x40 0x80 fm {
-  level 0x0000 35..25 0x4000..0xffff 30 0x1000..0x6000 200..600 0x0000
-  wave sine
-  pitchenv 0x8000 70 0x8000 200..600 0x7ff0..0x7fc0
-  wheel 200
-  rate 0.25
-  range 8.0
+name("Timpani") "CHDR" len(4) {
+2f 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 48..55: String Ensemble --------------------------------------------------------
 
-# String Ensemble 1
-0x30 0x40 0x80 noop {
+name("String Ensemble 1") "CHDR" len(4) {
+30 40 80 MODE_NOOP len(2) {
+}
 }
 
-# String Ensemble 2
-0x31 0x40 0x80 noop {
+name("String Ensemble 2") "CHDR" len(4) {
+31 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Synth Strings 1
-0x32 0x40 0x80 noop {
+name("Synth Strings 1") "CHDR" len(4) {
+32 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Synth Strings 2
-0x33 0x40 0x80 noop {
+name("Synth Strings 2") "CHDR" len(4) {
+33 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Choir Aah
-0x34 0x40 0x80 noop {
+name("Choir Aah") "CHDR" len(4) {
+34 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Choir Ooh
-0x35 0x40 0x80 noop {
+name("Choir Ooh") "CHDR" len(4) {
+35 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Synth Voice
-0x36 0x40 0x80 noop {
+name("Synth Voice") "CHDR" len(4) {
+36 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Orchestra Hit
-0x37 0x40 0x80 noop {
+name("Orchestra Hit") "CHDR" len(4) {
+37 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 56..63: Brass ---------------------------------------------------------
 
-# Trumpet
-0x38 0x40 0x80 noop {
+name("Trumpet") "CHDR" len(4) {
+38 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Trombone
-0x39 0x40 0x80 noop {
+name("Trombone") "CHDR" len(4) {
+39 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Tuba
-0x3a 0x40 0x80 noop {
+name("Tuba") "CHDR" len(4) {
+3a 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Muted Trumpet
-0x3b 0x40 0x80 noop {
+name("Muted Trumpet") "CHDR" len(4) {
+3b 40 80 MODE_NOOP len(2) {
+}
 }
 
-# French Horn
-0x3c 0x40 0x80 noop {
+name("French Horn") "CHDR" len(4) {
+3c 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Brass Section
-0x3d 0x40 0x80 noop {
+name("Brass Section") "CHDR" len(4) {
+3d 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Synth Brass 1
-0x3e 0x40 0x80 noop {
+name("Synth Brass 1") "CHDR" len(4) {
+3e 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Synth Brass 2
-0x3f 0x40 0x80 noop {
+name("Synth Brass 2") "CHDR" len(4) {
+3f 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 64..71: Solo Reed ------------------------------------------------------------------
 
-# Soprano Sax
-0x40 0x40 0x80 noop {
+name("Soprano Sax") "CHDR" len(4) {
+40 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Alto Sax
-0x41 0x40 0x80 noop {
+name("Alto Sax") "CHDR" len(4) {
+41 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Tenor Sax
-0x42 0x40 0x80 noop {
+name("Tenor Sax") "CHDR" len(4) {
+42 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Baritone Sax
-0x43 0x40 0x80 noop {
+name("Baritone Sax") "CHDR" len(4) {
+43 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Oboe
-0x44 0x40 0x80 noop {
+name("Oboe") "CHDR" len(4) {
+44 40 80 MODE_NOOP len(2) {
+}
 }
 
-# English Horn
-0x45 0x40 0x80 noop {
+name("English Horn") "CHDR" len(4) {
+45 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Bassoon
-0x46 0x40 0x80 noop {
+name("Bassoon") "CHDR" len(4) {
+46 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Clarinet
-0x47 0x40 0x80 noop {
+name("Clarinet") "CHDR" len(4) {
+47 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 72..79: Solo Flute ------------------------------------------------------------
 
-# Piccolo
-0x48 0x40 0x80 noop {
+name("Piccolo") "CHDR" len(4) {
+48 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Flute
-0x49 0x40 0x80 noop {
+name("Flute") "CHDR" len(4) {
+49 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Recorder
-0x4a 0x40 0x80 noop {
+name("Recorder") "CHDR" len(4) {
+4a 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Pan Flute
-0x4b 0x40 0x80 noop {
+name("Pan Flute") "CHDR" len(4) {
+4b 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Blown Bottle
-0x4c 0x40 0x80 noop {
+name("Blown Bottle") "CHDR" len(4) {
+4c 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Shakuhachi
-0x4d 0x40 0x80 noop {
+name("Shakuhachi") "CHDR" len(4) {
+4d 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Whistle
-0x4e 0x40 0x80 noop {
+name("Whistle") "CHDR" len(4) {
+4e 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Ocarina
-0x4f 0x40 0x80 noop {
+name("Ocarina") "CHDR" len(4) {
+4f 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 80..87: Synth Lead -------------------------------------------------------------
 
-# Square Lead
-0x50 0x40 0x80 noop {
+name("Square Lead") "CHDR" len(4) {
+50 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Saw Lead
-0x51 0x40 0x80 noop {
+name("Saw Lead") "CHDR" len(4) {
+51 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Calliope
-0x52 0x40 0x80 noop {
+name("Calliope") "CHDR" len(4) {
+52 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Chiffer
-0x53 0x60 0xa0 fm {
-  #XXX TEMP
-  level 0x0000 30..15 0x4000..0xffff 40 0x1000..0x4000* 300..800 0x0000
-  wave square +0x30
-  pitchenv 0
-  wheel 0
-  rate 1.0
-  range 3.0
-  rangeenv 0
-  rangelforate 8.0
-  rangelfodepth 0.750
-  post {
-    delay 0.500 0.500 0.500 0.500 0.500
-  }
+name("Chiffer") "CHDR" len(4) {
+53 60 a0 MODE_NOOP len(2) {
+}
 }
 
-# Charang
-0x54 0x40 0x80 noop {
+name("Charang") "CHDR" len(4) {
+54 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Synth Voice
-0x55 0x40 0x80 noop {
+name("Synth Voice") "CHDR" len(4) {
+55 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Fifths
-0x56 0x40 0x80 noop {
+name("Fifths") "CHDR" len(4) {
+56 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Bass+Lead
-0x57 0x40 0x80 noop {
+name("Bass+Lead") "CHDR" len(4) {
+57 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 88..95: Synth Pad ------------------------------------------------------------------
 
-# Fantasia Pad
-0x58 0x40 0x80 noop {
+name("Fantasia Pad") "CHDR" len(4) {
+58 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Warm Pad
-0x59 0x40 0x80 noop {
+name("Warm Pad") "CHDR" len(4) {
+59 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Polysynth Pad
-0x5a 0x40 0x80 noop {
+name("Polysynth Pad") "CHDR" len(4) {
+5a 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Choir Space Voice
-0x5b 0x40 0x80 noop {
+name("Choir Space Voice") "CHDR" len(4) {
+5b 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Bowed Glass
-0x5c 0x40 0x80 noop {
+name("Bowed Glass") "CHDR" len(4) {
+5c 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Metallic Pro Pad
-0x5d 0x40 0x80 noop {
+name("Metallic Pro Pad") "CHDR" len(4) {
+5d 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Halo Pad
-0x5e 0x40 0x80 noop {
+name("Halo Pad") "CHDR" len(4) {
+5e 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Sweep Pad
-0x5f 0x40 0x80 noop {
+name("Sweep Pad") "CHDR" len(4) {
+5f 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 96..103: Synth Effects -------------------------------------------------------------
 
-# Rain
-0x60 0x40 0x80 noop {
+name("Rain") "CHDR" len(4) {
+60 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Soundtrack
-0x61 0x40 0x80 noop {
+name("Soundtrack") "CHDR" len(4) {
+61 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Crystal
-0x62 0x40 0x80 noop {
+name("Crystal") "CHDR" len(4) {
+62 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Atmosphere
-0x63 0x40 0x80 noop {
+name("Atmosphere") "CHDR" len(4) {
+63 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Brightness
-0x64 0x40 0x80 noop {
+name("Brightness") "CHDR" len(4) {
+64 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Goblins
-0x65 0x40 0x80 noop {
+name("Goblins") "CHDR" len(4) {
+65 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Echoes, Drops
-0x66 0x40 0x80 noop {
+name("Echoes, Drops") "CHDR" len(4) {
+66 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Sci-Fi Star Theme
-0x67 0x01 0x00 fm {
-  #XXX TEMP
-  level 0x0000 30..15 0x4000..0xffff 40 0x1000..0x4000* 100..200 0x0000
-  wave saw +0x40
-  pitchenv 0
-  wheel 0
-  rate 0.500
-  range 3.0
-  rangeenv 0x8000 30..15 0xffff 40 0xa000* 100..200 0x4000
-  rangelforate 4.0
-  rangelfodepth 0.250
-  post {
-    gain 15.0 0.250
-  }
+name("Sci-Fi Star Theme") "CHDR" len(4) {
+67 01 00 MODE_NOOP len(2) {
+}
 }
 
 #--- 104..111: World -----------------------------------------------------------------
 
-# Sitar
-0x68 0x40 0x80 noop {
+name("Sitar") "CHDR" len(4) {
+68 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Banjo
-0x69 0x40 0x80 noop {
+name("Banjo") "CHDR" len(4) {
+69 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Shamisen
-0x6a 0x40 0x80 noop {
+name("Shamisen") "CHDR" len(4) {
+6a 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Koto
-0x6b 0x40 0x80 noop {
+name("Koto") "CHDR" len(4) {
+6b 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Kalimba
-0x6c 0x40 0x80 noop {
+name("Kalimba") "CHDR" len(4) {
+6c 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Bagpipe
-0x6d 0x40 0x80 noop {
+name("Bagpipe") "CHDR" len(4) {
+6d 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Fiddle
-0x6e 0x40 0x80 noop {
+name("Fiddle") "CHDR" len(4) {
+6e 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Shanai
-0x6f 0x40 0x80 noop {
+name("Shanai") "CHDR" len(4) {
+6f 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 112..119: Percussion ---------------------------------------------------------------
 
-# Tinkle Bell
-0x70 0x40 0x80 noop {
+name("Tinkle Bell") "CHDR" len(4) {
+70 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Agogo
-0x71 0x40 0x80 noop {
+name("Agogo") "CHDR" len(4) {
+71 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Steel Drums
-0x72 0x40 0x80 noop {
+name("Steel Drums") "CHDR" len(4) {
+72 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Wood Block
-0x73 0x40 0x80 noop {
+name("Wood Block") "CHDR" len(4) {
+73 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Taiko
-0x74 0x40 0x80 noop {
+name("Taiko") "CHDR" len(4) {
+74 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Melodic Tom
-0x75 0x40 0x80 noop {
+name("Melodic Tom") "CHDR" len(4) {
+75 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Synth Drum
-0x76 0x40 0x80 noop {
+name("Synth Drum") "CHDR" len(4) {
+76 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Reverse Cymbal
-0x77 0x40 0x80 noop {
+name("Reverse Cymbal") "CHDR" len(4) {
+77 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 120..127: Filler --------------------------------------------------------------
 
-# Guitar Fret Noise
-0x78 0x40 0x80 noop {
+name("Guitar Fret Noise") "CHDR" len(4) {
+78 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Breath Noise
-0x79 0x40 0x80 noop {
+name("Breath Noise") "CHDR" len(4) {
+79 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Seashore
-0x7a 0x40 0x80 noop {
+name("Seashore") "CHDR" len(4) {
+7a 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Bird Tweet
-0x7b 0x40 0x80 noop {
+name("Bird Tweet") "CHDR" len(4) {
+7b 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Telephone Ring
-0x7c 0x40 0x80 noop {
+name("Telephone Ring") "CHDR" len(4) {
+7c 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Helicopter
-0x7d 0x40 0x80 noop {
+name("Helicopter") "CHDR" len(4) {
+7d 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Applause
-0x7e 0x40 0x80 noop {
+name("Applause") "CHDR" len(4) {
+7e 40 80 MODE_NOOP len(2) {
+}
 }
 
-# Gunshot
-0x7f 0x40 0x80 noop {
+name("Gunshot") "CHDR" len(4) {
+7f 40 80 MODE_NOOP len(2) {
+}
 }
 
 #--- 128: GM Drums plus a bunch of extra opinionated percussion --------------------------------------------------------------
 
-# Standard Drum Kit
-0x80 0x40 0x80 drum {
+name("Standard Drum Kit") "CHDR" len(4) {
+80 40 80 MODE_DRUM len(2) {
 
-  # TODO Fill 0x00..0x22 with extra drums. Alternative kick/snare/hat, DJ scratch, whatever seems to be missing from GM...
+  # TODO Fill 00..22 with extra drums. Alternative kick/snare/hat, DJ scratch, whatever seems to be missing from GM...
 
   #--- BEGIN GM DRUMS ---
 
-  # 35: Acoustic Bass Drum
-  note 0x23 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Acoustic Bass Drum") 23 40 c0 80 len(2) {
   }
   
-  # 36: Bass Drum 1
-  note 0x24 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Bass Drum 1") 24 40 c0 80 len(2) {
   }
   
-  # 37: Side Stick
-  note 0x25 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Side Stick") 25 40 c0 80 len(2) {
   }
   
-  # 38: Acoustic Snare
-  note 0x26 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Acoustic Snare") 26 40 c0 80 len(2) {
   }
   
-  # 39: Hand Clap
-  note 0x27 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Hand Clap") 27 40 c0 80 len(2) {
   }
   
-  # 40: Electric Snare
-  note 0x28 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Electric Snare") 28 40 c0 80 len(2) {
   }
   
-  # 41: Low Floor Tom
-  note 0x29 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Low Floor Tom") 29 40 c0 80 len(2) {
   }
   
-  # 42: Closed Hi Hat
-  note 0x2a {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Closed Hi Hat") 2a 40 c0 80 len(2) {
   }
   
-  # 43: High Floor Tom
-  note 0x2b {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("High Floor Tom") 2b 40 c0 80 len(2) {
   }
   
-  # 44: Pedal Hi-Hat
-  note 0x2c {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Pedal Hi Hat") 2c 40 c0 80 len(2) {
   }
   
-  # 45: Low Tom
-  note 0x2d {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Low Tom") 2d 40 c0 80 len(2) {
   }
   
-  # 46: Open Hi-Hat
-  note 0x2e {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Open Hi Hat") 2e 40 c0 80 len(2) {
   }
   
-  # 47: Low-Mid Tom
-  note 0x2f {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Low Mid Tom") 2f 40 c0 80 len(2) {
   }
   
-  # 48: Hi Mid Tom
-  note 0x30 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Hi Mid Tom") 30 40 c0 80 len(2) {
   }
   
-  # 49: Crash Cymbal 1
-  note 0x31 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Crash Cymbal 1") 31 40 c0 80 len(2) {
   }
   
-  # 50: High Tom
-  note 0x32 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Hi Tom") 32 40 c0 80 len(2) {
   }
   
-  # 51: Ride Cymbal 1
-  note 0x33 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Ride Cymbal 1") 33 40 c0 80 len(2) {
   }
   
-  # 52: Chinese Cymbal
-  note 0x34 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Chinese Cymbal") 34 40 c0 80 len(2) {
   }
   
-  # 53: Ride Bell
-  note 0x35 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Ride Bell") 35 40 c0 80 len(2) {
   }
   
-  # 54: Tambourine
-  note 0x36 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Tambourine") 36 40 c0 80 len(2) {
   }
   
-  # 55: Splash Cymbal
-  note 0x37 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Splash Cymbal") 37 40 c0 80 len(2) {
   }
   
-  # 56: Cowbell
-  note 0x38 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Cowbell") 38 40 c0 80 len(2) {
   }
   
-  # 57: Crash Cymbal 2
-  note 0x39 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Crash Cymbal 2") 39 40 c0 80 len(2) {
   }
   
-  # 58: Vibraslap
-  note 0x3a {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Vibraslap") 3a 40 c0 80 len(2) {
   }
   
-  # 59: Ride Cymbal 2
-  note 0x3b {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Ride Cymbal 2") 3b 40 c0 80 len(2) {
   }
   
-  # 60: Hi Bongo
-  note 0x3c {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Hi Bongo") 3c 40 c0 80 len(2) {
   }
   
-  # 61: Low Bongo
-  note 0x3d {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Low Bongo") 3d 40 c0 80 len(2) {
   }
   
-  # 62: Mute Hi Conga
-  note 0x3e {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Mute Hi Conga") 3e 40 c0 80 len(2) {
   }
   
-  # 63: Open Hi Conga
-  note 0x3f {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Open Hi Conga") 3f 40 c0 80 len(2) {
   }
   
-  # 64: Low Conga
-  note 0x40 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Low Conga") 40 40 c0 80 len(2) {
   }
   
-  # 65: High Timbale
-  note 0x41 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("High Timbale") 41 40 c0 80 len(2) {
   }
   
-  # 66: Low Timbale
-  note 0x42 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Low Timbale") 42 40 c0 80 len(2) {
   }
   
-  # 67: High Agogo
-  note 0x43 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("High Agogo") 43 40 c0 80 len(2) {
   }
   
-  # 68: Low Agogo
-  note 0x44 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Low Agogo") 44 40 c0 80 len(2) {
   }
   
-  # 69: Cabasa
-  note 0x45 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Cabasa") 45 40 c0 80 len(2) {
   }
   
-  # 70: Maracas
-  note 0x46 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Maracas") 46 40 c0 80 len(2) {
   }
   
-  # 71: Short Whistle
-  note 0x47 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Short Whistle") 47 40 c0 80 len(2) {
   }
   
-  # 72: Long Whistle
-  note 0x48 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Long Whistle") 48 40 c0 80 len(2) {
   }
   
-  # 73: Short Guiro
-  note 0x49 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Short Guiro") 49 40 c0 80 len(2) {
   }
   
-  # 74: Long Guiro
-  note 0x4a {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Long Guiro") 4a 40 c0 80 len(2) {
   }
   
-  # 75: Claves
-  note 0x4b {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Claves") 4b 40 c0 80 len(2) {
   }
   
-  # 76: Hi Wood Block
-  note 0x4c {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Hi Wood Block") 4c 40 c0 80 len(2) {
   }
   
-  # 77: Low Wood Block
-  note 0x4d {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Low Wood Block") 4d 40 c0 80 len(2) {
   }
   
-  # 78: Mute Cuica
-  note 0x4e {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Mute Cuica") 4e 40 c0 80 len(2) {
   }
   
-  # 79: Open Cuica
-  note 0x4f {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Open Cuica") 4f 40 c0 80 len(2) {
   }
   
-  # 80: Mute Triangle
-  note 0x50 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Mute Triangle") 50 40 c0 80 len(2) {
   }
   
-  # 81: Open Triangle
-  note 0x51 {
-    0 0x80 0x80 fm {
-      level 0x0000 15 0xffff 20 0x2000 200 0x0000
-    }
-    events {
-      note 0 0x30 15 0
-    }
+  name("Open Triangle") 51 40 c0 80 len(2) {
   }
   
   #--- END GM DRUMS ---
   
-  # 0x52..0x7f are available for additional percussion. Fill the low gap first.
+  # 52..7f are available for additional percussion. Fill the low gap first.
+}
 }
 
 #--- 129: Standard sound effects, not intended for music ----------------------------------------------------------
 
-# Example Sound Effects
-0x81 0x40 0x80 drum {
+name("Example Sound Effects") "CHDR" len(4) {
+81 40 80 MODE_DRUM len(2) {
 
   # TODO Make an assortment of common gamey sound effects.
 
+}
 }
 
 #--- 130..143: Reserve for additional drum kits and sound effects -------------------------------------------------

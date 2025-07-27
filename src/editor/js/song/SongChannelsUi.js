@@ -78,7 +78,7 @@ export class SongChannelsUi {
   rebuildChannelCardForChid(chid) {
     const card = this.element.querySelector(`.channel[data-chid='${chid}']`);
     if (!card) return;
-    const channel = this.songService.song?.channels[chid];
+    const channel = this.songService.song?.channelsByChid[chid];
     if (!channel) {
       card.remove();
       return;
@@ -116,14 +116,14 @@ export class SongChannelsUi {
   }
   
   onReplaceChannel(chid) {
-    const channel = this.songService.song.channels[chid];
+    const channel = this.songService.song.channelsByChid[chid];
     if (!channel) return;
     const modal = this.dom.spawnModal(PidModal);
     modal.setup(channel);
     modal.result.then(pid => {
       if (pid === null) return;
       if (!this.sharedSymbols.instruments) return; // Don't poke or wait for it; the modal must have done that already.
-      const src = this.sharedSymbols.instruments.channels[pid];
+      const src = this.sharedSymbols.instruments.channelsByChid[pid];
       if (!src) return this.dom.modalError(`pid ${pid} not found`);
       // Don't modify (chid) obviously, also don't touch (trim) or (pan) even though we could.
       // The trims and pans in the shared instrument set are dummies, one is expected to tweak those per channel.
@@ -136,12 +136,14 @@ export class SongChannelsUi {
   }
   
   onDeleteChannel(chid) {
-    const channel = this.songService.song.channels[chid];
+    const channel = this.songService.song.channelsByChid[chid];
     if (!channel) return;
     const events = this.songService.song.events.filter(e => e.chid === chid);
     this.dom.modalPickOne(`Delete ${channel.getDisplayName()} and ${events.length} events?`, ["Yes, delete"]).then(rsp => {
       if (!rsp) return;
-      this.songService.song.channels[chid] = null;
+      const p = this.songService.song.channels.indexOf(channel);
+      if (p >= 0) this.songService.song.channels.splice(p, 1);
+      this.songService.song.channelsByChid[chid] = null;
       this.songService.song.events = this.songService.song.events.filter(v => v.chid !== chid);
       this.songService.broadcast({ type: "channelsRemoved" });
       this.songService.broadcast({ type: "eventsRemoved" });
@@ -149,7 +151,7 @@ export class SongChannelsUi {
   }
   
   onSliderChanged(chid) {
-    const channel = this.songService.song.channels[chid];
+    const channel = this.songService.song.channelsByChid[chid];
     if (!channel) return;
     const card = this.element.querySelector(`.channel[data-chid='${chid}']`);
     if (!card) return;
@@ -162,7 +164,7 @@ export class SongChannelsUi {
   }
   
   onClickName(chid) {
-    const channel = this.songService.song.channels[chid];
+    const channel = this.songService.song.channelsByChid[chid];
     if (!channel) return;
     const card = this.element.querySelector(`.channel[data-chid='${chid}']`);
     if (!card) return;
@@ -181,7 +183,7 @@ export class SongChannelsUi {
   onModeChanged(chid, event) {
     const v = +event?.target?.value;
     if (isNaN(v) || (v < 0) || (v > 0xff)) return;
-    const channel = this.songService.song.channels[chid];
+    const channel = this.songService.song.channelsByChid[chid];
     if (!channel) return;
     if (channel.mode === v) return;
     channel.changeMode(v);
@@ -189,7 +191,7 @@ export class SongChannelsUi {
   }
   
   onEditModeConfig(chid) {
-    const channel = this.songService.song.channels[chid];
+    const channel = this.songService.song.channelsByChid[chid];
     if (!channel) return;
     let modalcls;
     switch (channel.mode) {
@@ -208,7 +210,7 @@ export class SongChannelsUi {
   }
   
   onDeletePostStage(chid, p) {
-    const channel = this.songService.song?.channels[chid];
+    const channel = this.songService.song?.channelsByChid[chid];
     if (!channel) return;
     const stages = [];
     let got = false;
@@ -227,7 +229,7 @@ export class SongChannelsUi {
   }
   
   onEditPostStage(chid, p) {
-    const channel = this.songService.song?.channels[chid];
+    const channel = this.songService.song?.channelsByChid[chid];
     if (!channel) return;
     /*TODO
     const stages = eauPostDecode(channel.post);
@@ -246,7 +248,7 @@ export class SongChannelsUi {
   }
   
   onAddPostStage(chid) {
-    const channel = this.songService.song?.channels[chid];
+    const channel = this.songService.song?.channelsByChid[chid];
     if (!channel) return;
     /*TODO
     const modal = this.dom.spawnModal(SongPostTypeModal);

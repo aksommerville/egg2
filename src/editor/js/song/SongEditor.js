@@ -51,12 +51,14 @@ export class SongEditor {
   setup(res) {
     this.res = res;
     this.song = new Song(res.serial);
-    this.element.innerHTML = "";
-    this.songToolbar = this.dom.spawnController(this.element, SongToolbar, [this.songService]);
-    this.songChannelsUi = this.dom.spawnController(this.element, SongChannelsUi, [this.songService]);
-    const detailContainer = this.dom.spawn(this.element, "DIV", ["detailContainer"]);
-    this.detailEditor = this.dom.spawnController(detailContainer, this.songService.getDetailEditorClass(), [this.songService]);
-    this.songService.setup(res, this.song);
+    this.songService.defaultInstruments(this.song).then(() => {
+      this.element.innerHTML = "";
+      this.songToolbar = this.dom.spawnController(this.element, SongToolbar, [this.songService]);
+      this.songChannelsUi = this.dom.spawnController(this.element, SongChannelsUi, [this.songService]);
+      const detailContainer = this.dom.spawn(this.element, "DIV", ["detailContainer"]);
+      this.detailEditor = this.dom.spawnController(detailContainer, this.songService.getDetailEditorClass(), [this.songService]);
+      this.songService.setup(res, this.song);
+    });
   }
   
   replaceDetailEditor() {

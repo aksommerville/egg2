@@ -153,6 +153,7 @@ Events for a channel with no header will get a non-silent default instrument.
 Decoder behavior re duplicate chid is undefined. Use the first or last or fail.
 An empty CHDR is technically legal but meaningless.
 CHDR for channels 16 and above are perfectly legal. We may use EAU and EAU-Text as instrument repositories.
+In MIDI files, this payload is repeated verbatim as Meta 0x77.
 
 ```
   1 Channel ID 0..255, but only 0..15 are addressable.
@@ -284,7 +285,7 @@ Basically a hex dump, with some helpers:
 - `"..."` JSON string.
 - `u8(N)` `u16(N)` `u24(N)` `u32(N)` Big-endian integer, decimal by default.
 - `len(SIZE) { ... }` emits the length of the body in SIZE bytes, then the body. Fails if too large.
-- `name(STRING)` inside channel header or drum note. Produces no output but we might use for indexing.
+- `name(STRING)` before channel header or drum note. Produces no output but we might use for indexing.
 - `delay(MS)` emits zero or more delay events.
 - `note(CHID,NOTEID,VELOCITY,DURMS)`
 - `wheel(CHID,V)` V in -512..511
@@ -304,3 +305,4 @@ And some 1:1 symbols:
 - `SHAPE_SQUARE` = 1
 - `SHAPE_SAW` = 2
 - `SHAPE_TRIANGLE` = 3
+

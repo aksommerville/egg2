@@ -9,15 +9,17 @@ import { SongListUi } from "./SongListUi.js";
 import { SongEventModal } from "./SongEventModal.js";
 import { Dom } from "../Dom.js";
 import { Data } from "../Data.js";
+import { SharedSymbols } from "../SharedSymbols.js";
  
 export class SongService {
   static getDependencies() {
-    return [Dom, Data, Window];
+    return [Dom, Data, Window, SharedSymbols];
   }
-  constructor(dom, data, window) {
+  constructor(dom, data, window, sharedSymbols) {
     this.dom = dom;
     this.data = data;
     this.window = window;
+    this.sharedSymbols = sharedSymbols;
     this.songEditor = null; // Owner assigns after construction.
     
     this.nextListenerId = 1;
@@ -36,6 +38,34 @@ export class SongService {
     this.res = res;
     this.song = song;
     this.broadcast({ type: "setup" });
+  }
+  
+  /* If (song) contains any incomplete channels, fetch the default instruments and apply them.
+   * Resolves with (song) again after completion, never rejects.
+   * Modifies (song) in place.
+   * Defaulting deliberately does not mark the song dirty.
+   * If the user modifies anything after, it will save with the chosen instruments baked in.
+   */
+  defaultInstruments(song) {
+    if (song.format !== "mid") return Promise.resolve(song); // Only relevant when sourced from MIDI.
+    const incompleteChannels = song.channels.filter(c => !c.explicitChdr);
+    if (!incompleteChannels.length) return Promise.resolve(song); // All channels voiced properly, nothing for us to do.
+    return this.sharedSymbols.getInstruments().then(instruments => {
+      for (const channel of incompleteChannels) {
+        let src = instruments.channelsByChid[channel.pid]; // Song's pid is instruments' chid.
+        if (!src) {
+          // No defaulting. It's OK to leave a channel unconfigured. Better than introducing exotic fallback rules.
+          console.warn(`No default instrument for pid ${channel.pid}.`);
+          continue;
+        }
+        // (chid,trim,pan) are preserved from the song's channel. Replace (mode,payload,post). If (name) unset, take it from the instrument.
+        channel.mode = src.mode;
+        channel.payload = src.payload;
+        channel.post = src.post;
+        if (src.name && !channel.name) channel.name = src.name
+      }
+      return song;
+    });
   }
   
   /* Detail editor class.

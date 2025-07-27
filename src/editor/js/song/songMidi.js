@@ -37,7 +37,7 @@ function midiEventsByTrack(song) {
     const trackId = event.trackId || 0;
     let track = tracks[trackId];
     if (!track) track = tracks[trackId] = [];
-    switch (event.opcode) {
+    switch (event.type) {
       case "n": {
           addMidiEvent(track, { time: ~~event.time, chid: event.chid, opcode: 0x90, a: event.noteid, b: event.velocity });
           addMidiEvent(track, { time: ~~event.time + ~~event.durms, chid: event.chid, opcode: 0x80, a: event.noteid, b: 0x40 });
@@ -196,14 +196,22 @@ function readEventFromMidiTrack(track) {
   
   switch (lead & 0xf0) {
       
-    // Note On: "n"
+    // Note On: "n".
     case 0x90: {
         if (track.p > track.v.length - 2) throw new Error("Unexpected end of track.");
-        event.type = "n";
-        event.chid = lead & 0x0f;
-        event.noteid = track.v[track.p++];
-        event.velocity = track.v[track.p++];
-        event.durms = -1; // Our caller will replace this when the Note Off is reached; or default to zero.
+        if (track.v[track.p+1]) { // Nonzero velocity, a real Note On.
+          event.type = "n";
+          event.chid = lead & 0x0f;
+          event.noteid = track.v[track.p++];
+          event.velocity = track.v[track.p++];
+          event.durms = -1; // Our caller will replace this when the Note Off is reached; or default to zero.
+        } else { // Zero velocity, report as Note Off.
+          event.type = "m";
+          event.chid = lead & 0x0f;
+          event.opcode = 0x80;
+          event.a = track.v[track.p++];
+          event.b = track.v[track.p++];
+        }
       } break;
       
     // Wheel: "w"
@@ -260,9 +268,56 @@ function readEventFromMidiTrack(track) {
             } break;
         }
         event.chid = track.chpfx;
+        // One more thing: If it's Meta 0x77 EAU Channel Header, set (chid) to what's indicated in the payload, regardless of MIDI Channel Prefix.
+        if ((event.opcode === 0xff) && (event.a === 0x77) && (event.v.length >= 1)) {
+          event.chid = event.v[0];
+        }
       } break;
   }
   return event;
+}
+
+/* Overwrite channel's config with the payload of Meta 0x77 EAU Channel Header.
+ * This replaces everything in the channel, and once set, we'll ignore configuration from other Meta, Control, and Program events.
+ * Our spec is explicit about this behavior: "If Meta 0x77 is present, we don't guess anything from the MIDI events."
+ * That's good policy, must have been written by somebody very handsome.
+ */
+function applyChdr(channel, src) {
+  if (channel.explicitChdr) {
+    console.warn(`Multiple Meta 0x77 EAU Channel Header for channel ${channel.chid}. Using the later one.`);
+  }
+  channel.explicitChdr = true;
+  if (!src?.length || (src[0] !== channel.chid)) throw new Error(`Meta 0x77 names a different channel, applying to ${channel.chid}`);
+  channel._decode(src);
+}
+
+/* If no Meta 0x77 has been applied yet, consider taking clues from this Meta event.
+ * It must have been preceded by 0x20 MIDI Channel Prefix.
+ * Actually we cheat a little: Channel names are not stored in CHDR, so we'll accept those even if already CHDR'd.
+ */
+function applyMetaIfNoChdr(channel, type, v) {
+  //if (channel.explicitChdr) return;
+  switch (type) {
+    case 0x01: case 0x03: case 0x04: { // Text, Track Name, Instrument Name: Use as channel name, first one wins.
+        if (v.length && !channel.name) {
+          channel.name = new TextDecoder("utf8").decode(v);
+        }
+      } break;
+  }
+}
+
+/* If no Meta 0x77 has been applied yet, consider taking clues from the Control or Program event.
+ * (k==0xc0) for Program Change, that wouldn't be a legal key for Control Change.
+ */
+function applyControlIfNoChdr(channel, k, v) {
+  if (channel.explicitChdr) return;
+  switch (k) {
+    case 0x00: channel.pid = (channel.pid & 0x003fff) | (v << 14); break; // Bank MSB
+    case 0x07: channel.trim = (v << 1) | (v & 1); break; // Volume MSB (sticky low bit; don't expect an LSB)
+    case 0x0a: channel.pan = (v << 1) | (v & 1); break; // Pan MSB, not coincidentally MIDI phrases them the same way we do. Don't expect an LSB.
+    case 0x20: channel.pid = (channel.pid & 0x1fc07f) | (v << 7); break; // Bank LSB.
+    case 0xc0: channel.pid = (channel.pid & 0x1fff80) | v; break; // Program Change masquerading as Control Change.
+  }
 }
 
 /* Decode.
@@ -303,7 +358,6 @@ export function midiSongDecode(song, src) {
     }
   }
   if (!division) throw new Error("Missing MThd");
-  console.log(`initial decode ok`, { tracks });
   
   /* Read the tracks serially, no need to interleave.
    * Keep all timing initially in ticks, and we'll convert to ms after all events are captured.
@@ -376,7 +430,23 @@ export function midiSongDecode(song, src) {
   
   /* Collect channel headers.
    */
-  //TODO
-  
-  console.log(`Decoded MIDI song.`, { song, src, tracks, division, tempo });
+  for (const event of song.events) {
+    if (event.chid < 0) continue;
+    if (!song.channelsByChid[event.chid]) {
+      const channel = new SongChannel(event.chid);
+      song.channels.push(channel);
+      song.channelsByChid[event.chid] = channel;
+    }
+    if (event.type !== "m") continue; // "n" and "w" events can force the channel to exist, but only "m" can configure it.
+    const channel = song.channelsByChid[event.chid];
+    switch (event.opcode) {
+      case 0xff: switch (event.a) {
+          case 0x77: applyChdr(channel, event.v); break;
+          default: applyMetaIfNoChdr(channel, event.a, event.v); break;
+        } break;
+      case 0xb0: applyControlIfNoChdr(channel, event.a, event.b); break;
+      case 0xc0: applyControlIfNoChdr(channel, 0xc0, event.a); break;
+    }
+  }
+  song.channels.sort((a, b) => a.chid - b.chid);
 }
