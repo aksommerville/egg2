@@ -1,6 +1,8 @@
 /* songMidi.js
  */
  
+//XXX what the fuck am i thinking? We should call the server for these conversions
+ 
 import { Encoder } from "../Encoder.js";
 import { SongEvent, SongChannel } from "./Song.js";
  

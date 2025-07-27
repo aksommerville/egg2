@@ -1,6 +1,8 @@
 /* songEau.js
  */
  
+//XXX what the fuck am i thinking? We should call the server for these conversions
+ 
 export function eauSongDecode(song, src) {
   throw new Error("TODO: eauSongDecode");//TODO
 }

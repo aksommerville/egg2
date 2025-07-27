@@ -282,7 +282,7 @@ In general, we can add features to EAU without specifically adding anything to E
 
 Basically a hex dump, with some helpers:
 - `#` starts a line comment anywhere.
-- `"..."` JSON string.
+- `"..."` JSON string. Don't use parens inside a string, because I'm lazy on the JS parsing side.
 - `u8(N)` `u16(N)` `u24(N)` `u32(N)` Big-endian integer, decimal by default.
 - `len(SIZE) { ... }` emits the length of the body in SIZE bytes, then the body. Fails if too large.
 - `name(STRING)` before channel header or drum note. Produces no output but we might use for indexing.
@@ -306,3 +306,5 @@ And some 1:1 symbols:
 - `SHAPE_SAW` = 2
 - `SHAPE_TRIANGLE` = 3
 
+Leading "0x" on plain hex words is permitted because it's an understandable mistake. It's meaningless.
+Beware that saving an EAUT file in our editor will strip comments and will probably not format text the same way you did.
