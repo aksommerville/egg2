@@ -9,7 +9,7 @@
    * drumtest
    */
 #define FIRST_SONG RID_song_around_here_somewhere
-#define LAST_SONG RID_song_drumtest
+#define LAST_SONG RID_song_doors_without_walls
 struct g g={
   .songid=FIRST_SONG,
 };

@@ -1,16 +1,9 @@
 # egg2
 
-2025-03-12: I'd been working on this for about a month and accidentally deleted it all.
-Nice one, Andy. Don't do that again.
-For reference, here's what we had before the deletion:
-- Custom build tool with multiple arbitrary targets.
-- Abstract data conversion.
-- Most of the native synthesizer: FM, Sub, and Drum voices. Post pipes. Note and Wheel events.
-- Platform API defined, headers only. Single render call with GPU-ready vertex buffer. Optional mouse, keyboard, and touch events.
-- Many data formats defined: ROM, metadata, strings, map, cmdlist, tilesheet, decalsheet, EAU, EAU-Text
-- Test harness.
+Engine for web and native games, retro style.
+Most documentation is under [./etc/doc](./etc/doc/).
 
-Planned differences from Egg v1:
+Differences from [Egg v1](https://github.com/aksommerville/egg):
 - Custom build tool, similar to berry. Arbitrary targets selected at eggdev's build time, and web is not special.
 - Direct access to data conversion a la carte via eggdev.
 - Synth: Post pipes, LFOs, and stereo output.
@@ -65,55 +58,19 @@ Planned differences from Egg v1:
 - - [ ] web Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
 - - [ ] web: Quantize final scale-up, don't use `object-fit:contain`. Then implement `egg_video_fb_from_screen`
 - - [ ] web: Player count 
-- Defects:
-- - [x] Minify: `for (let i=0; i<2; i++) {` became `for (let h1 = 0; hZ < 2; hZ++) {`, two names from one.
-- - - repro'd: 20250712-minify.sh
-
-## 2025-06-23 resynth
-
-I stepped away from this project for a while to play with AudioWorkletNode.
-It's enticing... In theory, we could write one synthesizer in C, and use it in both web and native.
-It does work, but it makes the plumbing quite a bit more complex (also it requires games to be served HTTPS, which is sure to be a problem).
-Anyhoo, gave up on that idea (for now) and returning to Egg 2, and I'm going to scrap its current synth and rewrite.
-
-The broad outline:
- - Separate web and native implementations. :(
- - One format, "EAU", for delivery at runtime. Source from MIDI or EAU-Text.
- - Stereo.
- - Per-channel post, LFO, trim, pan.
- - Limited set of post stages, only things we can reliably implement on both sides: Delay, Waveshaper, Tremolo
- - No SUB voices. Too hard to maintain parity across implementations.
- - No IIR post stages, same reason.
- - Implicit PCM printing.
- 
-TODO:
-- [x] Define data formats.
-- [x] Portable data converter unit.
-- [x] Define native synth API.
-- [x] Update eggdev.
-- [x] Native synth implementation.
-- [x] Web synth implementation.
-- - [x] Print PCM.
-- - [x] Soft pause. -- punt
-- - [x] Correct getPlayhead (currently not wrapping)
-- - [x] Tuned voices wheel
-- - [x] Tuned voices pitchenv
-- - [x] Stereo
-- - [x] Post
-- [ ] Update editor.
-- - [ ] New serial format.
-- [ ] Define some instruments.
-- [ ] Test perceptually.
-- - Pay close attention to FM. I hacked it fast and loose for web, probably got it all wrong.
-- - Add some editor tooling to print a song both native and web, and play them back with an easy toggle.
-- [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
-- [ ] `eggdev_convert_audio.c:eggdev_wav_from_eau`: Arbitrary params from user for conversion? (rate,chanc,method) in this case.
-- [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
-- [ ] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.
-- - We're not. And if it seems burdensome, we can change the spec to require CHDR.
-- - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
-- [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
-- [x] !!! minify: `const frequency = 256000 / (lforate * this.player.tempo);` became `const ex=256000/eu*this[h8][hO]`, missing parens!
-- [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
-- [x] web synth not sustaining notes?
-- [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter.
+- 2025-06-23 audio rekajiggerment:
+- - [ ] Update editor.
+- - - [ ] New serial format.
+- - [ ] Define some instruments.
+- - [ ] Test perceptually.
+- - - Pay close attention to FM. I hacked it fast and loose for web, probably got it all wrong.
+- - - Add some editor tooling to print a song both native and web, and play them back with an easy toggle.
+- - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
+- - [ ] `eggdev_convert_audio.c:eggdev_wav_from_eau`: Arbitrary params from user for conversion? (rate,chanc,method) in this case.
+- - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
+- - [ ] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.
+- - - We're not. And if it seems burdensome, we can change the spec to require CHDR.
+- - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
+- - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
+- - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
+- - [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter.
