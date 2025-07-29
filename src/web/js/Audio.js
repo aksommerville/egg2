@@ -69,10 +69,11 @@ export class Audio {
       this.song = null;
     }
     if (serial) {
-      console.log(`Audio.playEauSong`, { serial, songid, playhead });
-      this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, false, songid);
+      if (!this.ctx) this.start();
+      this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, true, songid);
       this.song.play();
       if (playhead > 0) this.song.setPlayhead(playhead);
+      this.update(); // Editor updates on a long period; ensure we get one initial priming update.
     }
   }
   

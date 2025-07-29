@@ -7,14 +7,24 @@ import { SongService } from "./SongService.js";
 
 export class SongToolbarUi {
   static getDependencies() {
-    return [HTMLElement, Dom, SongService];
+    return [HTMLElement, Dom, SongService, Window];
   }
-  constructor(element, dom, songService) {
+  constructor(element, dom, songService, window) {
     this.element = element;
     this.dom = dom;
     this.songService = songService;
+    this.window = window;
+    
+    this.animationFrame = null;
     
     this.buildUi();
+  }
+  
+  onRemoveFromDom() {
+    if (this.animationFrame) {
+      this.window.cancelAnimationFrame(this.animationFrame);
+      this.animationFrame = null;
+    }
   }
   
   /* UI.
@@ -27,7 +37,7 @@ export class SongToolbarUi {
     this.dom.spawn(this.element, "INPUT", { type: "button", value: "!", "on-click": () => this.onPanic() });
     this.dom.spawn(this.element, "INPUT", { type: "button", value: ">", "on-click": () => this.onPlay() });
     
-    this.dom.spawn(this.element, "CANVAS", ["playhead"], { "on-click": () => this.onClickPlayhead() });
+    this.dom.spawn(this.element, "CANVAS", ["playhead"], { "on-click": e => this.onClickPlayhead(e) });
     
     // Visibility toggles.
     // Older versions had Track and Event filters, but since we're EAU only, really only Channel matters.
@@ -72,7 +82,7 @@ export class SongToolbarUi {
     canvas.width = bounds.width;
     canvas.height = bounds.height;
     const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#630";
+    ctx.fillStyle = this.songService.playing ? "#630" : "#555";
     ctx.fillRect(0, 0, bounds.width, bounds.height);
     ctx.moveTo(0.5, 0.5);
     ctx.lineTo(bounds.width - 0.5, 0.5);
@@ -81,22 +91,48 @@ export class SongToolbarUi {
     ctx.lineTo(0.5, 0.5);
     ctx.strokeStyle = "#aaa";
     ctx.stroke();
-    //TODO playhead
+    if (!this.songService.playing) return;
+    const x = ~~(this.songService.getNormalizedPlayhead() * bounds.width) + 0.5;
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, bounds.height);
+    ctx.stroke();
+  }
+  
+  requirePlayhead() {
+    if (this.animationFrame) return;
+    this.animationFrame = this.window.requestAnimationFrame(() => {
+      this.animationFrame = null;
+      this.renderPlayhead();
+      this.requirePlayhead();
+    });
+  }
+  
+  cancelPlayhead() {
+    if (!this.animationFrame) return;
+    this.window.cancelAnimationFrame(this.animationFrame);
+    this.animationFrame = null;
+    this.renderPlayhead(); // Once more to draw it neutral.
   }
   
   /* Events.
    **************************************************************************************/
    
   onPanic() {
-    console.log(`TODO SongToolbarUi.onPanic`); //TODO Stop playing.
+    this.songService.playSong(null);
+    this.cancelPlayhead();
   }
   
   onPlay() {
-    console.log(`TODO SongToolbarUi.onPlay`); // TODO Start playing.
+    this.songService.playSong(this.songService.song);
+    this.requirePlayhead();
   }
   
-  onClickPlayhead() {
-    console.log(`TODO SongToolbarUi.onClickPlayhead`); // TODO Start playing at a given time.
+  onClickPlayhead(event) {
+    if (!this.songService.playing) return;
+    const canvas = this.element.querySelector(".playhead");
+    const bounds = canvas.getBoundingClientRect();
+    const x = event.x - bounds.x;
+    this.songService.setNormalizedPlayhead(x / bounds.width);
   }
   
   onVisChannelChange() {

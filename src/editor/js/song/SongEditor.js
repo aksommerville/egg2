@@ -30,6 +30,7 @@ export class SongEditor {
   onRemoveFromDom() {
     if (this.songService.song === this.song) this.songService.song = null;
     this.songService.unlisten(this.songServiceListener);
+    this.songService.unload();
   }
   
   static checkResource(res) {
@@ -40,7 +41,7 @@ export class SongEditor {
   setup(res) {
     this.songService.getSong(res.path).then(song => {
       console.log(`SongEditor got song`, { song, res });
-      this.songService.reset(song);
+      this.songService.reset(song, res.rid);
       this.res = res;
       this.song = song;
       this.buildUi();

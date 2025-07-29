@@ -4,6 +4,7 @@
  */
  
 import { calculateEauDuration, EauDecoder, eauNotev, eauEnvApply } from "./songBits.js";
+import { SongPlayer } from "./SongPlayer.js";
 
 export class SongChannel {
   

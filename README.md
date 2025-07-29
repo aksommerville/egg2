@@ -27,7 +27,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - - [ ] Nix queue.
 - - [ ] Record and playback session.
 - [ ] Web runtime.
-- - [ ] Synth.
+- - [x] Synth.
 - - [ ] Input.
 - - - [ ] Mapping.
 - - - [ ] Live config.
@@ -60,7 +60,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] web: Player count 
 - 2025-06-23 audio rekajiggerment:
 - - [ ] Update editor.
-- - - [ ] New serial format.
+- - - [x] New serial format.
 - - [ ] Define some instruments.
 - - [ ] Test perceptually.
 - - - Pay close attention to FM. I hacked it fast and loose for web, probably got it all wrong.
@@ -73,4 +73,4 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
 - - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
 - - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
-- - [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter.
+- - [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter. Apparent in drumtest.

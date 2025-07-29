@@ -144,4 +144,24 @@ export class Encoder {
       this.u8(src & 0x7f);
     } else throw new Error(`Invalid input for VLQ: ${src}`);
   }
+  
+  /* Emits length of (size) bytes big-endian, then content.
+   * Generate the content in (cb).
+   */
+  pfxlen(size, cb) {
+    const lenp = this.c;
+    let limit = 0;
+    switch (size) {
+      case 1: this.u8(0); limit = 0xff; break;
+      case 2: this.u16be(0); limit = 0xffff; break;
+      case 3: this.u24be(0); limit = 0xffffff; break;
+      case 4: this.u32be(0); limit = 0x7fffffff; break;
+      default: throw new Error(`Encoder.pfxlen size must be in 1..4`);
+    }
+    const startp = this.c;
+    cb();
+    let len = this.c - startp;
+    if ((len < 0) || (len > limit)) throw new Error(`Invalid length ${len} for block with ${size}-byte length field.`);
+    for (let i=size; i-->0; len>>=8) this.v[lenp + i] = len;
+  }
 }

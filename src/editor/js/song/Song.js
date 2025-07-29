@@ -6,6 +6,8 @@
  * Anyone using Song must arrange to call the server for conversion, if it might be some non-EAU format.
  */
  
+import { Encoder } from "../Encoder.js";
+ 
 export class Song {
 
   /* Construction.
@@ -127,6 +129,91 @@ export class Song {
     }
     // Since we're not recording delay as events, append a dummy to capture the end time.
     this.events.push(new SongEvent(now, "noop"));
+  }
+  
+  encode() {
+    const encoder = new Encoder();
+    
+    encoder.raw("\0EAU");
+    let looppp = 0;
+    encoder.pfxlen(4, () => {
+      encoder.u16be(this.tempo);
+      looppp = encoder.c;
+      encoder.u16be(0);
+    });
+    
+    for (const channel of this.channels) {
+      encoder.raw("CHDR");
+      encoder.pfxlen(4, () => {
+        encoder.u8(channel.chid);
+        encoder.u8(channel.trim);
+        encoder.u8(channel.pan);
+        encoder.u8(channel.mode);
+        if (channel.modecfg.length > 0xffff) throw new Error(`Channel ${channel.chid} modecfg length ${channel.modecfg.length} > 65535`);
+        encoder.u16be(channel.modecfg.length);
+        encoder.raw(channel.modecfg);
+        if (channel.post.length > 0xffff) throw new Error(`Channel ${channel.chid} post length ${channel.post.length} > 65535`);
+        encoder.u16be(channel.post.length);
+        encoder.raw(channel.post);
+      });
+    }
+    
+    encoder.raw("EVTS");
+    encoder.pfxlen(4, () => {
+      const chunkstart = encoder.c;
+      let now = 0;
+      for (const event of this.events) {
+      
+        // Sync delay at each event. There's never a case where we need to aggregate them.
+        let delay = ~~(event.time - now);
+        while (delay >= 4096) {
+          encoder.u8(0x7f);
+          delay -= 4096;
+        }
+        if (delay >= 0x40) {
+          encoder.u8(0x40 | ((delay >> 6) - 1));
+          delay &= 0x3f;
+        }
+        if (delay > 0) {
+          encoder.u8(delay);
+        }
+        now = event.time;
+        
+        switch (event.type) {
+          case "loop": {
+              const loopp = encoder.c - chunkstart;
+              if ((loopp < 0) || (loopp > 0xffff)) throw new Error(`Invalid loop position ${loopp}`);
+              encoder.v[looppp] = loopp >> 8;
+              encoder.v[looppp + 1] = loopp;
+            } break;
+          case "note": {
+              // 10ccccnn nnnnnvvv vvvvdddd dddddddd : Note (n) on channel (c), velocity (v), duration (d*4) ms.
+              let dur = event.durms >> 2;
+              if (dur < 0) dur = 0;
+              else if (dur > 0xfff) dur = 0xfff;
+              encoder.u8(0x80 | (event.chid << 2) | (event.noteid >> 5));
+              encoder.u8((event.noteid << 3) | (event.velocity >> 4));
+              encoder.u8((event.velocity << 4) | (dur >> 8));
+              encoder.u8(dur);
+            } break;
+          case "wheel": {
+              // 11ccccww wwwwwwww : Wheel on channel (c), (w)=0..512..1023 = -1..0..1
+              let v = event.wheel;
+              if (v < 0) v = 0;
+              else if (v > 1023) v = 1023;
+              encoder.u8(0xc0 | (event.chid << 2) | (v >> 8));
+              encoder.u8(v);
+            } break;
+        }
+      }
+    });
+    
+    return encoder.finish();
+  }
+  
+  calculateDuration() {
+    if (this.events.length < 1) return 0;
+    return this.events[this.events.length - 1].time / 1000;
   }
 }
 

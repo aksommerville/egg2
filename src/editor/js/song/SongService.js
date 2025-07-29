@@ -4,29 +4,80 @@
  
 import { Data } from "../Data.js";
 import { Comm } from "../Comm.js";
+import { Dom } from "../Dom.js";
 import { Song } from "./Song.js";
+import { Audio } from "../Audio.js"; // From the Egg Web Runtime, not part of editor.
 
 export class SongService {
   static getDependencies() {
-    return [Data, Comm];
+    return [Data, Comm, Audio, Dom, Window];
   }
-  constructor(data, comm) {
+  constructor(data, comm, audio, dom, window) {
     this.data = data;
     this.comm = comm;
+    this.audio = audio;
+    this.dom = dom;
+    this.window = window;
     
     this.song = null; // Set by SongEditor when it's alive.
+    this.rid = 0;
+    this.songDuration = 0; // s
     this.visChid = null; // null or chid, visibility filter.
+    this.playing = false;
     
     this.listeners = []; // {id,cb}
     this.nextListenerId = 1;
+    
+    this.window.setInterval(() => {
+      if (this.audio.ctx) this.audio.update();
+    }, 1000);
   }
   
   /* We're a singleton, but we're also pretty context-sensitive.
    * SongEditor should call reset() as it loads so we can clear any transient state.
    */
-  reset(song) {
+  reset(song, rid) {
+    this.audio.playEauSong(null, 0);
+    this.playing = false;
+    this.songDuration = 0;
     this.song = song;
+    this.rid = rid;
     this.visChid = null;
+  }
+  
+  /* SongEditor calls this on the way out.
+   * Beware the another SongEditor may have already reset us by the time this happens.
+   */
+  unload() {
+    this.audio.playEauSong(null, 0);
+    this.playing = false;
+    this.songDuration = 0;
+  }
+  
+  playSong(song) {
+    try {
+      const serial = song ? song.encode() : null;
+      this.audio.playEauSong(serial, this.rid);
+      this.songDuration = song ? song.calculateDuration() : 0;
+      this.playing = !!serial;
+    } catch (e) {
+      this.songDuration = 0;
+      this.dom.modalError(e);
+    }
+  }
+  
+  getNormalizedPlayhead() {
+    if (!this.playing) return 0;
+    if (this.songDuration <= 0) return 0;
+    const phs = this.audio.egg_song_get_playhead();
+    return Math.max(0, Math.min(1, phs / this.songDuration));
+  }
+  
+  setNormalizedPlayhead(p) {
+    if (!this.playing) return;
+    if (this.songDuration <= 0) return;
+    if ((p < 0) || (p > 1)) return;
+    this.audio.egg_song_set_playhead(p * this.songDuration);
   }
   
   /* Returns a Promise resolving to a Song instance.
