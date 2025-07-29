@@ -54,6 +54,7 @@ export class SongToolbarUi {
     if (select = this.element.querySelector("select[name='visChannel']")) {
       select.innerHTML = "";
       this.dom.spawn(select, "OPTION", { value: "" }, "All Channels");
+      this.dom.spawn(select, "OPTION", { value: "-1" }, "Channelless Events");
       if (this.songService.song) {
         for (let chid=0; chid<this.songService.song.channelsByChid.length; chid++) {
           if (this.songService.song.channelsByChid[chid]) {

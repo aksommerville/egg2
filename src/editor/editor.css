@@ -536,6 +536,7 @@ input.toggle:checked + label.toggle.light {
   flex: 1;
   display: flex;
   flex-direction: row;
+  max-height: calc(100vh - 40px);
 }
 
 .SongToolbarUi {
@@ -556,10 +557,81 @@ input.toggle:checked + label.toggle.light {
   min-width: 300px;
   max-width: 300px;
   border-right: 1px solid #000;
-  background-color: #0f0;
+  overflow-y: scroll;
+}
+.SongChannelsUi > .channel {
+  margin: 5px;
+  padding: 5px;
+  border: 1px solid #000;
+  box-shadow: #000 2px 2px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.SongChannelsUi .row {
+  display: flex;
+  flex-direction: row;
+}
+.SongChannelsUi .spacer {
+  flex: 1;
+}
+.SongChannelsUi .name {
+  font-weight: bold;
+}
+.SongChannelsUi .tattle {
+  width: 30px;
+  text-align: center;
+}
+.SongChannelsUi input[type='range'] {
+  flex: 1;
+}
+.SongChannelsUi .sublabel {
+  margin-left: 5px;
 }
 
 .SongEventsUi {
   flex: 1;
-  background-color: #00f;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
 }
+.SongEventsUi > .event {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  user-select: none;
+  cursor: pointer;
+  background-color: #333;
+}
+.SongEventsUi > .event:hover {
+  background-color: #555;
+}
+.SongEventsUi > .event > .time {
+  width: 60px;
+  text-align: right;
+}
+.SongEventsUi > .event > .chid {
+  width: 1lh;
+  text-align: center;
+  background-color: #666;
+}
+
+/* Song Channel Colors, available to all elements. */
+.chid-0  { background-color: #800 !important }
+.chid-1  { background-color: #050 !important }
+.chid-2  { background-color: #008 !important }
+.chid-3  { background-color: #820 !important }
+.chid-4  { background-color: #804 !important }
+.chid-5  { background-color: #450 !important }
+.chid-6  { background-color: #408 !important }
+.chid-7  { background-color: #420 !important }
+.chid-8  { background-color: #404 !important }
+.chid-9  { background-color: #024 !important }
+.chid-10 { background-color: #200 !important }
+.chid-11 { background-color: #010 !important }
+.chid-12 { background-color: #002 !important }
+.chid-13 { background-color: #210 !important }
+.chid-14 { background-color: #202 !important }
+.chid-15 { background-color: #012 !important }

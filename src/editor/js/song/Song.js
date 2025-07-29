@@ -60,6 +60,7 @@ export class Song {
     
     // Create a default channel for any events that lack a channel.
     for (const event of this.events) {
+      if (event.chid < 0) continue;
       if (this.channelsByChid[event.chid]) continue;
       const channel = new SongChannel(event.chid);
       this.channels.push(channel);
@@ -199,10 +200,12 @@ export class SongEvent {
   }
   
   _init(time, type) {
+    if (!SongEvent.nextId) SongEvent.nextId = 1;
+    this.id = SongEvent.nextId++; // Unique across the entire session.
     if (typeof(time) === "number") this.time = time;
     else this.time = 0; // ms
     this.type = type || "noop"; // "noop","note","wheel","loop"
-    this.chid = 0;
+    this.chid = -1;
     /* If (type==="note"):
      *   this.noteid = 0..127
      *   this.velocity = 0..127

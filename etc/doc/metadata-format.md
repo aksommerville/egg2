@@ -49,7 +49,7 @@ Line-oriented text.
 | desc        | Loose description for human consumption. |
 | advisory    | Freeform warning of gore, obscenity, etc. |
 | rating      | Machine-readable ratings from official agencies. See below. |
-| required    | Machine-readable feature flags. Runtime should refuse to launch if unavailble. See below. |
+| required    | Machine-readable feature flags. Runtime should refuse to launch if unavailable. See below. |
 | optional    | Same flags as `required` but allow to launch without. |
 | version     | Version of your game (not of Egg). Recommend eg "v1.2.3". |
 | time        | Publication time. ISO 8601, typically you'll stop after the year. |
@@ -60,6 +60,8 @@ Line-oriented text.
 | source      | URL of source code, presumably clonable with git. |
 | players     | "MIN..MAX" decimal. |
 | persistKey  | If present, contributes to store isolation. Only versions of your game with the same persistKey will see the same store. |
+| incfgMask   | Which gamepad keys are used? Some combination of: dswen123lrLR |
+| incfgNames  | Decimal index in strings:1, for the first key in incfgMask. Must be followed by as many keys as you listed. For interactive configurer. |
 
 `freedom` is `limited` if unspecified, and is only a convenient summary of your game's real license:
 - `free`: Assume you are allowed to reuse assets and redistribute freely.
@@ -71,7 +73,4 @@ Line-oriented text.
 
 `required` and `optional` are comma-delimited lists:
 - `audio`: Fail fast if audio disabled. eg for rhythm games where it's absolutely necessary.
-- `keyboard`
-- `mouse`
-- `touch`
 - `store`: Fail fast if permanent storage will not be available.
