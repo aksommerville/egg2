@@ -4,6 +4,7 @@
  
 import { Dom } from "../Dom.js";
 import { SongService } from "./SongService.js";
+import { SongChannel } from "./Song.js";
 
 export class SongToolbarUi {
   static getDependencies() {
@@ -143,11 +144,22 @@ export class SongToolbarUi {
   }
   
   onAddChannel() {
-    console.log(`TODO SongToolbarUi.onAddChannel`);
+    const song = this.songService.song;
+    if (!song) return;
+    const chid = song.unusedChid();
+    if (chid < 0) {
+      this.dom.modalError(`All channels in use.`);
+      return;
+    }
+    const channel = new SongChannel(chid);
+    song.channels.push(channel);
+    song.channelsByChid[chid] = channel;
+    this.songService.broadcast("dirty");
+    this.songService.broadcast("channelSetChanged");
   }
   
   onAddEvent() {
-    console.log(`TODO SongToolbarUi.onAddEvent`);
+    console.log(`TODO SongToolbarUi.onAddEvent`);//TODO Present modal and add to song only if submitted.
   }
   
   onActionsChange() {

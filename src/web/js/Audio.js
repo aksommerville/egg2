@@ -61,7 +61,7 @@ export class Audio {
   /* For editor.
    * If (songid) nonzero and matches the current song, we'll start at the prior playhead.
    */
-  playEauSong(serial, songid) {
+  playEauSong(serial, songid, repeat) {
     let playhead = 0;
     if (this.song) {
       if (songid && (songid === this.song.id)) playhead = this.song.getPlayhead();
@@ -70,7 +70,7 @@ export class Audio {
     }
     if (serial) {
       if (!this.ctx) this.start();
-      this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, true, songid);
+      this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid);
       this.song.play();
       if (playhead > 0) this.song.setPlayhead(playhead);
       this.update(); // Editor updates on a long period; ensure we get one initial priming update.
@@ -81,7 +81,6 @@ export class Audio {
    ********************************************************************************/
    
   egg_play_sound(soundid, trim, pan) {
-    console.log(`Audio.egg_play_sound ${soundid}`);
     if (!this.ctx) return;
     //TODO Print and cache.
     const serial = this.rt.rom.getRes(EGG_TID_sound, soundid);
@@ -92,7 +91,6 @@ export class Audio {
   }
   
   egg_play_song(songid, force, repeat) {
-    console.log(`Audio.egg_play_song ${songid}`);
     if (!this.ctx) return;
     if (!force && (songid === this.song?.id)) return;
     const serial = this.rt.rom.getRes(EGG_TID_song, songid);

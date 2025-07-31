@@ -635,3 +635,79 @@ input.toggle:checked + label.toggle.light {
 .chid-13 { background-color: #210 !important }
 .chid-14 { background-color: #202 !important }
 .chid-15 { background-color: #012 !important }
+
+.ModecfgModal {
+  display: flex;
+  flex-direction: column;
+  min-width: 500px;
+}
+
+.ModecfgModal > .bottom {
+  display: flex;
+  flex-direction: row;
+  border-top: 1px solid #444;
+}
+
+.ModecfgModal .spacer {
+  flex: 1;
+}
+
+.ModecfgModal .drum {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+}
+.ModecfgModal .drum .size {
+  font-family: monospace;
+  min-width: 40px;
+  text-align: center;
+}
+.ModecfgModal .drum .name {
+  min-width: 150px;
+}
+
+.ModecfgModal td.v {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.ModecfgModal textarea {
+  width: 100%;
+}
+
+.HarmonicsUi {
+  display: flex;
+}
+.HarmonicsUi > canvas {
+  flex: 1;
+}
+
+.EnvUi {
+  display: flex;
+  flex-direction: column;
+}
+.EnvUi canvas.visual {
+  min-width: 300px;
+  min-height: 200px;
+}
+.EnvUi .controls {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+}
+.EnvUi .zoom {
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  background-color: #f80;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.EnvUi .tattle {
+  font-family: monospace;
+}

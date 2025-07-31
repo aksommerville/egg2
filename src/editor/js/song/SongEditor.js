@@ -40,7 +40,6 @@ export class SongEditor {
   
   setup(res) {
     this.songService.getSong(res.path).then(song => {
-      console.log(`SongEditor got song`, { song, res });
       this.songService.reset(song, res.rid);
       this.res = res;
       this.song = song;
@@ -57,6 +56,9 @@ export class SongEditor {
   }
   
   onSongServiceEvent(e) {
-    console.log(`SongEditor.onSongServiceEvent: ${JSON.stringify(e)}`);
+    //console.log(`SongEditor.onSongServiceEvent: ${JSON.stringify(e)}`);
+    switch (e) {
+      case "dirty": this.songService.dirtySong(this.res.path, this.song); break;
+    }
   }
 }

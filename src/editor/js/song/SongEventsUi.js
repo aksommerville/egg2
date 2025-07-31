@@ -100,14 +100,18 @@ export class SongEventsUi {
   onEdit(domEvent, id) {
     const songEvent = this.songService.song.events.find(e => e.id === id);
     if (!songEvent) return;
-    console.log(`onEdit ${id}`, songEvent);
+    console.log(`onEdit ${id}`, songEvent);//TODO event modal
   }
   
   onDelete(domEvent, id) {
     domEvent.stopPropagation();
-    const songEvent = this.songService.song.events.find(e => e.id === id);
-    if (!songEvent) return;
-    console.log(`onDelete ${id}`, songEvent);
+    const p = this.songService.song.events.findIndex(e => e.id === id);
+    if (p < 0) return;
+    // Debatable: I say delete immediately, but it would be reasonable to ask confirmation I guess.
+    this.songService.song.events.splice(p, 1);
+    this.songService.broadcast("dirty");
+    // Don't broadcast "eventsChanged". We're the only one listening for it, and we don't need to rebuild the whole UI.
+    this.element.querySelector(`.event[data-id='${id}']`)?.remove();
   }
   
   onVisibilityChange() {
@@ -115,9 +119,15 @@ export class SongEventsUi {
     this.buildUi();
   }
   
+  onEventsChanged() {
+    // Keep hugeListConfirmed if set.
+    this.buildUi();
+  }
+  
   onSongServiceEvent(event) {
     switch (event) {
       case "visibility": this.onVisibilityChange(); break;
+      case "eventsChanged": this.onEventsChanged(); break;
     }
   }
 }

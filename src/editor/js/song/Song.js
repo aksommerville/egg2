@@ -215,6 +215,21 @@ export class Song {
     if (this.events.length < 1) return 0;
     return this.events[this.events.length - 1].time / 1000;
   }
+  
+  unusedChid() {
+    for (let chid=0; chid<16; chid++) {
+      if (!this.channelsByChid[chid]) return chid;
+    }
+    return -1;
+  }
+  
+  countEventsForChid(chid) {
+    let c = 0;
+    for (const event of this.events) {
+      if (event.chid === chid) c++;
+    }
+    return c;
+  }
 }
 
 /* SongChannel.
@@ -237,6 +252,7 @@ export class SongChannel {
     this.mode = 2;
     this.modecfg = []; // Read-only Uint8Array if not empty.
     this.post = []; // ''
+    this.stash = []; // Sparse Uint8Array indexed by (mode). Prior configs we can return to when user toggles mode.
   }
   
   _copy(src) {

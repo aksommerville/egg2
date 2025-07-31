@@ -37,7 +37,7 @@ export class SongService {
    * SongEditor should call reset() as it loads so we can clear any transient state.
    */
   reset(song, rid) {
-    this.audio.playEauSong(null, 0);
+    this.audio.playEauSong(null, 0, false);
     this.playing = false;
     this.songDuration = 0;
     this.song = song;
@@ -49,16 +49,23 @@ export class SongService {
    * Beware the another SongEditor may have already reset us by the time this happens.
    */
   unload() {
-    this.audio.playEauSong(null, 0);
+    this.audio.playEauSong(null, 0, false);
     this.playing = false;
     this.songDuration = 0;
   }
   
-  playSong(song) {
+  playSong(song, rid) {
     try {
-      const serial = song ? song.encode() : null;
-      this.audio.playEauSong(serial, this.rid);
-      this.songDuration = song ? song.calculateDuration() : 0;
+      if (typeof(rid) !== "number") rid = this.rid;
+      let serial = null, duration = 0;
+      if (song instanceof Song) {
+        serial = song.encode();
+        duration = song.calculateDuration();
+      } else if (song instanceof Uint8Array) serial = song;
+      else if (!song) ;
+      else throw new Error(`Unexpected input to playSong()`);
+      this.audio.playEauSong(serial, rid, duration >= 5);
+      this.songDuration = duration;
       this.playing = !!serial;
     } catch (e) {
       this.songDuration = 0;
@@ -130,6 +137,9 @@ export class SongService {
   
   /* (event) may be a stateless string:
    *   "visibility"
+   *   "dirty"
+   *   "channelSetChanged"
+   *   "eventsChanged"
    * Or a structured event:
    * Whatever it is, we send to all listeners verbatim.
    */

@@ -36,6 +36,12 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] `eggdev project`: Prep overrides.
 - - [ ] Standard actions... what's needed?
 - - [ ] Verify overrides
+- - [ ] SongChannelsUi.onStore: Modal with SDK instruments
+- - [ ] Song event modal (SongEventsUi and SongToolbarUi)
+- - [ ] SongService: Should we auto-re-play on dirty?
+- - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
+- - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
+- - [ ] SongService: Don't repeat song if duration below some threshold (eg sound effects)
 - [ ] Client utilities.
 - - [ ] stdlib
 - - [ ] graf
