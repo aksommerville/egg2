@@ -479,8 +479,6 @@ uniform vec2 uscreensize;
 uniform vec2 usrcsize;
 uniform float udstborder;
 uniform float usrcborder;
-uniform vec4 utint;
-uniform float ualpha;
 attribute vec2 apos;
 attribute vec2 atexcoord;
 varying vec2 vtexcoord;
