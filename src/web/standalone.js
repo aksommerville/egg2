@@ -25,6 +25,7 @@ function acquireRomFromUi() {
     else if ((ch >= 0x30) && (ch <= 0x39)) ch = ch - 0x30 + 52;
     else if (ch === 0x2b) ch = 62;
     else if (ch === 0x2f) ch = 63;
+    else if (ch === 0x3d) continue;
     else throw new Error(`Unexpected byte ${ch} in base64-encoded ROM.`);
     tmp[tmpc++] = ch;
     if (tmpc === 4) {
