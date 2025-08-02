@@ -298,7 +298,9 @@ export class ModecfgModal {
   }
   
   buildUiFm() {
-    const table = this.dom.spawn(this.form, "TABLE");
+    const bigrow = this.dom.spawn(this.form, "DIV", ["bigrow"]);
+    const left = this.dom.spawn(bigrow, "DIV", ["left"]);
+    const table = this.dom.spawn(left, "TABLE");
     this.spawnRowU88(table, "rate");
     this.spawnRowBoolean(table, "absrate", ["relative", "qnotes"]);
     this.spawnRowU88(table, "range");
@@ -306,28 +308,35 @@ export class ModecfgModal {
     this.spawnRowU88(table, "lforate");
     this.spawnRowU08(table, "lfodepth");
     this.spawnRowU08(table, "lfophase");
-    this.spawnEnv("levelenv");
-    this.spawnEnv("rangeenv");
-    this.spawnEnv("pitchenv");
-    this.spawnExtra();
+    this.spawnExtra(left);
+    const right = this.dom.spawn(bigrow, "DIV", ["right"]);
+    this.spawnEnv(right, "levelenv");
+    this.spawnEnv(right, "rangeenv");
+    this.spawnEnv(right, "pitchenv");
   }
   
   buildUiHarsh() {
-    const table = this.dom.spawn(this.form, "TABLE");
+    const bigrow = this.dom.spawn(this.form, "DIV", ["bigrow"]);
+    const left = this.dom.spawn(bigrow, "DIV", ["left"]);
+    const table = this.dom.spawn(left, "TABLE");
     this.spawnRowU8(table, "shape", ["sine", "square", "saw", "triangle"]);
     this.spawnRowU16(table, "wheelrange");
-    this.spawnEnv("levelenv");
-    this.spawnEnv("pitchenv");
-    this.spawnExtra();
+    this.spawnExtra(left);
+    const right = this.dom.spawn(bigrow, "DIV", ["right"]);
+    this.spawnEnv(right, "levelenv");
+    this.spawnEnv(right, "pitchenv");
   }
   
   buildUiHarm() {
-    const table = this.dom.spawn(this.form, "TABLE");
+    const bigrow = this.dom.spawn(this.form, "DIV", ["bigrow"]);
+    const left = this.dom.spawn(bigrow, "DIV", ["left"]);
+    const table = this.dom.spawn(left, "TABLE");
     this.spawnRowU16(table, "wheelrange");
-    this.spawnHarmonics();
-    this.spawnEnv("levelenv");
-    this.spawnEnv("pitchenv");
-    this.spawnExtra();
+    this.spawnHarmonics(left);
+    this.spawnExtra(left);
+    const right = this.dom.spawn(bigrow, "DIV", ["right"]);
+    this.spawnEnv(right, "levelenv");
+    this.spawnEnv(right, "pitchenv");
   }
   
   spawnRowU88(table, k) {
@@ -382,22 +391,22 @@ export class ModecfgModal {
     else inputFalse.checked = true;
   }
   
-  spawnHarmonics() {
-    const controller = this.dom.spawnController(this.form, HarmonicsUi);
+  spawnHarmonics(parent) {
+    const controller = this.dom.spawnController(parent, HarmonicsUi);
     controller.setup(this.model.harmonics, v => {
       this.model.harmonics = v;
     });
   }
   
-  spawnEnv(k) {
-    const controller = this.dom.spawnController(this.form, EnvUi);
+  spawnEnv(parent, k) {
+    const controller = this.dom.spawnController(parent, EnvUi);
     controller.setup(this.model[k], k, v => {
       this.model[k] = v;
     });
   }
   
-  spawnExtra() {
-    const textarea = this.dom.spawn(this.form, "TEXTAREA", { name: "extra", "on-input": e => this.onExtraChange(e) });
+  spawnExtra(parent) {
+    const textarea = this.dom.spawn(parent, "TEXTAREA", { name: "extra", "on-input": e => this.onExtraChange(e) });
     textarea.value = this.hexdump(this.model.extra);
   }
   

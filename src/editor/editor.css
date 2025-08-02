@@ -676,6 +676,12 @@ input.toggle:checked + label.toggle.light {
   width: 100%;
 }
 
+.ModecfgModal .bigrow {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
 .HarmonicsUi {
   display: flex;
 }
