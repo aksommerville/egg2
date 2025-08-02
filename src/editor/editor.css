@@ -717,3 +717,25 @@ input.toggle:checked + label.toggle.light {
 .EnvUi .tattle {
   font-family: monospace;
 }
+
+.PostModal {
+  min-width: 50vw;
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+}
+.PostModal > form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.PostModal .spacer {
+  flex: 1;
+}
+.PostModal .stage {
+  display: flex;
+  flex-direction: row;
+}
+.PostModal .stage input[name='serial'] {
+  flex: 1;
+}

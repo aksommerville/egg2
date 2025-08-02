@@ -69,6 +69,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - 2025-06-23 audio rekajiggerment:
 - - [x] Web pitch wheel is badly broken.
 - - [ ] EnvUi scroll and zoom.
+- - [ ] PostModal fields per stage type.
 - - [ ] Update editor.
 - - - [x] New serial format.
 - - [ ] Define some instruments.

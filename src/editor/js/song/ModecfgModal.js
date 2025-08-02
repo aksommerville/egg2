@@ -272,7 +272,7 @@ export class ModecfgModal {
   }
   
   buildUiRaw() {
-    this.spawnExtra();
+    this.spawnExtra(this.form);
   }
   
   buildUiDrum() {
@@ -425,7 +425,7 @@ export class ModecfgModal {
     src = src.replace(/[^0-9a-fA-F]+/g, "");
     const dst = new Uint8Array(src.length >> 1);
     for (let i=0; i<src.length; i+=2) {
-      dst[i >> 1] = src.substring(i, i + 2).parseInt(16);
+      dst[i >> 1] = parseInt(src.substring(i, i + 2), 16);
     }
     return dst;
   }
