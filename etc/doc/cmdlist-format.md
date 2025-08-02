@@ -46,8 +46,6 @@ Binary has a preamble:
  ...  Cells (Width*Height)
 ```
 
-TODO Consider trivial compression for the cells, they tend to get big. RLE or a table of expectations per tileid?
-
 Followed by cmdlist.
 
 Text begins with the cells image as a rectangular hex dump terminated by an empty line.
