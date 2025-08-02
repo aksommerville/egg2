@@ -67,7 +67,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] web: Quantize final scale-up, don't use `object-fit:contain`. Then implement `egg_video_fb_from_screen`
 - - [ ] web: Player count 
 - 2025-06-23 audio rekajiggerment:
-- - [ ] Web pitch wheel is badly broken.
+- - [x] Web pitch wheel is badly broken.
 - - [ ] Update editor.
 - - - [x] New serial format.
 - - [ ] Define some instruments.

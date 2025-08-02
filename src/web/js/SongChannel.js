@@ -372,7 +372,7 @@ export class SongChannel {
       if (this.tunable[i].until < this.player.ctx.currentTime) {
         this.tunable.splice(i, 1);
       } else {
-        this.tunable[i].node.detune.value = this.wheelCents;
+        this.tunable[i].node.detune.setValueAtTime(this.wheelCents, when);
       }
     }
   }
@@ -429,7 +429,8 @@ export class SongChannel {
   }
   
   oscillateHarsh(when, hz, velocity, durs) {
-    const osc = new OscillatorNode(this.player.ctx, { frequency: hz, shape: this.shape, detune: this.wheelCents });
+    const osc = new OscillatorNode(this.player.ctx, { frequency: hz, shape: this.shape });
+    osc.detune.value = this.wheelCents;
     osc.start(when);
     
     if (!(this.pitchenv.flags & 0x80)) {
@@ -442,7 +443,8 @@ export class SongChannel {
   }
   
   oscillateHarm(when, hz, velocity, durs) {
-    const osc = new OscillatorNode(this.player.ctx, { frequency: hz, shape: "custom", periodicWave: this.wave, detune: this.wheelCents });
+    const osc = new OscillatorNode(this.player.ctx, { frequency: hz, shape: "custom", periodicWave: this.wave });
+    osc.detune.value = this.wheelCents;
     osc.start(when);
     
     if (!(this.pitchenv.flags & 0x80)) {
