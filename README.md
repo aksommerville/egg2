@@ -68,6 +68,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] web: Player count 
 - 2025-06-23 audio rekajiggerment:
 - - [x] Web pitch wheel is badly broken.
+- - [x] sand_farming: Channel 5, off-beat accents, distinctly louder native than web. ...OscillatorNode: "type", not "shape"
 - - [ ] EnvUi scroll and zoom.
 - - [ ] PostModal fields per stage type.
 - - [ ] Update editor.

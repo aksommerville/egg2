@@ -429,7 +429,7 @@ export class SongChannel {
   }
   
   oscillateHarsh(when, hz, velocity, durs) {
-    const osc = new OscillatorNode(this.player.ctx, { frequency: hz, shape: this.shape });
+    const osc = new OscillatorNode(this.player.ctx, { frequency: hz, type: this.shape });
     osc.detune.value = this.wheelCents;
     osc.start(when);
     
