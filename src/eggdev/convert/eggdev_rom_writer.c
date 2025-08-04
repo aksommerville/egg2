@@ -86,6 +86,8 @@ int eggdev_rom_writer_encode(struct sr_encoder *dst,const struct eggdev_rom_writ
   const struct eggdev_rw_res *res=writer->resv;
   int i=writer->resc,tid=1,rid=1;
   for (;i-->0;res++) {
+  
+    if (!res->c) continue;
     
     // Advance tid if necessary.
     if (res->tid<tid) return -1;

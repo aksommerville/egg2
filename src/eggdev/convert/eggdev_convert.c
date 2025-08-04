@@ -89,6 +89,7 @@ int eggdev_fmt_by_path(const char *path,int pathc) {
     while ((pathp<pathc)&&(path[pathp++]!='/')) dirc++;
     if (underdata) {
       int tid=eggdev_tid_eval(dir,dirc);
+      if (tid==EGG_TID_sound) break; // Sounds are often empty, and that's perfectly legal.
       if (tid>0) {
         int fmt=eggdev_fmt_by_tid(tid);
         if (fmt>0) return eggdev_fmt_portable(fmt);
