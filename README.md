@@ -71,6 +71,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] MapEditor: Refresh image after editing commands.
 - - [x] MapEditor: Mysterious black rectangle in background, for zennoniwa
 - - [ ] MapEditor: Did I not implement sprite preview thumbnails? Not seeing them in zennoniwa, but the sprites are configured and all. I did not: MapPaint.js:composePoiv
+- - [ ] New blank sound should open in SongEditor (currently able to, but you have to select it manually)
 - 2025-06-23 audio rekajiggerment:
 - - [x] Web pitch wheel is badly broken.
 - - [x] sand_farming: Channel 5, off-beat accents, distinctly louder native than web. ...OscillatorNode: "type", not "shape"
@@ -94,4 +95,5 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
 - - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
 - - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
+- - - Probably related to that, FM voices really can't bend at all, the modulator goes out of sync.
 - - [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter. Apparent in drumtest.

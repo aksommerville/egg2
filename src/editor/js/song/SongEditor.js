@@ -35,6 +35,7 @@ export class SongEditor {
   
   static checkResource(res) {
     if (res.type === "song") return 2;
+    if (res.type === "sound") return 2;
     return 0;
   }
   

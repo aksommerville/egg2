@@ -107,14 +107,14 @@ export class EauDecoder {
       case "range": initlo /= 65535; inithi /= 65535; for (const pt of points) { pt.vlo /= 65535; pt.vhi /= 65535; } break; // will be modified further by caller, with the range scale.
       case "pitch": {
           if (flags & 0x01) {
-            initlo = (initlo - 0x8000) / 0x8000;
-            inithi = (inithi - 0x8000) / 0x8000;
+            initlo = (initlo - 0x8000);
+            inithi = (inithi - 0x8000);
           } else {
-            initlo = inithi = 0x8000;
+            initlo = inithi = 0;
           }
           for (const pt of points) {
-            pt.vlo = (pt.vlo - 0x8000) / 0x8000;
-            pt.vhi = (pt.vhi - 0x8000) / 0x8000;
+            pt.vlo = (pt.vlo - 0x8000);
+            pt.vhi = (pt.vhi - 0x8000);
           }
         } break;
     }

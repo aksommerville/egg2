@@ -5,6 +5,7 @@
 import { Dom } from "../Dom.js";
 import { SongService } from "./SongService.js";
 import { SongChannel } from "./Song.js";
+import { EventModal } from "./EventModal.js";
 
 export class SongToolbarUi {
   static getDependencies() {
@@ -159,7 +160,14 @@ export class SongToolbarUi {
   }
   
   onAddEvent() {
-    console.log(`TODO SongToolbarUi.onAddEvent`);//TODO Present modal and add to song only if submitted.
+    const modal = this.dom.spawnModal(EventModal);
+    modal.setup(null);
+    modal.result.then(rsp => {
+      if (!rsp) return;
+      this.songService.song.insertEvent(rsp);
+      this.songService.broadcast("dirty");
+      this.songService.broadcast("eventsChanged");
+    });
   }
   
   onActionsChange() {

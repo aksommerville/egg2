@@ -230,6 +230,26 @@ export class Song {
     }
     return c;
   }
+  
+  insertEvent(event) {
+    if (!event) throw new Error("Null event");
+    let lo=0, hi=this.events.length;
+    while (lo < hi) {
+      const ck = (lo + hi) >> 1;
+      const q = this.events[ck];
+           if (event.time < q.time) hi = ck;
+      else if (event.time > q.time) lo = ck + 1;
+      else {
+        lo = ck;
+        break;
+      }
+    }
+    this.events.splice(lo, 0, event);
+  }
+  
+  sortEvents() {
+    this.events.sort((a, b) => a.time - b.time);
+  }
 }
 
 /* SongChannel.
@@ -297,9 +317,21 @@ export class SongEvent {
   constructor(srcOrTime, type) {
     this._init(srcOrTime, type);
     if (typeof(srcOrTime) === "number") ;
-    else if (!src) ;
-    else if (src instanceof SongEvent) this._copy(src);
+    else if (!srcOrTime) ;
+    else if (srcOrTime instanceof SongEvent) this._copy(srcOrTime);
     else throw new Error(`Unexpected input to SongEvent`);
+  }
+  
+  // New event with all the fields, on the assumption that user is going to change type.
+  static newFullyPopulated() {
+    const event = new SongEvent();
+    event.type = "note";
+    event.noteid = 0x40;
+    event.velocity = 0x40;
+    event.chid = 0;
+    event.durms = 0;
+    event.wheel = 0x100;
+    return event;
   }
   
   _init(time, type) {

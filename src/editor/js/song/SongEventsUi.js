@@ -5,6 +5,7 @@
  
 import { Dom } from "../Dom.js";
 import { SongService } from "./SongService.js";
+import { EventModal } from "./EventModal.js";
 
 // If there's so many events to display, require a click first.
 // Songs can be arbitrarily complex, there's no general event limit.
@@ -41,7 +42,7 @@ export class SongEventsUi {
       });
     } else {
       for (const event of events) {
-        const row = this.dom.spawn(this.element, "DIV", ["event"], { "data-id": event.id, "on-click": e => this.onEdit(e, event.id) });
+        const row = this.dom.spawn(this.element, "DIV", ["event"], { "data-id": event.id, "on-click": e => this.onEdit(e) });
         this.populateEventRow(row, event);
       }
     }
@@ -97,10 +98,32 @@ export class SongEventsUi {
     this.buildUi();
   }
   
-  onEdit(domEvent, id) {
-    const songEvent = this.songService.song.events.find(e => e.id === id);
-    if (!songEvent) return;
-    console.log(`onEdit ${id}`, songEvent);//TODO event modal
+  // We don't take the event ID because that can change.
+  onEdit(domEvent) {
+    let row = domEvent.target;
+    while (row && !row.classList.contains("event")) row = row.parentNode;
+    if (!row) return;
+    const eid = +row.getAttribute("data-id");
+    const p = this.songService.song.events.findIndex(e => e.id === eid);
+    if (p < 0) return;
+    const songEvent = this.songService.song.events[p];
+    const modal = this.dom.spawnModal(EventModal);
+    modal.setup(songEvent);
+    modal.result.then(newEvent => {
+      if (!newEvent) return;
+      this.songService.song.events[p] = newEvent;
+      if (
+        ((p > 0) && (newEvent.time < this.songService.song.events[p-1].time)) ||
+        ((p < this.songService.song.events.length - 1) && (newEvent.time > this.songService.song.events[p+1].time))
+      ) {
+        this.songService.song.sortEvents();
+        this.songService.broadcast("eventsChanged");
+      } else {
+        row.setAttribute("data-id", newEvent.id);
+        this.populateEventRow(row, newEvent);
+      }
+      this.songService.broadcast("dirty");
+    });
   }
   
   onDelete(domEvent, id) {
