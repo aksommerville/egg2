@@ -847,7 +847,12 @@ export class MapPaint {
   performAction(action) {
     if (!action.name.match(/^[a-z][a-zA-Z0-9_]*$/)) return;
     const fnname = "action_" + action.name;
-    this[fnname]?.();
+    const fn = this[fnname];
+    if (typeof(fn) === "function") {
+      fn.bind(this)();
+    } else {
+      console.log(`MapPaint.performAction: Unknown action ${JSON.stringify(fnname)}`);
+    }
   }
   
   action_commands() {
@@ -887,6 +892,12 @@ export class MapPaint {
       }
     }
     this.broadcast({ type: "cellDirty", x: 0, y: 0 });
+  }
+  
+  action_resetZoom() {
+    if (this.zoom === 1) return;
+    this.zoom = 1;
+    this.broadcast({ type: "zoom" });
   }
 }
 
@@ -953,5 +964,9 @@ MapPaint.ACTIONS = [
   {
     name: "healAll",
     label: "Heal All",
+  },
+  {
+    name: "resetZoom",
+    label: "Reset Zoom",
   },
 ];

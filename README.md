@@ -46,6 +46,8 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] stdlib
 - - [ ] graf
 - - [ ] font
+- [ ] A web build for zennoniwa failed to detect a dirty file or something. Need to clean every time. Are we not applying '.d' files or something?
+- - Affects native too, evidently. Effects are unpredictable.
 - Minor things punted:
 - - [ ] project: Update Makefile for serving runtime
 - - [ ] project: README.md
@@ -66,10 +68,17 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] web Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
 - - [ ] web: Quantize final scale-up, don't use `object-fit:contain`. Then implement `egg_video_fb_from_screen`
 - - [ ] web: Player count 
+- - [ ] MapEditor: Refresh image after editing commands.
+- - [x] MapEditor: Mysterious black rectangle in background, for zennoniwa
+- - [ ] MapEditor: Did I not implement sprite preview thumbnails? Not seeing them in zennoniwa, but the sprites are configured and all. I did not: MapPaint.js:composePoiv
 - 2025-06-23 audio rekajiggerment:
 - - [x] Web pitch wheel is badly broken.
 - - [x] sand_farming: Channel 5, off-beat accents, distinctly louder native than web. ...OscillatorNode: "type", not "shape"
 - - [ ] EnvUi scroll and zoom.
+- - [ ] EnvUi: Sustain point.
+- - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
+- - [ ] PostModal: New TREMOLO channel showed as NOOP on first re-open, and after adding stage.
+- - [ ] Opening raw modecfg: Uncaught ReferenceError: defaultModel is not defined
 - - [ ] PostModal fields per stage type.
 - - [ ] Update editor.
 - - - [x] New serial format.

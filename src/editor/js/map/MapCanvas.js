@@ -335,9 +335,13 @@ export class MapCanvas {
   }
   
   refreshSizer() {
+    const scroller = this.element.querySelector(".scroller");
+    const bounds = scroller.getBoundingClientRect();
+    const wlimit = bounds.width - 16; // Must lop off enough to account for the scroll bars. Wish there was a reliably way to do that...
+    const hlimit = bounds.height - 16;
     const sizer = this.element.querySelector(".sizer");
-    sizer.style.width = (this.mapPaint.map.w * this.mapPaint.tilesize * this.mapPaint.zoom + this.margin * 2) + "px";
-    sizer.style.height = (this.mapPaint.map.h * this.mapPaint.tilesize * this.mapPaint.zoom + this.margin * 2) + "px";
+    sizer.style.width = Math.max(wlimit, (this.mapPaint.map.w * this.mapPaint.tilesize * this.mapPaint.zoom + this.margin * 2)) + "px";
+    sizer.style.height = Math.max(hlimit, (this.mapPaint.map.h * this.mapPaint.tilesize * this.mapPaint.zoom + this.margin * 2)) + "px";
     this.renderSoon();
   }
   
@@ -388,7 +392,7 @@ export class MapCanvas {
    
   onPaintEvent(event) {
     switch (event.type) {
-      case "image": this.renderSoon(); break;
+      case "image": this.refreshSizer(); this.renderSoon(); break; // May change tilesize.
       case "map": this.refreshSizer(); this.forceScrollerPosition(); break;
       case "zoom": this.refreshSizer(); break;
       case "cellDirty": this.renderSoon(); break;

@@ -147,6 +147,7 @@ export class PostModal {
 export class Post {
   constructor(src) {
     this._init();
+    console.log('Post input', src);
     if (!src) ;
     else if (src instanceof Uint8Array) this._decode(src);
     else throw new Error(`Unexpected input to Post`);

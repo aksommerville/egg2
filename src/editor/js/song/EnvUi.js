@@ -21,7 +21,7 @@ export class EnvUi {
     this.cb = v => {};
     this.renderTimeout = null;
     this.zoomPointerListener = null;
-    this.trange = 500; // Horizontal view range in ms.
+    this.trange = 800; // Horizontal view range in ms.
     this.vrange = 65535; // Vertical view range in level units.
     this.t0 = 0; // Time at left edge.
     this.v0 = 0; // Level at bottom edge -- vertical axis is positive up.
