@@ -77,7 +77,10 @@ export class SidebarUi {
       if (!bucket) bucket = buckets[res.type] = [];
       const bits = res.path.split("/");
       const base = bits[bits.length - 1];
-      bucket.push({ base, rid: res.rid, lang: res.lang, path: res.path, serial: res.serial });
+      bucket.push({
+        ...res,
+        base,
+      });
     }
     for (const bucket of Object.values(buckets)) {
       bucket.sort((a, b) => {
@@ -164,7 +167,26 @@ export class SidebarUi {
         return this.data.renameResource(res.path, rsp.path);
       } else if (rsp.action === "edit") {
         this.actions.editResource(res.path, rsp.editor?.name);
+      } else if (rsp.action === "copy") {
+        this.copyResource(res);
       }
+    }).catch(e => this.dom.modalError(e));
+  }
+  
+  copyResource(res) {
+    const modal = this.dom.spawnModal(NewResourceModal);
+    const defaults = {
+      msg: `Copy ${res.type}:${res.rid}...`,
+      type: res.type,
+      rid: this.data.unusedId(res.type),
+    };
+    if (res.name) defaults.name = res.name + "_copy";
+    modal.setup(defaults);
+    modal.result.then(path => {
+      if (!path) return;
+      return this.data.createResource(path).then(nres => {
+        this.actions.editResource(path);
+      });
     }).catch(e => this.dom.modalError(e));
   }
   

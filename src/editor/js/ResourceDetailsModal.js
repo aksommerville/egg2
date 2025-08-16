@@ -1,5 +1,10 @@
 /* ResourceDetailsModal.js
  * Delete, rename, or pick an editor.
+ * Resolves with null or {
+ *   action: "rename" | "delete" | "edit" | "copy"
+ *   path?: string # if "rename"
+ *   editor?: Class # if "edit"
+ * }
  */
  
 import { Dom } from "./Dom.js";
@@ -32,6 +37,7 @@ export class ResourceDetailsModal {
     const fsopRow = this.dom.spawn(this.element, "DIV", ["fsopRow"]);
     this.dom.spawn(fsopRow, "INPUT", { type: "text", value: res.path, name: "npath", "on-input": () => this.onNpathInput() });
     this.dom.spawn(fsopRow, "INPUT", ["renameOrDelete"], { type: "button", value: "Rename", "on-click": () => this.onRenameOrDelete() });
+    this.dom.spawn(fsopRow, "INPUT", { type: "button", value: "Copy...", "on-click": () => this.onCopy() });
     
     this.dom.spawn(this.element, "DIV", "Open with...");
     const editors = this.dom.spawn(this.element, "DIV", ["editors"]);
@@ -55,6 +61,11 @@ export class ResourceDetailsModal {
     const npath = this.element.querySelector("input[name='npath']").value;
     if (npath) this.resolve({ action: "rename", path: npath });
     else this.resolve({ action: "delete" });
+    this.element.remove();
+  }
+  
+  onCopy() {
+    this.resolve({ action: "copy" });
     this.element.remove();
   }
   

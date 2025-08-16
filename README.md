@@ -22,26 +22,25 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - [ ] Editor.
 - - [ ] Standard actions... what's needed?
 - - [ ] SongChannelsUi.onStore: Modal with SDK instruments
-- - [ ] Song event modal (SongEventsUi and SongToolbarUi)
 - - [ ] SongService: Should we auto-re-play on dirty?
 - - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
 - - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
-- - [ ] SongService: Don't repeat song if duration below some threshold (eg sound effects)
 - - [ ] HexEditor: Paging, offset, ASCII, multi-byte edits.
 - - [ ] ImageEditor: Animation preview like we had in v1.
 - - [ ] StringsEditor: Side-by-side editing across languages, like we had in v1.
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] MapEditor: Refresh image after editing commands.
-- - [ ] MapEditor: Did I not implement sprite preview thumbnails? Not seeing them in zennoniwa, but the sprites are configured and all. I did not: MapPaint.js:composePoiv
 - - [ ] MapEditor: New map should default to `NS_sys_mapw,h`
-- - [ ] Editor: Copy resource.
+- - [x] Editor: Copy resource.
+- - [x] Right-click on resource, all the proposed types are red, even the default one. ...SidebarUi copies res, and I forgot "type".
 - - [ ] MapEditor: Toolbar reacts to modifier keys when a modal is open; it shouldn't.
 - - [ ] MapEditor: Opening commands modal, implicitly click "+" on entry. They can leave it blank and it's noop.
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
-- - [ ] Opening raw modecfg: Uncaught ReferenceError: defaultModel is not defined
+- - [x] Opening raw modecfg: Uncaught ReferenceError: defaultModel is not defined
 - - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
 - - [ ] PostModal fields per stage type.
+- - [ ] Launch game.
 - [ ] eggdev
 - - [ ] project: Update Makefile for serving runtime
 - - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.

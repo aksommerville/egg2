@@ -151,7 +151,7 @@ export class ModecfgModal {
           model.extra = decoder.remainder();
         } break;
         
-      default: return defaultModel(src);
+      default: return this.defaultModel(src);
     }
     return model;
   }

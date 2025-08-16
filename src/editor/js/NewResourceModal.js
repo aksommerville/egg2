@@ -24,6 +24,24 @@ export class NewResourceModal {
     this.resolve(null);
   }
   
+  /* Prepopulate all fields.
+   * Provide only the ones you want prepopulated.
+   * If (res.msg), that becomes our header text.
+   */
+  setup(res) {
+    if (res.msg) this.element.querySelector("h2").innerText = res.msg;
+    if (res.path) {
+      this.element.querySelector("input[name='path']").value = res.path;
+      this.populateSplitFromPath();
+    }
+    if (res.type) this.element.querySelector("input[name='type']").value = res.type;
+    if (res.name) this.element.querySelector("input[name='name']").value = res.name;
+    if (res.rid) this.element.querySelector("input[name='rid']").value = res.rid;
+    if (!res.path) {
+      this.populatePathFromSplit();
+    }
+  }
+  
   buildUi() {
     this.element.innerHTML = "";
     this.dom.spawn(this.element, "H2", "New Resource");
