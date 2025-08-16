@@ -30,12 +30,12 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] StringsEditor: Side-by-side editing across languages, like we had in v1.
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
-- - [ ] MapEditor: Refresh image after editing commands.
-- - [ ] MapEditor: New map should default to `NS_sys_mapw,h`
+- - [x] MapEditor: Refresh image after editing commands.
+- - [x] MapEditor: New map should default to `NS_sys_mapw,h`
 - - [x] Editor: Copy resource.
 - - [x] Right-click on resource, all the proposed types are red, even the default one. ...SidebarUi copies res, and I forgot "type".
-- - [ ] MapEditor: Toolbar reacts to modifier keys when a modal is open; it shouldn't.
-- - [ ] MapEditor: Opening commands modal, implicitly click "+" on entry. They can leave it blank and it's noop.
+- - [x] MapEditor: Toolbar reacts to modifier keys when a modal is open; it shouldn't.
+- - [x] MapEditor: Opening commands modal, implicitly click "+" on entry. They can leave it blank and it's noop.
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
 - - [x] Opening raw modecfg: Uncaught ReferenceError: defaultModel is not defined
 - - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.

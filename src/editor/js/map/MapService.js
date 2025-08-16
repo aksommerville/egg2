@@ -62,15 +62,35 @@ export class MapService {
       if (!old) {
         this.resv.push({
           ...res,
-          map: new MapRes(res.serial, res.rid),
+          map: this.generateNewMap(res.serial, res.rid),
         });
       } else if (old.map && (old.serial === res.serial)) {
       } else {
         old.serial = res.serial;
-        old.map = new MapRes(res.serial, res.rid);
+        old.map = this.generateNewMap(res.serial, res.rid);
       }
     }
     this.requireLayout();
+  }
+  
+  /* Return a new instance of MapRes.
+   * This is for new maps created without any context -- ones created by clicking on a neighbor slot do not use this.
+   * If (serial) is present and not empty, use it verbatim, end of story.
+   * Otherwise, scan the project for sensible defaults.
+   * It's always legal to create a MapRes from empty serial, so this is only best*-effort.
+   * [*] Expect less.
+   */
+  generateNewMap(serial, rid) {
+    if (serial?.length) return new MapRes(serial, rid);
+    const mapw = this.sharedSymbols.getValue("NS", "sys", "mapw");
+    const maph = this.sharedSymbols.getValue("NS", "sys", "maph");
+    const anyTilesheet = this.data.resv.find(r => r.type === "tilesheet");
+    const map = new MapRes(null, rid);
+    if (mapw && maph) map.resize(mapw, maph);
+    if (anyTilesheet) {
+      map.cmd.commands.push(["image", `image:${anyTilesheet.name || anyTilesheet.rid}`]);
+    }
+    return map;
   }
   
   /* From a given MapRes, call (cb(map,dx,dy)) for whichever cardinal and diagonal neighbors exist, up to 8 of them.

@@ -103,11 +103,14 @@ export class SidebarUi {
       if (this.openTypes.includes(type)) details.open = true;
       this.dom.spawn(details, "SUMMARY", ["type"], type);
       for (const res of bucket) {
-        this.dom.spawn(details, "DIV", ["res"], {
+        const row = this.dom.spawn(details, "DIV", ["res"], {
           "on-click": e => this.onClickRes(e, res),
           "on-contextmenu": e => this.onRightClickRes(e, res),
           "data-path": res.path,
         }, res.base);
+        if (res.path === this.actions.selectedPath) { // Important for unexpected TOC rebuilds.
+          row.classList.add("highlight");
+        }
       }
     }
   }

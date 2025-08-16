@@ -43,6 +43,7 @@ export class CommandList {
   encodeText() {
     let dst = "";
     for (const command of this.commands) {
+      if (!command.length) continue;
       dst += command.join(" ") + "\n";
     }
     return dst;

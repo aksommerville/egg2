@@ -149,18 +149,20 @@ export class MapPaint {
     this.tilesize = 16;
     this.composePoiv();
     const imageName = this.map.cmd.getFirstArg("image");
-    if (imageName) {
-      this.data.getImageAsync(imageName).then(image => {
-        this.image = image;
-        this.tilesize = Math.max(1, image.naturalWidth >> 4);
-        this.broadcast({ type: "image", image });
-      }).catch(() => {});
-      const tsres = this.data.findResourceOverridingType(imageName, "tilesheet");
-      if (tsres) {
-        this.tilesheet = new Tilesheet(tsres.serial);
-      }
-    }
+    if (imageName) this.replaceImage(imageName);
     this.broadcast({ type: "map", map, path, image: null });
+  }
+  
+  replaceImage(imageName) {
+    this.data.getImageAsync(imageName).then(image => {
+      this.image = image;
+      this.tilesize = Math.max(1, image.naturalWidth >> 4);
+      this.broadcast({ type: "image", image });
+    }).catch(() => {});
+    const tsres = this.data.findResourceOverridingType(imageName, "tilesheet");
+    if (tsres) {
+      this.tilesheet = new Tilesheet(tsres.serial);
+    }
   }
   
   composePoiv() {
@@ -924,6 +926,7 @@ export class MapPaint {
   }
   
   action_commands() {
+    const previousImageName = this.map.cmd.getFirstArg("image");
     const modal = this.dom.spawnModal(CommandListEditor);
     modal.setup(this.map.cmd, "map");
     let dirty = false;
@@ -933,6 +936,8 @@ export class MapPaint {
     };
     modal.element.addEventListener("close", () => {
       if (dirty) {
+        const nextImageName = this.map.cmd.getFirstArg("image");
+        if (previousImageName !== nextImageName) this.replaceImage(nextImageName);
         this.composePoiv();
         this.broadcast({ type: "commands" });
       }

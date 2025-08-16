@@ -42,6 +42,8 @@ export class Actions {
       TextEditor,
       HexEditor,
     ];
+    
+    this.selectedPath = ""; // RootUi populates when it loads an editor. Not 100% reliable.
   }
   
   /* Returns the preferred editor class, synchronously.

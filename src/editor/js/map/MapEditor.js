@@ -93,16 +93,18 @@ export class MapEditor {
   }
   
   onKey(event) {
-    //console.log(`MapEditor.onKey ${event.type}:${event.code}`);
     
     // MapPaint needs to track modifier keys.
+    // When a modal is open, allow them to release but not set.
     if ((event.code === "ControlLeft") || (event.code === "ControlRight")) {
+      if ((event.type === "keydown") && this.dom.document.querySelector("dialog")) return;
       this.mapPaint.setModifier("ctl", event.type === "keydown");
       event.preventDefault();
       event.stopPropagation();
       return;
     }
     if ((event.code === "ShiftLeft") || (event.code === "ShiftRight")) {
+      if ((event.type === "keydown") && this.dom.document.querySelector("dialog")) return;
       this.mapPaint.setModifier("shift", event.type === "keydown");
       event.preventDefault();
       event.stopPropagation();

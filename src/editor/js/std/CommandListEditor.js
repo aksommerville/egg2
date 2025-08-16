@@ -46,12 +46,16 @@ export class CommandListEditor {
       this.res = null;
       this.model = modelOrRes;
       this.ns = ns;
+      // Drop empties from the end.
+      while (this.model.commands.length && !this.model.commands[this.model.commands.length - 1].length) this.model.commands.splice(this.model.commands.length - 1, 1);
     } else {
       this.res = modelOrRes;
       this.model = new CommandList(modelOrRes.serial);
       this.ns = modelOrRes.type;
     }
     this.buildUi();
+    // Pretend they clicked "+" immediately. If they do nothing with the new row, it's noop.
+    this.onAdd();
   }
   
   /* UI.
