@@ -6,7 +6,7 @@
  */
  
 import { Comm } from "./Comm.js";
-import { Song } from "./song/Song.js";
+import { Instruments } from "./song/Instruments.js";
 
 export class SharedSymbols {
   static getDependencies() {
@@ -16,7 +16,7 @@ export class SharedSymbols {
     this.comm = comm;
     
     this.symv = []; // {nstype,ns,k,v}
-    this.instruments = null; // null or Song
+    this.instruments = null; // null or Instruments
     this.instrumentsPromise = null;
     
     this.loadingPromise = this.comm.httpJson("GET", "/api/symbols").then(rsp => {
@@ -41,7 +41,7 @@ export class SharedSymbols {
     return this.symv.find(s => ((s.nstype === nstype) && (s.ns === ns) && (s.k === name)))?.v;
   }
   
-  /* Resolves to a Song object containing hundreds of channels, derived from EGG_SDK/src/eggdev/instruments.eaut.
+  /* Resolves to an Instruments instance containing the SDK's default instruments.
    * Logs errors and never rejects.
    */
   getInstruments() {
@@ -53,10 +53,10 @@ export class SharedSymbols {
     }).then(rsp => {
       this.instrumentsPromise = null;
       try {
-        this.instruments = new Song(rsp);
+        this.instruments = new Instruments(rsp);
       } catch (e) {
         console.log(`decode instruments failed`, e);
-        this.instruments = new Song();
+        this.instruments = new Instruments();
       }
       return this.instruments;
     });

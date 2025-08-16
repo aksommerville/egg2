@@ -282,7 +282,7 @@ In general, we can add features to EAU without specifically adding anything to E
 
 Basically a hex dump, with some helpers:
 - `#` starts a line comment anywhere.
-- `"..."` JSON string. Don't use parens inside a string, because I'm lazy on the JS parsing side.
+- `"..."` JSON string. Don't use parens or escaped quotes inside a string, because I'm lazy on the JS parsing side.
 - `u8(N)` `u16(N)` `u24(N)` `u32(N)` Big-endian integer, decimal by default.
 - `len(SIZE) { ... }` emits the length of the body in SIZE bytes, then the body. Fails if too large.
 - `name(STRING)` before channel header or drum note. Produces no output but we might use for indexing.

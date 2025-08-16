@@ -7,15 +7,17 @@ import { Dom } from "../Dom.js";
 import { SongService } from "./SongService.js";
 import { ModecfgModal } from "./ModecfgModal.js";
 import { PostModal } from "./PostModal.js";
+import { SharedSymbols } from "../SharedSymbols.js";
 
 export class SongChannelsUi {
   static getDependencies() {
-    return [HTMLElement, Dom, SongService];
+    return [HTMLElement, Dom, SongService, SharedSymbols];
   }
-  constructor(element, dom, songService) {
+  constructor(element, dom, songService, sharedSymbols) {
     this.element = element;
     this.dom = dom;
     this.songService = songService;
+    this.sharedSymbols = sharedSymbols;
     
     this.songServiceListener = this.songService.listen(e => this.onSongServiceEvent(e));
     
@@ -82,6 +84,9 @@ export class SongChannelsUi {
   
   onStore(channel) {
     console.log(`onStore`, channel);//TODO present modal with the SDK's instrument set
+    this.sharedSymbols.getInstruments().then(song => {
+      console.log(`got instruments`, song);
+    });
   }
   
   onDelete(channel) {
