@@ -69,6 +69,7 @@ export class ModecfgModal {
      */
     this.model = {};
     
+    this.envUis = [];
     this.mode = 0;
     this.modecfg = []; // Read-only, as received initially.
     this.chid = -1;
@@ -255,6 +256,7 @@ export class ModecfgModal {
   
   buildUi() {
     this.element.innerHTML = "";
+    this.envUis = [];
     this.form = this.dom.spawn(this.element, "FORM", { method: "", action: "", "on-submit": e => this.onSubmitForm(e) });
     switch (this.model.mode) {
       case 0: this.buildUiRaw(); break;
@@ -310,6 +312,7 @@ export class ModecfgModal {
     this.spawnRowU08(table, "lfophase");
     this.spawnExtra(left);
     const right = this.dom.spawn(bigrow, "DIV", ["right"]);
+    this.dom.spawn(right, "DIV", ["advice"], "Mouse wheel + ctl,shift to zoom and scroll.");
     this.spawnEnv(right, "levelenv");
     this.spawnEnv(right, "rangeenv");
     this.spawnEnv(right, "pitchenv");
@@ -323,6 +326,7 @@ export class ModecfgModal {
     this.spawnRowU16(table, "wheelrange");
     this.spawnExtra(left);
     const right = this.dom.spawn(bigrow, "DIV", ["right"]);
+    this.dom.spawn(right, "DIV", ["advice"], "Mouse wheel + ctl,shift to zoom and scroll.");
     this.spawnEnv(right, "levelenv");
     this.spawnEnv(right, "pitchenv");
   }
@@ -335,6 +339,7 @@ export class ModecfgModal {
     this.spawnHarmonics(left);
     this.spawnExtra(left);
     const right = this.dom.spawn(bigrow, "DIV", ["right"]);
+    this.dom.spawn(right, "DIV", ["advice"], "Mouse wheel + ctl,shift to zoom and scroll.");
     this.spawnEnv(right, "levelenv");
     this.spawnEnv(right, "pitchenv");
   }
@@ -400,9 +405,13 @@ export class ModecfgModal {
   
   spawnEnv(parent, k) {
     const controller = this.dom.spawnController(parent, EnvUi);
+    controller.onTimeChange = (p, c) => {
+      for (const env of this.envUis) env.setTime(p, c);
+    };
     controller.setup(this.model[k], k, v => {
       this.model[k] = v;
     });
+    this.envUis.push(controller);
   }
   
   spawnExtra(parent) {

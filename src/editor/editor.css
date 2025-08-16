@@ -706,17 +706,6 @@ input.toggle:checked + label.toggle.light {
   align-items: baseline;
   gap: 5px;
 }
-.EnvUi .zoom {
-  width: 24px;
-  height: 24px;
-  border-radius: 12px;
-  background-color: #f80;
-  cursor: pointer;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 .EnvUi .tattle {
   font-family: monospace;
 }

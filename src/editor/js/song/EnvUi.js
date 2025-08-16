@@ -16,6 +16,8 @@ export class EnvUi {
     this.window = window;
     this.nonce = nonce;
     
+    this.onTimeChange = (p, c) => {}; // Notify of scroll or zoom on time axis. So parent can sync its children's time axes.
+    
     this.env = {};
     this.usage = "levelenv";
     this.cb = v => {};
@@ -30,6 +32,8 @@ export class EnvUi {
     this.dragDv = 0;
     this.dragTMin = 0; // From the neighbor points; we don't let you move past them.
     this.dragTMax = 0;
+    this.dragVOk = true; // False if value must be zero.
+    this.zeroForeAndAft = true; // For "levelenv", don't allow nonzero value for the first or last point. (the model technically does allow it).
   }
   
   onRemoveFromDom() {
@@ -43,7 +47,28 @@ export class EnvUi {
     this.env = env;
     this.usage = usage;
     this.cb = cb;
+    
+    this.zeroForeAndAft = false;
+    switch (usage) {
+      case "levelenv": {
+          this.zeroForeAndAft = true;
+        } break;
+      case "pitchenv": {
+          // pitchenv v axis is in signed cents. The full range is insane, 327 semitones each way. Narrow it to one octave each way.
+          this.vrange = 2400;
+          this.v0 = 0x8000 - 1200;
+        } break;
+    }
+    
     this.buildUi();
+  }
+  
+  // Companion to (onTimeChange).
+  setTime(p, c) {
+    if ((this.t0 === p) && (this.trange === c)) return;
+    this.t0 = p;
+    this.trange = c;
+    this.renderSoon();
   }
   
   /* UI.
@@ -70,9 +95,7 @@ export class EnvUi {
         "on-change": e => this.onVelocityChange(e),
       }),
       this.dom.spawn(null, "LABEL", ["toggle", "light"], { for: `EnvUi-${this.nonce}-velocity` }, "Velocity"),
-      this.dom.spawn(null, "DIV", ["zoom"], { "on-pointerdown": e => this.onZoomDown(e) },
-        this.dom.spawn(null, "DIV", "Z")
-      ),
+      this.dom.spawn(null, "INPUT", { type: "number", name: "susp", min: 0, max: 15, value: this.env.susp, "on-input": () => this.onSuspChange() }),
       this.dom.spawn(null, "DIV", ["tattle"])
     );
     
@@ -123,7 +146,7 @@ export class EnvUi {
     if (vguideh > vguidetarget) {
       while ((vguideh > vguidetarget) && (vguideunit > 10)) {
         vguideunit *= 0.5;
-        vguidew *= 0.5;
+        vguideh *= 0.5;
       }
     } else {
       while (vguideunit < 65536) {
@@ -156,8 +179,8 @@ export class EnvUi {
     ctx.beginPath();
     for (let i=0; i<line.length; i++) {
       const pt = line[i];
-      const x = Math.floor((pt.t * canvas.width) / this.trange - this.t0) + 0.5;
-      const y = Math.floor(canvas.height - (pt.v * canvas.height) / this.vrange - this.v0) + 0.5;
+      const x = Math.floor(((pt.t - this.t0) * canvas.width) / this.trange) + 0.5;
+      const y = Math.floor(canvas.height - ((pt.v - this.v0) * canvas.height) / this.vrange) + 0.5;
       if (i) ctx.lineTo(x, y);
       else ctx.moveTo(x, y);
     }
@@ -167,12 +190,19 @@ export class EnvUi {
   
   renderHandles(canvas, ctx, line, color) {
     ctx.fillStyle = color;
-    for (const pt of line) {
-      const x = Math.floor((pt.t * canvas.width) / this.trange - this.t0) + 0.5;
-      const y = Math.floor(canvas.height - (pt.v * canvas.height) / this.vrange - this.v0) + 0.5;
+    for (let i=0; i<line.length; i++) {
+      const pt = line[i];
+      const x = Math.floor(((pt.t - this.t0) * canvas.width) / this.trange) + 0.5;
+      const y = Math.floor(canvas.height - ((pt.v - this.v0) * canvas.height) / this.vrange) + 0.5;
       ctx.beginPath();
       ctx.arc(x, y, HANDLE_RADIUS, 0, 2 * Math.PI);
       ctx.fill();
+      if (i && (i === this.env.susp)) {
+        ctx.beginPath();
+        ctx.arc(x, y, HANDLE_RADIUS + 2, 0, 2 * Math.PI);
+        ctx.strokeStyle = "#fff";
+        ctx.stroke();
+      }
     }
   }
   
@@ -194,13 +224,63 @@ export class EnvUi {
    */
   
   scroll(dx, dy) {
-    console.log(`EnvUi.scroll ${dx},${dy}`);
-    return false;
+    let handled = false;
+    if (dx) {
+      this.t0 += Math.round(dx * this.trange * 0.100);
+      if (this.t0 < 0) this.t0 = 0;
+      this.renderSoon();
+      handled = true;
+      this.onTimeChange(this.t0, this.trange);
+    }
+    if (dy) {
+      this.v0 -= Math.round(dy * this.vrange * 0.100);
+      if (this.v0 < 0) this.v0 = 0;
+      else if (this.v0 > 65536 - this.vrange) this.v0 = 65536 - this.vrange;
+      this.renderSoon();
+      handled = true;
+    }
+    if (!handled) return false;
+    this.setTattle(null); // Could supply the original event and we could recalc this but meh. User, just jiggle the mouse to refresh it.
+    return true;
   }
   
   zoom(dx, dy, ref) {
-    console.log(`EnvUi.zoom ${dx},${dy}`);
-    return false;
+    if (!ref) ref = {
+      t: this.t0 + this.trange / 2,
+      v: this.v0 + this.vrange / 2,
+    };
+    if (dx) { // Zoom in time.
+      const rel = this.t0 ? ((ref.t - this.t0) / this.trange) : 0; // If we're flush on the left already, keep it so. (typical)
+      const nrange = Math.max(100, (dx < 0) ? (this.trange / 1.200) : (this.trange * 1.200));
+      this.trange = nrange;
+      if (this.t0) this.t0 = ref.t - rel * this.trange;
+      if (this.t0 < 0) this.t0 = 0;
+      this.renderSoon();
+      this.onTimeChange(this.t0, this.trange);
+    }
+    if (dy) { // Zoom in value.
+      const rel = (ref.v - this.v0) / this.vrange;
+      const nrange = Math.max(100, Math.min(65536, (dy < 0) ? (this.vrange / 1.200) : (this.vrange * 1.200)));
+      this.vrange = nrange;
+      this.v0 = ref.v - rel * this.vrange;
+      if (this.v0 < 0) this.v0 = 0;
+      else if (this.v0 > 65536 - this.vrange) this.v0 = 65536 - this.vrange;
+      this.renderSoon();
+    }
+    // Call it "handled" whether we did something or not. Don't let the browser change the global zoom (grrr why does such a thing even exist?)
+    // Don't bother with the tattle. It can be wrong now due to clamping and rounding, but ordinarily it stays close. And it's just a jiggle away from exact.
+    return true;
+  }
+  
+  setTattle(pt) {
+    const tattle = this.element.querySelector(".tattle");
+    if (!pt) tattle.innerText = "";
+    else if (this.usage === "pitchenv") tattle.innerText = `${this.centsFromValue(pt.v)} @ ${pt.t} ms`;
+    else tattle.innerText = `0x${pt.v.toString(16).padStart(4, '0')} @ ${pt.t} ms`;
+  }
+  
+  centsFromValue(v) {
+    return `${(v > 0x8000) ? '+' : ''}${v - 0x8000} c`;
   }
   
   /* Events.
@@ -271,6 +351,7 @@ export class EnvUi {
         this.dragHandle = pt;
         this.dragTMin = i ? this.env.hi[i - 1].t : 0;
         this.dragTMax = (i + 1 < this.env.hi.length) ? this.env.hi[i + 1].t : 10000;
+        if (!pt.t && !i) this.dragTMax = 0; // Points at time zero must stay there.
         break;
       }
     }
@@ -282,6 +363,7 @@ export class EnvUi {
         this.dragHandle = pt;
         this.dragTMin = i ? this.env.lo[i - 1].t : 0;
         this.dragTMax = (i + 1 < this.env.lo.length) ? this.env.lo[i + 1].t : 10000;
+        if (!pt.t && !i) this.dragTMax = 0; // Points at time zero must stay there.
         break;
       }
     }
@@ -299,9 +381,17 @@ export class EnvUi {
       return;
     }
     
+    this.dragVOk = true;
+    if (this.zeroForeAndAft) {
+      let p = this.env.lo.findIndex(pt => pt === this.dragHandle);
+      if ((p < 0) && this.env.hi) p = this.env.hi.findIndex(pt => pt === this.dragHandle);
+      if ((p === 0) || (p === this.env.lo.length - 1)) {
+        this.dragVOk = false;
+      }
+    }
     this.dragDt = ref.t - this.dragHandle.t;
     this.dragDv = ref.v - this.dragHandle.v;
-    this.element.querySelector(".tattle").innerText = `0x${this.dragHandle.v.toString(16).padStart(4, '0')} @ ${this.dragHandle.t.toString().padStart(4)} ms`;
+    this.setTattle(this.dragHandle);
     event.target.setPointerCapture(event.pointerId);
   }
   
@@ -310,29 +400,33 @@ export class EnvUi {
       this.dragHandle = null;
       this.cb(this.env);
       const ref = this.logicalCoordsFromEvent(event);
-      this.element.querySelector(".tattle").innerText = `0x${ref.v.toString(16).padStart(4, '0')} @ ${ref.t.toString().padStart(4)} ms`;
+      this.setTattle(ref);
     }
   }
   
   onVisualMove(event) {
     const ref = this.logicalCoordsFromEvent(event);
     if (this.dragHandle) {
-      this.element.querySelector(".tattle").innerText = `0x${this.dragHandle.v.toString(16).padStart(4, '0')} @ ${this.dragHandle.t.toString().padStart(4)} ms`;
+      this.setTattle(this.dragHandle);
       this.dragHandle.t = ~~(ref.t - this.dragDt);
       if (this.dragHandle.t < this.dragTMin) this.dragHandle.t = this.dragTMin;
       else if (this.dragHandle.t > this.dragTMax) this.dragHandle.t = this.dragTMax;
-      this.dragHandle.v = ~~(ref.v - this.dragDv);
-      if (this.dragHandle.v < 0) this.dragHandle.v = 0;
-      else if (this.dragHandle.v > 0xffff) this.dragHandle.v = 0xffff;
+      if (this.dragVOk) {
+        this.dragHandle.v = ~~(ref.v - this.dragDv);
+        if (this.dragHandle.v < 0) this.dragHandle.v = 0;
+        else if (this.dragHandle.v > 0xffff) this.dragHandle.v = 0xffff;
+      } else {
+        this.dragHandle.v = 0;
+      }
       this.env.isDefault = false;
       this.renderSoon();
     } else {
-      this.element.querySelector(".tattle").innerText = `0x${ref.v.toString(16).padStart(4, '0')} @ ${ref.t.toString().padStart(4)} ms`;
+      this.setTattle(ref);
     }
   }
   
   onVisualLeave(event) {
-    this.element.querySelector(".tattle").innerText = "";
+    this.setTattle(null);
   }
   
   onWheel(event) {
@@ -362,10 +456,6 @@ export class EnvUi {
     event.stopPropagation();
   }
   
-  onZoomDown(event) {
-    console.log(`onZoomDown`);
-  }
-  
   onVelocityChange(event) {
     if (event.target.checked) {
       if (this.env.hirestore && (this.env.hirestore.length === this.env.lo.length)) {
@@ -378,6 +468,13 @@ export class EnvUi {
       this.env.hirestore = this.env.hi;
       delete this.env.hi;
     }
+    this.cb(this.env);
+    this.renderSoon();
+  }
+  
+  onSuspChange() {
+    const input = this.element.querySelector("input[name='susp']");
+    this.env.susp = +input.value;
     this.cb(this.env);
     this.renderSoon();
   }
