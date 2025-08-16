@@ -49,6 +49,7 @@ export class Audio {
   
   update() {
     for (let i=this.sounds.length; i-->0; ) {
+      const sound = this.sounds[i];
       if (!sound.update()) {
         sound.stop();
         this.sounds.splice(i, 1);

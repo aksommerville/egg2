@@ -71,7 +71,11 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] MapEditor: Refresh image after editing commands.
 - - [x] MapEditor: Mysterious black rectangle in background, for zennoniwa
 - - [ ] MapEditor: Did I not implement sprite preview thumbnails? Not seeing them in zennoniwa, but the sprites are configured and all. I did not: MapPaint.js:composePoiv
+- - [ ] MapEditor: New map should default to `NS_sys_mapw,h`
 - - [ ] New blank sound should open in SongEditor (currently able to, but you have to select it manually)
+- - [ ] Editor: Copy resource.
+- - [ ] MapEditor: Toolbar reacts to modifier keys when a modal is open; it shouldn't.
+- - [ ] MapEditor: Opening commands modal, implicitly click "+" on entry. They can leave it blank and it's noop.
 - 2025-06-23 audio rekajiggerment:
 - - [x] Web pitch wheel is badly broken.
 - - [x] sand_farming: Channel 5, off-beat accents, distinctly louder native than web. ...OscillatorNode: "type", not "shape"
