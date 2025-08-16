@@ -18,15 +18,6 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 
 # TODO
 
-- [ ] Major pain points, discovered during [zennoniwa](https://github.com/aksommerville/zennoniwa)
-- - [x] `eggdev build` is evidently not using `.d` files.
-- - - Our demo here already explicitly deletes its `mid` and `out` before building.
-- - [x] SongEditor: EnvUi is incomplete. Scroll, zoom, sustain...
-- - [ ] SongEditor: PostUi is broken. Stage ID doesn't populate properly.
-- - [x] SidebarUi: Highlight open resource. This is more annoying than it sounds.
-- - [x] POI icons for sprite and custom overrides.
-- - [x] New blank sound should open in SongEditor (currently able to, but you have to select it manually)
-- - [ ] PostModal fields per stage type.
 - [ ] Programmatic access to a song eg for ocarinas or sustained notes. API change.
 - [ ] Editor.
 - - [ ] Standard actions... what's needed?
@@ -50,6 +41,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
 - - [ ] Opening raw modecfg: Uncaught ReferenceError: defaultModel is not defined
 - - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
+- - [ ] PostModal fields per stage type.
 - [ ] eggdev
 - - [ ] project: Update Makefile for serving runtime
 - - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.

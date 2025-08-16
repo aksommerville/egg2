@@ -68,6 +68,7 @@ export class PostModal {
     for (let i=4; i<256; i++) {
       this.dom.spawn(stageidSelect, "OPTION", { value: i }, i);
     }
+    stageidSelect.value = stage.stageid;
     
     //TODO friendlier per-stage-type ui
     this.dom.spawn(row, "INPUT", { type: "text", name: "serial", value: this.hexdump(stage.serial), "on-input": e => this.onStageInput(stage.id, e.target.value) });

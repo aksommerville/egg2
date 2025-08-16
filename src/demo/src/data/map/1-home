@@ -18,4 +18,4 @@
 image image:tiles
 sprite @9,7 sprite:devil *
 neighbors 0x0000 map:east map:another 0x0000
-sprite @12,10 hero
+sprite @12,10 sprite:hero *
