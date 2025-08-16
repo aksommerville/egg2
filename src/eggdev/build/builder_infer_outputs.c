@@ -40,9 +40,28 @@ static int builder_add_dfile_text(struct builder *builder,struct builder_file *o
     if ((tokenc==1)&&(token[0]=='\\')) continue;
     if ((tokenc==1)&&(token[0]==';')) break;
     
+    /* When gcc generates Makefiles, it strips the leading "./" which we depend on.
+     * Restore it.
+     */
+    char mangle[1024];
+    if (
+      (builder->rootc==1)&&
+      (builder->root[0]=='.')&&
+      (tokenc>=4)&&
+      !memcmp(token,"src/",4)
+    ) {
+      int manglec=2+tokenc;
+      if (manglec>=sizeof(mangle)) continue;
+      memcpy(mangle,"./",2);
+      memcpy(mangle+2,token,tokenc);
+      token=mangle;
+      tokenc+=2;
+    }
+    
     if (tokenc<builder->rootc+5) continue;
     if (memcmp(token,builder->root,builder->rootc)) continue;
     if (memcmp(token+builder->rootc,"/src/",5)) continue;
+    
     struct builder_file *req=builder_find_file(builder,token,tokenc);
     if (!req) continue;
     if (builder_file_add_req(ofile,req)<0) return -1;

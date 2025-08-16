@@ -19,7 +19,8 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 # TODO
 
 - [ ] Major pain points, discovered during [zennoniwa](https://github.com/aksommerville/zennoniwa)
-- - [ ] `eggdev build` is evidently not using `.d` files.
+- - [x] `eggdev build` is evidently not using `.d` files.
+- - - Our demo here already explicitly deletes its `mid` and `out` before building.
 - - [ ] SongEditor: EnvUi is incomplete. Scroll, zoom, sustain...
 - - [ ] SongEditor: PostUi is broken. Stage ID doesn't populate properly.
 - - [ ] SidebarUi: Highlight open resource. This is more annoying than it sounds.
@@ -59,6 +60,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - - We're not. And if it seems burdensome, we can change the spec to require CHDR.
 - - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
 - - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
+- - [ ] `src/demo/src/data/song/8-doors_without_walls.mid:WARNING: 3 notes were not released.`
 - [ ] Native runtime.
 - - [ ] Input.
 - - - [ ] Persist mappings.
