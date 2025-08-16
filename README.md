@@ -18,6 +18,47 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 
 # TODO
 
+- [ ] Major pain points, discovered during [zennoniwa](https://github.com/aksommerville/zennoniwa)
+- - [ ] `eggdev build` is evidently not using `.d` files.
+- - [ ] SongEditor: EnvUi is incomplete. Scroll, zoom, sustain...
+- - [ ] SongEditor: PostUi is broken. Stage ID doesn't populate properly.
+- - [ ] SidebarUi: Highlight open resource. This is more annoying than it sounds.
+- - [ ] POI icons for sprite and custom overrides.
+- - [ ] New blank sound should open in SongEditor (currently able to, but you have to select it manually)
+- - [ ] PostModal fields per stage type.
+- [ ] Editor.
+- - [ ] Standard actions... what's needed?
+- - [ ] SongChannelsUi.onStore: Modal with SDK instruments
+- - [ ] Song event modal (SongEventsUi and SongToolbarUi)
+- - [ ] SongService: Should we auto-re-play on dirty?
+- - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
+- - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
+- - [ ] SongService: Don't repeat song if duration below some threshold (eg sound effects)
+- - [ ] HexEditor: Paging, offset, ASCII, multi-byte edits.
+- - [ ] ImageEditor: Animation preview like we had in v1.
+- - [ ] StringsEditor: Side-by-side editing across languages, like we had in v1.
+- - [ ] DecalsheetEditor: Validation.
+- - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
+- - [ ] MapEditor: Refresh image after editing commands.
+- - [ ] MapEditor: Did I not implement sprite preview thumbnails? Not seeing them in zennoniwa, but the sprites are configured and all. I did not: MapPaint.js:composePoiv
+- - [ ] MapEditor: New map should default to `NS_sys_mapw,h`
+- - [ ] Editor: Copy resource.
+- - [ ] MapEditor: Toolbar reacts to modifier keys when a modal is open; it shouldn't.
+- - [ ] MapEditor: Opening commands modal, implicitly click "+" on entry. They can leave it blank and it's noop.
+- - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
+- - [ ] Opening raw modecfg: Uncaught ReferenceError: defaultModel is not defined
+- - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
+- [ ] eggdev
+- - [ ] project: Update Makefile for serving runtime
+- - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
+- - [ ] project: README.md
+- - [ ] `eggdev project`: Prep overrides.
+- - [ ] eggdev build: Replace `<title>` in HTMLs.
+- - [ ] `eggdev_convert_audio.c:eggdev_wav_from_eau`: Arbitrary params from user for conversion? (rate,chanc,method) in this case.
+- - [ ] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.
+- - - We're not. And if it seems burdensome, we can change the spec to require CHDR.
+- - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
+- - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
 - [ ] Native runtime.
 - - [ ] Input.
 - - - [ ] Persist mappings.
@@ -25,79 +66,32 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - - - [ ] Let the client declare which buttons it uses, so when configuring we don't ask for all 15 buttons.
 - - - - - Maybe a metadata field "incfgMask" containing characters "dswne123lrLR". "d" being the dpad, all others correspond to one button.
 - - - [ ] Nix queue.
+- - - [ ] Select player.
 - - [ ] Record and playback session.
+- - [ ] System language, for MacOS and Windows.
 - [ ] Web runtime.
-- - [x] Synth.
 - - [ ] Input.
 - - - [ ] Mapping.
 - - - [ ] Live config.
 - - [ ] prefs
-- [ ] Editor.
-- - [ ] `eggdev project`: Prep overrides.
-- - [ ] Standard actions... what's needed?
-- - [ ] Verify overrides
-- - [ ] SongChannelsUi.onStore: Modal with SDK instruments
-- - [ ] Song event modal (SongEventsUi and SongToolbarUi)
-- - [ ] SongService: Should we auto-re-play on dirty?
-- - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
-- - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
-- - [ ] SongService: Don't repeat song if duration below some threshold (eg sound effects)
-- [ ] Client utilities.
-- - [ ] stdlib
-- - [ ] graf
-- - [ ] font
-- [ ] A web build for zennoniwa failed to detect a dirty file or something. Need to clean every time. Are we not applying '.d' files or something?
-- - Affects native too, evidently. Effects are unpredictable.
-- Minor things punted:
-- - [ ] project: Update Makefile for serving runtime
-- - [ ] project: README.md
-- - [ ] System language, for MacOS and Windows.
-- - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
-- - [ ] HexEditor: Paging, offset, ASCII, multi-byte edits.
-- - [ ] ImageEditor: Animation preview like we had in v1.
-- - [ ] StringsEditor: Side-by-side editing across languages, like we had in v1.
-- - [ ] SidebarUi: Highlight open resource.
-- - [ ] DecalsheetEditor: Validation.
-- - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
-- - [ ] POI icons for sprite and custom overrides.
-- - [ ] native inmgr: Select player
-- - [ ] eggdev build: Replace `<title>` in HTMLs.
 - - [ ] web: Detect loss of focus. At a minimum, pause audio. Maybe pause everything? Probly needs new soft-pause support in synth.
 - - [ ] web Video: Load raw pixels with non-minimum stride
 - - [ ] web `egg_texture_get_pixels`
 - - [ ] web Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
-- - [ ] web: Quantize final scale-up, don't use `object-fit:contain`. Then implement `egg_video_fb_from_screen`
-- - [ ] web: Player count 
-- - [ ] MapEditor: Refresh image after editing commands.
-- - [x] MapEditor: Mysterious black rectangle in background, for zennoniwa
-- - [ ] MapEditor: Did I not implement sprite preview thumbnails? Not seeing them in zennoniwa, but the sprites are configured and all. I did not: MapPaint.js:composePoiv
-- - [ ] MapEditor: New map should default to `NS_sys_mapw,h`
-- - [ ] New blank sound should open in SongEditor (currently able to, but you have to select it manually)
-- - [ ] Editor: Copy resource.
-- - [ ] MapEditor: Toolbar reacts to modifier keys when a modal is open; it shouldn't.
-- - [ ] MapEditor: Opening commands modal, implicitly click "+" on entry. They can leave it blank and it's noop.
-- 2025-06-23 audio rekajiggerment:
-- - [x] Web pitch wheel is badly broken.
-- - [x] sand_farming: Channel 5, off-beat accents, distinctly louder native than web. ...OscillatorNode: "type", not "shape"
-- - [ ] EnvUi scroll and zoom.
-- - [ ] EnvUi: Sustain point.
-- - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
-- - [ ] PostModal: New TREMOLO channel showed as NOOP on first re-open, and after adding stage.
-- - [ ] Opening raw modecfg: Uncaught ReferenceError: defaultModel is not defined
-- - [ ] PostModal fields per stage type.
-- - [ ] Update editor.
-- - - [x] New serial format.
-- - [ ] Define some instruments.
-- - [ ] Test perceptually.
+- - [ ] web: Quantize final scale-up, don't use `object-fit:contain`.
+- - [ ] web: Player count
+- - [ ] synth: Test perceptually.
 - - - Pay close attention to FM. I hacked it fast and loose for web, probably got it all wrong.
 - - - Add some editor tooling to print a song both native and web, and play them back with an easy toggle.
-- - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
-- - [ ] `eggdev_convert_audio.c:eggdev_wav_from_eau`: Arbitrary params from user for conversion? (rate,chanc,method) in this case.
-- - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
-- - [ ] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.
-- - - We're not. And if it seems burdensome, we can change the spec to require CHDR.
-- - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
-- - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
+- - [ ] synth: Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
 - - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
 - - - Probably related to that, FM voices really can't bend at all, the modulator goes out of sync.
 - - [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter. Apparent in drumtest.
+- [ ] Generic menu: Input config, quit, audio, language.
+- - [ ] Native.
+- - [ ] Web.
+- [ ] Client utilities.
+- - [ ] stdlib
+- - [ ] graf
+- - [ ] font
+- - [ ] Standard instruments and sound effects.
