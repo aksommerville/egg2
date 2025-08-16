@@ -23,9 +23,9 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - - Our demo here already explicitly deletes its `mid` and `out` before building.
 - - [ ] SongEditor: EnvUi is incomplete. Scroll, zoom, sustain...
 - - [ ] SongEditor: PostUi is broken. Stage ID doesn't populate properly.
-- - [ ] SidebarUi: Highlight open resource. This is more annoying than it sounds.
-- - [ ] POI icons for sprite and custom overrides.
-- - [ ] New blank sound should open in SongEditor (currently able to, but you have to select it manually)
+- - [x] SidebarUi: Highlight open resource. This is more annoying than it sounds.
+- - [x] POI icons for sprite and custom overrides.
+- - [x] New blank sound should open in SongEditor (currently able to, but you have to select it manually)
 - - [ ] PostModal fields per stage type.
 - [ ] Editor.
 - - [ ] Standard actions... what's needed?

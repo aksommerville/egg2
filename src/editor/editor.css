@@ -152,6 +152,9 @@ input.toggle:checked + label.toggle.light {
 .SidebarUi .res:hover {
   background-color: #333;
 }
+.SidebarUi .res.highlight {
+  background-color: #00f;
+}
 
 .NewResourceModal {
   min-width: 400px;

@@ -35,6 +35,14 @@ export class Override {
     this.editors = [
       //MyEditor,
     ];
+    
+    /* Key is a map command opcode.
+     * Value is a function receiving poi (notably: { cmd: string[] }), and returning Promise<Image|Canvas|null>.
+     * "sprite" has its own generator hard-coded in MapPaint. A few others have static fallback icons.
+     */
+    this.poiIconGenerators = {
+      //sprite: poi => null,
+    };
   }
 };
 

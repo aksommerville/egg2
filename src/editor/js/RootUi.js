@@ -70,5 +70,6 @@ export class RootUi {
     workbench.innerHTML = "";
     const controller = this.dom.spawnController(workbench, editor);
     controller.setup(res);
+    this.sidebar.highlightOpenResource(res);
   }
 }

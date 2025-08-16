@@ -45,6 +45,13 @@ export class SidebarUi {
     this.window.localStorage.setItem("egg2.SidebarUi.openTypes", JSON.stringify(this.openTypes));
   }
   
+  highlightOpenResource(res) {
+    for (const element of this.element.querySelectorAll(".res.highlight")) element.classList.remove("highlight");
+    const element = this.element.querySelector(`.res[data-path='${res?.path}']`);
+    if (!element) return;
+    element.classList.add("highlight");
+  }
+  
   buildUi() {
     this.element.innerHTML = "";
     
@@ -96,6 +103,7 @@ export class SidebarUi {
         this.dom.spawn(details, "DIV", ["res"], {
           "on-click": e => this.onClickRes(e, res),
           "on-contextmenu": e => this.onRightClickRes(e, res),
+          "data-path": res.path,
         }, res.base);
       }
     }

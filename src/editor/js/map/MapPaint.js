@@ -8,6 +8,7 @@ import { MapService } from "./MapService.js";
 import { Dom } from "../Dom.js";
 import { Data } from "../Data.js";
 import { CommandListEditor } from "../std/CommandListEditor.js";
+import { CommandList } from "../std/CommandList.js";
 import { Tilesheet } from "../std/Tilesheet.js";
 import { Selection } from "./Selection.js";
 import { MapRes, Poi } from "./MapRes.js";
@@ -15,17 +16,19 @@ import { NewDoorModal } from "./NewDoorModal.js";
 import { MapResizeModal } from "./MapResizeModal.js";
 import { Actions } from "../Actions.js";
 import { NewMapModal } from "./NewMapModal.js";
+import { Override } from "../../Override.js";
  
 export class MapPaint {
   static getDependencies() {
-    return [MapService, Dom, Data, Window, Actions];
+    return [MapService, Dom, Data, Window, Actions, Override];
   }
-  constructor(mapService, dom, data, window, actions) {
+  constructor(mapService, dom, data, window, actions, override) {
     this.mapService = mapService;
     this.dom = dom;
     this.data = data;
     this.window = window;
     this.actions = actions;
+    this.override = override;
     this.mapEditor = null; // MapEditor should inject itself here during construction.
     
     this.path = "";
@@ -166,9 +169,74 @@ export class MapPaint {
       this.poiv.push(poi);
     }
     this.refreshPoiPositions();
+    const iconPromises = [];
     for (const poi of this.poiv) {
-      //TODO Populate (icon) in (this.poiv) as warranted, eg "sprite".
+      const promise = this.generatePoiIcon(poi);
+      if (promise) iconPromises.push(promise.then(icon => {
+        if (icon) poi.icon = icon;
+      }));
     }
+    if (iconPromises.length) {
+      Promise.all(iconPromises)
+        .then(() => this.broadcast({ type: "render" }))
+        .catch(e => this.dom.modalError(e));
+    }
+  }
+  
+  /* Generate custom icon for POI that need it.
+   * Returns null if we can determine synchronously that no custom icon is needed -- the usual case.
+   * Otherwise a Promise resolving to null or something passable to CanvasRenderingContext2D.drawImage().
+   */
+  generatePoiIcon(poi) {
+    const overfn = this.override.poiIconGenerators[poi.kw];
+    if (overfn) return overfn(poi);
+    switch (poi.kw) {
+      case "sprite": {
+          const res = this.data.findResource(poi.cmd[2], "sprite");
+          if (!res) break;
+          const commandList = new CommandList(res.serial);
+          const imageName = commandList.getFirstArg("image");
+          const tileParams = commandList.getFirstArgArray("tile");
+          if (!imageName || !tileParams || (tileParams.length < 2)) break;
+          const tileid = +tileParams[1];
+          const xform = +tileParams[2] || 0;
+          if (isNaN(tileid) || (tileid < 0) || (tileid > 0xff)) break;
+          return this.data.getImageAsync(imageName).then(image => {
+            return this.sliceTile(image, tileid, xform, "#0f0");
+          }).catch(e => null);
+        } break;
+    }
+    return null;
+  }
+  
+  sliceTile(image, tileid, xform, bgcolor) {
+    if (!image || (image.naturalWidth < 16) || (image.naturalHeight < 16)) return null;
+    const tilesize = image.naturalWidth >> 4;
+    const srcx = (tileid & 15) * tilesize;
+    const srcy = (tileid >> 4) * tilesize;
+    const canvas = this.dom.document.createElement("CANVAS");
+    canvas.width = tilesize;
+    canvas.height = tilesize;
+    const ctx = canvas.getContext("2d");
+    if (bgcolor) {
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = bgcolor;
+      ctx.fillRect(0, 0, tilesize, tilesize);
+      ctx.globalAlpha = 1;
+    }
+    const halftile = tilesize >> 1;
+    ctx.translate(halftile, halftile);
+    switch (xform) {
+      case 1: ctx.scale(-1, 1); break; // XREV
+      case 2: ctx.scale(1, -1); break; // YREV
+      case 3: ctx.scale(-1, -1); break; // XREV|YREV
+      case 4: ctx.rotate(Math.PI / 2); ctx.scale(1, -1); break; // SWAP
+      case 5: ctx.rotate(Math.PI / -2); break; // SWAP|XREV
+      case 6: ctx.rotate(Math.PI / 2); break; // SWAP|YREV
+      case 7: ctx.rotate(Math.PI / 2); ctx.scale(-1, 1); break; // SWAP|XREV|YREV
+    }
+    ctx.drawImage(image, srcx, srcy, tilesize, tilesize, -halftile, -halftile, tilesize, tilesize);
+    return canvas;
   }
   
   refreshPoiPositions() {
