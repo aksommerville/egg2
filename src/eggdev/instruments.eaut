@@ -7,825 +7,573 @@
 
 #--- 0..7: Piano -------------------------------------------------------------------
 
-name("Acoustic Grand Piano") "CHDR" len(4) {
-00 40 80 MODE_NOOP len(2) {
-}
-}
-
-name("Bright Acoustic Piano") "CHDR" len(4) {
-01 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0000; name "Acoustic Grand Piano";
+  mode noop; modecfg Feed Face Dead Beef;
 }
 
-name("Electic Grand Piano") "CHDR" len(4) {
-02 40 80 MODE_NOOP len(2) {
-}
-}
-
-name("Honky-Tonk Piano") "CHDR" len(4) {
-03 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0001; name "Bright Acoustic Piano";
+  mode fm; modecfg {
+  }
 }
 
-name("EP 1 Rhodes") "CHDR" len(4) {
-04 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0002; name "Electic Grand Piano";
 }
 
-name("EP 2 Chorus") "CHDR" len(4) {
-05 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0003; name "Honky-Tonk Piano";
 }
 
-name("Harpsichord") "CHDR" len(4) {
-06 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0004; name "EP 1 Rhodes";
 }
 
-name("Clavinet") "CHDR" len(4) {
-07 40 80 MODE_NOOP len(2) {
+chdr { chid 0x0005; name "EP 2 Chorus";
 }
+
+chdr { chid 0x0006; name "Harpsichord";
+}
+
+chdr { chid 0x0007; name "Clavinet";
 }
 
 #--- 8..15: Chromatic --------------------------------------------------------------
 
-name("Celesta") "CHDR" len(4) {
-08 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0008; name "Celesta";
 }
 
-name("Glockenspiel") "CHDR" len(4) {
-09 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0009; name "Glockenspiel";
 }
 
-name("Music Box") "CHDR" len(4) {
-0a 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x000a; name "Music Box";
 }
 
-name("Vibraphone") "CHDR" len(4) {
-0b 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x000b; name "Vibraphone";
 }
 
-name("Marimba") "CHDR" len(4) {
-0c 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x000c; name "Marimba";
 }
 
-name("Xylophone") "CHDR" len(4) {
-0d 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x000d; name "Xylophone";
 }
 
-name("Tubular Bells") "CHDR" len(4) {
-0e 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x000e; name "Tubular Bells";
 }
 
-name("Dulcimer") "CHDR" len(4) {
-0f 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x000f; name "Dulcimer";
 }
 
 #--- 16..23: Organ ----------------------------------------------------------------------------------
 
-name("Drawbar Organ") "CHDR" len(4) {
-10 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0010; name "Drawbar Organ";
 }
 
-name("Percussive Organ") "CHDR" len(4) {
-11 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0011; name "Percussive Organ";
 }
 
-name("Rock Organ") "CHDR" len(4) {
-12 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0012; name "Rock Organ";
 }
 
-name("Church Organ") "CHDR" len(4) {
-13 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0013; name "Church Organ";
 }
 
-name("Reed Organ") "CHDR" len(4) {
-14 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0014; name "Reed Organ";
 }
 
-name("Accordion French") "CHDR" len(4) {
-15 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0015; name "Accordion French";
 }
 
-name("Harmonica") "CHDR" len(4) {
-16 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0016; name "Harmonica";
 }
 
-name("Accordion Tango") "CHDR" len(4) {
-17 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0017; name "Accordion Tango";
 }
 
 #--- 24..31: Guitar ----------------------------------------------------------------------
 
-name("Acoustic Nylon Guitar") "CHDR" len(4) {
-18 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0018; name "Acoustic Nylon Guitar";
 }
 
-name("Acoustic Steel Guitar") "CHDR" len(4) {
-19 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0019; name "Acoustic Steel Guitar";
 }
 
-name("Electric Jazz Guitar") "CHDR" len(4) {
-1a 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x001a; name "Electric Jazz Guitar";
 }
 
-name("Electric Clean Guitar") "CHDR" len(4) {
-1b 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x001b; name "Electric Clean Guitar";
 }
 
-name("Electric Muted Guitar") "CHDR" len(4) {
-1c 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x001c; name "Electric Muted Guitar";
 }
 
-name("Overdriven Guitar") "CHDR" len(4) {
-1d 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x001d; name "Overdriven Guitar";
 }
 
-name("Distortion Guitar") "CHDR" len(4) {
-1e 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x001e; name "Distortion Guitar";
 }
 
-name("Guitar Harmonics") "CHDR" len(4) {
-1f 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x001f; name "Guitar Harmonics";
 }
 
 #--- 32..39: Bass ---------------------------------------------------------------------------
 
-name("Acoustic Bass") "CHDR" len(4) {
-20 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0020; name "Acoustic Bass";
 }
 
-name("Electric Finger Bass") "CHDR" len(4) {
-21 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0021; name "Electric Finger Bass";
 }
 
-name("Electric Pick Bass") "CHDR" len(4) {
-22 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0022; name "Electric Pick Bass";
 }
 
-name("Fretless Bass") "CHDR" len(4) {
-23 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0023; name "Fretless Bass";
 }
 
-name("Slap Bass 1") "CHDR" len(4) {
-24 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0024; name "Slap Bass 1";
 }
 
-name("Slap Bass 2") "CHDR" len(4) {
-25 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0025; name "Slap Bass 2";
 }
 
-name("Synth Bass 1") "CHDR" len(4) {
-26 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0026; name "Synth Bass 1";
 }
 
-name("Synth Bass 2") "CHDR" len(4) {
-27 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0027; name "Synth Bass 2";
 }
 
 #--- 40..47: Solo String -----------------------------------------------------------
 
-name("Violin") "CHDR" len(4) {
-28 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0028; name "Violin";
 }
 
-name("Viola") "CHDR" len(4) {
-29 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0029; name "Viola";
 }
 
-name("Cello") "CHDR" len(4) {
-2a 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x002a; name "Cello";
 }
 
-name("Contrabass") "CHDR" len(4) {
-2b 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x002b; name "Contrabass";
 }
 
-name("Tremolo Strings") "CHDR" len(4) {
-2c 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x002c; name "Tremolo Strings";
 }
 
-name("Pizzicato Strings") "CHDR" len(4) {
-2d 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x002d; name "Pizzicato Strings";
 }
 
-name("Orchestral Harp") "CHDR" len(4) {
-2e 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x002e; name "Orchestral Harp";
 }
 
-name("Timpani") "CHDR" len(4) {
-2f 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x002f; name "Timpani";
 }
 
 #--- 48..55: String Ensemble --------------------------------------------------------
 
-name("String Ensemble 1") "CHDR" len(4) {
-30 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0030; name "String Ensemble 1";
 }
 
-name("String Ensemble 2") "CHDR" len(4) {
-31 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0031; name "String Ensemble 2";
 }
 
-name("Synth Strings 1") "CHDR" len(4) {
-32 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0032; name "Synth Strings 1";
 }
 
-name("Synth Strings 2") "CHDR" len(4) {
-33 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0033; name "Synth Strings 2";
 }
 
-name("Choir Aah") "CHDR" len(4) {
-34 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0034; name "Choir Aah";
 }
 
-name("Choir Ooh") "CHDR" len(4) {
-35 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0035; name "Choir Ooh";
 }
 
-name("Synth Voice") "CHDR" len(4) {
-36 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0036; name "Synth Voice";
 }
 
-name("Orchestra Hit") "CHDR" len(4) {
-37 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0037; name "Orchestra Hit";
 }
 
 #--- 56..63: Brass ---------------------------------------------------------
 
-name("Trumpet") "CHDR" len(4) {
-38 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0038; name "Trumpet";
 }
 
-name("Trombone") "CHDR" len(4) {
-39 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0039; name "Trombone";
 }
 
-name("Tuba") "CHDR" len(4) {
-3a 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x003a; name "Tuba";
 }
 
-name("Muted Trumpet") "CHDR" len(4) {
-3b 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x003b; name "Muted Trumpet";
 }
 
-name("French Horn") "CHDR" len(4) {
-3c 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x003c; name "French Horn";
 }
 
-name("Brass Section") "CHDR" len(4) {
-3d 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x003d; name "Brass Section";
 }
 
-name("Synth Brass 1") "CHDR" len(4) {
-3e 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x003e; name "Synth Brass 1";
 }
 
-name("Synth Brass 2") "CHDR" len(4) {
-3f 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x003f; name "Synth Brass 2";
 }
 
 #--- 64..71: Solo Reed ------------------------------------------------------------------
 
-name("Soprano Sax") "CHDR" len(4) {
-40 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0040; name "Soprano Sax";
 }
 
-name("Alto Sax") "CHDR" len(4) {
-41 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0041; name "Alto Sax";
 }
 
-name("Tenor Sax") "CHDR" len(4) {
-42 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0042; name "Tenor Sax";
 }
 
-name("Baritone Sax") "CHDR" len(4) {
-43 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0043; name "Baritone Sax";
 }
 
-name("Oboe") "CHDR" len(4) {
-44 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0044; name "Oboe";
 }
 
-name("English Horn") "CHDR" len(4) {
-45 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0045; name "English Horn";
 }
 
-name("Bassoon") "CHDR" len(4) {
-46 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0046; name "Bassoon";
 }
 
-name("Clarinet") "CHDR" len(4) {
-47 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0047; name "Clarinet";
 }
 
 #--- 72..79: Solo Flute ------------------------------------------------------------
 
-name("Piccolo") "CHDR" len(4) {
-48 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0048; name "Piccolo";
 }
 
-name("Flute") "CHDR" len(4) {
-49 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0049; name "Flute";
 }
 
-name("Recorder") "CHDR" len(4) {
-4a 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x004a; name "Recorder";
 }
 
-name("Pan Flute") "CHDR" len(4) {
-4b 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x004b; name "Pan Flute";
 }
 
-name("Blown Bottle") "CHDR" len(4) {
-4c 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x004c; name "Blown Bottle";
 }
 
-name("Shakuhachi") "CHDR" len(4) {
-4d 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x004d; name "Shakuhachi";
 }
 
-name("Whistle") "CHDR" len(4) {
-4e 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x004e; name "Whistle";
 }
 
-name("Ocarina") "CHDR" len(4) {
-4f 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x004f; name "Ocarina";
 }
 
 #--- 80..87: Synth Lead -------------------------------------------------------------
 
-name("Square Lead") "CHDR" len(4) {
-50 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0050; name "Square Lead";
 }
 
-name("Saw Lead") "CHDR" len(4) {
-51 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0051; name "Saw Lead";
 }
 
-name("Calliope") "CHDR" len(4) {
-52 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0052; name "Calliope";
 }
 
-name("Chiffer") "CHDR" len(4) {
-53 60 a0 MODE_NOOP len(2) {
-}
+chdr { chid 0x0053; name "Chiffer";
 }
 
-name("Charang") "CHDR" len(4) {
-54 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0054; name "Charang";
 }
 
-name("Synth Voice") "CHDR" len(4) {
-55 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0055; name "Synth Voice";
 }
 
-name("Fifths") "CHDR" len(4) {
-56 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0056; name "Fifths";
 }
 
-name("Bass+Lead") "CHDR" len(4) {
-57 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0057; name "Bass+Lead";
 }
 
 #--- 88..95: Synth Pad ------------------------------------------------------------------
 
-name("Fantasia Pad") "CHDR" len(4) {
-58 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0058; name "Fantasia Pad";
 }
 
-name("Warm Pad") "CHDR" len(4) {
-59 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0059; name "Warm Pad";
 }
 
-name("Polysynth Pad") "CHDR" len(4) {
-5a 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x005a; name "Polysynth Pad";
 }
 
-name("Choir Space Voice") "CHDR" len(4) {
-5b 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x005b; name "Choir Space Voice";
 }
 
-name("Bowed Glass") "CHDR" len(4) {
-5c 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x005c; name "Bowed Glass";
 }
 
-name("Metallic Pro Pad") "CHDR" len(4) {
-5d 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x005d; name "Metallic Pro Pad";
 }
 
-name("Halo Pad") "CHDR" len(4) {
-5e 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x005e; name "Halo Pad";
 }
 
-name("Sweep Pad") "CHDR" len(4) {
-5f 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x005f; name "Sweep Pad";
 }
 
 #--- 96..103: Synth Effects -------------------------------------------------------------
 
-name("Rain") "CHDR" len(4) {
-60 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0060; name "Rain";
 }
 
-name("Soundtrack") "CHDR" len(4) {
-61 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0061; name "Soundtrack";
 }
 
-name("Crystal") "CHDR" len(4) {
-62 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0062; name "Crystal";
 }
 
-name("Atmosphere") "CHDR" len(4) {
-63 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0063; name "Atmosphere";
 }
 
-name("Brightness") "CHDR" len(4) {
-64 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0064; name "Brightness";
 }
 
-name("Goblins") "CHDR" len(4) {
-65 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0065; name "Goblins";
 }
 
-name("Echoes, Drops") "CHDR" len(4) {
-66 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0066; name "Echoes, Drops";
 }
 
-name("Sci-Fi Star Theme") "CHDR" len(4) {
-67 01 00 MODE_NOOP len(2) {
-}
+chdr { chid 0x0067; name "Sci-Fi Star Theme";
 }
 
 #--- 104..111: World -----------------------------------------------------------------
 
-name("Sitar") "CHDR" len(4) {
-68 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0068; name "Sitar";
 }
 
-name("Banjo") "CHDR" len(4) {
-69 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0069; name "Banjo";
 }
 
-name("Shamisen") "CHDR" len(4) {
-6a 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x006a; name "Shamisen";
 }
 
-name("Koto") "CHDR" len(4) {
-6b 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x006b; name "Koto";
 }
 
-name("Kalimba") "CHDR" len(4) {
-6c 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x006c; name "Kalimba";
 }
 
-name("Bagpipe") "CHDR" len(4) {
-6d 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x006d; name "Bagpipe";
 }
 
-name("Fiddle") "CHDR" len(4) {
-6e 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x006e; name "Fiddle";
 }
 
-name("Shanai") "CHDR" len(4) {
-6f 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x006f; name "Shanai";
 }
 
 #--- 112..119: Percussion ---------------------------------------------------------------
 
-name("Tinkle Bell") "CHDR" len(4) {
-70 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0070; name "Tinkle Bell";
 }
 
-name("Agogo") "CHDR" len(4) {
-71 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0071; name "Agogo";
 }
 
-name("Steel Drums") "CHDR" len(4) {
-72 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0072; name "Steel Drums";
 }
 
-name("Wood Block") "CHDR" len(4) {
-73 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0073; name "Wood Block";
 }
 
-name("Taiko") "CHDR" len(4) {
-74 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0074; name "Taiko";
 }
 
-name("Melodic Tom") "CHDR" len(4) {
-75 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0075; name "Melodic Tom";
 }
 
-name("Synth Drum") "CHDR" len(4) {
-76 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0076; name "Synth Drum";
 }
 
-name("Reverse Cymbal") "CHDR" len(4) {
-77 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0077; name "Reverse Cymbal";
 }
 
 #--- 120..127: Filler --------------------------------------------------------------
 
-name("Guitar Fret Noise") "CHDR" len(4) {
-78 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0078; name "Guitar Fret Noise";
 }
 
-name("Breath Noise") "CHDR" len(4) {
-79 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x0079; name "Breath Noise";
 }
 
-name("Seashore") "CHDR" len(4) {
-7a 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x007a; name "Seashore";
 }
 
-name("Bird Tweet") "CHDR" len(4) {
-7b 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x007b; name "Bird Tweet";
 }
 
-name("Telephone Ring") "CHDR" len(4) {
-7c 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x007c; name "Telephone Ring";
 }
 
-name("Helicopter") "CHDR" len(4) {
-7d 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x007d; name "Helicopter";
 }
 
-name("Applause") "CHDR" len(4) {
-7e 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x007e; name "Applause";
 }
 
-name("Gunshot") "CHDR" len(4) {
-7f 40 80 MODE_NOOP len(2) {
-}
+chdr { chid 0x007f; name "Gunshot";
 }
 
 #--- 128: GM Drums plus a bunch of extra opinionated percussion --------------------------------------------------------------
 
-name("Standard Drum Kit") "CHDR" len(4) {
-80 40 80 MODE_DRUM len(2) {
+chdr { chid 0x0080; name "Default Inoffensive Kit";
+  mode drum;
+  modecfg {
 
   # TODO Fill 00..22 with extra drums. Alternative kick/snare/hat, DJ scratch, whatever seems to be missing from GM...
 
   #--- BEGIN GM DRUMS ---
 
-  name("Acoustic Bass Drum") 23 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x23; name "Acoustic Bass Drum"; serial {
+  }}
   
-  name("Bass Drum 1") 24 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x24; name "Bass Drum 1"; serial {
+  }}
   
-  name("Side Stick") 25 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x25; name "Side Stick"; serial {
+  }}
   
-  name("Acoustic Snare") 26 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x26; name "Acoustic Snare"; serial {
+  }}
   
-  name("Hand Clap") 27 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x27; name "Hand Clap"; serial {
+  }}
   
-  name("Electric Snare") 28 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x28; name "Electric Snare"; serial {
+  }}
   
-  name("Low Floor Tom") 29 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x29; name "Low Floor Tom"; serial {
+  }}
   
-  name("Closed Hi Hat") 2a 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x2a; name "Closed Hi Hat"; serial {
+  }}
   
-  name("High Floor Tom") 2b 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x2b; name "High Floor Tom"; serial {
+  }}
   
-  name("Pedal Hi Hat") 2c 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x2c; name "Pedal Hi Hat"; serial {
+  }}
   
-  name("Low Tom") 2d 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x2d; name "Low Tom"; serial {
+  }}
   
-  name("Open Hi Hat") 2e 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x2e; name "Open Hi Hat"; serial {
+  }}
   
-  name("Low Mid Tom") 2f 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x2f; name "Low Mid Tom"; serial {
+  }}
   
-  name("Hi Mid Tom") 30 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x30; name "Hi Mid Tom"; serial {
+  }}
   
-  name("Crash Cymbal 1") 31 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x31; name "Crash Cymbal 1"; serial {
+  }}
   
-  name("Hi Tom") 32 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x32; name "Hi Tom"; serial {
+  }}
   
-  name("Ride Cymbal 1") 33 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x33; name "Ride Cymbal 1"; serial {
+  }}
   
-  name("Chinese Cymbal") 34 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x34; name "Chinese Cymbal"; serial {
+  }}
   
-  name("Ride Bell") 35 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x35; name "Ride Bell"; serial {
+  }}
   
-  name("Tambourine") 36 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x36; name "Tambourine"; serial {
+  }}
   
-  name("Splash Cymbal") 37 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x37; name "Splash Cymbal"; serial {
+  }}
   
-  name("Cowbell") 38 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x38; name "Cowbell"; serial {
+  }}
   
-  name("Crash Cymbal 2") 39 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x39; name "Crash Cymbal 2"; serial {
+  }}
   
-  name("Vibraslap") 3a 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x3a; name "Vibraslap"; serial {
+  }}
   
-  name("Ride Cymbal 2") 3b 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x3b; name "Ride Cymbal 2"; serial {
+  }}
   
-  name("Hi Bongo") 3c 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x3c; name "Hi Bongo"; serial {
+  }}
   
-  name("Low Bongo") 3d 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x3d; name "Low Bongo"; serial {
+  }}
   
-  name("Mute Hi Conga") 3e 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x3e; name "Mute Hi Conga"; serial {
+  }}
   
-  name("Open Hi Conga") 3f 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x3f; name "Open Hi Conga"; serial {
+  }}
   
-  name("Low Conga") 40 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x40; name "Low Conga"; serial {
+  }}
   
-  name("High Timbale") 41 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x41; name "High Timbale"; serial {
+  }}
   
-  name("Low Timbale") 42 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x42; name "Low Timbale"; serial {
+  }}
   
-  name("High Agogo") 43 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x43; name "High Agogo"; serial {
+  }}
   
-  name("Low Agogo") 44 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x44; name "Low Agogo"; serial {
+  }}
   
-  name("Cabasa") 45 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x45; name "Cabasa"; serial {
+  }}
   
-  name("Maracas") 46 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x46; name "Maracas"; serial {
+  }}
+ 
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x47; name "Short Whistle"; serial {
+  }}
+ 
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x48; name "Long Whistle"; serial {
+  }}
   
-  name("Short Whistle") 47 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x49; name "Short Guiro"; serial {
+  }}
   
-  name("Long Whistle") 48 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x4a; name "Long Guiro"; serial {
+  }}
   
-  name("Short Guiro") 49 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x4b; name "Claves"; serial {
+  }}
   
-  name("Long Guiro") 4a 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x4c; name "Hi Wood Block"; serial {
+  }}
   
-  name("Claves") 4b 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x4d; name "Low Wood Block"; serial {
+  }}
   
-  name("Hi Wood Block") 4c 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x4e; name "Mute Cuica"; serial {
+  }}
   
-  name("Low Wood Block") 4d 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x4f; name "Open Cuica"; serial {
+  }}
   
-  name("Mute Cuica") 4e 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x50; name "Mute Triangle"; serial {
+  }}
   
-  name("Open Cuica") 4f 40 c0 80 len(2) {
-  }
-  
-  name("Mute Triangle") 50 40 c0 80 len(2) {
-  }
-  
-  name("Open Triangle") 51 40 c0 80 len(2) {
-  }
+  drum { trim 0x40 0xc0; pan 0x80; noteid 0x51; name "Open Triangle"; serial {
+  }}
   
   #--- END GM DRUMS ---
   
@@ -833,17 +581,100 @@ name("Standard Drum Kit") "CHDR" len(4) {
 }
 }
 
-#--- 129: Standard sound effects, not intended for music ----------------------------------------------------------
+#--- 136: 8-bit kit ---------------------------------------------------------------------------
 
-name("Example Sound Effects") "CHDR" len(4) {
-81 40 80 MODE_DRUM len(2) {
-
-  # TODO Make an assortment of common gamey sound effects.
-
+chdr { chid 0x0088; name "8-Bit Kit";
+  mode drum;
+  modecfg {
+    #TODO
+  }
 }
+
+#--- 137: Noise Kit ------------------------------------------------------------------------------
+
+chdr { chid 0x0089; name "Noise Kit";
+  mode drum;
+  modecfg {
+    #TODO
+  }
 }
 
-#--- 130..143: Reserve for additional drum kits and sound effects -------------------------------------------------
+#--- 144: Happy Sounds --------------------------------------------------------------------------
 
-#--- 144..254: Extra non-GM instruments ---------------------------------------------------------------------------
+chdr { chid 0x0090; name "Happy Sounds";
+  mode drum;
+  modecfg {
+    #TODO
+  }
+}
 
+#--- 145: Sci-Fi Sounds --------------------------------------------------------------------------
+
+chdr { chid 0x0091; name "Sci-Fi Sounds";
+  mode drum;
+  modecfg {
+    #TODO
+  }
+}
+
+#--- 146: Natural Sounds --------------------------------------------------------------------------
+
+chdr { chid 0x0092; name "Natural Sounds";
+  mode drum;
+  modecfg {
+    #TODO
+  }
+  post {}
+}
+
+#--- 0xa0..0xa7: Tuned Drums 1 (Instruments, not drum kits) ------------------------------------
+#- - 0xa0: Natural Tom 1
+#- - 0xa1: Natural Tom 2
+#- - 0xa2: Synth Tom 1
+#- - 0xa3: Synth Tom 2
+#- - 0xa4: Chirp 1
+#- - 0xa5: Chirp 2
+#- - 0xa6: Tick 1
+#- - 0xa7: Tick 2
+
+#--- 0xa8..0xaf: Tuned Drums 2 (Instruments, not drum kits) ------------------------------------------
+#- - 0xa8: Clang 1
+#- - 0xa9: Clang 2
+#- - 0xaa: Thump 1
+#- - 0xab: Thump 2
+#- - TODO
+
+#--- 0xb0..0xb7: Simple Synth ----------------------------------------------------------------------
+#- - 0xb0: Sine Lead
+#- - 0xb1: Square Lead
+#- - 0xb2: Saw Lead
+#- - 0xb3: Triangle Lead
+#- - 0xb4: Sine Pad
+#- - 0xb5: Square Pad
+#- - 0xb6: Saw Pad
+#- - 0xb7: Triangle Pad
+
+#--- 0xb8..0xbf: Lead Guitar -------------------------------------------------------------------------
+#- - 0xb8: Clean Delay Guitar
+#- - 0xb9: Clean Wah Lead
+#- - 0xba: Rock Lead
+#- - 0xbb: Wah Lead
+#- - 0xbc: Brain Melting Lead
+#- - 0xbd: Panty Ripping Lead
+#- - 0xbe: Stutter Lead
+#- - 0xbf: Flat Lead Guitar
+
+#--- 0xc0..0xc7: Rhythm Guitar ----------------------------------------------------------------------
+#TODO
+
+#--- 0xc8..0xcf: Plucks -----------------------------------------------------------------------------
+#TODO
+
+#--- 0xd0..0xd7: Noise ------------------------------------------------------------------------------
+#TODO
+
+#- 0xd8..0xdf: TODO
+#- 0xe0..0xe7: TODO
+#- 0xe8..0xef: TODO
+#- 0xf0..0xf7: TODO
+#- 0xf8..0xff: TODO

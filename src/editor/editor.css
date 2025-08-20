@@ -731,3 +731,8 @@ input.toggle:checked + label.toggle.light {
 .PostModal .stage input[name='serial'] {
   flex: 1;
 }
+
+.InstrumentsModal {
+  display: flex;
+  flex-direction: column;
+}

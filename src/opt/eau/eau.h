@@ -63,7 +63,7 @@ struct eau_file_chunk {
 int eau_file_reader_next(struct eau_file_chunk *chunk,struct eau_file_reader *reader);
 
 /* "CHDR" chunk.
- * Decoding fills in defaults if short.
+ * Decoding fills in defaults if short. But not modecfg defaults, obviously.
  */
 struct eau_file_channel {
   uint8_t chid;
@@ -87,6 +87,8 @@ struct eau_file {
   int channelc; // 0..16 indicating the highest; may be sparse.
   const uint8_t *eventv;
   int eventc;
+  const uint8_t *textv;
+  int textc;
 };
 int eau_file_decode(struct eau_file *file,const void *src,int srcc);
 

@@ -8,6 +8,7 @@ import { SongService } from "./SongService.js";
 import { ModecfgModal } from "./ModecfgModal.js";
 import { PostModal } from "./PostModal.js";
 import { SharedSymbols } from "../SharedSymbols.js";
+import { InstrumentsModal } from "./InstrumentsModal.js";
 
 export class SongChannelsUi {
   static getDependencies() {
@@ -84,9 +85,11 @@ export class SongChannelsUi {
   
   onStore(channel) {
     console.log(`onStore`, channel);//TODO present modal with the SDK's instrument set
-    this.sharedSymbols.getInstruments().then(song => {
-      console.log(`got instruments`, song);
-    });
+    const modal = this.dom.spawnModal(InstrumentsModal);
+    modal.result.then(rsp => {
+      if (!rsp) return;
+      console.log(`SongChannelsUi.onStore, from InstrumentsModal: ${rsp.name}`, rsp);
+    }).catch(e => this.dom.modalErrror(e));
   }
   
   onDelete(channel) {

@@ -100,6 +100,10 @@ int eau_file_decode(struct eau_file *file,const void *src,int srcc) {
       if (file->eventv) return -1; // Multiple EVTS
       file->eventv=chunk.v;
       file->eventc=chunk.c;
+    } else if (!memcmp(chunk.id,"TEXT",4)) {
+      if (file->textv) return -1; // Multiple TEXT
+      file->textv=chunk.v;
+      file->textc=chunk.c;
     } else {
       // Ignore unknown chunks.
     }

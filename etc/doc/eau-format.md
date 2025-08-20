@@ -28,6 +28,10 @@ Meta 0x77 contains one Channel Header, ie a "CHDR" chunk. Meta 0x20 MIDI Channel
 If absent, our compiler will make up Channel Headers based on Program Change, SDK data, and other clues.
 If Meta 0x77 is present, we don't guess anything from the MIDI events.
 
+Meta 0x78 contains one Text Chunk, ie "TEXT".
+Decoders should prefer 0x78 over standard events when they both appear, but I'm not imposing strict rules on precedence there.
+Text is always optional anyway.
+
 Meta 0x51 Set Tempo should appear once, at time zero.
 If it appears mid-song, we'll process timing correctly, but the song's declared tempo will be undefined.
 
@@ -134,6 +138,8 @@ File can be understood as chunks with 8-byte headers:
 
 The first chunk must have ID "\0EAU", and this also serves as the file signature.
 
+Chunks defined here: "\0EAU" "CHDR" "EVTS" "TEXT"
+
 Unknown chunks, and excess trailing data in any chunk, should be ignored.
 Each chunk type may have its own rules for short data, but in general short chunks are allowed if they break at a field boundary.
 
@@ -179,6 +185,23 @@ Zero or more events, distinguishable from high bits of the first byte:
   10ccccnn nnnnnvvv vvvvdddd dddddddd : Note (n) on channel (c), velocity (v), duration (d*4) ms.
   11ccccww wwwwwwww                   : Wheel on channel (c), (w)=0..512..1023 = -1..0..1
 ```
+
+### Chunk "TEXT"
+
+Optional. Tooling is expected to strip TEXT chunks at the final build.
+May appear zero or one times, any more is an error.
+
+Body is zero or more of:
+```
+  1 chid
+  1 noteid
+  1 length
+  ... text
+```
+
+Each entry names a channel (noteid==0) or one note of a channel, presumably drums.
+Technically, zero is a valid noteid, but in MIDI it's not, and mehhhhh just don't use it, ok?
+We're not imposing any rules about collisions, do whatever is easiest.
 
 ### Channel mode 0: NOOP
 
@@ -274,37 +297,95 @@ Zero or more stages:
 
 ## EAU Text
 
-This format is largely generic. It's easily possible to write valid EAU-Text which does not produce valid EAU.
-It's basically impossible to write EAU-Text without having the EAU spec (above) handy.
-Using this because it allows arbitrary commentary and plays nice with version control.
-Intending for the SDK built-in instruments especially.
-In general, we can add features to EAU without specifically adding anything to EAU-Text.
+Text format that roughly mirrors EAU, but allows extra commentary.
+We'll use this for the standard instrument set.
+Token-oriented text: `KEYWORD [PARAMS...] ;` or `KEYWORD { [STATEMENTS...] }`.
+`#` begins a line comment. Please do not put line comments inside a semicolon-delimited statement.
+Quoted strings are JSON but must not contain escaped quotes (use "\u0022" if you really need one).
+Fixed-point fields should be written as their integer equivalent, eg "0x0100" for 1.0 as u8.8.
 
-Basically a hex dump, with some helpers:
-- `#` starts a line comment anywhere.
-- `"..."` JSON string. Don't use parens or escaped quotes inside a string, because I'm lazy on the JS parsing side.
-- `u8(N)` `u16(N)` `u24(N)` `u32(N)` Big-endian integer, decimal by default.
-- `len(SIZE) { ... }` emits the length of the body in SIZE bytes, then the body. Fails if too large.
-- `name(STRING)` before channel header or drum note. Produces no output but we might use for indexing.
-- `delay(MS)` emits zero or more delay events.
-- `note(CHID,NOTEID,VELOCITY,DURMS)`
-- `wheel(CHID,V)` V in -512..511
+Global statements (order matters):
+```
+tempo MS_PER_QNOTE ; # Must appear before any "chdr" or "events". Absent is ok too.
+chdr { ... }
+events { ... } # 0, 1, or 2. If 2, they must be adjacent.
+```
 
-And some 1:1 symbols:
-- `MODE_NOOP` = 0
-- `MODE_DRUM` = 1
-- `MODE_FM` = 2
-- `MODE_HARSH` = 3
-- `MODE_HARM` = 4
-- `POST_NOOP` = 0
-- `POST_DELAY` = 1
-- `POST_WAVESHAPER` = 2
-- `POST_TREMOLO` = 3
-- `DEFAULT_ENV` = 0,0
-- `SHAPE_SINE` = 0
-- `SHAPE_SQUARE` = 1
-- `SHAPE_SAW` = 2
-- `SHAPE_TRIANGLE` = 3
+If there are two `events` blocks, the loop position falls between them. More than two is an error.
 
-Leading "0x" on plain hex words is permitted because it's an understandable mistake. It's meaningless.
-Beware that saving an EAUT file in our editor will strip comments and will probably not format text the same way you did.
+Within `events {...}` (order matters):
+```
+delay MS ;
+note CHID NOTEID VELOCITY DURMS ;
+wheel CHID 0..512..1023 ;
+```
+
+Within `chdr {...}` (any order):
+```
+name STRING ;
+chid 0..255 ;
+trim 0..255 ;
+pan 0..128..255 ;
+mode ( 0..255 | noop | drum | fm | harsh | harm ) ;
+modecfg { ... }   # For modes (drum,fm,harsh,harm). See below.
+modecfg HEXDUMP ; # For all other modes, of which none exist yet.
+post { ... }
+```
+
+Within `post {...}` (order matters):
+```
+STAGEID HEXDUMP ;
+delay PERIOD_U88 DRY WET STO FBK SPARKLE ; # 0..255
+waveshaper HEXDUMP ; # two bytes per unit
+tremolo PERIOD_U88 DEPTH PHASE ; # 0..255
+```
+
+Within `modecfg {...}` for `mode drum` (any order):
+```
+drum {
+  name STRING ;
+  noteid 0..255 ;
+  trim 0..255 0..255 ;
+  pan 0..128..255 ;
+  serial { ...EAU_TEXT_FILE... }
+}
+```
+
+Within `modecfg {...}` for `mode fm` (any order):
+```
+rate REL_U88 ;
+absrate QNOTES_U88 ;
+range U88 ;
+levelenv ENV ;
+rangeenv ENV ;
+pitchenv ENV ;
+wheelrange CENTS_U16 ;
+lforate QNOTES_U88 ;
+lfodepth 0..255 ;
+lfophase 0..255 ;
+```
+
+Within `modecfg {...}` for `mode harsh` (any order):
+```
+shape ( 0..255 | sine | square | saw | triangle ) ;
+levelenv ENV ;
+pitchenv ENV ;
+wheelrange CENTS_U16 ;
+```
+
+Within `modecfg {...}` for `mode harm` (any order):
+```
+harmonics HEXDUMP ; # 2 bytes per
+levelenv ENV ;
+pitchenv ENV ;
+wheelrange CENTS_U16 ;
+```
+
+ENV:
+```
+[=INITIAL[..HI]] [+MS[..HI] =VALUE[..HI][*] ...]
+```
+Times and values are 16-bit integers.
+Values must be prefixed with '=', and times with '+' (for the whole construction, not for the high part).
+One value may be suffixed `*` to mark the sustain point.
+Empty is legal but also pointless; you can skip the field instead.
