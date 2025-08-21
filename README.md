@@ -44,18 +44,18 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] Song actions (SongChannelsUi)
 - - [ ] ModecfgModal for drum: Spawn SongEditor in a modal per drum.
 - [ ] eggdev
-- - [ ] New EAU-Text format.
+- - [x] New EAU-Text format.
 - - - [x] Incorporate text in eggdev's MIDI<~>EAU.
 - - - [x] Remove vestigial EAU-Text from editor; plain EAU carries text now.
 - - - [x] Incorporate text in song editor.
 - - - [x] Return instruments as EAU, not EAU-Text. (continue storing as EAU-Text).
-- - - [ ] Some way to strip text from EAU at the final build.
+- - - [x] Some way to strip text from EAU at the final build.
 - - [ ] project: Update Makefile for serving runtime
 - - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
 - - [ ] project: README.md
 - - [ ] `eggdev project`: Prep overrides.
 - - [ ] eggdev build: Replace `<title>` in HTMLs.
-- - [ ] `eggdev_convert_audio.c:eggdev_wav_from_eau`: Arbitrary params from user for conversion? (rate,chanc,method) in this case.
+- - [x] `eggdev_convert_audio.c:eggdev_wav_from_eau`: Arbitrary params from user for conversion? (rate,chanc,method) in this case.
 - - [ ] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.
 - - - We're not. And if it seems burdensome, we can change the spec to require CHDR.
 - - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.

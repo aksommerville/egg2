@@ -41,6 +41,11 @@
   _(tilesheet) _(tstxt) _(decalsheet) _(dstxt) \
   _(map) _(maptxt) _(sprite) _(sprtxt) _(cmdlist) _(cmdltxt) \
   _(ico)
+  
+/* Conversion flags.
+ * These will take generic-ish names, and what a converter uses them for is up to it.
+ */
+#define EGGDEV_CVTFLAG_STRIP 0x00000001 /* Generally: Remove commentary. Song: Remove names. */
 
 /* Format properties and detection.
  */
@@ -63,6 +68,8 @@ struct eggdev_convert_context {
   const char *refname;
   int lineno0;
   struct sr_encoder *errmsg; // OPTIONAL. If present, errors log here instead of stderr, and even if no (refname).
+  uint32_t flags;
+  int rate,chanc; // Only used when producing WAV. Until we find any other need for them.
 };
 int eggdev_convert_noop(struct eggdev_convert_context *ctx); // Just copy (src) to (dst), no conversion.
 int eggdev_egg_from_exe(struct eggdev_convert_context *ctx); // ie extract ROM.
@@ -99,6 +106,7 @@ int eggdev_cmdlist_from_cmdltxt(struct eggdev_convert_context *ctx);
 int eggdev_cmdltxt_from_cmdlist(struct eggdev_convert_context *ctx);
 
 /* Generic access to converters and conveniences for common use cases.
+ * These may use extra parameters in (eggdev): strip,rate,chanc
  */
 typedef int (*eggdev_convert_fn)(struct eggdev_convert_context *ctx);
 eggdev_convert_fn eggdev_get_converter(int dstfmt,int srcfmt);

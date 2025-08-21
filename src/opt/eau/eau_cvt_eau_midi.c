@@ -24,6 +24,7 @@ struct eau_midi_context {
     const char *v;
     int c; // clamp to 0xff at reception
   } name_by_chid[16]; // Meta 0x03 or 0x04, fallback channel names.
+  int strip_names;
   
   // May contain up to 256 channels, since our Meta 0x77 Channel Header can address the full 8 bits.
   struct eau_midi_channel {
@@ -301,13 +302,15 @@ static int eau_midi_emit_headers(struct eau_midi_context *ctx) {
   }
   
   // If we got Meta 0x78, emit it verbatim as TEXT. Otherwise, if we have any channel names, synthesize TEXT.
-  if (ctx->textc) {
-    sr_encode_raw(ctx->dst,"TEXT",4);
-    sr_encode_intbe(ctx->dst,ctx->textc,4);
-    sr_encode_raw(ctx->dst,ctx->text,ctx->textc);
-  } else {
-    int err=eau_midi_synthesize_text(ctx);
-    if (err<0) return err;
+  if (!ctx->strip_names) {
+    if (ctx->textc) {
+      sr_encode_raw(ctx->dst,"TEXT",4);
+      sr_encode_intbe(ctx->dst,ctx->textc,4);
+      sr_encode_raw(ctx->dst,ctx->text,ctx->textc);
+    } else {
+      int err=eau_midi_synthesize_text(ctx);
+      if (err<0) return err;
+    }
   }
   
   struct eau_midi_channel *channel=ctx->channelv;
@@ -515,8 +518,8 @@ static int eau_cvt_eau_midi_inner(struct eau_midi_context *ctx,const void *src,i
 /* EAU from MIDI, main entry point.
  */
  
-int eau_cvt_eau_midi(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr) {
-  struct eau_midi_context ctx={.dst=dst,.path=path,.get_chdr=get_chdr};
+int eau_cvt_eau_midi(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names) {
+  struct eau_midi_context ctx={.dst=dst,.path=path,.get_chdr=get_chdr,.strip_names=strip_names};
   int err=eau_cvt_eau_midi_inner(&ctx,src,srcc);
   eau_midi_context_cleanup(&ctx);
   return err;

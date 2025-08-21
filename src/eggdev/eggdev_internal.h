@@ -23,6 +23,7 @@ extern struct g {
   char **srcpathv;
   int srcpathc,srcpatha;
   char *dstfmt,*srcfmt; // convert
+  int strip,rate,chanc; // convert
   char **htdocsv;
   int htdocsc,htdocsa;
   int port;

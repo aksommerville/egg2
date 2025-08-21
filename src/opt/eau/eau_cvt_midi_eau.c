@@ -36,6 +36,7 @@ struct midi_eau_context {
   
   const void *text;
   int textc;
+  int strip_names;
 };
 
 static void midi_eau_context_cleanup(struct midi_eau_context *ctx) {
@@ -121,6 +122,7 @@ static int midi_eau_receive_EVTS(struct midi_eau_context *ctx,const uint8_t *src
 }
 
 static int midi_eau_receive_TEXT(struct midi_eau_context *ctx,const uint8_t *src,int srcc) {
+  if (ctx->strip_names) return 0; // Stripping names is just this; pretend we didn't see them here at intake.
   ctx->text=src;
   ctx->textc=srcc;
   return 0;
@@ -333,8 +335,8 @@ static int midi_eau_inner(struct midi_eau_context *ctx,const void *src,int srcc)
 /* MIDI from EAU, main entry point.
  */
  
-int eau_cvt_midi_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr) {
-  struct midi_eau_context ctx={.dst=dst,.path=path};
+int eau_cvt_midi_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names) {
+  struct midi_eau_context ctx={.dst=dst,.path=path,.strip_names=strip_names};
   int err=midi_eau_inner(&ctx,src,srcc);
   midi_eau_context_cleanup(&ctx);
   return err;

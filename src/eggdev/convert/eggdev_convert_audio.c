@@ -20,9 +20,9 @@ static int eggdev_get_chdr(void *dstpp,int fqpid) {
  
 static int eggdev_cvt_eau(
   struct eggdev_convert_context *ctx,
-  int (*eaufn)(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr)
+  int (*eaufn)(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names)
 ) {
-  int err=eaufn(ctx->dst,ctx->src,ctx->srcc,ctx->refname,eggdev_get_chdr);
+  int err=eaufn(ctx->dst,ctx->src,ctx->srcc,ctx->refname,eggdev_get_chdr,ctx->flags&EGGDEV_CVTFLAG_STRIP);
   if (err<0) {
     if (err==-2) {
       /* eggdev allows redirection of error messages but eau does not.
@@ -106,9 +106,12 @@ int eggdev_wav_from_eaut(struct eggdev_convert_context *ctx) {
 
 int eggdev_wav_from_eau(struct eggdev_convert_context *ctx) {
 
-  // TODO Can we let the caller supply rate and chanc?
-  int rate=44100;
-  int chanc=2;
+  int rate=ctx->rate;
+  int chanc=ctx->chanc;
+  if ((rate<1)||(chanc<1)) {
+    rate=44100;
+    chanc=2;
+  }
   int method=EAU_DURATION_METHOD_DEFAULT; // Let eau decide (it will pick ROUND_UP).
   
   // Take some measurements and allocate the PCM buffer.

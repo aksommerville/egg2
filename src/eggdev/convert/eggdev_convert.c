@@ -421,6 +421,11 @@ int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,int s
     .refname=path,
     .lineno0=0,
     .errmsg=errmsg,
+    .flags=
+      EGGDEV_CVTFLAG_STRIP|
+    0,
+    .rate=g.rate,
+    .chanc=g.chanc,
   };
   return cvt(&ctx);
 }
@@ -450,6 +455,10 @@ int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int src
     .refname=0,
     .lineno0=0,
     .errmsg=errmsg,
+    .flags=
+    0,
+    .rate=g.rate,
+    .chanc=g.chanc,
   };
   return cvt(&ctx);
 }
@@ -497,6 +506,11 @@ int eggdev_convert_auto(
     .nsc=tnamec,
     .refname=srcpath,
     .lineno0=0,
+    .flags=
+      (g.strip?EGGDEV_CVTFLAG_STRIP:0)|
+    0,
+    .rate=g.rate,
+    .chanc=g.chanc,
   };
   return cvt(&ctx);
 }

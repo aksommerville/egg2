@@ -196,6 +196,9 @@ static int eggdev_argv_kv(const char *k,int kc,const char *v,int vc) {
   if ((kc==4)&&!memcmp(k,"lang",4)) return eggdev_set_string(&g.lang,v,vc,k,kc);
   if ((kc==8)&&!memcmp(k,"verbatim",8)) { g.verbatim=vn; return 0; }
   if ((kc==6)&&!memcmp(k,"format",6)) return eggdev_set_string(&g.format,v,vc,k,kc);
+  if ((kc==5)&&!memcmp(k,"strip",5)) { g.strip=vn; return 0; }
+  if ((kc==4)&&!memcmp(k,"rate",4)) { g.rate=vn; return 0; }
+  if ((kc==5)&&!memcmp(k,"chanc",5)) { g.chanc=vn; return 0; }
   
   fprintf(stderr,"%s: Unexpected option '%.*s' = '%.*s'\n",g.exename,kc,k,vc,v);
   return -2;

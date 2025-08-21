@@ -38,13 +38,15 @@ typedef int (*eau_get_chdr_fn)(void *dstpp,int fqpid);
 int eau_convert(
   struct sr_encoder *dst,int dstfmt,
   const void *src,int srcc,int srcfmt,
-  const char *path,eau_get_chdr_fn get_chdr
+  const char *path,
+  eau_get_chdr_fn get_chdr,
+  int strip_names
 );
 
-int eau_cvt_eau_eaut(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr);
-int eau_cvt_eau_midi(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr);
-int eau_cvt_eaut_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr);
-int eau_cvt_midi_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr);
+int eau_cvt_eau_eaut(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names);
+int eau_cvt_eau_midi(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names);
+int eau_cvt_eaut_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names);
+int eau_cvt_midi_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names);
 
 /* EAU files.
  **********************************************************************/

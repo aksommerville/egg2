@@ -75,6 +75,7 @@ struct eautd {
   int error;
   struct eautd_ns ns;
   int indent;
+  int strip_names;
 };
 
 static void eautd_cleanup(struct eautd *ctx) {
@@ -579,8 +580,9 @@ static int eautd_inner(struct eautd *ctx,const uint8_t *src,int srcc) {
   if (loopp>evtsc) return eautd_fail(ctx,"Invalid loopp %d for EVTS length %d.",loopp,evtsc);
   
   /* If there's a TEXT chunk, populate our namespace.
+   * We won't need to check (strip_names) at each name output site -- preventing them from entering the TOC here is enough.
    */
-  if (text) {
+  if (text&&!ctx->strip_names) {
     int textp=0;
     while (textp<textc) {
       if (textp>textc-3) return eautd_fail(ctx,"Unexpected EOF in TEXT chunk.");
@@ -622,8 +624,8 @@ static int eautd_inner(struct eautd *ctx,const uint8_t *src,int srcc) {
 /* EAU-Text from EAU, main entry point.
  */
  
-int eau_cvt_eaut_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr) {
-  struct eautd ctx={.dst=dst,.path=path};
+int eau_cvt_eaut_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names) {
+  struct eautd ctx={.dst=dst,.path=path,.strip_names=strip_names};
   int err=eautd_inner(&ctx,src,srcc);
   eautd_cleanup(&ctx);
   return err;

@@ -71,7 +71,9 @@ int eau_guess_format(const void *src,int srcc,const char *path) {
 int eau_convert(
   struct sr_encoder *dst,int dstfmt,
   const void *src,int srcc,int srcfmt,
-  const char *path,eau_get_chdr_fn get_chdr
+  const char *path,
+  eau_get_chdr_fn get_chdr,
+  int strip_names
 ) {
 
   if (srcfmt==EAU_FORMAT_UNKNOWN) {
@@ -92,33 +94,33 @@ int eau_convert(
   
   switch (dstfmt) {
     case EAU_FORMAT_EAU: switch (srcfmt) {
-        case EAU_FORMAT_EAUT: return eau_cvt_eau_eaut(dst,src,srcc,path,get_chdr);
-        case EAU_FORMAT_MIDI: return eau_cvt_eau_midi(dst,src,srcc,path,get_chdr);
+        case EAU_FORMAT_EAUT: return eau_cvt_eau_eaut(dst,src,srcc,path,get_chdr,strip_names);
+        case EAU_FORMAT_MIDI: return eau_cvt_eau_midi(dst,src,srcc,path,get_chdr,strip_names);
       } break;
     case EAU_FORMAT_EAUT: switch (srcfmt) {
-        case EAU_FORMAT_EAU: return eau_cvt_eaut_eau(dst,src,srcc,path,get_chdr);
+        case EAU_FORMAT_EAU: return eau_cvt_eaut_eau(dst,src,srcc,path,get_chdr,strip_names);
         case EAU_FORMAT_MIDI: {
             struct sr_encoder eau={0};
-            int err=eau_cvt_eau_midi(&eau,src,srcc,path,get_chdr);
+            int err=eau_cvt_eau_midi(&eau,src,srcc,path,get_chdr,strip_names);
             if (err<0) {
               sr_encoder_cleanup(&eau);
               return err;
             }
-            err=eau_cvt_eaut_eau(dst,eau.v,eau.c,path,get_chdr);
+            err=eau_cvt_eaut_eau(dst,eau.v,eau.c,path,get_chdr,strip_names);
             sr_encoder_cleanup(&eau);
             return err;
           }
       } break;
     case EAU_FORMAT_MIDI: switch (srcfmt) {
-        case EAU_FORMAT_EAU: return eau_cvt_midi_eau(dst,src,srcc,path,get_chdr);
+        case EAU_FORMAT_EAU: return eau_cvt_midi_eau(dst,src,srcc,path,get_chdr,strip_names);
         case EAU_FORMAT_EAUT: {
             struct sr_encoder eau={0};
-            int err=eau_cvt_eau_eaut(&eau,src,srcc,path,get_chdr);
+            int err=eau_cvt_eau_eaut(&eau,src,srcc,path,get_chdr,strip_names);
             if (err<0) {
               sr_encoder_cleanup(&eau);
               return err;
             }
-            err=eau_cvt_midi_eau(dst,eau.v,eau.c,path,get_chdr);
+            err=eau_cvt_midi_eau(dst,eau.v,eau.c,path,get_chdr,strip_names);
             sr_encoder_cleanup(&eau);
             return err;
           }

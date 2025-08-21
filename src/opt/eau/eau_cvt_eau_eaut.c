@@ -119,6 +119,7 @@ struct eautc {
   struct eautc_ns ns;
   int emitted_lead; // Zero or position in (dst) of the start of the lead's 4-byte payload.
   int events_done;
+  int strip_names;
 };
 
 static void eautc_cleanup(struct eautc *ctx) {
@@ -380,6 +381,7 @@ static int eautc_modecfg_drum_1(struct eautc *ctx,const char *src,int srcc,int c
     .src=src,
     .srcc=srcc,
     .path=ctx->path,
+    .strip_names=ctx->strip_names,
   };
   struct drum_inputs {
     const char *name,*noteid,*trimlo,*trimhi,*pan,*serial;
@@ -510,6 +512,7 @@ static int eautc_env(struct eautc *ctx,const char *src,int srcc) {
     .src=ctx->src,
     .srcc=ctx->srcc,
     .path=ctx->path,
+    .strip_names=ctx->strip_names,
   };
   const char *token;
   int tokenc,err;
@@ -583,6 +586,7 @@ static int eautc_harmonics(struct eautc *ctx,const char *src,int srcc) {
     .src=ctx->src,
     .srcc=ctx->srcc,
     .path=ctx->path,
+    .strip_names=ctx->strip_names,
   };
   int cp=ctx->dst->c;
   if (sr_encode_u8(ctx->dst,0)<0) return -1;
@@ -834,6 +838,7 @@ static int eautc_modecfg(struct eautc *ctx,const char *src,int srcc,int mode,int
     .ns={0},
     .emitted_lead=0,
     .events_done=0,
+    .strip_names=ctx->strip_names,
   };
   int lenp=ctx->dst->c;
   if (sr_encode_raw(ctx->dst,"\0\0",2)<0) return -1;
@@ -871,6 +876,7 @@ static int eautc_post_delay(struct eautc *ctx,const char *src,int srcc) {
     .src=src,
     .srcc=srcc,
     .path=ctx->path,
+    .strip_names=ctx->strip_names,
   };
   if (sr_encode_u8(ctx->dst,0x01)<0) return -1;
   if (sr_encode_u8(ctx->dst,7)<0) return -1;
@@ -915,6 +921,7 @@ static int eautc_post_tremolo(struct eautc *ctx,const char *src,int srcc) {
     .src=src,
     .srcc=srcc,
     .path=ctx->path,
+    .strip_names=ctx->strip_names,
   };
   const char *token;
   int tokenc,err;
@@ -948,6 +955,7 @@ static int eautc_post_generic(struct eautc *ctx,const char *kw,int kwc,const cha
     .src=src,
     .srcc=srcc,
     .path=ctx->path,
+    .strip_names=ctx->strip_names,
   };
   if (sr_encode_u8(ctx->dst,stageid)<0) return -1;
   int lenp=ctx->dst->c;
@@ -986,6 +994,7 @@ static int eautc_post(struct eautc *ctx,const char *src,int srcc) {
     .src=src,
     .srcc=srcc,
     .path=ctx->path,
+    .strip_names=ctx->strip_names,
   };
   for (;;) {
     const char *token;
@@ -1256,8 +1265,8 @@ static int eautc_finish(struct eautc *ctx) {
   int err=eautc_require_lead(ctx);
   if (err<0) return err;
   
-  // "TEXT" chunk if our namespace is not empty.
-  if (ctx->ns.c>0) {
+  // "TEXT" chunk if our namespace is not empty and we're not stripping.
+  if (!ctx->strip_names&&(ctx->ns.c>0)) {
     if (sr_encode_raw(ctx->dst,"TEXT",4)<0) return -1;
     int lenp=ctx->dst->c;
     if (sr_encode_raw(ctx->dst,"\0\0\0\0",4)<0) return -1;
@@ -1301,6 +1310,7 @@ static int eautc_file(struct eautc *ctx,const char *src,int srcc) {
     .ns={0},
     .emitted_lead=0,
     .events_done=0,
+    .strip_names=ctx->strip_names,
   };
   for (;;) {
     if ((err=eautc_global(&subctx))<0) {
@@ -1320,9 +1330,9 @@ static int eautc_file(struct eautc *ctx,const char *src,int srcc) {
 /* EAU from EAU-Text, main entry point.
  */
  
-int eau_cvt_eau_eaut(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr) {
+int eau_cvt_eau_eaut(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names) {
   // This outermost context doesn't really do anything; eautc_file() creates a new one.
-  struct eautc ctx={.dst=dst,.osrc=src,.osrcc=srcc,.src=src,.srcc=srcc,.path=path};
+  struct eautc ctx={.dst=dst,.osrc=src,.osrcc=srcc,.src=src,.srcc=srcc,.path=path,.strip_names=strip_names};
   int err=eautc_file(&ctx,src,srcc);
   eautc_cleanup(&ctx);
   return err;

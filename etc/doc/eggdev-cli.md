@@ -35,12 +35,17 @@ Detailed documentation is at EGG_SDK/etc/doc/eggdev-http.md.
 
 ## convert
 
-Usage: `eggdev convert -oDSTPATH SRCPATH [--dstfmt=FORMAT] [--srcfmt=FORMAT]`
+Usage: `eggdev convert -oDSTPATH SRCPATH [--dstfmt=FORMAT] [--srcfmt=FORMAT] [--strip] [--rate=44100] [--chanc=2]`
 
 Convert anything to anything.
 Omit paths to use stdout and stdin.
 We can usually infer `srcfmt` from the content and `dstfmt` from the path.
 Use the special dstfmt "rommable" or "portable" for conversions to or from our standard resource formats.
+
+Extra parameters are accepted in all cases but only meaningful for certain conversions:
+ - `--strip`: If present, remove text from songs.
+ - `--rate=HZ`: For song-to-wav.
+ - `--chanc=CHANC`: For song-to-wav.
 
 ## config
 
