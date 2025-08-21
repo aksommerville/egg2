@@ -47,9 +47,14 @@ export class SongToolbarUi {
     
     const actionsMenu = this.dom.spawn(this.element, "SELECT", { name: "actions", "on-change": () => this.onActionsChange() },
       this.dom.spawn(null, "OPTION", { value: "", disabled: "disabled" }, "Actions..."),
-      this.dom.spawn(null, "OPTION", { value: "example1" }, "Example Action 1"),
-      this.dom.spawn(null, "OPTION", { value: "example2" }, "Example Action 2")
-      //TODO actions
+      this.dom.spawn(null, "OPTION", { value: "dropUnusedNames" }, "Drop Unused Names"),
+      this.dom.spawn(null, "OPTION", { value: "dropAllNames" }, "Drop All Names"),
+      this.dom.spawn(null, "OPTION", { value: "autoStartTime" }, "Auto Start Time"),
+      this.dom.spawn(null, "OPTION", { value: "autoEndTime" }, "Auto End Time"),
+      this.dom.spawn(null, "OPTION", { value: "transpose" }, "Transpose..."),
+      this.dom.spawn(null, "OPTION", { value: "filter" }, "Filter..."),
+      this.dom.spawn(null, "OPTION", { value: "reduceWheels" }, "Reduce Wheels..."),
+      this.dom.spawn(null, "OPTION", { value: "adjustVelocities" }, "Adjust Velocities..."),
     );
     actionsMenu.value = "";
     

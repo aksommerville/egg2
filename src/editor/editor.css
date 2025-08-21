@@ -581,6 +581,7 @@ input.toggle:checked + label.toggle.light {
 }
 .SongChannelsUi .name {
   font-weight: bold;
+  cursor: pointer;
 }
 .SongChannelsUi .tattle {
   width: 30px;

@@ -288,7 +288,7 @@ export class ModecfgModal {
       this.dom.spawn(row, "INPUT", { type: "number", min: 0, max: 255, value: drum.pan, name: "pan", "on-change": e => this.onDrumChange(e, drum) });
       this.dom.spawn(row, "INPUT", { type: "button", value: "...", "on-click": () => this.onEditDrum(drum) });
       this.dom.spawn(row, "DIV", ["size"], drum.serial.length);
-      this.dom.spawn(row, "DIV", ["name"], GM_DRUM_NAMES[drum.noteid] || "");
+      this.dom.spawn(row, "DIV", ["name"], this.songService.song.getName(this.chid, drum.noteid) || GM_DRUM_NAMES[drum.noteid] || "");
     }
   }
   

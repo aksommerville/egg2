@@ -41,12 +41,15 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
 - - [ ] PostModal fields per stage type.
 - - [ ] Launch game.
+- - [ ] Song actions (SongChannelsUi)
+- - [ ] ModecfgModal for drum: Spawn SongEditor in a modal per drum.
 - [ ] eggdev
 - - [ ] New EAU-Text format.
-- - - [ ] Incorporate text in eggdev's MIDI<~>EAU.
-- - - [ ] Remove vestigial EAU-Text from editor; plain EAU carries text now.
-- - - [ ] Incorporate text in song editor.
-- - - [ ] Return instruments as EAU, not EAU-Text. (continue storing as EAU-Text).
+- - - [x] Incorporate text in eggdev's MIDI<~>EAU.
+- - - [x] Remove vestigial EAU-Text from editor; plain EAU carries text now.
+- - - [x] Incorporate text in song editor.
+- - - [x] Return instruments as EAU, not EAU-Text. (continue storing as EAU-Text).
+- - - [ ] Some way to strip text from EAU at the final build.
 - - [ ] project: Update Makefile for serving runtime
 - - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
 - - [ ] project: README.md

@@ -80,10 +80,28 @@ static int eggdev_cb_get_instruments(struct http_xfer *req,struct http_xfer *rsp
   void *src=0;
   int srcc=eggdev_config_get_instruments_text(&src);
   if (srcc<0) srcc=0;
-  sr_encode_raw(http_xfer_get_body(rsp),src,srcc);
+  struct sr_encoder *dst=http_xfer_get_body(rsp);
+  int dstc0=dst->c;
+  struct sr_encoder errmsg={0};
+  struct eggdev_convert_context ctx={
+    .dst=dst,
+    .src=src,
+    .srcc=srcc,
+    .errmsg=&errmsg,
+  };
+  int err=eggdev_eau_from_eaut(&ctx);
   if (src) free(src);
-  http_xfer_set_header(rsp,"Content-Type",12,"text/plain",10);
-  return http_xfer_set_status(rsp,200,"OK");
+  if (err>=0) {
+    sr_encoder_cleanup(&errmsg);
+    http_xfer_set_header(rsp,"Content-Type",12,"application/octet-stream",24);
+    return http_xfer_set_status(rsp,200,"OK");
+  } else {
+    dst->c=dstc0;
+    sr_encode_raw(dst,errmsg.v,errmsg.c);
+    sr_encoder_cleanup(&errmsg);
+    http_xfer_set_header(rsp,"Content-Type",12,"text/plain",10);
+    return http_xfer_set_status(rsp,500,"Failed to convert");
+  }
 }
 
 /* GET /api/toc/**

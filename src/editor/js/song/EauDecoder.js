@@ -230,3 +230,22 @@ export function encodeEnv(encoder, usage, env) {
     }
   }
 }
+
+export function decodeDrumModecfg(src) {
+  const dst = []; // {noteid,trimlo,trimhi,pan,serial}
+  for (let srcp=0; srcp<src.length; ) {
+    const noteid = src[srcp++];
+    const trimlo = src[srcp++];
+    const trimhi = src[srcp++];
+    const pan = src[srcp++];
+    const len = (src[srcp] << 8) | src[srcp+1];
+    srcp += 2;
+    if (srcp > src.length - len) break;
+    dst.push({
+      noteid, trimlo, trimhi, pan,
+      serial: new Uint8Array(src.buffer, src.byteOffset + srcp, len),
+    });
+    srcp += len;
+  }
+  return dst;
+}

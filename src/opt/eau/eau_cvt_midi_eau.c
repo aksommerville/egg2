@@ -33,6 +33,9 @@ struct midi_eau_context {
     uint8_t chid,opcode,a,b; // Phrased for MIDI.
   } *mevtv;
   int mevtc,mevta;
+  
+  const void *text;
+  int textc;
 };
 
 static void midi_eau_context_cleanup(struct midi_eau_context *ctx) {
@@ -117,6 +120,12 @@ static int midi_eau_receive_EVTS(struct midi_eau_context *ctx,const uint8_t *src
   return 0;
 }
 
+static int midi_eau_receive_TEXT(struct midi_eau_context *ctx,const uint8_t *src,int srcc) {
+  ctx->text=src;
+  ctx->textc=srcc;
+  return 0;
+}
+
 /* Produce MIDI events at time zero for the tempo and channel headers.
  */
  
@@ -125,6 +134,13 @@ static int midi_eau_header_events(struct midi_eau_context *ctx) {
   // Our Division is already in ms/qnote, so Meta 0x51 Set Tempo is just that times 1000.
   sr_encode_raw(ctx->dst,"\0\xff\x51\3",4);
   sr_encode_intbe(ctx->dst,ctx->tempo*1000,3);
+  
+  // Meta 0x78 for the text index, if we have one. Dump it verbatim, it's already encoded the way we want it.
+  if (ctx->textc) {
+    sr_encode_raw(ctx->dst,"\0\xff\x78",3);
+    sr_encode_vlq(ctx->dst,ctx->textc);
+    sr_encode_raw(ctx->dst,ctx->text,ctx->textc);
+  }
   
   // Meta 0x77 for each CHDR that existed in the input file, whether it's used or not.
   struct eau_file_channel *channel=ctx->channelv;
@@ -277,6 +293,8 @@ static int midi_eau_inner(struct midi_eau_context *ctx,const void *src,int srcc)
       if ((err=midi_eau_receive_CHDR(ctx,chunk.v,chunk.c))<0) return err;
     } else if (!memcmp(chunk.id,"EVTS",4)) {
       if ((err=midi_eau_receive_EVTS(ctx,chunk.v,chunk.c))<0) return err;
+    } else if (!memcmp(chunk.id,"TEXT",4)) {
+      if ((err=midi_eau_receive_TEXT(ctx,chunk.v,chunk.c))<0) return err;
     } else {
       if (ctx->path) {
         char cname[32];

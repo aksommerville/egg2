@@ -27,6 +27,7 @@ export class Song {
     this.channels = []; // SongChannel, packed, not necessarily sorted.
     this.channelsByChid = []; // WEAK SongChannel, sparse, index is chid.
     this.events = []; // SongEvent, sorted by time. Note that Delay is not an event in this model.
+    this.text = []; // [chid,noteid,name], sorted.
   }
   
   _copy(src) {
@@ -53,6 +54,7 @@ export class Song {
         case 0x00454155: this._decode0EAU(chunk); break;
         case 0x43484452: this._decodeCHDR(chunk); break;
         case 0x45565453: this._decodeEVTS(chunk); break;
+        case 0x54455854: this._decodeTEXT(chunk); break;
         default: console.warn(`Ignoring unexpected ${len}-byte chunk 0x${id.toString(16).padStart('0',8)} in EAU file. It will not be preserved at save.`);
       }
     }
@@ -131,6 +133,75 @@ export class Song {
     this.events.push(new SongEvent(now, "noop"));
   }
   
+  _decodeTEXT(src) {
+    for (let srcp=0; srcp<src.length; ) {
+      const chid = src[srcp++];
+      const noteid = src[srcp++] || 0;
+      const len = src[srcp++] || 0;
+      if (srcp>src.length - len) break;
+      let p = this.textSearch(chid, noteid);
+      if (p < 0) {
+        p = -p - 1;
+        const v = new TextDecoder("utf8").decode(new Uint8Array(src.buffer, src.byteOffset + srcp, len));
+        this.text.splice(p, 0, [chid, noteid, v]);
+      }
+      srcp += len;
+    }
+  }
+  
+  textSearch(chid, noteid) {
+    let lo=0, hi=this.text.length;
+    while (lo < hi) {
+      const ck = (lo + hi) >> 1;
+      const q = this.text[ck];
+           if (chid < q[0]) hi = ck;
+      else if (chid > q[0]) lo = ck + 1;
+      else if (noteid < q[1]) hi = ck;
+      else if (noteid > q[1]) lo = ck + 1;
+      else return ck;
+    }
+    return -lo - 1;
+  }
+  
+  // Never empty, and always contains channel and note id.
+  getNameForce(chid, noteid) {
+    const p = this.textSearch(chid, noteid);
+    if (p >= 0) {
+      if (noteid) return `${chid}:${noteid}: ${this.text[p][2]}`;
+      return `${chid}: ${this.text[p][2]}`;
+    }
+    if (noteid) return `Note ${noteid} on channel ${chid}`;
+    return `Channel ${chid}`;
+  }
+  
+  // Empty string if not defined.
+  getName(chid, noteid) {
+    const p = this.textSearch(chid, noteid);
+    if (p < 0) return "";
+    return this.text[p][2];
+  }
+  
+  setName(chid, noteid, name) {
+    let p = this.textSearch(chid, noteid);
+    if (name) {
+      if (name.length > 0xff) name = name.substring(0, 256);
+      if (p < 0) this.text.splice(-p - 1, 0, [chid, noteid, name]);
+      else this.text[p][2] = name;
+    } else {
+      if (p >= 0) this.text.splice(p, 1);
+    }
+  }
+  
+  removeNoteNames(chid) {
+    let p = this.textSearch(chid, 0);
+    if (p < 0) p = -p -1;
+    else p++;
+    let c = 0;
+    while ((p + c < this.text.length) && (this.text[p + c][0] === chid)) c++;
+    this.text.splice(p, c);
+    return c;
+  }
+  
   encode() {
     const encoder = new Encoder();
     
@@ -141,6 +212,18 @@ export class Song {
       looppp = encoder.c;
       encoder.u16be(0);
     });
+    
+    if (this.text.length) {
+      encoder.raw("TEXT");
+      encoder.pfxlen(4, () => {
+        for (const [chid, noteid, name] of this.text) {
+          encoder.u8(chid);
+          encoder.u8(noteid);
+          encoder.u8(name.length);
+          encoder.raw(name);
+        }
+      });
+    }
     
     for (const channel of this.channels) {
       encoder.raw("CHDR");
@@ -307,6 +390,15 @@ export class SongChannel {
     if (srcp < src.length) {
       console.warn(`Dropping ${src.length - srcp} extra bytes at end of CHDR for channel ${this.chid}`);
     }
+  }
+  
+  /* Rewrite this channel in place from some other channel.
+   * Does not affect (chid,trim,pan).
+   */
+  overwrite(src) {
+    this.mode = src.mode;
+    this.modecfg = new Uint8Array(src.modecfg);
+    this.post = new Uint8Array(src.post);
   }
 }
 

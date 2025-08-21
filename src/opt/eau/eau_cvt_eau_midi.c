@@ -18,6 +18,12 @@ struct eau_midi_context {
   int tempo; // ms/qnote. 500 unless a Meta Set Tempo replaces it.
   int has_loop; // Populated during header collection. Actual position can't be known until we start emitting events.
   int looppp; // If (has_loop), position in (dst->v) of the 2-byte loop position.
+  const uint8_t *text; // Meta 0x78, corresponding to an EAU "TEXT" chunk.
+  int textc; // If absent, we can still get channel names from Meta 0x03 or 0x04.
+  struct eaum_string {
+    const char *v;
+    int c; // clamp to 0xff at reception
+  } name_by_chid[16]; // Meta 0x03 or 0x04, fallback channel names.
   
   // May contain up to 256 channels, since our Meta 0x77 Channel Header can address the full 8 bits.
   struct eau_midi_channel {
@@ -31,6 +37,8 @@ struct eau_midi_context {
     int wheelc;
     uint8_t notev[16]; // Little-endian bits corresponding to noteid, which notes are used.
     int wheel; // Live value in EAU scale: 0..0x200..0x3ff
+    const char *name;
+    int namec;
   } *channelv;
   int channelc,channela;
   
@@ -122,6 +130,12 @@ static int eau_midi_collect_headers(struct eau_midi_context *ctx) {
         } break;
       case 'b': {
           if (event.block.opcode==0xff) switch (event.block.type) {
+            case 0x03: case 0x04: {
+                if ((event.block.chid>=0)&&(event.block.chid<0x10)&&event.block.c) {
+                  ctx->name_by_chid[event.block.chid].v=event.block.v;
+                  ctx->name_by_chid[event.block.chid].c=(event.block.c>0xff)?0xff:event.block.c;
+                }
+              } break;
             case 0x07: if ((event.block.c==4)&&!memcmp(event.block.v,"LOOP",4)) ctx->has_loop=1; break;
             case 0x51: { // Set Tempo
                 if (event.block.c>=3) {
@@ -138,6 +152,10 @@ static int eau_midi_collect_headers(struct eau_midi_context *ctx) {
                   channel->chdr=event.block.v;
                   channel->chdrc=event.block.c;
                 }
+              } break;
+            case 0x78: { // Egg Text
+                ctx->text=event.block.v;
+                ctx->textc=event.block.c;
               } break;
           }
         } break;
@@ -237,6 +255,35 @@ static int eau_midi_generate_chdr(struct eau_midi_context *ctx,struct eau_midi_c
   return 0;
 }
 
+/* Synthesize and emit a TEXT chunk, if we have any loose channel names.
+ */
+ 
+static int eau_midi_synthesize_text(struct eau_midi_context *ctx) {
+
+  /* Calculate expected total length.
+   * Zero means don't emit a chunk.
+   */
+  struct eaum_string *string=ctx->name_by_chid;
+  int i=16,expectlen=0;
+  for (;i-->0;string++) if (string->c) {
+    expectlen+=3; // chid,noteid,len
+    expectlen+=string->c;
+  }
+  if (!expectlen) return 0;
+  
+  sr_encode_raw(ctx->dst,"TEXT",4);
+  sr_encode_intbe(ctx->dst,expectlen,4);
+  for (i=0,string=ctx->name_by_chid;i<16;i++,string++) {
+    if (!string->c) continue;
+    sr_encode_u8(ctx->dst,i);
+    sr_encode_u8(ctx->dst,0); // noteid always zero; we only produce channel names.
+    sr_encode_u8(ctx->dst,string->c);
+    sr_encode_raw(ctx->dst,string->v,string->c);
+  }
+  
+  return 0;
+}
+
 /* With headers collected, emit the "\0EAU" and "CHDR" chunks.
  */
  
@@ -251,6 +298,16 @@ static int eau_midi_emit_headers(struct eau_midi_context *ctx) {
   } else {
     sr_encode_intbe(ctx->dst,2,4);
     sr_encode_intbe(ctx->dst,ctx->tempo,2);
+  }
+  
+  // If we got Meta 0x78, emit it verbatim as TEXT. Otherwise, if we have any channel names, synthesize TEXT.
+  if (ctx->textc) {
+    sr_encode_raw(ctx->dst,"TEXT",4);
+    sr_encode_intbe(ctx->dst,ctx->textc,4);
+    sr_encode_raw(ctx->dst,ctx->text,ctx->textc);
+  } else {
+    int err=eau_midi_synthesize_text(ctx);
+    if (err<0) return err;
   }
   
   struct eau_midi_channel *channel=ctx->channelv;

@@ -1,3 +1,6 @@
+/* Beware that the labels we normally display are stored individually in songs.
+ * GM_DRUM_NAMES is ony a fallback, that shouldn't get used often.
+ */
 export const GM_DRUM_NAMES = [
   // 35 empty...
   null, null, null, null, null, null, null,
@@ -5,7 +8,7 @@ export const GM_DRUM_NAMES = [
   null, null, null, null, null, null, null,
   null, null, null, null, null, null, null,
   null, null, null, null, null, null, null,
-  "Acoustic Bass Drum",
+  "WRONG Acoustic Bass Drum",
   "Bass Drum 1",
   "Side Stick",
   "Acoustic Snare",

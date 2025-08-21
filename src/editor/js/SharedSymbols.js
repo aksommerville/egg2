@@ -6,7 +6,7 @@
  */
  
 import { Comm } from "./Comm.js";
-import { Instruments } from "./song/Instruments.js";
+import { Song } from "./song/Song.js";
 
 export class SharedSymbols {
   static getDependencies() {
@@ -16,7 +16,7 @@ export class SharedSymbols {
     this.comm = comm;
     
     this.symv = []; // {nstype,ns,k,v}
-    this.instruments = null; // null or Instruments
+    this.instruments = null; // null or Song
     this.instrumentsPromise = null;
     
     this.loadingPromise = this.comm.httpJson("GET", "/api/symbols").then(rsp => {
@@ -47,16 +47,16 @@ export class SharedSymbols {
   getInstruments() {
     if (this.instruments) return Promise.resolve(this.instruments);
     if (this.instrumentsPromise) return this.instrumentsPromise;
-    return this.instrumentsPromise = this.comm.httpText("GET", "/api/instruments").catch(e => {
+    return this.instrumentsPromise = this.comm.httpBinary("GET", "/api/instruments").catch(e => {
       console.log(`GET /api/instruments failed`, e);
-      return "";
+      return null;
     }).then(rsp => {
       this.instrumentsPromise = null;
       try {
-        this.instruments = new Instruments(rsp);
+        this.instruments = new Song(new Uint8Array(rsp));
       } catch (e) {
         console.log(`decode instruments failed`, e);
-        this.instruments = new Instruments();
+        this.instruments = new Song();
       }
       return this.instruments;
     });

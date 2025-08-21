@@ -13,6 +13,7 @@ export class InstrumentsModal {
     this.element = element;
     this.dom = dom;
     this.sharedSymbols = sharedSymbols;
+    this.instruments = null;
     
     this.result = new Promise((resolve, reject) => {
       this.resolve = resolve;
@@ -20,7 +21,8 @@ export class InstrumentsModal {
     });
     
     this.sharedSymbols.getInstruments().then(instruments => {
-      this.buildUi(instruments);
+      this.instruments = instruments;
+      this.buildUi();
     });
   }
   
@@ -28,19 +30,18 @@ export class InstrumentsModal {
     this.resolve(null);
   }
   
-  buildUi(instruments) {
+  buildUi() {
     this.element.innerHTML = "";
+    if (!this.instruments) return;
     
     /* Split the instruments into 32 buckets.
      * The first 16 are GM, and the last 16 are proposed by Egg.
      * Instruments above bank one mirror into these.
-     * Instruments without both name and pid are ignored.
      */
     const buckets = [];
     for (let i=0; i<32; i++) buckets.push([]);
-    for (const instrument of instruments.instruments) {
-      if (!instrument.name || !instrument.pid) continue;
-      const bid = (instrument.pid >> 3) & 0x1f;
+    for (const instrument of this.instruments.channels) {
+      const bid = (instrument.chid >> 3) & 0x1f;
       buckets[bid].push(instrument);
     }
     
@@ -53,22 +54,25 @@ export class InstrumentsModal {
       const select = this.dom.spawn(this.element, "SELECT", { "on-input": e => this.onSelect(e) });
       this.dom.spawn(select, "OPTION", { value: "", disabled: "disabled" }, InstrumentsModal.BUCKET_NAMES[i]);
       for (const instrument of bucket) {
-        this.dom.spawn(select, "OPTION", { value: instrument.pid }, instrument.name || instrument.pid);
+        this.dom.spawn(select, "OPTION", { value: instrument.chid }, this.instruments.getNameForce(instrument.chid, 0));
       }
       select.value = "";
     }
   }
   
   onSelect(event) {
-    const pid = +event.target.value;
-    if (isNaN(pid)) return;
-    this.sharedSymbols.getInstruments().then(instruments => {
-      const instrument = instruments.instruments.find(i => i.pid === pid);
-      if (instrument) {
-        this.resolve(instrument);
-        this.element.remove();
-      }
-    });
+    const chid = +event.target.value;
+    if (isNaN(chid)) return;
+    const instrument = this.instruments.channels.find(i => i.chid === chid);
+    if (instrument) {
+      this.resolve(instrument);
+      this.element.remove();
+    }
+  }
+  
+  getInstrumentName(instrument) {
+    if (!instrument || !this.instruments) return "";
+    return this.instruments.getName(instrument.chid, 0);
   }
 }
 

@@ -38,8 +38,7 @@ If it appears mid-song, we'll process timing correctly, but the song's declared 
 Meta 0x07 Cue Point with the payload "LOOP" to mark the loop point.
 
 Meta 0x03 Track Name and 0x04 Instrument Name will be understood as channel names, if you use Meta 0x20 MIDI Channel Prefix.
-We explicitly allow channels 0..254 for this, not just 0..15.
-MIDI and EAU-Text can name their channels; regular EAU can not.
+We explicitly allow channels 0..255 for this, not just 0..15.
 
 Opening a MIDI file in our editor and resaving it may destroy information.
 

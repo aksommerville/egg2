@@ -47,7 +47,7 @@ If no project was specified at launch, or anything else goes wrong, returns an e
 
 ### GET /api/instruments
 
-Returns the synth instruments config file verbatim (EAU-Text).
+Returns the synth instruments config file as binary EAU (it's stored as EAU-Text).
 That should be stored at `EGG_SDK/src/eggdev/instruments.eaut`.
 This is read from scratch every time you call it; no need to restart the server if you change the underlying file.
 Beware that regular conversion against the default instruments does cache, and you do have to restart to get that.

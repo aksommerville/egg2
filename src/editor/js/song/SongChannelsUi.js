@@ -9,6 +9,7 @@ import { ModecfgModal } from "./ModecfgModal.js";
 import { PostModal } from "./PostModal.js";
 import { SharedSymbols } from "../SharedSymbols.js";
 import { InstrumentsModal } from "./InstrumentsModal.js";
+import { decodeDrumModecfg } from "./EauDecoder.js";
 
 export class SongChannelsUi {
   static getDependencies() {
@@ -46,7 +47,7 @@ export class SongChannelsUi {
     card.innerHTML = "";
     
     const top = this.dom.spawn(card, "DIV", ["row"]);
-    this.dom.spawn(top, "DIV", ["name"], `Channel ${channel.chid}`);
+    this.dom.spawn(top, "DIV", ["name"], { "on-click": () => this.onEditName(channel) }, this.songService.song.getNameForce(channel.chid, 0));
     this.dom.spawn(top, "DIV", ["spacer"]);
     this.dom.spawn(top, "INPUT", { type: "button", value: "Store...", "on-click": () => this.onStore(channel) });
     this.dom.spawn(top, "INPUT", { type: "button", value: "X", "on-click": () => this.onDelete(channel) });
@@ -82,14 +83,42 @@ export class SongChannelsUi {
   
   /* Events.
    ***************************************************************************************/
+   
+  onEditName(channel) {
+    this.dom.modalText(`Name for channel ${channel.chid}:`, this.songService.song.getName(channel.chid, 0)).then(rsp => {
+      if (typeof(rsp) !== "string") return;
+      this.songService.song.setName(channel.chid, 0, rsp);
+      const element = this.element.querySelector(`.channel[data-chid='${channel.chid}'] .name`);
+      if (element) element.innerText = this.songService.song.getNameForce(channel.chid, 0); // Don't use (rsp); there's some defaulting and decoration here.
+      this.songService.broadcast("dirty");
+    });
+  }
   
   onStore(channel) {
-    console.log(`onStore`, channel);//TODO present modal with the SDK's instrument set
     const modal = this.dom.spawnModal(InstrumentsModal);
     modal.result.then(rsp => {
       if (!rsp) return;
-      console.log(`SongChannelsUi.onStore, from InstrumentsModal: ${rsp.name}`, rsp);
+      const name = modal.getInstrumentName(rsp);
+      channel.overwrite(rsp);
+      this.songService.song.removeNoteNames(channel.chid);
+      this.songService.song.setName(channel.chid, 0, name);
+      if (rsp.mode === 1) this.applyNewDrumNames(channel, rsp.chid);
+      this.songService.broadcast("dirty");
+      this.songService.broadcast("channelSetChanged");
     }).catch(e => this.dom.modalErrror(e));
+  }
+  
+  applyNewDrumNames(channel, fromChid) {
+    const drums = decodeDrumModecfg(channel.modecfg);
+    if (!drums.length) return;
+    this.sharedSymbols.getInstruments().then(instruments => {
+      for (const drum of drums) {
+        const name = instruments.getName(fromChid, drum.noteid);
+        if (!name) continue;
+        this.songService.song.setName(channel.chid, drum.noteid, name);
+      }
+      this.songService.broadcast("dirty");
+    });
   }
   
   onDelete(channel) {
