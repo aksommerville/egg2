@@ -737,3 +737,18 @@ input.toggle:checked + label.toggle.light {
   display: flex;
   flex-direction: column;
 }
+
+.StringsEditor {
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  max-height: 100vh;
+}
+.StringsEditor td {
+  text-align: center;
+}
+.StringsEditor textarea {
+  width: 100%;
+  height: 1lh;
+}

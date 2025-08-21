@@ -25,6 +25,7 @@ export class Injector {
       Injector: this,
       Window: window,
       Document: window.document,
+      Navigator: window.navigator || {},
     };
     this.inProgress = [];
     this.nextNonce = 1;

@@ -19,15 +19,17 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 # TODO
 
 - [ ] Programmatic access to a song eg for ocarinas or sustained notes. API change.
+- - The synthesizers currently aren't built for infinitely-sustaining notes.
+- - Need to think this thru carefully, and ensure we have some safeguards against stuck notes.
 - [ ] Editor.
 - - [ ] Standard actions... what's needed?
-- - [ ] SongChannelsUi.onStore: Modal with SDK instruments
+- - [x] SongChannelsUi.onStore: Modal with SDK instruments
 - - [ ] SongService: Should we auto-re-play on dirty?
 - - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
 - - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
 - - [ ] HexEditor: Paging, offset, ASCII, multi-byte edits.
 - - [ ] ImageEditor: Animation preview like we had in v1.
-- - [ ] StringsEditor: Side-by-side editing across languages, like we had in v1.
+- - [x] StringsEditor: Side-by-side editing across languages, like we had in v1.
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
@@ -83,3 +85,4 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] graf
 - - [ ] font
 - - [ ] Standard instruments and sound effects.
+- [ ] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet.

@@ -18,6 +18,7 @@ Index above 1024 is an error.
 
 Line-oriented text.
 `#` begins a line comment, start of line only.
+Beware that our editor will strip comments and blanks on save.
 
 Each non-empty line is: `INDEX TEXT...` or `INDEX JSON_STRING`
 
