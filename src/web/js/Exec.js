@@ -37,9 +37,6 @@ export class Exec {
       egg_song_get_playhead: () => this.rt.audio.egg_song_get_playhead(),
       egg_song_set_playhead: ph => this.rt.audio.egg_song_set_playhead(ph),
       
-      egg_video_get_screen_size: (wp, hp) => this.rt.video.egg_video_get_screen_size(wp, hp),
-      egg_video_fb_from_screen: (xp, yp) => this.rt.video.egg_video_fb_from_screen(xp, yp),
-      egg_video_screen_from_fb: (xp, yp) => this.rt.video.egg_video_screen_from_fb(xp, yp),
       egg_texture_del: texid => this.rt.video.egg_texture_del(texid),
       egg_texture_new: () => this.rt.video.egg_texture_new(),
       egg_texture_get_size: (wp, hp, texid) => this.rt.video.egg_texture_get_size(wp, hp, texid),

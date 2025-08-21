@@ -179,19 +179,6 @@ void egg_song_set_playhead(double playhead) {
 
 /* Video.
  */
- 
-void egg_video_get_screen_size(int *w,int *h) {
-  if (w) *w=eggrt.hostio->video->w;
-  if (h) *h=eggrt.hostio->video->h;
-}
-
-void egg_video_fb_from_screen(int *x,int *y) {
-  render_coords_fb_from_win(eggrt.render,x,y);
-}
-
-void egg_video_screen_from_fb(int *x,int *y) {
-  render_coords_win_from_fb(eggrt.render,x,y);
-}
 
 void egg_texture_del(int texid) {
   render_texture_del(eggrt.render,texid);

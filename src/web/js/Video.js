@@ -174,25 +174,6 @@ export class Video {
   
   /* Egg Platform API.
    ******************************************************************************************/
-   
-  egg_video_get_screen_size(wp, hp) {
-    wp >>= 2;
-    hp >>= 2;
-    const m32 = this.rt.exec.mem32;
-    if ((wp < 0) || (wp >= m32.length) || (hp < 0) || (hp >= m32.length)) return;
-    const bounds = this.canvas.getBoundingClientRect();
-    m32[wp] = bounds.width;
-    m32[hp] = bounds.height;
-  }
-  
-  egg_video_fb_from_screen(xp, yp) {
-    //TODO We currently have "object-fit:contain" on the canvas. That might not be OK, we might need to handle the final scale-up more deliberately.
-    console.log(`TODO Video.egg_video_fb_from_screen ${xp},${yp}`);
-  }
-  
-  egg_video_screen_from_fb(xp, yp) {
-    console.log(`TODO Video.egg_video_screen_from_fb ${xp},${yp}`);
-  }
   
   egg_texture_del(texid) {
     if (texid <= 1) return; // Deleting framebuffer not allowed.

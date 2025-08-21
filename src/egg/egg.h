@@ -196,15 +196,6 @@ void egg_song_set_playhead(double playhead);
  
 #define EGG_TEXTURE_SIZE_LIMIT 4096
 
-/* You shouldn't normally care about the "screen" size.
- * That's the window your game is running in, usually substantially larger than the framebuffer.
- * It can matter, if you are using unmapped mouse or touch events.
- * Don't make any assumptions about how the framebuffer is mapped onto the screen size; use the provided transformers.
- */
-void egg_video_get_screen_size(int *w,int *h);//XXX I've removed pointer events; we shouldn't need these anymore.
-void egg_video_fb_from_screen(int *x,int *y);
-void egg_video_screen_from_fb(int *x,int *y);
-
 /* Texture objects are identified by a unique positive integer.
  * You must delete any textures you create (don't need to at quit).
  * Texture ID 1 is created implicitly before init, and represents the framebuffer.
