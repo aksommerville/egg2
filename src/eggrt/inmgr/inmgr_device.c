@@ -149,11 +149,130 @@ static int inmgr_device_map_default_keyboard(struct inmgr *inmgr,struct inmgr_de
   return 0;
 }
 
+/* XXX TEMP Hard-coded device mappings.
+ */
+ 
+static int XXX_inmgr_device_map_xinmotek(struct inmgr *inmgr,struct inmgr_device *device) {
+  struct inmgr_button *button=device->buttonv;
+  int i=device->buttonc;
+  for (;i-->0;button++) {
+    switch (button->btnid) {
+      case 0x00010121: button->dstbtnid=EGG_BTN_SOUTH; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010122: button->dstbtnid=EGG_BTN_WEST; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010123: button->dstbtnid=EGG_BTN_EAST; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010124: button->dstbtnid=EGG_BTN_NORTH; button->srclo=1; button->srchi=INT_MAX; break;
+      //case 0x00010125: button->dstbtnid=EGG_BTN_AUX2; button->srclo=1; button->srchi=INT_MAX; break; // We don't have an AUX2.
+      case 0x00010126: button->dstbtnid=EGG_BTN_AUX1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x0001012a: button->dstbtnid=INMGR_ACTION_QUIT; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00030000: button->dstbtnid=EGG_BTN_HORZ; button->srclo=127; button->srchi=129; button->srcvalue=128; break;
+      case 0x00030001: button->dstbtnid=EGG_BTN_VERT; button->srclo=127; button->srchi=129; button->srcvalue=128; break;
+    }
+  }
+  return 0;
+}
+
+static int XXX_inmgr_device_map_elcheapo(struct inmgr *inmgr,struct inmgr_device *device) {
+  struct inmgr_button *button=device->buttonv;
+  int i=device->buttonc;
+  for (;i-->0;button++) {
+    switch (button->btnid) {
+      case 0x00030010: button->dstbtnid=EGG_BTN_HORZ; button->srclo=-1; button->srchi=1; break;
+      case 0x00030011: button->dstbtnid=EGG_BTN_VERT; button->srclo=-1; button->srchi=1; break;
+      case 0x00010122: button->dstbtnid=EGG_BTN_SOUTH; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010123: button->dstbtnid=EGG_BTN_WEST; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010121: button->dstbtnid=EGG_BTN_EAST; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010120: button->dstbtnid=EGG_BTN_NORTH; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010124: button->dstbtnid=EGG_BTN_L1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010125: button->dstbtnid=EGG_BTN_R1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010129: button->dstbtnid=EGG_BTN_AUX1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x0001012b: button->dstbtnid=INMGR_ACTION_QUIT; button->srclo=1; button->srchi=INT_MAX; break;
+    }
+  }
+  return 0;
+}
+
+static int XXX_inmgr_device_map_zelda(struct inmgr *inmgr,struct inmgr_device *device) {
+  struct inmgr_button *button=device->buttonv;
+  int i=device->buttonc;
+  for (;i-->0;button++) {
+    switch (button->btnid) {
+      case 0x00030010: button->dstbtnid=EGG_BTN_HORZ; button->srclo=-1; button->srchi=1; break;
+      case 0x00030011: button->dstbtnid=EGG_BTN_VERT; button->srclo=-1; button->srchi=1; break;
+      case 0x00010131: button->dstbtnid=EGG_BTN_SOUTH; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010130: button->dstbtnid=EGG_BTN_WEST; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010132: button->dstbtnid=EGG_BTN_EAST; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010133: button->dstbtnid=EGG_BTN_NORTH; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010134: button->dstbtnid=EGG_BTN_L1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010135: button->dstbtnid=EGG_BTN_R1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010139: button->dstbtnid=EGG_BTN_AUX1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x0001013b: button->dstbtnid=INMGR_ACTION_QUIT; button->srclo=1; button->srchi=INT_MAX; break;
+    }
+  }
+  return 0;
+}
+
+static int XXX_inmgr_device_map_snes8bd(struct inmgr *inmgr,struct inmgr_device *device) {
+  struct inmgr_button *button=device->buttonv;
+  int i=device->buttonc;
+  for (;i-->0;button++) {
+    switch (button->btnid) {
+      case 0x00030000: button->dstbtnid=EGG_BTN_HORZ; button->srclo=-100; button->srchi=100; break; // Range 32kish, sometimes nonzero resting value.
+      case 0x00030001: button->dstbtnid=EGG_BTN_VERT; button->srclo=-100; button->srchi=100; break; // ....why on earth does it do that???
+      case 0x00010130: button->dstbtnid=EGG_BTN_SOUTH; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010133: button->dstbtnid=EGG_BTN_WEST; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010131: button->dstbtnid=EGG_BTN_EAST; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010134: button->dstbtnid=EGG_BTN_NORTH; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010136: button->dstbtnid=EGG_BTN_L1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010137: button->dstbtnid=EGG_BTN_R1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x0001013b: button->dstbtnid=EGG_BTN_AUX1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x0001013a: button->dstbtnid=INMGR_ACTION_QUIT; button->srclo=1; button->srchi=INT_MAX; break; // Select (there is no AUX3 or plunger)
+    }
+  }
+  return 0;
+}
+
+static int XXX_inmgr_device_map_evercade(struct inmgr *inmgr,struct inmgr_device *device) {
+  struct inmgr_button *button=device->buttonv;
+  int i=device->buttonc;
+  for (;i-->0;button++) {
+    switch (button->btnid) {
+      case 0x00030010: button->dstbtnid=EGG_BTN_HORZ; button->srclo=-1; button->srchi=1; break;
+      case 0x00030011: button->dstbtnid=EGG_BTN_VERT; button->srclo=-1; button->srchi=1; break;
+      case 0x00010130: button->dstbtnid=EGG_BTN_SOUTH; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010133: button->dstbtnid=EGG_BTN_WEST; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010131: button->dstbtnid=EGG_BTN_EAST; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010134: button->dstbtnid=EGG_BTN_NORTH; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010136: button->dstbtnid=EGG_BTN_L1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x00010137: button->dstbtnid=EGG_BTN_R1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x0001013b: button->dstbtnid=EGG_BTN_AUX1; button->srclo=1; button->srchi=INT_MAX; break;
+      case 0x0001013c: button->dstbtnid=INMGR_ACTION_QUIT; button->srclo=1; button->srchi=INT_MAX; break;
+    }
+  }
+  return 0;
+}
+
 /* Map device buttons, after acquiring the full set.
  */
  
-static int inmgr_device_map(struct inmgr *inmgr,struct inmgr_device *device) {
-  //fprintf(stderr,"%s %04x:%04x:%04x '%.*s' buttonc=%d...\n",__func__,device->vid,device->pid,device->version,device->namec,device->name,device->buttonc);
+static int inmgr_device_map(
+  struct inmgr *inmgr,
+  struct inmgr_device *device,
+  int vid,int pid,int version,const char *name
+) {
+  //fprintf(stderr,"%s %04x:%04x:%04x '%s' buttonc=%d...\n",__func__,vid,pid,version,name,device->buttonc);
+  
+  /* XXX Highly temporary. Hard-coded mapping for my devices.
+   * Hacking this in quick before GDEX 2025. Get it working proper later.
+   */
+  switch ((vid<<16)|pid) {
+    case 0x16c005e1: return XXX_inmgr_device_map_xinmotek(inmgr,device);
+    case 0x0e8f0003: return XXX_inmgr_device_map_elcheapo(inmgr,device);
+    case 0x20d6a711: return XXX_inmgr_device_map_zelda(inmgr,device);
+    case 0x045e028e: switch (version) { // Everybody calls themselves fucking "Xbox 360 Controller", it drives me nuts.
+        case 0x0114: return XXX_inmgr_device_map_snes8bd(inmgr,device);
+        case 0x0105: return XXX_inmgr_device_map_evercade(inmgr,device);
+      } break;
+  }
   
   //TODO Search templates. Apply if we find one. Otherwise synthesize a new template, save it, then apply it.
   // The logic below should be adapted for that synthesize case.
@@ -346,7 +465,6 @@ static int inmgr_device_acquire_buttons_cb(int btnid,int hidusage,int lo,int hi,
 }
  
 static int inmgr_device_acquire_buttons(struct inmgr *inmgr,struct inmgr_device *device) {
-  //fprintf(stderr,"%s %04x:%04x:%04x '%.*s'...\n",__func__,device->vid,device->pid,device->version,device->namec,device->name);
   return device->driver->type->for_each_button(device->driver,device->devid,inmgr_device_acquire_buttons_cb,device);
 }
 
@@ -356,17 +474,17 @@ static int inmgr_device_acquire_buttons(struct inmgr *inmgr,struct inmgr_device 
 int inmgr_device_query_config(struct inmgr *inmgr,struct inmgr_device *device) {
   if (!device->driver) return -1;
   
+  int vid=0,pid=0,version=0;
+  const char *name=0;
   if (device->driver->type->get_ids) {
-    //TODO Fetch name and IDs, but don't store in device. We only need them during setup.
-    //const char *name=device->driver->type->get_ids(&device->vid,&device->pid,&device->version,device->driver,device->devid);
-    //if (inmgr_device_set_name(device,name,-1)<0) return -1;
+    name=device->driver->type->get_ids(&vid,&pid,&version,device->driver,device->devid);
   }
   
   if (device->driver->type->for_each_button) {
     if (inmgr_device_acquire_buttons(inmgr,device)<0) return -1;
   }
   
-  return inmgr_device_map(inmgr,device);
+  return inmgr_device_map(inmgr,device,vid,pid,version,name);
 }
 
 /* Synthesize config for keyboard and apply maps.
@@ -394,7 +512,7 @@ int inmgr_device_init_keyboard(struct inmgr *inmgr,struct inmgr_device *device) 
     }
   }
   
-  return inmgr_device_map(inmgr,device);
+  return inmgr_device_map(inmgr,device,0,0,0,"System Keyboard");
 }
 
 /* Map to player if we haven't.

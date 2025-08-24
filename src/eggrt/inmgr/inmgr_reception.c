@@ -18,5 +18,6 @@ void inmgr_disconnect(struct hostio_input *driver,int devid) {
 
 void inmgr_button(struct hostio_input *driver,int devid,int btnid,int value) {
   if (!devid||!btnid) return; // (devid) and (btnid) zero are reserved, for keyboards and connection events.
+  //fprintf(stderr,"%s %d.0x%08x=%d\n",__func__,devid,btnid,value);
   inmgr_mappable_event(&eggrt.inmgr,devid,btnid,value);
 }

@@ -18,11 +18,18 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 
 # TODO
 
+- [x] !!! CRITICAL !!! Need proper input mapping before GDEX. I don't want to hack it. Don't need interactive config, but do acquire config generically from a config file.
+- - ...meh, hacked it
+- [ ] I'd really like `make run` from this project to rebuild the demo when libeggrt changes. Would be nice in external projects too.
 - [ ] Programmatic access to a song eg for ocarinas or sustained notes. API change.
 - - The synthesizers currently aren't built for infinitely-sustaining notes.
 - - Need to think this thru carefully, and ensure we have some safeguards against stuck notes.
 - [ ] Editor.
 - - [ ] Standard actions... what's needed?
+- - - Don't bother with map stuff; those tend to implement a little different per game, let the overrides worry about it.
+- - - [ ] Detect missing strings across languages.
+- - - [ ] Detect empty sound effects.
+- - - [ ] Is it feasible to scan for missing resources? eg map names an image that doesn't exist.
 - - [x] SongChannelsUi.onStore: Modal with SDK instruments
 - - [ ] SongService: Should we auto-re-play on dirty?
 - - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
@@ -59,6 +66,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - - [ ] Select player.
 - - [ ] Record and playback session.
 - - [ ] System language, for MacOS and Windows.
+- - [ ] Global config file.
 - [ ] Web runtime.
 - - [ ] Input.
 - - - [ ] Mapping.
