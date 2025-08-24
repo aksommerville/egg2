@@ -85,7 +85,7 @@ static void synth_voice_update_wave_bend(float *v,int c,struct synth_voice *voic
   
     float cents=synth_env_update(&voice->pitchenv);
     uint32_t dp=voice->cardp;
-    dp=(uint32_t)((float)dp*powf(2.0f,cents/1200.0f));
+    dp=(int32_t)((float)dp*powf(2.0f,cents/1200.0f));
     
     voice->carp+=dp;
     float sample=EXTRA->wavefv[voice->carp>>SYNTH_WAVE_SHIFT];
@@ -112,7 +112,7 @@ static void synth_voice_update_fm_basic(float *v,int c,struct synth_voice *voice
     float mod=EXTRA->wavefv[voice->modp>>SYNTH_WAVE_SHIFT];
     voice->modp+=moddp;
     float range=synth_env_update(&voice->rangeenv);
-    dp=(uint32_t)((float)dp+(float)dp*mod*range);
+    dp=(int32_t)((float)dp+(float)dp*mod*range);
     voice->carp+=dp;
   }
 }
@@ -132,7 +132,7 @@ static void synth_voice_update_fm_abs(float *v,int c,struct synth_voice *voice,s
     float mod=EXTRA->wavefv[voice->modp>>SYNTH_WAVE_SHIFT];
     voice->modp+=EXTRA->moddp;
     float range=synth_env_update(&voice->rangeenv);
-    dp=(uint32_t)((float)dp+(float)dp*mod*range);
+    dp=(int32_t)((float)dp+(float)dp*mod*range);
     voice->carp+=dp;
   }
 }
@@ -149,10 +149,10 @@ static void synth_voice_update_fm_full(float *v,int c,struct synth_voice *voice,
   
     float cents=synth_env_update(&voice->pitchenv);
     uint32_t dp=voice->cardp;
-    dp=(uint32_t)((float)dp*powf(2.0f,cents/1200.0f));
+    dp=(int32_t)((float)dp*powf(2.0f,cents/1200.0f));
     uint32_t moddp;
     if (EXTRA->moddp) moddp=EXTRA->moddp;
-    else moddp=(uint32_t)((float)dp*EXTRA->modrate);
+    else moddp=(int32_t)((float)dp*EXTRA->modrate);
     
     float sample=EXTRA->wavefv[voice->carp>>SYNTH_WAVE_SHIFT];
     (*v)+=sample*synth_env_update(&voice->levelenv);
@@ -161,7 +161,7 @@ static void synth_voice_update_fm_full(float *v,int c,struct synth_voice *voice,
     voice->modp+=moddp;
     float range=synth_env_update(&voice->rangeenv)*(*lfo);
     
-    dp=(uint32_t)((float)dp+(float)dp*mod*range);
+    dp=(int32_t)((float)dp+(float)dp*mod*range);
     voice->carp+=dp;
   }
 }
