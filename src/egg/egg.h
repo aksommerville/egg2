@@ -149,10 +149,7 @@ void egg_input_configure();
 void egg_input_get_all(int *statev,int statea);
 int egg_input_get_one(int playerid);
 
-/* The Egg gamepad is 11 buttons, all 2-state.
- * It's the SNES gamepad minus Select.
- * I'm deliberately not defining the entire Standard Mapping Gamepad, to leave some available for global actions.
- * The triggers and aux button are numbered per convention, but the number is only 1.
+/* Egg's gamepad deliberately matches our shared 'inmgr' unit.
  */
 #define EGG_BTN_LEFT   0x0001
 #define EGG_BTN_RIGHT  0x0002
@@ -164,7 +161,11 @@ int egg_input_get_one(int playerid);
 #define EGG_BTN_NORTH  0x0080
 #define EGG_BTN_L1     0x0100
 #define EGG_BTN_R1     0x0200
-#define EGG_BTN_AUX1   0x0400
+#define EGG_BTN_L2     0x0400
+#define EGG_BTN_R2     0x0800
+#define EGG_BTN_AUX1   0x1000
+#define EGG_BTN_AUX2   0x2000
+#define EGG_BTN_AUX3   0x4000
 
 /* Audio.
  **********************************************************************************************/

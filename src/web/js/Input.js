@@ -1,9 +1,9 @@
 /* Input.js
  */
 
-// Match src/eggrt/inmgr/inmgr.h:INMGR_ACTION_*, not because they need to, but just to keep things straight.
-const ACTION_QUIT       = 0x00010001;
-const ACTION_FULLSCREEN = 0x00010002;
+// Match src/eggrt/inmgr/inmgr.h, not because they need to, but just to keep things straight.
+const ACTION_QUIT       = 0x01000001;
+const ACTION_FULLSCREEN = 0x01000002;
 
 // From egg/egg.h.
 const BTN_LEFT   = 0x0001;
@@ -16,7 +16,11 @@ const BTN_EAST   = 0x0040;
 const BTN_NORTH  = 0x0080;
 const BTN_L1     = 0x0100;
 const BTN_R1     = 0x0200;
-const BTN_AUX1   = 0x0400;
+const BTN_L2     = 0x0400;
+const BTN_R2     = 0x0800;
+const BTN_AUX1   = 0x1000;
+const BTN_AUX2   = 0x2000;
+const BTN_AUX3   = 0x4000;
  
 export class Input {
   constructor(rt) {
@@ -56,8 +60,10 @@ export class Input {
       KeyC: BTN_EAST,
       KeyV: BTN_NORTH,
       
-      Backquote: BTN_L1,
-      Backspace: BTN_R1,
+      Backquote: BTN_L2,
+      Tab: BTN_L1,
+      Backspace: BTN_R2,
+      Backslash: BTN_R1,
       Enter: BTN_AUX1,
       
       Numpad8: BTN_UP,
@@ -80,11 +86,11 @@ export class Input {
     // Indexed by Standard Mapping gamepad button index.
     this.joyMap = [
       BTN_SOUTH, BTN_EAST, BTN_WEST, BTN_NORTH,
-      BTN_L1, BTN_R1, BTN_L1, BTN_R1, // L1, R1, L2, R2: Map them all to '1'.
-      BTN_AUX1, BTN_AUX1, // Select, Start: Call them both AUX1.
-      0, 0, // Plungers
+      BTN_L1, BTN_R1, BTN_L2, BTN_R2,
+      BTN_AUX2, BTN_AUX1, // Select, Start
+      0, ACTION_QUIT, // Plungers.
       BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT,
-      ACTION_QUIT,
+      BTN_AUX3,
     ];
   }
   

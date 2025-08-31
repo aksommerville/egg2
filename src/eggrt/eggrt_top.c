@@ -15,7 +15,7 @@ void eggrt_quit(int status) {
   if (!status) eggrt_clock_report();
   
   render_del(eggrt.render);
-  inmgr_quit(&eggrt.inmgr);
+  inmgr_quit();
   eggrt_store_quit();
   
   hostio_audio_play(eggrt.hostio,0);
@@ -179,10 +179,15 @@ static int eggrt_init_input() {
     fprintf(stderr,"%s: Error initializing input drivers.\n",eggrt.exename);
     return -2;
   }
-  int err=inmgr_init(&eggrt.inmgr);
+  int err=inmgr_init();
   if (err<0) {
     if (err!=-2) fprintf(stderr,"%s: Error initializing input manager.\n",eggrt.exename);
     return -2;
+  }
+  inmgr_set_signal(INMGR_BTN_QUIT,eggrt_cb_quit);
+  if (eggrt.hostio->video&&eggrt.hostio->video->type->provides_input) {
+    eggrt.devid_keyboard=hostio_input_devid_next();
+    inmgr_connect_keyboard(eggrt.devid_keyboard);
   }
   return 0;
 }
@@ -193,15 +198,15 @@ static int eggrt_init_drivers() {
     .cb_close=eggrt_cb_close,
     .cb_focus=eggrt_cb_focus,
     .cb_resize=eggrt_cb_resize,
-    .cb_key=inmgr_key,
+    .cb_key=eggrt_cb_key,
   };
   struct hostio_audio_delegate adelegate={
     .cb_pcm_out=eggrt_cb_pcm_out,
   };
   struct hostio_input_delegate idelegate={
-    .cb_connect=inmgr_connect,
-    .cb_disconnect=inmgr_disconnect,
-    .cb_button=inmgr_button,
+    .cb_connect=eggrt_cb_connect,
+    .cb_disconnect=eggrt_cb_disconnect,
+    .cb_button=eggrt_cb_button,
   };
   if (!(eggrt.hostio=hostio_new(&vdelegate,&adelegate,&idelegate))) return -1;
   // Video must initialize before input.
@@ -270,10 +275,6 @@ int eggrt_update() {
   // Update drivers.
   if ((err=hostio_update(eggrt.hostio))<0) {
     if (err!=-2) fprintf(stderr,"%s: Error updating platform drivers.\n",eggrt.exename);
-    return -2;
-  }
-  if ((err=inmgr_update(&eggrt.inmgr))<0) {
-    if (err!=-2) fprintf(stderr,"%s: Error updating input manager.\n",eggrt.exename);
     return -2;
   }
   if (eggrt.terminate) return 0;

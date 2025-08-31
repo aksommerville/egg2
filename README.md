@@ -18,9 +18,6 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 
 # TODO
 
-- [x] !!! CRITICAL !!! Audio is highly fucked on the pi. Must be ARM unsigned-int-to-float stuff.
-- [x] !!! CRITICAL !!! Need proper input mapping before GDEX. I don't want to hack it. Don't need interactive config, but do acquire config generically from a config file.
-- - ...meh, hacked it
 - [ ] I'd really like `make run` from this project to rebuild the demo when libeggrt changes. Would be nice in external projects too.
 - [ ] Programmatic access to a song eg for ocarinas or sustained notes. API change.
 - - The synthesizers currently aren't built for infinitely-sustaining notes.
@@ -59,12 +56,10 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] `src/demo/src/data/song/8-doors_without_walls.mid:WARNING: 3 notes were not released.`
 - [ ] Native runtime.
 - - [ ] Input.
-- - - [ ] Persist mappings.
+- - - [x] Persist mappings.
 - - - [ ] Interactive reconfig.
 - - - - [ ] Let the client declare which buttons it uses, so when configuring we don't ask for all 15 buttons.
 - - - - - Maybe a metadata field "incfgMask" containing characters "dswne123lrLR". "d" being the dpad, all others correspond to one button.
-- - - [ ] Nix queue.
-- - - [ ] Select player.
 - - [ ] Record and playback session.
 - - [ ] System language, for MacOS and Windows.
 - - [ ] Global config file.

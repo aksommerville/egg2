@@ -132,18 +132,14 @@ void egg_input_configure() {
 
 void egg_input_get_all(int *statev,int statea) {
   if (!statev||(statea<1)) return;
-  if (statea>EGGRT_PLAYER_LIMIT) statea=EGGRT_PLAYER_LIMIT; // sanity check
-  if (statea<=eggrt.inmgr.playerc) {
-    memcpy(statev,eggrt.inmgr.playerv,sizeof(int)*statea);
-  } else {
-    memcpy(statev,eggrt.inmgr.playerv,sizeof(int)*eggrt.inmgr.playerc);
-    memset(statev+eggrt.inmgr.playerc,0,sizeof(int)*(statea-eggrt.inmgr.playerc));
+  if (statea>INMGR_PLAYER_LIMIT) statea=INMGR_PLAYER_LIMIT; // sanity check
+  int i=statea; while (i-->0) {
+    statev[i]=inmgr_get_player(i);
   }
 }
 
 int egg_input_get_one(int playerid) {
-  if ((playerid<0)||(playerid>=eggrt.inmgr.playerc)) return 0;
-  return eggrt.inmgr.playerv[playerid];
+  return inmgr_get_player(playerid);
 }
 
 /* Audio.
