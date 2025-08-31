@@ -18,6 +18,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 
 # TODO
 
+- [x] !!! CRITICAL !!! Audio is highly fucked on the pi. Must be ARM unsigned-int-to-float stuff.
 - [x] !!! CRITICAL !!! Need proper input mapping before GDEX. I don't want to hack it. Don't need interactive config, but do acquire config generically from a config file.
 - - ...meh, hacked it
 - [ ] I'd really like `make run` from this project to rebuild the demo when libeggrt changes. Would be nice in external projects too.

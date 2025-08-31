@@ -157,15 +157,15 @@ static int XXX_inmgr_device_map_xinmotek(struct inmgr *inmgr,struct inmgr_device
   int i=device->buttonc;
   for (;i-->0;button++) {
     switch (button->btnid) {
-      case 0x00010121: button->dstbtnid=EGG_BTN_SOUTH; button->srclo=1; button->srchi=INT_MAX; break;
-      case 0x00010122: button->dstbtnid=EGG_BTN_WEST; button->srclo=1; button->srchi=INT_MAX; break;
-      case 0x00010123: button->dstbtnid=EGG_BTN_EAST; button->srclo=1; button->srchi=INT_MAX; break;
-      case 0x00010124: button->dstbtnid=EGG_BTN_NORTH; button->srclo=1; button->srchi=INT_MAX; break;
-      //case 0x00010125: button->dstbtnid=EGG_BTN_AUX2; button->srclo=1; button->srchi=INT_MAX; break; // We don't have an AUX2.
-      case 0x00010126: button->dstbtnid=EGG_BTN_AUX1; button->srclo=1; button->srchi=INT_MAX; break;
-      case 0x0001012a: button->dstbtnid=INMGR_ACTION_QUIT; button->srclo=1; button->srchi=INT_MAX; break;
-      case 0x00030000: button->dstbtnid=EGG_BTN_HORZ; button->srclo=127; button->srchi=129; button->srcvalue=128; break;
-      case 0x00030001: button->dstbtnid=EGG_BTN_VERT; button->srclo=127; button->srchi=129; button->srcvalue=128; break;
+      case 0x00010121: button->dstbtnid=EGG_BTN_SOUTH; button->srclo=1; button->srchi=INT_MAX; break; // green (BTN_THUMB)
+      case 0x00010122: button->dstbtnid=EGG_BTN_WEST; button->srclo=1; button->srchi=INT_MAX; break; // blue (BTN_THUMB2)
+      case 0x00010123: button->dstbtnid=EGG_BTN_EAST; button->srclo=1; button->srchi=INT_MAX; break; // red (BTN_TOP)
+      case 0x00010124: button->dstbtnid=EGG_BTN_NORTH; button->srclo=1; button->srchi=INT_MAX; break; // yellow (BTN_TOP2)
+      //case 0x00010125: button->dstbtnid=EGG_BTN_AUX2; button->srclo=1; button->srchi=INT_MAX; break; // upper white; We don't have an AUX2. (BTN_PINKIE)
+      case 0x00010126: button->dstbtnid=EGG_BTN_AUX1; button->srclo=1; button->srchi=INT_MAX; break; // lower white (BTN_BASE)
+      case 0x0001012a: button->dstbtnid=INMGR_ACTION_QUIT; button->srclo=1; button->srchi=INT_MAX; break; // front panel (BTN_BASE5)
+      case 0x00030000: button->dstbtnid=EGG_BTN_HORZ; button->srclo=127; button->srchi=129; button->srcvalue=128; break; // ABS_X
+      case 0x00030001: button->dstbtnid=EGG_BTN_VERT; button->srclo=127; button->srchi=129; button->srcvalue=128; break; // ABS_Y
     }
   }
   return 0;
