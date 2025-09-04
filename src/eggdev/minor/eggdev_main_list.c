@@ -21,7 +21,7 @@ static int eggdev_list_default(struct rom_reader *reader,const char *path) {
         'a'+(lang>>5)-1,
         'a'+(lang&0x1f)-1,
       };
-      if (subrid&&(ln[0]>='a')&&(ln[0]<='z')&&(ln[1]>='a')&&(ln[2]<='z')) {
+      if (subrid&&(ln[0]>='a')&&(ln[0]<='z')&&(ln[1]>='a')&&(ln[1]<='z')) {
         if (subrid>=10) fprintf(stdout,"%12.*s %.2s-%-d %7d\n",tnamec,tname,ln,subrid,res.c);
         else fprintf(stdout,"%12.*s %3.2s-%-d %7d\n",tnamec,tname,ln,subrid,res.c);
         continue;

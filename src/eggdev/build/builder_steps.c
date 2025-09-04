@@ -251,6 +251,20 @@ int builder_schedule_compile(struct builder *builder,struct builder_step *step) 
  */
  
 static int builder_generate_datao_assembly(struct sr_encoder *dst,const char *path,int pathc) {
+  /* TODO 2025-09-04: Under MacOS, referring to '_egg_embedded_rom', one underscore, causes an actual link aagainst '__egg_embedded_rom', two underscores.
+   * I need to understand why this happens, then maybe replace this bit with something more robust.
+   * It's different under Linux; there we use the same single-underscore name everywhere.
+   * For now, it works to use an extra underscore here in the assembly file.
+   */
+  #if USE_ismac
+    return sr_encode_fmt(dst,
+      ".global __egg_embedded_rom,__egg_embedded_rom_size\n"
+      "__egg_embedded_rom:\n"
+      ".incbin \"%.*s\"\n"
+      "__egg_embedded_rom_size:\n"
+      ".int (__egg_embedded_rom_size-__egg_embedded_rom)\n"
+    ,pathc,path);
+  #endif
   return sr_encode_fmt(dst,
     ".global _egg_embedded_rom,_egg_embedded_rom_size\n"
     "_egg_embedded_rom:\n"

@@ -54,6 +54,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
 - - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
 - - [ ] `src/demo/src/data/song/8-doors_without_walls.mid:WARNING: 3 notes were not released.`
+- - [ ] src/eggdev/build/builder_infer_outputs.c:260:TODO: builder_infer_target_outputs_macos, still need some of the ancillary bits
 - [ ] Native runtime.
 - - [ ] Input.
 - - - [x] Persist mappings.
@@ -90,3 +91,14 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] font
 - - [ ] Standard instruments and sound effects.
 - [ ] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet.
+- [ ] macbook: etc/tool/genbuildconfig.sh: line 23: realpath: command not found
+- [ ] macbook: [make] find: -executable: unknown primary or operator
+- [x] macbook: Is "-framework" not a thing anymore? How do we link against Frameworks?
+- - No, our link command is getting mangled somewhere: ...ggstra/eggstra_play.o -framework -lm -lz AudioUnit Cocoa CoreGraphics IOKit OpenGL Quartz
+- - It's an ill-advised `$(sort)` in linking eggstra. Just let LDPOST be duplicated.
+- [ ] macbook: /local/config.mk: Failed to read Egg's build configuration.
+- - Because I added "macos_OBJC"?
+- [ ] genbuildconfig.sh: Generated blank EGG_SDK (macbook)
+- [ ] macbook, linking rom: __egg_embedded_rom undefined
+- - Too many underscores? It is present in src/demo/mid/macos/data.o, but with a single leading underscore.
+- [ ] macbook: `make run` is not MacOS-savvy: `make: src/demo/out/demo-macos: No such file or directory`

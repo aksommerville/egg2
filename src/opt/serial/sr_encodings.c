@@ -6,7 +6,7 @@
 
 // App programmer! You probably need to tweak these defines to get the right endian.h.
 // SHA-1 uses it.
-#if USE_macos
+#if USE_ismac
   #include <machine/endian.h>
 #elif USE_mswin
   #define LITTLE_ENDIAN 1234

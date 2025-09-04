@@ -2,6 +2,7 @@
 #include "builder.h"
 #include <sys/wait.h>
 #include <unistd.h>
+#include <signal.h>
 
 /* Cleanup process.
  */

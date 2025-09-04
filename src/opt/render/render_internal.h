@@ -7,7 +7,13 @@
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
-#include <GLES2/gl2.h>
+
+#if USE_ismac
+  #include <OpenGL/OpenGL.h>
+  #include <OpenGL/gl3.h>
+#else
+  #include <GLES2/gl2.h>
+#endif
 
 //TODO EGG_GLSL_VERSION: Document, and set appropriate defaults via config.mk.
 #ifndef EGG_GLSL_VERSION

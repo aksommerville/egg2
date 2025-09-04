@@ -32,9 +32,10 @@ $(eggdev_STANDALONE_TEMPLATE):$(eggdev_EXE) $(eggdev_HTML_INPUTS);$(PRECMD) $(eg
 # [*] The distinction between "reasonably convenient" and "horrifically painful" is entirely subjective.
 eggdev_EGGSTRA_EXE:=out/eggstra
 eggdev_EGGSTRA_OPT_ENABLE:=$(sort $(eggdev_OPT_ENABLE) $($(EGG_NATIVE_TARGET)_OPT_ENABLE))
-eggdev_EGGSTRA_CFILES:=$(filter src/eggstra/%.c $(addprefix src/opt/,$(addsuffix /%.c,$(eggdev_EGGSTRA_OPT_ENABLE))),$(SRCFILES))
-eggdev_EGGSTRA_OFILES:=$(patsubst src/%.c,mid/eggstra/%.o,$(eggdev_EGGSTRA_CFILES))
+eggdev_EGGSTRA_CFILES:=$(filter %.c %.m,$(filter src/eggstra/% $(addprefix src/opt/,$(addsuffix /%,$(eggdev_EGGSTRA_OPT_ENABLE))),$(SRCFILES)))
+eggdev_EGGSTRA_OFILES:=$(patsubst src/%,mid/eggstra/%.o,$(basename $(eggdev_EGGSTRA_CFILES)))
 -include $(eggdev_EGGSTRA_OFILES:.o=.d)
 mid/eggstra/%.o:src/%.c;$(PRECMD) $($(EGG_NATIVE_TARGET)_CC) -o$@ $<
+mid/eggstra/%.o:src/%.m;$(PRECMD) $($(EGG_NATIVE_TARGET)_OBJC) -o$@ $<
 eggdev-all:$(eggdev_EGGSTRA_EXE)
-$(eggdev_EGGSTRA_EXE):$(eggdev_EGGSTRA_OFILES);$(PRECMD) $($(EGG_NATIVE_TARGET)_LD) -o$@ $^ $(sort $(eggdev_LDPOST) $($(EGG_NATIVE_TARGET)_LDPOST))
+$(eggdev_EGGSTRA_EXE):$(eggdev_EGGSTRA_OFILES);$(PRECMD) $($(EGG_NATIVE_TARGET)_LD) -o$@ $^ $(eggdev_LDPOST) $($(EGG_NATIVE_TARGET)_LDPOST)
