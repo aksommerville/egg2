@@ -234,17 +234,41 @@ int builder_schedule_compile(struct builder *builder,struct builder_step *step) 
   if (!ofile->target->ccc) return builder_error(builder,"%s: Target '%.*s' has no C compiler.\n",ofile->path,ofile->target->namec,ofile->target->name);
   struct builder_file *cfile=builder_file_req_with_hint(ofile,BUILDER_FILE_HINT_C);
   if (!cfile) return builder_error(builder,"%s: Expected a '.c' prereq\n",ofile->path);
-  char cmd[1024];
-  int cmdc=snprintf(cmd,sizeof(cmd),
-    "%.*s -I%.*s/mid -I%s/src -o%.*s %.*s",
+  struct sr_encoder cmd={0};
+
+  //TODO All languages are "C" to us. If we're going to allow C++, Objective-C, whatever, in games, we'll need to detect here.
+  // As of 2025-09-05, the only non-C compiled code I expect to use is some Objective-C in libeggrt -- nothing for clients.
+  if (sr_encode_fmt(&cmd,
+    "%.*s -I%.*s/mid -I%s/src",
     ofile->target->ccc,ofile->target->cc,
     builder->rootc,builder->root,
-    g.sdkpath,
+    g.sdkpath
+  )<0) { sr_encoder_cleanup(&cmd); return -1; }
+  
+  // Declare opt units.
+  const char *oe=0;
+  int oec=eggdev_config_get_sub(&oe,step->file->target->name,step->file->target->namec,"OPT_ENABLE",10);
+  int oep=0;
+  while (oep<oec) {
+    if ((unsigned char)oe[oep]<=0x20) {
+      oep++;
+      continue;
+    }
+    const char *token=oe+oep++;
+    int tokenc=1;
+    while ((oep<oec)&&((unsigned char)oe[oep++]>0x20)) tokenc++;
+    if (sr_encode_fmt(&cmd," -DUSE_%.*s=1",tokenc,token)<0) { sr_encoder_cleanup(&cmd); return -1; }
+  }
+
+  if (sr_encode_fmt(&cmd,
+    " -o%.*s %.*s",
     ofile->pathc,ofile->path,
     cfile->pathc,cfile->path
-  );
-  if ((cmdc<1)||(cmdc>=sizeof(cmd))) return -1;
-  return builder_begin_command(builder,step,cmd,cmdc,0,0);
+  )<0) { sr_encoder_cleanup(&cmd); return -1; }
+
+  int err=builder_begin_command(builder,step,cmd.v,cmd.c,0,0);
+  sr_encoder_cleanup(&cmd);
+  return err;
 }
 
 /* Assembly for the rom wrapper.

@@ -108,4 +108,5 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - [x] macbook: Video initially uses only like half of the window.
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
 - [ ] zennoniwa on macbook: Dropping sound effects randomly?
-- [ ] zennoniwa on macbook: Why did I have to declare 'USE_real_stdlib 1' in a game header? That should have been set by eggdev at compile.
+- [x] zennoniwa on macbook: Why did I have to declare 'USE_real_stdlib 1' in a game header? That should have been set by eggdev at compile.
+- - Looks like we're not sending '-DUSE_$U=1' as I thought. Do that.

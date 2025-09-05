@@ -114,7 +114,7 @@ int eggdev_config_get_sub(void *dstpp,const char *target,int targetc,const char 
   if (!target) targetc=0; else if (targetc<0) { targetc=0; while (target[targetc]) targetc++; }
   if (!k) kc=0; else if (kc<0) { kc=0; while (k[kc]) kc++; }
   char fullk[256];
-  int fullkc=snprintf(fullk,sizeof(fullk),"%.*s/%.*s",targetc,target,kc,k);
+  int fullkc=snprintf(fullk,sizeof(fullk),"%.*s_%.*s",targetc,target,kc,k);
   if ((fullkc<1)||(fullkc>=sizeof(fullk))) return 0;
   return eggdev_config_get(dstpp,fullk,fullkc);
 }
