@@ -5,6 +5,15 @@
 #ifndef MACOS_H
 #define MACOS_H
 
+struct macioc_delegate {
+  int rate; // hz, for update(). <=0 we will not update
+  void *userdata;
+  void (*focus)(void *userdata,int focus);
+  void (*quit)(void *userdata);
+  int (*init)(void *userdata);
+  void (*update)(void *userdata);
+};
+
 int macos_prerun_argv(int argc,char **argv);
 
 int macos_main(

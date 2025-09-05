@@ -48,6 +48,12 @@ int macos_main(
   void (*cb_update)(void *userdata),
   void *userdata
 ) {
+
+  // This seems necessary, to prevent AKAppDelegate from getting tree-shook out at link.
+  // The only *real* references to it are via Main.nib.
+  AKAppDelegate *throwaway=[[AKAppDelegate alloc] init];
+  [throwaway release];
+
   macioc.delegate.rate=60.0;
   macioc.delegate.quit=cb_quit;
   macioc.delegate.init=cb_init;

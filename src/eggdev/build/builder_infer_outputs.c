@@ -255,9 +255,37 @@ static int builder_infer_target_outputs_macos(struct builder *builder,struct bui
     if (ofile->target!=target) continue;
     if (builder_file_add_req(exefile,ofile)<0) return -1;
   }
-  
-  //TODO: plist, nib, icons... and any other mac stuff i'm forgetting.
-  fprintf(stderr,"%s:%d:TODO: %s, still need some of the ancillary bits\n",__FILE__,__LINE__,__func__);
+
+  /* BUNDLE/Contents/Resources/appicon.icns
+   * The input image files should be a prereq, but they're complicated to determine and not expected to change much.
+   * I think it's OK to force the user to delete 'out' if they change these things.
+   */
+  pathc=snprintf(path,sizeof(path),"%.*s/Contents/Resources/appicon.icns",bundlec,bundle);
+  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+  struct builder_file *icnsfile=builder_add_file(builder,path,pathc);
+  if (!icnsfile) return -1;
+  icnsfile->target=target;
+  icnsfile->hint=BUILDER_FILE_HINT_MAC_ICNS;
+
+  /* BUNDLE/Contents/Resources/Main.nib
+   * We depend on a template in the SDK, and the app's metadata. But like icons, not bothering with prereq check.
+   */
+  pathc=snprintf(path,sizeof(path),"%.*s/Contents/Resources/Main.nib",bundlec,bundle);
+  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+  struct builder_file *nibfile=builder_add_file(builder,path,pathc);
+  if (!nibfile) return -1;
+  nibfile->target=target;
+  nibfile->hint=BUILDER_FILE_HINT_MAC_NIB;
+
+  /* BUNDLE/Contents/Info.plist
+   * We depend on a template in the SDK, and the app's metadata. But like icons, not bothering with prereq check.
+   */
+  pathc=snprintf(path,sizeof(path),"%.*s/Contents/Info.plist",bundlec,bundle);
+  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+  struct builder_file *plistfile=builder_add_file(builder,path,pathc);
+  if (!plistfile) return -1;
+  plistfile->target=target;
+  plistfile->hint=BUILDER_FILE_HINT_MAC_PLIST;
   
   return 0;
 }

@@ -1,7 +1,7 @@
 #ifndef MACIOC_INTERNAL_H
 #define MACIOC_INTERNAL_H
 
-#include "macioc.h"
+#include "macos.h"
 #include <Cocoa/Cocoa.h>
 #include "AKAppDelegate.h"
 #include <stdio.h>

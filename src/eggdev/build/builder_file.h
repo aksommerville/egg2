@@ -19,6 +19,9 @@ struct builder_target;
 #define BUILDER_FILE_HINT_SEPARATE 9
 #define BUILDER_FILE_HINT_EXE 10
 #define BUILDER_FILE_HINT_DATAO 11 /* DATAROM wrapped in a native linkable object. */
+#define BUILDER_FILE_HINT_MAC_ICNS 12 /* MacOS only; icons bundle. */
+#define BUILDER_FILE_HINT_MAC_NIB 13 /* MacOS only; UI boilerplate stuff. */
+#define BUILDER_FILE_HINT_MAC_PLIST 14 /* MacOS only; OS boilerplate stuff. */
 
 struct builder_file {
   int id;

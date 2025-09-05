@@ -10,14 +10,19 @@
 
 #if USE_ismac
   #include <OpenGL/OpenGL.h>
-  #include <OpenGL/gl3.h>
+  #define GL_GLEXT_PROTOTYPES 1
+  #include <OpenGL/gl.h>
 #else
   #include <GLES2/gl2.h>
 #endif
 
 //TODO EGG_GLSL_VERSION: Document, and set appropriate defaults via config.mk.
 #ifndef EGG_GLSL_VERSION
-  #define EGG_GLSL_VERSION 100
+  #if USE_macos
+    #define EGG_GLSL_VERSION 120
+  #else
+    #define EGG_GLSL_VERSION 100
+  #endif
 #endif
 
 #define RENDER_FB_LIMIT 4096

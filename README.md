@@ -96,9 +96,12 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - [x] macbook: Is "-framework" not a thing anymore? How do we link against Frameworks?
 - - No, our link command is getting mangled somewhere: ...ggstra/eggstra_play.o -framework -lm -lz AudioUnit Cocoa CoreGraphics IOKit OpenGL Quartz
 - - It's an ill-advised `$(sort)` in linking eggstra. Just let LDPOST be duplicated.
-- [ ] macbook: /local/config.mk: Failed to read Egg's build configuration.
+- [x] macbook: /local/config.mk: Failed to read Egg's build configuration.
 - - Because I added "macos_OBJC"?
 - [ ] genbuildconfig.sh: Generated blank EGG_SDK (macbook)
-- [ ] macbook, linking rom: __egg_embedded_rom undefined
+- [x] macbook, linking rom: __egg_embedded_rom undefined
 - - Too many underscores? It is present in src/demo/mid/macos/data.o, but with a single leading underscore.
 - [ ] macbook: `make run` is not MacOS-savvy: `make: src/demo/out/demo-macos: No such file or directory`
+- [x] 2025-09-04 21:59:17.781 demo[3515:40896] Unknown class AKAppDelegate in Interface Builder file at path /Users/andy/proj/egg2/src/demo/out/demo-macos.app/Contents/Resources/Main.nib.
+- - It is present in libeggrt.a. Is AKAppDelegate getting tree-shook out at link? ...looks like it. Mitigated in macos.m.
+- [ ] EGG_GLSL_VERSION. Currently pretty hacky.

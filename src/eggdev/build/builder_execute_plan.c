@@ -183,6 +183,7 @@ static int builder_begin_step(struct builder *builder,struct builder_step *step)
     case BUILDER_FILE_HINT_FULLROM: SYNC return build_fullrom(builder,step->file);
     case BUILDER_FILE_HINT_STANDALONE: SYNC return build_standalone(builder,step->file);
     case BUILDER_FILE_HINT_SEPARATE: SYNC return build_separate(builder,step->file);
+    case BUILDER_FILE_HINT_MAC_PLIST: SYNC return build_mac_plist(builder,step->file);
     #undef SYNC
 
     // async...
@@ -191,8 +192,10 @@ static int builder_begin_step(struct builder *builder,struct builder_step *step)
     case BUILDER_FILE_HINT_OBJ: CKASYNC return builder_schedule_compile(builder,step);
     case BUILDER_FILE_HINT_EXE: CKASYNC return builder_schedule_link(builder,step);
     case BUILDER_FILE_HINT_DATAO: CKASYNC return builder_schedule_datao(builder,step);
+    case BUILDER_FILE_HINT_MAC_ICNS: CKASYNC return builder_schedule_mac_icns(builder,step);
+    case BUILDER_FILE_HINT_MAC_NIB: CKASYNC return builder_schedule_mac_nib(builder,step);
     #undef CKASYNC
-    
+
     default: return builder_error(builder,"%s: No rule to build file. (hint=%d)\n",step->file->path,step->file->hint);
   }
   return -1;

@@ -53,6 +53,13 @@ struct builder {
     int cmdc;
   } *processv;
   int processc,processa;
+
+  /* metadata:1, uncompiled.
+   * This gets populated when you ask for a metadata field.
+   * For the forseeable future, only MacOS uses it.
+   */
+  char *metadata;
+  int metadatac;
 };
 
 void builder_cleanup(struct builder *builder);
@@ -87,9 +94,12 @@ int build_datarom(struct builder *builder,struct builder_file *file);
 int build_fullrom(struct builder *builder,struct builder_file *file);
 int build_standalone(struct builder *builder,struct builder_file *file);
 int build_separate(struct builder *builder,struct builder_file *file);
+int build_mac_plist(struct builder *builder,struct builder_file *file);
 int builder_schedule_link(struct builder *builder,struct builder_step *step);
 int builder_schedule_compile(struct builder *builder,struct builder_step *step);
 int builder_schedule_datao(struct builder *builder,struct builder_step *step);
+int builder_schedule_mac_icns(struct builder *builder,struct builder_step *step);
+int builder_schedule_mac_nib(struct builder *builder,struct builder_step *step);
 
 void builder_process_cleanup(struct builder_process *process);
 int builder_begin_command(struct builder *builder,struct builder_step *step,const char *cmd,int cmdc,const void *in,int inc);
@@ -107,5 +117,17 @@ char *strlist_add(struct strlist *strlist,const char *src,int srcc);
 
 int builder_error(struct builder *builder,const char *fmt,...);
 #define builder_log(builder,fmt,...) builder_error(builder,fmt,##__VA_ARGS__)
+
+/* Load metadata if needed.
+ * Returns a WEAK pointer to the field's value, or zero if absent (empty and absent are equivalent).
+ */
+int builder_get_metadata(void *vpp,struct builder *builder,const char *k,int kc);
+
+/* Get an uncompiled data resource.
+ * On success, (*dstpp) is STRONG, caller frees it.
+ * If we return zero, (*dstpp) was allocated, and that denotes a present but empty file.
+ * (type) is the resource name and must match the directory's name exactly.
+ */
+int builder_get_resource(void *dstpp,struct builder *builder,const char *type,int typec,int rid);
 
 #endif

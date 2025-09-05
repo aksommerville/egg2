@@ -25,6 +25,10 @@ static int builder_discover_inputs_cb(const char *path,const char *base,char fty
   // Anything ending ".c" gets the C hint.
   } else if ((file->pathc>=2)&&!memcmp(file->path+file->pathc-2,".c",2)) {
     file->hint=BUILDER_FILE_HINT_C;
+
+  // Ditto ".m" for Objective-C. We're loose about "C", it just means "compilable source".
+  } else if ((file->pathc>=2)&&!memcmp(file->path+file->pathc-2,".m",2)) {
+    file->hint=BUILDER_FILE_HINT_C;
   
   // And finally, we can at least call it INPUT.
   } else {

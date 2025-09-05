@@ -31,6 +31,7 @@ void builder_cleanup(struct builder *builder) {
     while (builder->targetc-->0) builder_target_cleanup(builder->targetv+builder->targetc);
     free(builder->targetv);
   }
+  if (builder->metadata) free(builder->metadata);
 }
 
 /* Set projname as the last component of this path.
@@ -164,4 +165,72 @@ int builder_error(struct builder *builder,const char *fmt,...) {
     fprintf(stderr,"%.*s\n",msgc,msg);
   }
   return -2;
+}
+
+/* Get metadata.
+ */
+ 
+int builder_get_metadata(void *vpp,struct builder *builder,const char *k,int kc) {
+
+  if (!builder->metadata) {
+    char path[1024];
+    int pathc=snprintf(path,sizeof(path),"%.*s/src/data/metadata",builder->rootc,builder->root);
+    if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+    if ((builder->metadatac=file_read(&builder->metadata,path))<0) {
+      return builder_error(builder,"%s: Failed to read metadata.\n",path);
+    }
+  }
+
+  if (!k) kc=0; else if (kc<0) { kc=0; while (k[kc]) kc++; }
+  struct sr_decoder decoder={.v=builder->metadata,.c=builder->metadatac};
+  const char *line;
+  int linec;
+  while ((linec=sr_decode_line(&line,&decoder))>0) {
+    while (linec&&((unsigned char)line[linec-1]<=0x20)) linec--;
+    while (linec&&((unsigned char)line[0]<=0x20)) { line++; linec--; }
+    if (!linec||(line[0]=='#')) continue;
+
+    int linep=0;
+    const char *qk=line+linep;
+    int qkc=0;
+    while ((linep<linec)&&(line[linep++]!='=')) qkc++;
+    while (qkc&&((unsigned char)qk[qkc-1]<=0x20)) qkc--;
+    if ((qkc!=kc)||memcmp(qk,k,kc)) continue;
+
+    while ((linep<linec)&&((unsigned char)line[linep]<=0x20)) linep++;
+    *(const char**)vpp=line+linep;
+    return linec-linep;
+  }
+  return 0;
+}
+
+/* Get resource.
+ */
+ 
+int builder_get_resource(void *dstpp,struct builder *builder,const char *type,int typec,int rid) {
+  if (!type) return -1;
+  if (typec<0) { typec=0; while (type[typec]) typec++; }
+  if (typec<1) return -1;
+
+  /* We're looking for a registered file with hint RES where the final slash is surrounded by (type) and (rid).
+   */
+  char bpfx[32];
+  int bpfxc=sr_decsint_repr(bpfx,sizeof(bpfx),rid);
+  if ((bpfxc<1)||(bpfxc>sizeof(bpfx))) return -1;
+  int i=builder->filec;
+  while (i-->0) {
+    struct builder_file *file=builder->filev[i];
+    if (file->hint!=BUILDER_FILE_HINT_RES) continue;
+    int sepp=path_split(file->path,file->pathc);
+    if (sepp<typec) continue;
+    if (memcmp(file->path+sepp-typec,type,typec)) continue;
+    int basec=file->pathc-sepp-1;
+    if (basec<bpfxc) continue;
+    const char *base=file->path+sepp+1;
+    if (memcmp(base,bpfx,bpfxc)) continue;
+    if ((basec>bpfxc)&&(base[bpfxc]!='-')) continue; // eg "123" when we're looking for "12".
+    // Got it.
+    return file_read(dstpp,file->path);
+  }
+  return -1;
 }

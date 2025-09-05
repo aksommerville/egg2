@@ -62,6 +62,7 @@ Line-oriented text.
 | persistKey  | If present, contributes to store isolation. Only versions of your game with the same persistKey will see the same store. |
 | incfgMask   | Which gamepad keys are used? Some combination of: dswen123lrLR |
 | incfgNames  | Decimal index in strings:1, for the first key in incfgMask. Must be followed by as many keys as you listed. For interactive configurer. |
+| revdns      | Reverse-DNS namespace for this game. MacOS builds require it. "com.aksommerville.unspec.{{PROJECT}}" if you don't specify. |
 
 `freedom` is `limited` if unspecified, and is only a convenient summary of your game's real license:
 - `free`: Assume you are allowed to reuse assets and redistribute freely.
