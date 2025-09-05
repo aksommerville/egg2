@@ -16,7 +16,7 @@ test_OFILES_INT:=$(filter $(test_MIDDIR)/int/%,$(test_OFILES)) $(test_OFILES_COM
 test_OFILES_UNIT:=$(filter $(test_MIDDIR)/unit/%,$(test_OFILES))
 test_EXE_INT:=$(test_OUTDIR)/itest
 test_EXES_UNIT:=$(patsubst $(test_MIDDIR)/unit/%.o,$(test_OUTDIR)/unit/%,$(test_OFILES_UNIT))
-test_EXES_AUTO:=$(shell find src/test/auto -executable -type f)
+test_EXES_AUTO:=$(shell find src/test/auto -perm -0111 -type f)
 test_EXES:=$(test_EXE_INT) $(test_EXES_UNIT) $(test_EXES_AUTO)
 all:$(test_EXES)
 -include $(test_OFILES:.o=.d)

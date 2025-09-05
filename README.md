@@ -91,17 +91,21 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] font
 - - [ ] Standard instruments and sound effects.
 - [ ] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet.
-- [ ] macbook: etc/tool/genbuildconfig.sh: line 23: realpath: command not found
-- [ ] macbook: [make] find: -executable: unknown primary or operator
+- [x] macbook: etc/tool/genbuildconfig.sh: line 23: realpath: command not found
+- [x] macbook: [make] find: -executable: unknown primary or operator ...`-perm -0111` does it
 - [x] macbook: Is "-framework" not a thing anymore? How do we link against Frameworks?
 - - No, our link command is getting mangled somewhere: ...ggstra/eggstra_play.o -framework -lm -lz AudioUnit Cocoa CoreGraphics IOKit OpenGL Quartz
 - - It's an ill-advised `$(sort)` in linking eggstra. Just let LDPOST be duplicated.
 - [x] macbook: /local/config.mk: Failed to read Egg's build configuration.
 - - Because I added "macos_OBJC"?
-- [ ] genbuildconfig.sh: Generated blank EGG_SDK (macbook)
+- [x] genbuildconfig.sh: Generated blank EGG_SDK (macbook)
 - [x] macbook, linking rom: __egg_embedded_rom undefined
 - - Too many underscores? It is present in src/demo/mid/macos/data.o, but with a single leading underscore.
-- [ ] macbook: `make run` is not MacOS-savvy: `make: src/demo/out/demo-macos: No such file or directory`
+- [x] macbook: `make run` is not MacOS-savvy: `make: src/demo/out/demo-macos: No such file or directory`
+- [x] Also `eggdev run` (which is not used by the demo) ...already coded, just I'd reversed a memcmp :D
 - [x] 2025-09-04 21:59:17.781 demo[3515:40896] Unknown class AKAppDelegate in Interface Builder file at path /Users/andy/proj/egg2/src/demo/out/demo-macos.app/Contents/Resources/Main.nib.
 - - It is present in libeggrt.a. Is AKAppDelegate getting tree-shook out at link? ...looks like it. Mitigated in macos.m.
+- [x] macbook: Video initially uses only like half of the window.
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
+- [ ] zennoniwa on macbook: Dropping sound effects randomly?
+- [ ] zennoniwa on macbook: Why did I have to declare 'USE_real_stdlib 1' in a game header? That should have been set by eggdev at compile.

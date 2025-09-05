@@ -13,8 +13,12 @@ demo-all:$(demo_EXE)
 $(demo_EXE):$(eggdev_EXE) $(demo_EGGRT) $(demo_SRCFILES);$(eggdev_EXE) build $(demo_SRCDIR)
 
 # Don't use `eggdev run` for demo-run. Since we're part of eggdev's build, we would want to wipe demo/out first.
-#demo-run:$(eggdev_EXE) $(demo_EGGRT) $(demo_SRCFILES);rm -rf $(demo_SRCDIR)/mid $(demo_SRCDIR)/out ; $(eggdev_EXE) run $(demo_SRCDIR)
-demo-run:$(demo_EXE);$(demo_EXE)
+# And since we're not using eggdev for this, we need to be MacOS-savvy.
+ifeq (macos,$($(EGG_NATIVE_TARGET)_PACKAGING))
+  demo-run:$(demo_EXE);open -W $(demo_SRCDIR)/out/demo-$(EGG_NATIVE_TARGET).app --args --reopen-tty=$(shell tty)
+else
+  demo-run:$(demo_EXE);$(demo_EXE)
+endif
 
 # http://localhost:8080/api/buildfirst/index.html
 # Note that changes to the runtime will not get picked up automatically; you have to restart the server if you change any Egg things.

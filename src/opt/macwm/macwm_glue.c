@@ -52,7 +52,7 @@ static int _macwm_init(struct hostio_video *driver,const struct hostio_video_set
   };
   struct macwm_setup setup={
     .w=config->w,
-    .h=config->w,
+    .h=config->h,
     .fullscreen=config->fullscreen,
     .title=config->title,
     .fbw=config->fbw,

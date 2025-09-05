@@ -69,7 +69,7 @@ static int eggdev_run_post_build(
   } else if ((packagingc==5)&&!memcmp(packaging,"macos",5)) {
     const char *path=exefile->path;
     int pathc=exefile->pathc;
-    while ((pathc>=5)&&!memcmp(path+pathc-5,".app/",5)) pathc--;
+    while ((pathc>=5)&&memcmp(path+pathc-5,".app/",5)) pathc--;
     if (pathc<5) {
       fprintf(stderr,
         "%.*s: Executable for target '%.*s' does not appear to be in a MacOS app bundle, despite declared 'macos' packaging.\n",

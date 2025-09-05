@@ -20,7 +20,12 @@ EGG_NATIVE_TARGET=
 # Then for each target: OPT_ENABLE AR CC LD LDPOST PACKAGING
 # And a special target "eggdev": OPT_ENABLE CC LD LDPOST
 
-FULLPATH="$(realpath $0)"
+# Prefer `realpath` if available. On MacOS <=12 it is not.
+if ( which realpath ) ; then
+  FULLPATH="$(realpath $0)"
+else
+  FULLPATH="$PWD/$0"
+fi
 EGG_SDK="${FULLPATH%/etc/tool/genbuildconfig.sh}"
 
 #-----------------------------------------------------------------------------------------

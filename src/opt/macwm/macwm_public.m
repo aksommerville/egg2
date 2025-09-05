@@ -22,18 +22,18 @@ static void macwm_guess_initial_window_size(struct macwm *macwm) {
     screenh=screen.frame.size.height;
   }
 
-  // If a framebuffer is in use, maintain its aspect ratio and fill most of the screen.
+  /* If the framebuffer size was declared, use an integer multiple of that, that fits within the screen.
+   * We'll pretend the screen is 7/8 of its real size, to ensure there's room for the UI chrome.
+   */
   if ((macwm->fbw>0)&&(macwm->fbh>0)) {
     int usew=(screenw*7)>>3;
     int useh=(screenh*7)>>3;
-    int wforh=(macwm->fbw*useh)/macwm->fbh;
-    if (wforh<=usew) {
-      macwm->w=wforh;
-      macwm->h=useh;
-    } else {
-      macwm->w=usew;
-      macwm->h=(macwm->fbh*usew)/macwm->fbw;
-    }
+    int xscale=usew/macwm->fbw;
+    int yscale=useh/macwm->fbh;
+    int scale=(xscale<yscale)?xscale:yscale;
+    if (scale<1) scale=1;
+    macwm->w=macwm->fbw*scale;
+    macwm->h=macwm->fbh*scale;
     return;
   }
 
