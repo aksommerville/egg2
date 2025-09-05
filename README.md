@@ -107,6 +107,8 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - It is present in libeggrt.a. Is AKAppDelegate getting tree-shook out at link? ...looks like it. Mitigated in macos.m.
 - [x] macbook: Video initially uses only like half of the window.
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
-- [ ] zennoniwa on macbook: Dropping sound effects randomly?
+- [x] zennoniwa on macbook: Dropping sound effects randomly? ...duh you need to lock the audio driver. How did I not notice this yet?
 - [x] zennoniwa on macbook: Why did I have to declare 'USE_real_stdlib 1' in a game header? That should have been set by eggdev at compile.
 - - Looks like we're not sending '-DUSE_$U=1' as I thought. Do that.
+- [x] macbook: Synth wildly incorrect. around_here_somewhere, the chords at the end don't play at all.
+- - ...it's not the synth, just i messed up all the instruments while working on the editor. False alarm.

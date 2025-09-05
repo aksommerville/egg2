@@ -147,14 +147,18 @@ int egg_input_get_one(int playerid) {
  
 void egg_play_sound(int soundid,double trim,double pan) {
   if (!eggrt.sound_enable) return;
+  if (hostio_audio_lock(eggrt.hostio)<0) return;
   synth_play_sound(eggrt.synth,soundid,trim,pan);
+  hostio_audio_unlock(eggrt.hostio);
 }
 
 void egg_play_song(int songid,int force,int repeat) {
   eggrt.songid=songid;
   eggrt.songrepeat=repeat;
   if (!eggrt.music_enable) return;
+  if (hostio_audio_lock(eggrt.hostio)<0) return;
   synth_play_song(eggrt.synth,songid,force,repeat);
+  hostio_audio_unlock(eggrt.hostio);
 }
 
 int egg_song_get_id() {

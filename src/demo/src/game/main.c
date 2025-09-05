@@ -116,7 +116,7 @@ void egg_client_update(double elapsed) {
     if (input&EGG_BTN_RIGHT) msg[msgc++]='r'; else msg[msgc++]='.';
     msg[msgc]=0;
     egg_log(msg);
-    if ((input&EGG_BTN_SOUTH)&&!(pvinput&EGG_BTN_SOUTH)) {
+    if (0&&(input&EGG_BTN_SOUTH)&&!(pvinput&EGG_BTN_SOUTH)) {
       g.songid++;
       if (g.songid>LAST_SONG) g.songid=FIRST_SONG;
       char tmp[]="Play song 00";
@@ -128,6 +128,10 @@ void egg_client_update(double elapsed) {
     if ((input&EGG_BTN_WEST)&&!(pvinput&EGG_BTN_WEST)) {
       egg_log("Setting playhead to 4.0");
       egg_song_set_playhead(4.0);
+    }
+    if ((input&EGG_BTN_SOUTH)&&!(pvinput&EGG_BTN_SOUTH)) {
+      egg_log("Play sound 2");
+      egg_play_sound(2,1.0,0.0);
     }
     pvinput=input;
   }
