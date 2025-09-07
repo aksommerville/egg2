@@ -155,6 +155,16 @@ static int builder_infer_target_outputs_web(struct builder *builder,struct build
     if (builder_file_add_req(wasmfile,ofile)<0) return -1;
   }
   
+  // code:1 also depends on libeggrt-headless.
+  pathc=snprintf(path,sizeof(path),"%s/out/%.*s/libeggrt-headless.a",g.sdkpath,target->namec,target->name);
+  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+  struct builder_file *libfile=builder_add_file(builder,path,pathc);
+  if (!libfile) return -1;
+  libfile->target=target;
+  libfile->hint=0;
+  libfile->ready=1;
+  if (builder_file_add_req(wasmfile,libfile)<0) return -1;
+  
   // A proper Egg ROM. This is portable and everything, so I'm putting under out instead of mid.
   pathc=snprintf(path,sizeof(path),"%.*s/out/%.*s-%.*s.egg",builder->rootc,builder->root,builder->projnamec,builder->projname,target->namec,target->name);
   if ((pathc<1)||(pathc>=sizeof(path))) return -1;
@@ -216,6 +226,16 @@ static int builder_infer_target_outputs_exe(struct builder *builder,struct build
     if (builder_file_add_req(exefile,ofile)<0) return -1;
   }
   
+  // Add libeggrt as the final prereq.
+  pathc=snprintf(path,sizeof(path),"%s/out/%.*s/libeggrt.a",g.sdkpath,target->namec,target->name);
+  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+  struct builder_file *libfile=builder_add_file(builder,path,pathc);
+  if (!libfile) return -1;
+  libfile->target=target;
+  libfile->hint=0; // "external; don't build", we don't have or need a hint for that.
+  libfile->ready=1;
+  if (builder_file_add_req(exefile,libfile)<0) return -1;
+  
   return 0;
 }
 
@@ -255,6 +275,16 @@ static int builder_infer_target_outputs_macos(struct builder *builder,struct bui
     if (ofile->target!=target) continue;
     if (builder_file_add_req(exefile,ofile)<0) return -1;
   }
+  
+  // Add libeggrt as the final prereq.
+  pathc=snprintf(path,sizeof(path),"%s/out/%.*s/libeggrt.a",g.sdkpath,target->namec,target->name);
+  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+  struct builder_file *libfile=builder_add_file(builder,path,pathc);
+  if (!libfile) return -1;
+  libfile->target=target;
+  libfile->hint=0;
+  libfile->ready=1;
+  if (builder_file_add_req(exefile,libfile)<0) return -1;
 
   /* BUNDLE/Contents/Resources/appicon.icns
    * The input image files should be a prereq, but they're complicated to determine and not expected to change much.

@@ -102,7 +102,7 @@ static int eggrt_populate_video_setup(struct hostio_video_setup *setup) {
       }
     }
   }
-
+  
   if (
     (setup->fbw<1)||(setup->fbw>EGG_TEXTURE_SIZE_LIMIT)||
     (setup->fbh<1)||(setup->fbh>EGG_TEXTURE_SIZE_LIMIT)

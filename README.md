@@ -14,11 +14,31 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - Web apps pack to a Zip file with boilerplate HTML and the binary ROM. Same as berry. Also continue to allow standalone HTML as an option.
 - eggdev --help reads from etc/doc/eggdev-cli.md directly.
 - Default instruments live somewhere in the SDK.
-- No Wasm runtime for native builds. If we want that in the future, it should be achievable but I don't expect to want it.
+- No Wasm runtime for native builds. ~If we want that in the future, it should be achievable but I don't expect to want it.~ Actually I do.
 
-# TODO
+## Prereqs
 
-- [ ] I'd really like `make run` from this project to rebuild the demo when libeggrt changes. Would be nice in external projects too.
+- All use cases:
+- - gcc, make, etc. Can use a different C compiler; set it up in `local/config.mk`. But its semantics must be close to `gcc`.
+- Linux native (can take these a la carte):
+- - xegl
+- - libdrm, libgbm
+- - EGL, GLES2
+- - libasound
+- - libpulse-simple
+- Web:
+- - wasm32-capable LLVM
+- Native Wasm runtime:
+- - WebAssembly Micro Runtime
+- Editor: (anything?)
+- MacOS: (anything?)
+- Windows: (not supported)
+
+## TODO
+
+- [ ] Flesh out and validate Prereqs, above.
+- [x] I'd really like `make run` from this project to rebuild the demo when libeggrt changes. Would be nice in external projects too.
+- - When in an external project, you still need to `make -C../egg2` if you change egg. But beyond that, yes, we'll now detect libeggrt changes.
 - [ ] Programmatic access to a song eg for ocarinas or sustained notes. API change.
 - - The synthesizers currently aren't built for infinitely-sustaining notes.
 - - Need to think this thru carefully, and ensure we have some safeguards against stuck notes.
@@ -28,13 +48,11 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - - [ ] Detect missing strings across languages.
 - - - [ ] Detect empty sound effects.
 - - - [ ] Is it feasible to scan for missing resources? eg map names an image that doesn't exist.
-- - [x] SongChannelsUi.onStore: Modal with SDK instruments
 - - [ ] SongService: Should we auto-re-play on dirty?
 - - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
 - - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
 - - [ ] HexEditor: Paging, offset, ASCII, multi-byte edits.
 - - [ ] ImageEditor: Animation preview like we had in v1.
-- - [x] StringsEditor: Side-by-side editing across languages, like we had in v1.
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
@@ -44,7 +62,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] Song actions (SongChannelsUi)
 - - [ ] ModecfgModal for drum: Spawn SongEditor in a modal per drum.
 - [ ] eggdev
-- - [ ] project: Update Makefile for serving runtime
+- - [ ] project: Update Makefile for serving runtime. Also confirm re MacOS, I didn't look.
 - - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
 - - [ ] project: README.md
 - - [ ] `eggdev project`: Prep overrides.
@@ -54,10 +72,8 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
 - - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
 - - [ ] `src/demo/src/data/song/8-doors_without_walls.mid:WARNING: 3 notes were not released.`
-- - [ ] src/eggdev/build/builder_infer_outputs.c:260:TODO: builder_infer_target_outputs_macos, still need some of the ancillary bits
 - [ ] Native runtime.
 - - [ ] Input.
-- - - [x] Persist mappings.
 - - - [ ] Interactive reconfig.
 - - - - [ ] Let the client declare which buttons it uses, so when configuring we don't ask for all 15 buttons.
 - - - - - Maybe a metadata field "incfgMask" containing characters "dswne123lrLR". "d" being the dpad, all others correspond to one button.
@@ -91,24 +107,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] font
 - - [ ] Standard instruments and sound effects.
 - [ ] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet.
-- [x] macbook: etc/tool/genbuildconfig.sh: line 23: realpath: command not found
-- [x] macbook: [make] find: -executable: unknown primary or operator ...`-perm -0111` does it
-- [x] macbook: Is "-framework" not a thing anymore? How do we link against Frameworks?
-- - No, our link command is getting mangled somewhere: ...ggstra/eggstra_play.o -framework -lm -lz AudioUnit Cocoa CoreGraphics IOKit OpenGL Quartz
-- - It's an ill-advised `$(sort)` in linking eggstra. Just let LDPOST be duplicated.
-- [x] macbook: /local/config.mk: Failed to read Egg's build configuration.
-- - Because I added "macos_OBJC"?
-- [x] genbuildconfig.sh: Generated blank EGG_SDK (macbook)
-- [x] macbook, linking rom: __egg_embedded_rom undefined
-- - Too many underscores? It is present in src/demo/mid/macos/data.o, but with a single leading underscore.
-- [x] macbook: `make run` is not MacOS-savvy: `make: src/demo/out/demo-macos: No such file or directory`
-- [x] Also `eggdev run` (which is not used by the demo) ...already coded, just I'd reversed a memcmp :D
-- [x] 2025-09-04 21:59:17.781 demo[3515:40896] Unknown class AKAppDelegate in Interface Builder file at path /Users/andy/proj/egg2/src/demo/out/demo-macos.app/Contents/Resources/Main.nib.
-- - It is present in libeggrt.a. Is AKAppDelegate getting tree-shook out at link? ...looks like it. Mitigated in macos.m.
-- [x] macbook: Video initially uses only like half of the window.
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
-- [x] zennoniwa on macbook: Dropping sound effects randomly? ...duh you need to lock the audio driver. How did I not notice this yet?
-- [x] zennoniwa on macbook: Why did I have to declare 'USE_real_stdlib 1' in a game header? That should have been set by eggdev at compile.
-- - Looks like we're not sending '-DUSE_$U=1' as I thought. Do that.
-- [x] macbook: Synth wildly incorrect. around_here_somewhere, the chords at the end don't play at all.
-- - ...it's not the synth, just i messed up all the instruments while working on the editor. False alarm.
+- [ ] Standalone native app with a Wasm runtime that runs Egg, HTML, or ZIP files.
+- - This shouldn't require much, just the WAMR plumbing.
+- - Ensure eggdev and games can be built without it. Don't require all dev hosts to have WAMR.
