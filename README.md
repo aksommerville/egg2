@@ -64,7 +64,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - [ ] eggdev
 - - [ ] project: Update Makefile for serving runtime. Also confirm re MacOS, I didn't look.
 - - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
-- - [ ] project: README.md
+- - [x] project: README.md
 - - [ ] `eggdev project`: Prep overrides.
 - - [ ] eggdev build: Replace `<title>` in HTMLs.
 - - [ ] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.

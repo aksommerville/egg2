@@ -160,17 +160,22 @@ static int gen_makefile(struct eggdev_project_context *ctx) {
     "all:\n"
     ".SILENT:\n"
     "\n"
-    "all:;eggdev build\n"
+    "ifeq (,$(EGG2_SDK))\n"
+    "  EGG2_SDK:=../egg2\n"
+    "endif\n"
+    "EGGDEV:=$(EGG2_SDK)/out/eggdev\n"
+    "\n"
+    "all:;$(EGGDEV) build\n"
     "clean:;rm -rf mid out\n"
-    "run:;eggdev run\n"
+    "run:;$(EGGDEV) run\n"
   ,-1)<0) return -1;
   
   if (sr_encode_fmt(&ctx->scratch,
-    "web-run:all;eggdev serve --htdocs=out --project=.\n"
+    "web-run:all;$(EGGDEV) serve --htdocs=out --project=.\n"
   )<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,
     //TODO Serve editor and overrides.
-    "edit:;eggdev serve --htdocs=/data:src/data --htdocs=EGG_SDK/src/editor --htdocs=src/editor --htdocs=/out:out --writeable=src/data --project=.\n"
+    "edit:;$(EGGDEV) serve --htdocs=/data:src/data --htdocs=EGG_SDK/src/editor --htdocs=src/editor --htdocs=/out:out --writeable=src/data --project=.\n"
   )<0) return -1;
   
   return eggdev_project_write(ctx,"Makefile",ctx->scratch.v,ctx->scratch.c);
@@ -358,6 +363,20 @@ static int gen_editor(struct eggdev_project_context *ctx) {
   return 0;
 }
 
+/* Generate a blank GitHub-friendly README.
+ */
+ 
+static int gen_readme(struct eggdev_project_context *ctx) {
+  ctx->scratch.c=0;
+  if (ctx->titlec) {
+    if (sr_encode_fmt(&ctx->scratch,"# %.*s\n\n",ctx->titlec,ctx->title)<0) return -1;
+  } else {
+    if (sr_encode_fmt(&ctx->scratch,"# %.*s\n\n",ctx->namec,ctx->name)<0) return -1;
+  }
+  if (sr_encode_raw(&ctx->scratch,"Requires [Egg v2](https://github.com/aksommerville/egg2) to build.\n",-1)<0) return -1;
+  return eggdev_project_write(ctx,"README.md",ctx->scratch.v,ctx->scratch.c);
+}
+
 /* Generate project.
  * All inputs must have been gathered and validated before this.
  */
@@ -382,6 +401,7 @@ static int eggdev_project_commit(struct eggdev_project_context *ctx) {
   if ((err=gen_main(ctx))<0) return err;
   if ((err=gen_icon(ctx))<0) return err;
   if ((err=gen_editor(ctx))<0) return err;
+  if ((err=gen_readme(ctx))<0) return err;
   
   return 0;
 }
