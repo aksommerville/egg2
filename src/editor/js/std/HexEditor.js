@@ -1,11 +1,4 @@
 /* HexEditor.js
- * TODO I'm writing this quick and dirty just to have it as a fallback.
- * When there's time, flesh it out and make something useful of this. In particular:
- *  - UI for row length and page length.
- *  - Display one page at a time. So we don't choke on really big resources.
- *  - Better validation and reporting.
- *  - Select a range of text and then you can edit it as a multibyte word, or UTF-8, or whatever.
- *  - Offset and ASCII columns.
  */
  
 import { Dom } from "../Dom.js";
@@ -13,15 +6,32 @@ import { Data } from "../Data.js";
 
 export class HexEditor {
   static getDependencies() {
-    return [HTMLElement, Dom, Data];
+    return [HTMLElement, Dom, Data, Window];
   }
-  constructor(element, dom, data) {
+  constructor(element, dom, data, window) {
     this.element = element;
     this.dom = dom;
     this.data = data;
+    this.window = window;
     
     this.res = null;
+    this.serial = [];
+    this.page = 1; // one-based
+    this.pageSize = 256;
+    this.hexDirtyTimeout = null;
+    this.textDirtyTimeout = null;
     this.buildUi();
+  }
+  
+  onRemoveFromDom() {
+    if (this.hexDirtyTimeout) {
+      this.window.clearTimeout(this.hexDirtyTimeout);
+      this.hexDirtyTimeout = null;
+    }
+    if (this.textDirtyTimeout) {
+      this.window.clearTimeout(this.textDirtyTimeout);
+      this.textDirtyTimeout = null;
+    }
   }
   
   static checkResource(res) {
@@ -31,19 +41,83 @@ export class HexEditor {
   
   setup(res) {
     this.res = res;
-    this.element.querySelector("textarea").value = this.repr(res.serial);
+    this.serial = new Uint8Array(this.res.serial);
+    this.populateUi();
   }
   
   buildUi() {
     this.element.innerHTML = "";
-    this.dom.spawn(this.element, "TEXTAREA", { "on-input": () => {
-      if (!this.res) return;
-      this.data.dirty(this.res.path, () => this.encode());
-    }});
+    
+    const nav = this.dom.spawn(this.element, "DIV", ["nav"]);
+    this.dom.spawn(nav, "DIV", ["pageStart"], "Page");
+    this.dom.spawn(nav, "INPUT", { type: "number", name: "page", min: 1, value: 1, "on-input": e => this.onManualPage(e) });
+    this.dom.spawn(nav, "DIV", ["pageSep"], "of");
+    this.dom.spawn(nav, "DIV", ["pageCount"], "1");
+    
+    const content = this.dom.spawn(this.element, "DIV", ["content"]);
+    this.dom.spawn(content, "TEXTAREA", { name: "offset", readonly: "readonly" });
+    this.dom.spawn(content, "TEXTAREA", { name: "hex", "on-beforeinput": e => this.onHexDirty(event) });
+    this.dom.spawn(content, "TEXTAREA", { name: "text", readonly: "readonly" });
+    
+    const digested = this.dom.spawn(this.element, "DIV", ["digested"]);
+    
+    this.populateUi();
+  }
+  
+  populateUi() {
+    const resSize = this.serial.length;
+    const rowLength = 16;
+    this.element.querySelector("input[name='page']").value = this.page;
+    this.element.querySelector(".pageCount").value = Math.ceil(resSize / this.pageSize);
+    const startp = (this.page - 1) * this.pageSize;
+    const rowCount = Math.ceil(this.pageSize / rowLength);
+    
+    let tmp = "";
+    for (let i=rowCount, p=startp; i-->0; p+=rowLength) {
+      tmp += p.toString(16).padStart(8, '0') + "\n";
+    }
+    this.element.querySelector("textarea[name='offset']").value = tmp;
+    this.populateHex();
+    this.populateText();
+  }
+  
+  populateHex() {
+    const rowLength = 16;
+    const startp = (this.page - 1) * this.pageSize;
+    const rowCount = Math.ceil(this.pageSize / rowLength);
+    let tmp = "";
+    for (let ri=rowCount, p=startp; ri-->0; ) {
+      for (let ci=rowLength; ci-->0; p++) {
+        if (p >= this.serial.length) break;
+        tmp += " " + this.serial[p].toString(16).padStart(2, '0');
+      }
+      tmp += "\n";
+    }
+    this.element.querySelector("textarea[name='hex']").value = tmp;
+  }
+  
+  populateText() {
+    const rowLength = 16;
+    const startp = (this.page - 1) * this.pageSize;
+    const rowCount = Math.ceil(this.pageSize / rowLength);
+    let tmp = "";
+    for (let ri=rowCount, p=startp; ri-->0; ) {
+      for (let ci=rowLength; ci-->0; p++) {
+        if (p >= this.serial.length) break;
+        const v = this.serial[p];
+        if ((v < 0x20) || (v >= 0x7f)) {
+          tmp += ".";
+        } else {
+          tmp += String.fromCharCode(v);
+        }
+      }
+      tmp += "\n";
+    }
+    this.element.querySelector("textarea[name='text']").value = tmp;
   }
   
   encode() {
-    const src = this.element.querySelector("textarea").value;
+    const src = this.element.querySelector("textarea[name='hex']").value;
     const dst = new Uint8Array(src.length >> 1);
     let srcp=0, dstc=0, hi=-1;
     for (; srcp<src.length; srcp++) {
@@ -62,12 +136,62 @@ export class HexEditor {
     return new Uint8Array(dst.buffer, 0, dstc);
   }
   
-  repr(src) {
-    // Ouch this is really going to be expensive for huge resources.
-    let dst = "";
-    for (let i=0; i<src.length; i++) {
-      dst += src[i].toString(16).padStart(2, '0') + " ";
+  decodeHex(src) {
+    const digits = src.replace(/\s+/g, "");
+    if (digits.length & 1) return null;
+    const len = digits.length >> 1;
+    if (len > this.pageSize) return null;
+    const lastPageId = Math.ceil((this.res.serial.length + 1) / this.pageSize);
+    if (this.page > lastPageId) return null;
+    if (len < this.pageSize) {
+      if (this.page !== lastPageId) return null;
+    }
+    const dst = new Uint8Array(len);
+    for (let dstp=0, srcp=0; dstp<len; dstp++, srcp+=2) {
+      const v = parseInt(digits.substring(srcp, srcp+2), 16);
+      if (isNaN(v)) return null;
+      dst[dstp] = v;
     }
     return dst;
+  }
+  
+  onManualPage(event) {
+    this.page = +event.target.value || 1;
+    this.populateUi();
+  }
+  
+  onHexDirty(event) {
+    // If text is dirty, its timeout must expire before we allow editing hex.
+    if (this.textDirtyTimeout) {
+      event.preventDefault();
+      return;
+    }
+    if (this.hexDirtyTimeout) this.window.clearTimeout(this.hexDirtyTimeout);
+    this.hexDirtyTimeout = this.window.setTimeout(() => {
+      this.hexDirtyTimeout = null;
+      this.onHexDirtyAfter();
+    }, 500);
+  }
+  
+  onHexDirtyAfter() {
+    const hexElement = this.element.querySelector("textarea[name='hex']");
+    const nserial = this.decodeHex(hexElement.value);
+    if (!nserial) {
+      hexElement.classList.add("invalid");
+      return;
+    }
+    hexElement.classList.remove("invalid");
+    const nend = (this.page - 1) * this.pageSize + nserial.length;
+    if ((nserial.length < this.pageSize) || (nend > this.serial.length)) {
+      const nc = (this.page - 1) * this.pageSize + nserial.length;
+      const nfull = new Uint8Array(nc);
+      nfull.set(new Uint8Array(this.serial.buffer, this.serial.byteOffset, (this.page - 1) * this.pageSize));
+      new Uint8Array(nfull.buffer, nfull.byteOffset + (this.page - 1) * this.pageSize, nserial.length).set(nserial);
+      this.serial = nfull;
+    } else {
+      new Uint8Array(this.serial.buffer, this.serial.byteOffset + (this.page - 1) * this.pageSize, nserial.length).set(nserial);
+    }
+    this.populateText();
+    this.data.dirty(this.res.path, () => this.serial);
   }
 }

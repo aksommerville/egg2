@@ -207,13 +207,64 @@ input.toggle:checked + label.toggle.light {
   font-family: monospace;
 }
 
-.HexEditor textarea {
-  box-sizing: border-box;
-  width: 100%;
-  height: 99%; /* At 100%, it goes 3px taller than the container and forces scroll bars. Why??? */
-  background-color: #201;
+.HexEditor {
+  display: flex;
+  flex-direction: column;
+}
+.HexEditor .nav {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid #000;
+  padding: 5px;
+  align-items: baseline;
+}
+.HexEditor .nav .pageStart {
+  margin-right: 5px;
+}
+.HexEditor .nav input[name="page"] {
+  width: 4rem;
+  text-align: right;
+}
+.HexEditor .nav .pageSep {
+  margin: 0 5px;
+}
+.HexEditor .nav .pageCount {
+  font-weight: bold;
+}
+.HexEditor .content {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  height: 270px;
+}
+.HexEditor .content > textarea[name="offset"] {
+  width: 80px;
+  text-align: center;
+  resize: none;
+  background-color: #222;
+  color: #aaa;
+}
+.HexEditor .content > textarea[name="hex"] {
+  text-align: left;
+  resize: none;
+  width: 410px;
+  background-color: #000;
+  color: #cfc;
+}
+.HexEditor .content > textarea[name="text"] {
+  width: 160px;
+  text-align: left;
+  resize: none;
+  background-color: #210;
+  color: #ffc;
+}
+.HexEditor .content > textarea.invalid {
+  background-color: #c00;
   color: #fff;
-  font-family: monospace;
+}
+.HexEditor .digested {
+  flex: 1;
+  border-top: 1px solid #000;
 }
 
 .ImageEditor {

@@ -23,12 +23,17 @@ export class TextEditor {
   
   static checkResource(res) {
     // Most editors should lean on (res.type) or (res.format).
-    // For TextEditor, we'll say anything with a zero in the first 32 bytes is invalid, and everything else is acceptable.
+    // For TextEditor, we'll say anything with a non-G0 byte in the first 32 bytes is invalid, and everything else is acceptable.
     // We never return 2 ie "we're the preferred editor".
     let i=res.serial.length;
     if (i > 32) i = 32;
     while (i-- > 0) {
-      if (!res.serial[i]) return 0;
+      const ch = res.serial[i];
+      if (ch === 0x09) continue;
+      if (ch === 0x0a) continue;
+      if (ch === 0x0d) continue;
+      if (ch < 0x20) return 0;
+      if (ch > 0x7e) return 0;
     }
     return 1;
   }

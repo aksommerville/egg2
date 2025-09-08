@@ -50,7 +50,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] SongService: Should we auto-re-play on dirty?
 - - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
 - - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
-- - [ ] HexEditor: Paging, offset, ASCII, multi-byte edits.
+- - [x] HexEditor: Paging, offset, ASCII, multi-byte edits.
 - - [ ] ImageEditor: Animation preview like we had in v1.
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
