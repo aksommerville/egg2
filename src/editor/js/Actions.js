@@ -5,6 +5,7 @@
  
 import { Override } from "../Override.js";
 import { Dom } from "./Dom.js";
+import { LaunchService } from "./LaunchService.js";
 import { TextEditor } from "./std/TextEditor.js";
 import { HexEditor } from "./std/HexEditor.js";
 import { CommandListEditor } from "./std/CommandListEditor.js";
@@ -18,17 +19,18 @@ import { StringsEditor } from "./std/StringsEditor.js";
  
 export class Actions {
   static getDependencies() {
-    return [Override, Dom, Window];
+    return [Override, Dom, Window, LaunchService];
   }
-  constructor(override, dom, window) {
+  constructor(override, dom, window, launchService) {
     this.override = override;
     this.dom = dom;
     this.window = window;
+    this.launchService = launchService;
     
     this.actions = [
       ...this.override.actions,
+      { name: "launch", label: "Launch", fn: () => this.launchService.launch() },
       //TODO standard actions
-      //{ name: "exampleAction1", label: "Example Action 1", fn: () => this.exampleAction1() },
     ];
     
     this.editors = [

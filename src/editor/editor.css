@@ -752,3 +752,15 @@ input.toggle:checked + label.toggle.light {
   width: 100%;
   height: 1lh;
 }
+
+.LaunchModal {
+  width: 50vw;
+  height: 50vh;
+  padding: 0;
+  overflow: hidden;
+}
+.LaunchModal > iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

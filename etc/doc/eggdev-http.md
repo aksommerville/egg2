@@ -14,7 +14,7 @@ Launch with `eggdev serve` and arguments:
 - - If you omit `REMOTE:`, `LOCAL` is the root. ie `GET /abc/index.html` will serve `LOCAL/abc/index.html`.
 - - You may provide more than one. We search the last arguments first. So `--htdocs=my_defaults --htdocs=piecemeal_overrides`.
 - - Start the local path with "EGG_SDK/" to serve from the SDK.
-- - `LOCAL` may be Zip file, we'll painstakingly unpack it on every request. Always use a `REMOTE:` prefix in this case, otherwise it matches every request.
+- - `LOCAL` may be a Zip file, we'll painstakingly unpack it on every request. Always use a `REMOTE:` prefix in this case, otherwise it matches every request.
 - `--writeable=LOCAL`: Mark one local path as accepting PUT and DELETE methods. It must also be listed as `--htdocs`.
 - `--project=DIR`: Identify an Egg project, which we use for resource compilation and the `/api/buildfirst/...` endpoint.
 
@@ -22,7 +22,7 @@ Launch with `eggdev serve` and arguments:
 This usually means that the server is accessible from any host, possibly from the whole internet.
 **This server is not suitable for use on the internet.**
 We assume a single trusted user.
-Malicious or incompetent users could trivially DoS this server, and could probably do more serious harm with just a little effort.
+Malicious or incompetent users could trivially DoS this server, trash your project, and could probably do more serious harm with just a little effort.
 
 The main reason `--unsafe-external` is even an option is for testing on mobile devices locally.
 If you're going to use it, please first be sure that there's no untrusted parties on your network,
@@ -33,6 +33,12 @@ You can always build the artifacts separately, then serve them with a tool bette
 ## Endpoints
 
 Every special request managed by eggdev begins with `/api/`.
+
+### GET /api/webpath
+
+Returns the path to the standalone HTML of this project, relative to project's root.
+Typically `/out/MYGAME-web.html`.
+Fails if no suitable target is configured.
 
 ### GET /api/buildfirst/**
 

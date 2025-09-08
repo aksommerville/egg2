@@ -57,7 +57,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
 - - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
 - - [ ] PostModal fields per stage type.
-- - [ ] Launch game.
+- - [x] Launch game.
 - - [ ] Song actions (SongChannelsUi)
 - - [ ] ModecfgModal for drum: Spawn SongEditor in a modal per drum.
 - [ ] eggdev

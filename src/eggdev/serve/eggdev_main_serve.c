@@ -6,6 +6,48 @@
 
 static int eggdev_cb_get_other(struct http_xfer *req,struct http_xfer *rsp);
 
+/* GET /api/webpath
+ */
+
+static int eggdev_cb_get_webpath(struct http_xfer *req,struct http_xfer *rsp) {
+  if (g.project) {
+    const char *pname=g.project;
+    int pnamec=0,srcp=0;
+    for (;g.project[srcp];srcp++) {
+      if (g.project[srcp]=='/') {
+        pname=g.project+srcp+1;
+        pnamec=0;
+      } else {
+        pnamec++;
+      }
+    }
+    /* Realistically, the target should always be "web".
+     * But we'll do it right and check each configured target until we find one with "web" packaging,
+     * then infer the output path from that.
+     */
+    const char *targets=0;
+    int targetsc=eggdev_config_get(&targets,"EGG_TARGETS",11);
+    int targetsp=0;
+    while (targetsp<targetsc) {
+      if ((unsigned char)targets[targetsp]<=0x20) {
+        targetsp++;
+        continue;
+      }
+      const char *token=targets+targetsp++;
+      int tokenc=1;
+      while ((targetsp<targetsc)&&((unsigned char)targets[targetsp++]>0x20)) tokenc++;
+      const char *packaging=0;
+      int packagingc=eggdev_config_get_sub(&packaging,token,tokenc,"PACKAGING",9);
+      if ((packagingc==3)&&!memcmp(packaging,"web",3)) {
+        struct sr_encoder *dst=http_xfer_get_body(rsp);
+        if (sr_encode_fmt(dst,"/out/%.*s-%.*s.html\n",pnamec,pname,tokenc,token)<0) return -1;
+        return http_xfer_set_status(rsp,200,"OK");
+      }
+    }
+  }
+  return http_xfer_set_status(rsp,404,"No suitable target");
+}
+
 /* GET /api/buildfirst/**
  */
  
@@ -396,6 +438,7 @@ static int eggdev_cb_unmatched(struct http_xfer *req,struct http_xfer *rsp) {
  
 static int eggdev_cb_serve(struct http_xfer *req,struct http_xfer *rsp,void *userdata) {
   return http_dispatch(req,rsp,
+    HTTP_METHOD_GET,"/api/webpath",eggdev_cb_get_webpath,
     HTTP_METHOD_GET,"/api/buildfirst**",eggdev_cb_get_buildfirst,
     HTTP_METHOD_GET,"/api/symbols",eggdev_cb_get_symbols,
     HTTP_METHOD_GET,"/api/instruments",eggdev_cb_get_instruments,
