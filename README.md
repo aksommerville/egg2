@@ -14,7 +14,6 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - Web apps pack to a Zip file with boilerplate HTML and the binary ROM. Same as berry. Also continue to allow standalone HTML as an option.
 - eggdev --help reads from etc/doc/eggdev-cli.md directly.
 - Default instruments live somewhere in the SDK.
-- No Wasm runtime for native builds. ~If we want that in the future, it should be achievable but I don't expect to want it.~ Actually I do.
 
 ## Prereqs
 
@@ -108,6 +107,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] Standard instruments and sound effects.
 - [ ] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet.
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
-- [ ] Standalone native app with a Wasm runtime that runs Egg, HTML, or ZIP files.
+- [x] Standalone native app with a Wasm runtime that runs Egg, HTML, or ZIP files.
 - - This shouldn't require much, just the WAMR plumbing.
 - - Ensure eggdev and games can be built without it. Don't require all dev hosts to have WAMR.
+- [ ] macos: eggrun

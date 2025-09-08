@@ -227,7 +227,7 @@ int eggrt_init() {
   
   // ROM must initialize before drivers, drivers before prefs, and prefs before client.
   if ((err=eggrt_rom_init())<0) {
-    if (err!=-2) fprintf(stderr,"%s: Failed to acquire game ROM.\n",eggrt.exename);
+    if (err!=-2) fprintf(stderr,"%s: Malformed ROM.\n",eggrt.exename);
     return -2;
   }
   

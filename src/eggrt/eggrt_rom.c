@@ -7,8 +7,13 @@
 #include "eggrt_internal.h"
 #include "opt/serial/serial.h"
 
+/* One of these will be populated and the other empty,
+ * depending on whether we're a full native app or the generic runtime.
+ */
 extern const uint8_t _egg_embedded_rom[];
 extern const int _egg_embedded_rom_size;
+extern uint8_t *_egg_dynamic_rom;
+extern int _egg_dynamic_rom_size;
 
 /* Quit.
  */
@@ -125,8 +130,13 @@ static int eggrt_rom_load_metadata() {
  */
 
 int eggrt_rom_init() {
-  eggrt.rom=(void*)_egg_embedded_rom;
-  eggrt.romc=_egg_embedded_rom_size;
+  if (_egg_dynamic_rom_size) {
+    eggrt.rom=_egg_dynamic_rom;
+    eggrt.romc=_egg_dynamic_rom_size;
+  } else {
+    eggrt.rom=(void*)_egg_embedded_rom;
+    eggrt.romc=_egg_embedded_rom_size;
+  }
   
   struct rom_reader reader;
   if (rom_reader_init(&reader,eggrt.rom,eggrt.romc)<0) return -1;

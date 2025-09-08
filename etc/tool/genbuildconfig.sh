@@ -62,7 +62,9 @@ EOF
   web_LD="wasm-ld --no-entry -z stack-size=4194304 --no-gc-sections --allow-undefined --export-table   --export=egg_client_init --export=egg_client_quit --export=egg_client_update --export=egg_client_render"
   web_LDPOST=
   web_PACKAGING=web
+  # EXESFX,WAMR_SDK are not meaningful with "web" packaging, but we define them for the sake of uniformity.
   web_EXESFX=
+  web_WAMR_SDK=
 else
   echo "clang does not appear to support the 'wasm32' target. This Egg installation will not build for web."
 fi
@@ -93,6 +95,7 @@ for TARGET in $EGG_TARGETS ; do
       macos_LDPOST="-lm -lz -framework OpenGL -framework CoreGraphics -framework IOKit -framework AudioUnit -framework Cocoa -framework Quartz"
       macos_PACKAGING=macos
       macos_EXESFX=
+      macos_WAMR_SDK=
     ;;
     
     mswin)
@@ -103,6 +106,7 @@ for TARGET in $EGG_TARGETS ; do
       mswin_LDPOST="-lm -lz -lopengl32 -lwinmm -lhid"
       mswin_PACKAGING=mswin
       mswin_EXESFX=.exe
+      mswin_WAMR_SDK=
     ;;
     
     linux)
@@ -113,6 +117,7 @@ for TARGET in $EGG_TARGETS ; do
       linux_LDPOST="-lm -lz"
       linux_PACKAGING=exe
       linux_EXESFX=
+      linux_WAMR_SDK=
       # Select other drivers based on the available headers:
       if [ -f /usr/include/asoundlib.h ] ; then
         linux_OPT_ENABLE="$linux_OPT_ENABLE asound"
@@ -156,6 +161,7 @@ for TARGET in $EGG_TARGETS ; do
       declare "${TARGET}_LDPOST=-lm"
       declare "${TARGET}_PACKAGING=exe"
       declare "${TARGET}_EXESFX="
+      declare "${TARGET}_WAMR_SDK="
     ;;
   esac
 done
@@ -197,6 +203,7 @@ LD=${TARGET}_LD
 LDPOST=${TARGET}_LDPOST
 PACKAGING=${TARGET}_PACKAGING
 EXESFX=${TARGET}_EXESFX
+WAMR_SDK=${TARGET}_WAMR_SDK
 cat - >>"$DSTPATH" <<EOF
 
 export ${TARGET}_OPT_ENABLE:=${!OPT_ENABLE}
@@ -206,6 +213,8 @@ export ${TARGET}_LD:=${!LD}
 export ${TARGET}_LDPOST:=${!LDPOST}
 export ${TARGET}_PACKAGING:=${!PACKAGING}
 export ${TARGET}_EXESFX:=${!EXESFX}
+export ${TARGET}_WAMR_SDK:=${!WAMR_SDK}
+# Set WAMR_SDK to build eggrun. Get its source here: https://github.com/bytecodealliance/wasm-micro-runtime
 EOF
 done
 

@@ -1,18 +1,20 @@
-/* eggrt_main.c
- * This file is the difference between libeggrt.a and libeggrt-headless.a
- * Our job is just to provide main() and if applicable, patch into the local IoC provider.
+/* eggrun_main.c
+ * Owner of main() for the generic runtime.
+ * We do the same stuff as eggrt_main.c, but also load the ROM file and provide glue for the client entry points.
  */
 
-#include "eggrt_internal.h"
+#include "eggrun_internal.h"
 #include <sys/signal.h>
 
 #if USE_macos
   #include "opt/macos/macos.h"
 #endif
 
-/* We'll be using an embedded ROM only.
- * Set _egg_dynamic_rom empty so eggrt_rom knows to use the embedded one.
- */
+// Dummy embedded ROM so eggrt_rom knows to use the dynamic one.
+const uint8_t _egg_embedded_rom[1]={0};
+const int _egg_embedded_rom_size=0;
+
+// This is the real thing; we'll populate it before initializing eggrt.
 uint8_t *_egg_dynamic_rom=0;
 int _egg_dynamic_rom_size=0;
 
@@ -60,13 +62,25 @@ static void eggrt_cb_mac_update(void *userdata) {
  */
 
 int main(int argc,char **argv) {
+  eggrt.exename=((argc>=1)&&argv&&argv[0]&&argv[0][0])?argv[0]:"eggrun";
 
   #if USE_macos
     argc=macos_prerun_argv(argc,argv);
   #endif
-
-  int err=eggrt_configure(argc,argv);
+  
+  /* Before eggrt_configure, locate the ROM path and load it.
+   */
+  if ((_egg_dynamic_rom_size=eggrun_load_file(&_egg_dynamic_rom,argc,argv))<0) {
+    if (_egg_dynamic_rom_size!=-2) fprintf(stderr,"%s: Unspecified error loading ROM file.\n",eggrt.exename);
+    return 1;
+  }
+  int err=eggrun_boot(_egg_dynamic_rom,_egg_dynamic_rom_size,eggrun_rom_path);
   if (err<0) {
+    if (err!=-2) fprintf(stderr,"%s: Unspecified error instantiating Wasm runtime.\n",eggrt.exename);
+    return 1;
+  }
+
+  if ((err=eggrt_configure(argc,argv))<0) {
     if (err!=-2) fprintf(stderr,"%s: Unspecified error reading configuration.\n",eggrt.exename);
     return 1;
   }
