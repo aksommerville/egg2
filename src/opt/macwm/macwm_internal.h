@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 //#include <MetalKit/MetalKit.h>
+#define GL_SILENCE_DEPRECATION 1
 #include <OpenGL/gl.h>
 
 #define MACWM_KEY_LIMIT 16

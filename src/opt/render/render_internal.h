@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #if USE_ismac
+  #define GL_SILENCE_DEPRECATION 1
   #include <OpenGL/OpenGL.h>
   #define GL_GLEXT_PROTOTYPES 1
   #include <OpenGL/gl.h>

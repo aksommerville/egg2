@@ -88,10 +88,11 @@ for TARGET in $EGG_TARGETS ; do
     web) ;; # Already configured.
     
     macos)
-      macos_OPT_ENABLE="$STDRTOPT macos macaudio machid macwm"
+      macos_OPT_ENABLE="$STDRTOPT macos macaudio machid macwm ismac"
       macos_AR="ar"
-      macos_CC="gcc -c -MMD -O3 -Isrc -Werror -Wimplicit -Wno-comment -Wno-parentheses"
-      macos_LD="gcc -z noexecstack"
+      macos_CC="gcc -c -MMD -O3 -Isrc -Werror -Wimplicit -Wno-comment -Wno-parentheses -Wno-empty-body -Wno-comment -Wno-pointer-sign -Wno-deprecated-declarations"
+      macos_OBJC="gcc -xobjective-c -c -MMD -O3 -Isrc -Werror -Wimplicit -Wno-comment -Wno-parentheses -Wno-empty-body -Wno-comment -Wno-pointer-sign -Wno-deprecated-declarations"
+      macos_LD="gcc"
       macos_LDPOST="-lm -lz -framework OpenGL -framework CoreGraphics -framework IOKit -framework AudioUnit -framework Cocoa -framework Quartz"
       macos_PACKAGING=macos
       macos_EXESFX=
@@ -170,8 +171,14 @@ done
 # Set eggdev up with hard-coded defaults.
 
 eggdev_OPT_ENABLE="serial fs synth zip http image res real_stdlib eau"
-eggdev_CC="gcc -c -MMD -O3 -Isrc -Werror -Wimplicit"
-eggdev_LD="gcc -z noexecstack"
+if [ "$EGG_NATIVE_TARGET" = macos ] ; then
+  eggdev_OPT_ENABLE="$eggdev_OPT_ENABLE ismac"
+  eggdev_CC="gcc -c -MMD -O3 -Isrc -Werror -Wimplicit -Wno-parentheses -Wno-empty-body -Wno-comment -Wno-pointer-sign -Wno-deprecated-declarations"
+  eggdev_LD="gcc"
+else
+  eggdev_CC="gcc -c -MMD -O3 -Isrc -Werror -Wimplicit"
+  eggdev_LD="gcc -z noexecstack"
+fi
 eggdev_LDPOST="-lm -lz"
 
 #-----------------------------------------------------------------------------------------
@@ -199,6 +206,7 @@ for TARGET in $EGG_TARGETS ; do
 OPT_ENABLE=${TARGET}_OPT_ENABLE
 AR=${TARGET}_AR
 CC=${TARGET}_CC
+OBJC=${TARGET}_OBJC
 LD=${TARGET}_LD
 LDPOST=${TARGET}_LDPOST
 PACKAGING=${TARGET}_PACKAGING
@@ -209,6 +217,7 @@ cat - >>"$DSTPATH" <<EOF
 export ${TARGET}_OPT_ENABLE:=${!OPT_ENABLE}
 export ${TARGET}_AR:=${!AR}
 export ${TARGET}_CC:=${!CC}
+export ${TARGET}_OBJC:=${!OBJC}
 export ${TARGET}_LD:=${!LD}
 export ${TARGET}_LDPOST:=${!LDPOST}
 export ${TARGET}_PACKAGING:=${!PACKAGING}

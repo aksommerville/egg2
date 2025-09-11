@@ -38,5 +38,5 @@ eggdev_EGGSTRA_OFILES:=$(patsubst src/%,mid/eggstra/%.o,$(basename $(eggdev_EGGS
 mid/eggstra/%.o:src/%.c;$(PRECMD) $($(EGG_NATIVE_TARGET)_CC) -o$@ $<
 mid/eggstra/%.o:src/%.m;$(PRECMD) $($(EGG_NATIVE_TARGET)_OBJC) -o$@ $<
 eggdev-all:$(eggdev_EGGSTRA_EXE)
-$(eggdev_EGGSTRA_EXE):$(eggdev_EGGSTRA_OFILES);$(PRECMD) $($(EGG_NATIVE_TARGET)_LD) -o$@ $^ $(eggdev_LDPOST) $($(EGG_NATIVE_TARGET)_LDPOST)
+$(eggdev_EGGSTRA_EXE):$(eggdev_EGGSTRA_OFILES);$(PRECMD) $($(EGG_NATIVE_TARGET)_LD) -o$@ $^ $($(EGG_NATIVE_TARGET)_LDPOST)
 
