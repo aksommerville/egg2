@@ -266,7 +266,7 @@ export class ImageEditor {
         this.dom.spawn(trow, "INPUT", { type: "text", value: reprtile(tile.tileid), "on-input": e => this.onTileidInput(e, framep, tilep) });
         this.dom.spawn(trow, "INPUT", { type: "number", value: tile.x || 0, "on-input": e => this.onXInput(e, framep, tilep) });
         this.dom.spawn(trow, "INPUT", { type: "number", value: tile.y || 0, "on-input": e => this.onYInput(e, framep, tilep) });
-        this.dom.spawn(trow, "INPUT", { type: "number", value: tile.xform || 0, "on-input": e => this.onXformInput(e, framep, tilep) });
+        this.dom.spawn(trow, "INPUT", { type: "number", value: tile.xform || 0, min: 0, max: 7, "on-input": e => this.onXformInput(e, framep, tilep) });
         tilepi++;
       }
       framepi++;
@@ -374,11 +374,17 @@ export class ImageEditor {
       const zoom = this.previewZoom;
       const dstw = srcbounds[2] * zoom;
       const dsth = srcbounds[3] * zoom;
-      const dstx = (bounds.width >> 1) - (dstw >> 1) + ((tile.x || 0) * zoom);
-      const dsty = (bounds.height >> 1) - (dsth >> 1) + ((tile.y || 0) * zoom);
-      const halftile = dstw >> 1; // TODO This is incorrect for oblong decals.
+      let dstx = (bounds.width >> 1) - (dstw >> 1) + ((tile.x || 0) * zoom);
+      let dsty = (bounds.height >> 1) - (dsth >> 1) + ((tile.y || 0) * zoom);
+      const halfw = dstw >> 1;
+      const halfh = dsth >> 1;
       ctx.save();
-      ctx.translate(halftile + dstx, halftile + dsty);
+      if (tile.xform & 4) { // SWAP
+        const tmp = dstx;
+        dstx = dsty;
+        dsty = dstx;
+      }
+      ctx.translate(halfw + dstx, halfh + dsty);
       switch (tile.xform) {
         case 1: ctx.scale(-1, 1); break; // XREV
         case 2: ctx.scale(1, -1); break; // YREV
@@ -388,7 +394,7 @@ export class ImageEditor {
         case 6: ctx.rotate(Math.PI / 2); break; // SWAP|YREV
         case 7: ctx.rotate(Math.PI / 2); ctx.scale(-1, 1); break; // SWAP|XREV|YREV
       }
-      ctx.drawImage(this.res.image, srcbounds[0], srcbounds[1], srcbounds[2], srcbounds[3], -halftile, -halftile, dstw, dsth);
+      ctx.drawImage(this.res.image, srcbounds[0], srcbounds[1], srcbounds[2], srcbounds[3], -halfw, -halfh, dstw, dsth);
       ctx.restore();
     }
   }

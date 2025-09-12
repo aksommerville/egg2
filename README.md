@@ -53,7 +53,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [x] HexEditor: Paging, offset, ASCII, multi-byte edits.
 - - [x] ImageEditor: Animation preview like we had in v1.
 - - [ ] ImageEditor: Detect fonts and provide a specific preview mode for them?
-- - [ ] ImageEditor: Animation preview does not accomodate oblong decals (see ImageEditor.renderPreviewNow).
+- - [x] ImageEditor: Animation preview does not accomodate oblong decals (see ImageEditor.renderPreviewNow).
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
