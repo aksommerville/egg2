@@ -48,6 +48,26 @@ static int eggdev_cb_get_webpath(struct http_xfer *req,struct http_xfer *rsp) {
   return http_xfer_set_status(rsp,404,"No suitable target");
 }
 
+/* GET /api/projname
+ */
+ 
+static int eggdev_cb_get_projname(struct http_xfer *req,struct http_xfer *rsp) {
+  if (!g.project) return http_xfer_set_status(rsp,404,"No project established at command line.");
+  const char *pname=g.project;
+  int pnamec=0,srcp=0;
+  for (;g.project[srcp];srcp++) {
+    if (g.project[srcp]=='/') {
+      pname=g.project+srcp+1;
+      pnamec=0;
+    } else {
+      pnamec++;
+    }
+  }
+  struct sr_encoder *dst=http_xfer_get_body(rsp);
+  if (sr_encode_raw(dst,pname,pnamec)<0) return -1;
+  return http_xfer_set_status(rsp,200,"OK");
+}
+
 /* GET /api/buildfirst/**
  */
  
@@ -439,6 +459,7 @@ static int eggdev_cb_unmatched(struct http_xfer *req,struct http_xfer *rsp) {
 static int eggdev_cb_serve(struct http_xfer *req,struct http_xfer *rsp,void *userdata) {
   return http_dispatch(req,rsp,
     HTTP_METHOD_GET,"/api/webpath",eggdev_cb_get_webpath,
+    HTTP_METHOD_GET,"/api/projname",eggdev_cb_get_projname,
     HTTP_METHOD_GET,"/api/buildfirst**",eggdev_cb_get_buildfirst,
     HTTP_METHOD_GET,"/api/symbols",eggdev_cb_get_symbols,
     HTTP_METHOD_GET,"/api/instruments",eggdev_cb_get_instruments,

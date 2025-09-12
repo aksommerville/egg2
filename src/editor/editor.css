@@ -269,14 +269,66 @@ input.toggle:checked + label.toggle.light {
 
 .ImageEditor {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
 }
-.ImageEditor img {
-  width: 80%;
-  height: 80%;
-  image-rendering: pixelated;
-  object-fit: contain;
+.ImageEditor > .top {
+  height: 520px; /* Let 256px images scale up 2x */
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid #000;
+}
+.ImageEditor > .top > .full {
+  flex: 1;
+  min-width: 100px;
+}
+.ImageEditor > .top > .setup {
+  width: 250px;
+  border-left: 1px solid #000;
+}
+.ImageEditor .resName {
+  min-height: 1lh;
+}
+.ImageEditor .resDimensions {
+  min-height: 1lh;
+}
+.ImageEditor > .bottom {
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 520px); /* Need explicit height to prevent scrollable children from overflowing. */
+}
+.ImageEditor > .bottom > .preview {
+  width: 300px;
+}
+.ImageEditor > .bottom > .animlist {
+  border-left: 1px solid #000;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  width: 200px;
+}
+.ImageEditor > .bottom > .animedit {
+  border-left: 1px solid #000;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  flex: 1;
+}
+.ImageEditor .face {
+  cursor: pointer;
+  user-select: none;
+}
+.ImageEditor .face.selected {
+  background-color: #014;
+}
+.ImageEditor .frame {
+  display: flex;
+  flex-direction: column;
+  margin: 5px 0;
+}
+.ImageEditor .frame > .tiles {
+  position: relative;
+  left: 10px;
+}
+.ImageEditor .tile > input[type="number"] {
+  width: 60px;
 }
 
 .PickImageModal {

@@ -18,13 +18,18 @@ export class SharedSymbols {
     this.symv = []; // {nstype,ns,k,v}
     this.instruments = null; // null or Song
     this.instrumentsPromise = null;
+    this.projname = "";
     
     this.loadingPromise = this.comm.httpJson("GET", "/api/symbols").then(rsp => {
       if (!(rsp instanceof Array)) throw new Error(`Expected array from /api/symbols`);
       this.symv = rsp;
     }).catch(error => {
       this.symv = [];
-    });
+    }).then(() => {
+      return this.comm.httpText("GET", "/api/projname");
+    }).then(rsp => {
+      if (rsp && (typeof(rsp) === "string")) this.projname = rsp;
+    }).catch(() => {});
   }
   
   whenLoaded() {

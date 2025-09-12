@@ -40,6 +40,10 @@ Returns the path to the standalone HTML of this project, relative to project's r
 Typically `/out/MYGAME-web.html`.
 Fails if no suitable target is configured.
 
+### GET /api/projname
+
+Returns a short simple string, the name of the project being edited (ie basename of its top directory).
+
 ### GET /api/buildfirst/**
 
 If `--project` was provided, do the equivalent of `eggdev build PROJECT` first.

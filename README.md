@@ -51,7 +51,9 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
 - - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
 - - [x] HexEditor: Paging, offset, ASCII, multi-byte edits.
-- - [ ] ImageEditor: Animation preview like we had in v1.
+- - [x] ImageEditor: Animation preview like we had in v1.
+- - [ ] ImageEditor: Detect fonts and provide a specific preview mode for them?
+- - [ ] ImageEditor: Animation preview does not accomodate oblong decals (see ImageEditor.renderPreviewNow).
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
@@ -60,6 +62,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [x] Launch game.
 - - [ ] Song actions (SongChannelsUi)
 - - [ ] ModecfgModal for drum: Spawn SongEditor in a modal per drum.
+- - [ ] SpriteEditor: Adding a blank row at load is good, but don't dirty the resource because of it.
 - [ ] eggdev
 - - [ ] project: Update Makefile for serving runtime. Also confirm re MacOS, I didn't look.
 - - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
