@@ -100,7 +100,6 @@ export class ImageEditor {
       this.sliceData = new Tilesheet(res.serial);
     } else if (res = this.data.resv.find(r => ((r.rid === this.res.rid) && (r.type === "decalsheet")))) {
       this.sliceData = new Decalsheet(res.serial);
-    //TODO Maybe also detect fonts? One can imagine some value in previewing text.
     } else if (this.boundsSuggestTilesheet(this.res.image.naturalWidth, this.res.image.naturalHeight)) {
       this.sliceData = new Tilesheet(null);
     }

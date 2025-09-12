@@ -52,7 +52,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
 - - [x] HexEditor: Paging, offset, ASCII, multi-byte edits.
 - - [x] ImageEditor: Animation preview like we had in v1.
-- - [ ] ImageEditor: Detect fonts and provide a specific preview mode for them?
+- - [x] ImageEditor: Detect fonts and provide a specific preview mode for them? ...DECLINE. We don't have a firm standard for bitmap fonts, and I don't want to impose one here.
 - - [x] ImageEditor: Animation preview does not accomodate oblong decals (see ImageEditor.renderPreviewNow).
 - - [ ] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
