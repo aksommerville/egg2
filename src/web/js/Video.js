@@ -250,8 +250,7 @@ export class Video {
     this.gl.bindTexture(this.gl.TEXTURE_2D, tex.gltexid);
     if (src) {
       if (stride > minstride) {
-        console.error(`TODO Video.egg_texture_load_raw: Rewrite with minimum stride`);
-        return -1;
+        src = this.rewriteTexture(src, h, minstride, stride);
       }
       tex.border = 0;
       this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, w, h, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, src);
@@ -264,8 +263,28 @@ export class Video {
     return 0;
   }
   
+  rewriteTexture(src, h, dststride, srcstride) {
+    const dst = new Uint8Array(dststride * h);
+    for (let dstp=0, srcp=0, yi=h; yi-->0; dstp+=dststride, srcp+=srcstride) {
+      const srcview = new Uint8Array(src.buffer, src.byteOffset + srcp, dststride);
+      const dstview = new Uint8Array(dst.buffer, dst.byteOffset + dstp, dststride);
+      dstview.set(srcview);
+    }
+    return dst;
+  }
+  
   egg_texture_get_pixels(dstp, dsta, texid) {
-    console.log(`TODO Video.egg_texture_get_pixels ${dstp},${dsta},${texid}`);//TODO
+    const tex = this.texv[texid];
+    if (!tex) return -1;
+    const stride = tex.w * 4;
+    const dstc = stride * tex.h;
+    if (dstc > dsta) return -1;
+    const dst = this.rt.exec.getMemory(dstp, dstc);
+    if (!dst) return -1;
+    if (!this.requireFramebuffer(tex)) return -1;
+    this.gl.flush();
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, tex.fbid);
+    this.gl.readPixels(tex.border, tex.border, tex.w, tex.h, this.gl.RGBA, this.gl.UNSIGNED_BYTE, dst);
     return 0;
   }
   

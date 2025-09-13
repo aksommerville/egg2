@@ -88,6 +88,45 @@ int egg_client_init() {
     egg_log("Failed to decode tiles.");
     return -1;
   }
+  
+  /* XXX 2025-09-13: Testing two new things in web: egg_texture_load_raw() with excess stride, and egg_texture_get_pixels().
+   */
+  {
+    int texid=egg_texture_new();
+    if (texid<1) return -1;
+    const uint8_t pixels0[]={
+      #define W 0xff,0xff,0xff,0xff,
+      #define _ 0x00,0x00,0x00,0x00,
+      W _ _ _ W _ _ _
+      _ W _ W _ _ _ _
+      _ _ W _ _ _ _ _
+      _ W _ W _ _ _ _
+      W _ _ _ W _ _ _
+      #undef W
+      #undef _
+    };
+    if (egg_texture_load_raw(texid,5,5,8*4,pixels0,sizeof(pixels0))<0) {
+      egg_log("egg_texture_load_raw failed");
+      return -1;
+    }
+    uint8_t pixels1[5*5*4]={0};
+    if (egg_texture_get_pixels(pixels1,sizeof(pixels1),texid)<0) {
+      egg_log("egg_texture_get_pixels failed");
+      return -1;
+    }
+    const uint8_t *rowa=pixels0,*rowb=pixels1;
+    int yi=5; for (;yi-->0;rowa+=8*4,rowb+=5*4) {
+      const uint8_t *pa=rowa,*pb=rowb;
+      int xi=5*4; for (;xi-->0;pa++,pb++) {
+        if (*pa!=*pb) {
+          egg_log("pixels mismatch after readback!");
+          return -1;
+        }
+      }
+    }
+    egg_texture_del(texid);
+    egg_log("stride and readback test pass");
+  }
 
   //TODO
 
