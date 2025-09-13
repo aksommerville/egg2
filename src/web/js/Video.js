@@ -607,14 +607,14 @@ gl_PointSize*=sqrt(2.0);
 } else {
 vmat=mat2(1.0,0.0,0.0,1.0);
 }
-if (axform<0.5) ; // no xform
-else if (axform<1.5) vmat=mat2(-vmat[0][0],-vmat[0][1], vmat[1][0], vmat[1][1]); // XREV
-else if (axform<2.5) vmat=mat2( vmat[0][0], vmat[0][1],-vmat[1][0],-vmat[1][1]); // YREV
-else if (axform<3.5) vmat=mat2(-vmat[0][0],-vmat[0][1],-vmat[1][0],-vmat[1][1]); // XREV|YREV
-else if (axform<4.5) vmat=mat2( vmat[0][1], vmat[0][0], vmat[1][1], vmat[1][0]); // SWAP
-else if (axform<5.5) vmat=mat2(-vmat[0][1],-vmat[0][0], vmat[1][1], vmat[1][0]); // SWAP|XREV
-else if (axform<6.5) vmat=mat2( vmat[0][1], vmat[0][0],-vmat[1][1],-vmat[1][0]); // SWAP|YREV
-else if (axform<7.5) vmat=mat2( vmat[0][1],-vmat[0][0],-vmat[1][1], vmat[1][0]); // SWAP|XREV|YREV
+if (axform<0.5) ;
+else if (axform<1.5) vmat=mat2(-vmat[0][0],-vmat[0][1], vmat[1][0], vmat[1][1]);
+else if (axform<2.5) vmat=mat2( vmat[0][0], vmat[0][1],-vmat[1][0],-vmat[1][1]);
+else if (axform<3.5) vmat=mat2(-vmat[0][0],-vmat[0][1],-vmat[1][0],-vmat[1][1]);
+else if (axform<4.5) vmat=mat2( vmat[0][1], vmat[0][0], vmat[1][1], vmat[1][0]);
+else if (axform<5.5) vmat=mat2(-vmat[0][1], vmat[0][0],-vmat[1][1], vmat[1][0]);
+else if (axform<6.5) vmat=mat2( vmat[0][1],-vmat[0][0], vmat[1][1],-vmat[1][0]);
+else if (axform<7.5) vmat=mat2( vmat[0][1],-vmat[0][0],-vmat[1][1], vmat[1][0]);
 vtint=atint;
 vprimary=aprimary;
 }

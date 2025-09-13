@@ -1,364 +1,73 @@
 #include "demo.h"
 
-  /* around_here_somewhere
-   * eternal_torment
-   * hold_your_fire
-   * bakers_dozen
-   * in_thru_the_window
-   * wheeltest
-   * drumtest
-   */
-#define FIRST_SONG RID_song_around_here_somewhere
-#define LAST_SONG RID_song_doors_without_walls
-struct g g={
-  .songid=FIRST_SONG,
-};
+struct g g={0};
 
 void egg_client_quit(int status) {
 }
-
-char rom_tmp[128<<10];//TODO really need stdlib
 
 int egg_client_init() {
 
   int fbw=0,fbh=0;
   egg_texture_get_size(&fbw,&fbh,1);
-  {
-    char msg[]={
-      'f','b',':',' ',
-      '0'+(fbw/1000)%10,
-      '0'+(fbw/ 100)%10,
-      '0'+(fbw/  10)%10,
-      '0'+(fbw     )%10,
-      'x',
-      '0'+(fbh/1000)%10,
-      '0'+(fbh/ 100)%10,
-      '0'+(fbh/  10)%10,
-      '0'+(fbh     )%10,
-      0,
-    };
-    egg_log(msg);
-  }
   if ((fbw!=FBW)||(fbh!=FBH)) {
-    //fprintf(stderr,"Framebuffer size mismatch! metadata=%dx%d header=%dx%d\n",fbw,fbh,FBW,FBH);
+    fprintf(stderr,"Framebuffer size mismatch! metadata=%dx%d header=%dx%d\n",fbw,fbh,FBW,FBH);
     return -1;
   }
+  fprintf(stderr,"framebuffer %dx%d\n",fbw,fbh);
 
   g.romc=egg_rom_get(0,0);
-  if (g.romc>sizeof(rom_tmp)) {
-    egg_log("rom too large");
-    return -1;
-  }
-  g.rom=rom_tmp;
+  if (!(g.rom=malloc(g.romc))) return -1;
   egg_rom_get(g.rom,g.romc);
-  //if (!(g.rom=malloc(g.romc))) return -1;//TODO need stdlib
-  //egg_rom_get(g.rom,g.romc);
+  fprintf(stderr,"rom size %d\n",g.romc);
   
-  // TEMP: Report rom size.
-  char msg[]="rom size 0000000";
-  msg[ 9]='0'+(g.romc/1000000)%10;
-  msg[10]='0'+(g.romc/ 100000)%10;
-  msg[11]='0'+(g.romc/  10000)%10;
-  msg[12]='0'+(g.romc/   1000)%10;
-  msg[13]='0'+(g.romc/    100)%10;
-  msg[14]='0'+(g.romc/     10)%10;
-  msg[15]='0'+(g.romc        )%10;
-  egg_log(msg);
-  
-  // TEMP: Try load and save.
-  char v[256];
-  int vc=egg_store_get(v,sizeof(v),"mySavedGame",11);
-  if ((vc>0)&&(vc<sizeof(v))) {
-    v[vc]=0;
-    egg_log("Acquired saved game:");
-    egg_log(v);
-  } else {
-    egg_log("Failed to load saved game.");
-  }
-  if (egg_store_set("mySavedGame",11,"Abcdefghi",9)<0) {
-    egg_log("Failed to save game.");
-  } else {
-    egg_log("Saved game.");
-  }
-  
-  egg_play_song(g.songid,0,1);
-  
-  g.texid_tiles=egg_texture_new();
-  if (egg_texture_load_image(g.texid_tiles,RID_image_tiles)<0) {
-    egg_log("Failed to decode tiles.");
-    return -1;
-  }
-  
-  /* XXX 2025-09-13: Testing two new things in web: egg_texture_load_raw() with excess stride, and egg_texture_get_pixels().
-   */
-  {
-    int texid=egg_texture_new();
-    if (texid<1) return -1;
-    const uint8_t pixels0[]={
-      #define W 0xff,0xff,0xff,0xff,
-      #define _ 0x00,0x00,0x00,0x00,
-      W _ _ _ W _ _ _
-      _ W _ W _ _ _ _
-      _ _ W _ _ _ _ _
-      _ W _ W _ _ _ _
-      W _ _ _ W _ _ _
-      #undef W
-      #undef _
-    };
-    if (egg_texture_load_raw(texid,5,5,8*4,pixels0,sizeof(pixels0))<0) {
-      egg_log("egg_texture_load_raw failed");
-      return -1;
-    }
-    uint8_t pixels1[5*5*4]={0};
-    if (egg_texture_get_pixels(pixels1,sizeof(pixels1),texid)<0) {
-      egg_log("egg_texture_get_pixels failed");
-      return -1;
-    }
-    const uint8_t *rowa=pixels0,*rowb=pixels1;
-    int yi=5; for (;yi-->0;rowa+=8*4,rowb+=5*4) {
-      const uint8_t *pa=rowa,*pb=rowb;
-      int xi=5*4; for (;xi-->0;pa++,pb++) {
-        if (*pa!=*pb) {
-          egg_log("pixels mismatch after readback!");
-          return -1;
-        }
-      }
-    }
-    egg_texture_del(texid);
-    egg_log("stride and readback test pass");
-  }
-
-  //TODO
+  //TODO Prep font and graphics.
 
   return 0;
 }
 
-static int pvinput=0;
-
 void egg_client_update(double elapsed) {
-
-  // Report aggregate input state.
-  int input=egg_input_get_one(0);
-  if (input!=pvinput) {
-    char msg[32]="INPUT: ";
-    int msgc=7;
-    if (input&EGG_BTN_SOUTH) msg[msgc++]='s'; else msg[msgc++]='.';
-    if (input&EGG_BTN_EAST ) msg[msgc++]='e'; else msg[msgc++]='.';
-    if (input&EGG_BTN_WEST ) msg[msgc++]='w'; else msg[msgc++]='.';
-    if (input&EGG_BTN_NORTH) msg[msgc++]='n'; else msg[msgc++]='.';
-    if (input&EGG_BTN_L1   ) msg[msgc++]='L'; else msg[msgc++]='.';
-    if (input&EGG_BTN_R1   ) msg[msgc++]='R'; else msg[msgc++]='.';
-    if (input&EGG_BTN_AUX1 ) msg[msgc++]='1'; else msg[msgc++]='.';
-    if (input&EGG_BTN_UP   ) msg[msgc++]='u'; else msg[msgc++]='.';
-    if (input&EGG_BTN_DOWN ) msg[msgc++]='d'; else msg[msgc++]='.';
-    if (input&EGG_BTN_LEFT ) msg[msgc++]='l'; else msg[msgc++]='.';
-    if (input&EGG_BTN_RIGHT) msg[msgc++]='r'; else msg[msgc++]='.';
-    msg[msgc]=0;
-    egg_log(msg);
-    if (0&&(input&EGG_BTN_SOUTH)&&!(pvinput&EGG_BTN_SOUTH)) {
-      g.songid++;
-      if (g.songid>LAST_SONG) g.songid=FIRST_SONG;
-      char tmp[]="Play song 00";
-      tmp[11]='0'+g.songid%10;
-      tmp[10]='0'+g.songid/10;
-      egg_log(tmp);
-      egg_play_song(g.songid,0,1);
-    }
-    if ((input&EGG_BTN_WEST)&&!(pvinput&EGG_BTN_WEST)) {
-      egg_log("Setting playhead to 4.0");
-      egg_song_set_playhead(4.0);
-    }
-    if ((input&EGG_BTN_SOUTH)&&!(pvinput&EGG_BTN_SOUTH)) {
-      egg_log("Play sound 2");
-      egg_play_sound(2,1.0,0.0);
-    }
-    pvinput=input;
-  }
+  //TODO
 }
 
-static uint32_t fb[FBW*FBH]={0};
-#define SETPIXEL(x,y,r,g,b,a) fb[((y)*FBW)+(x)]=(r)|((g)<<8)|((b)<<16)|((a)<<24);
-
-static uint8_t keyt=0;
-
 void egg_client_render() {
-  //graf_reset(&g.graf);
-  //TODO Eventually the demo should use "graf", all Egg games should. But while building out the platform, I'll call the Egg Platform API directly.
-  //graf_flush(&g.graf);
+  graf_reset(&g.graf);
   
-  egg_texture_clear(1);
+  // Fill background with a gradient.
+  graf_triangle_strip_begin(&g.graf,
+    0,0,  0xa06060ff,
+    FBW,0,0x60a060ff,
+    0,FBH,0x6060a0ff
+  );
+  graf_triangle_strip_more(&g.graf,
+    FBW,FBH,0x808080ff
+  );
   
-  if (0) { //XXX TEMP Upload from a client-side RGBA framebuffer.
-    int i=32; while (i-->0) {
-      SETPIXEL(i,0    ,0x00,0x00,0xff,0xff) // blue on top
-      SETPIXEL(i,FBH-1,0x00,0xff,0x00,0xff) // green on bottom
-      SETPIXEL(0    ,i,0xff,0x00,0x00,0xff) // red left
-      SETPIXEL(FBW-1,i,0xff,0xff,0xff,0xff) // white right
-    }
-    egg_texture_load_raw(1,FBW,FBH,FBW<<2,fb,sizeof(fb));
-    return;
-  }
-  
-  if (0) { //XXX TEMP Drop an image into the framebuffer. This is really not a normal thing to do.
-    egg_texture_load_image(1,RID_image_smallbanner);
-    return;
-  }
-  
-  // Fill the framebuffer with brown. And you can see why "graf" needs to exist, this is way too much ceremony!
-  {
-    struct egg_render_uniform un={
-      .mode=EGG_RENDER_TRIANGLE_STRIP,
-      .dsttexid=1,
-      .alpha=0xff,
-    };
-    struct egg_render_raw vtxv[]={
-      {  0,  0, 0,0, 0x80,0x40,0x20,0xff},
-      {  0,FBH, 0,0, 0x80,0x40,0x20,0xff},
-      {FBW,  0, 0,0, 0x80,0x40,0x20,0xff},
-      {FBW,FBH, 0,0, 0x80,0x40,0x20,0xff},
-    };
-    egg_render(&un,vtxv,sizeof(vtxv));
-  }
-  
-  // Draw a gradient-filled triangle: Red on top, green lower left, and blue lower right.
-  {
-    struct egg_render_uniform un={
-      .mode=EGG_RENDER_TRIANGLES,
-      .dsttexid=1,
-      .alpha=0xff,
-    };
-    const int margin=10;
-    struct egg_render_raw vtxv[]={
-      {    FBW>>1,    margin,0,0,0xff,0x00,0x00,0xff},
-      {    margin,FBH-margin,0,0,0x00,0xff,0x00,0xff},
-      {FBW-margin,FBH-margin,0,0,0x00,0x00,0xff,0xff},
-    };
-    egg_render(&un,vtxv,sizeof(vtxv));
-  }
-  
-  // Draw a textured quad.
-  {
-    struct egg_render_uniform un={
-      .mode=EGG_RENDER_TRIANGLE_STRIP,
-      .dsttexid=1,
-      .srctexid=g.texid_tiles,
-      .alpha=0xff,
-    };
-    int16_t x=NS_sys_tilesize*2,y=NS_sys_tilesize*5,w=NS_sys_tilesize*3,h=NS_sys_tilesize*3;
-    struct egg_render_raw vtxv[]={
-      { 10, 10, x  ,y  },
-      { 10, 58, x  ,y+h},
-      { 58, 10, x+w,y  },
-      { 58, 58, x+w,y+h},
-    };
-    egg_render(&un,vtxv,sizeof(vtxv));
-  }
-  
-  // Draw a couple plain tiles.
-  {
-    struct egg_render_uniform un={
-      .mode=EGG_RENDER_TILE,
-      .dsttexid=1,
-      .srctexid=g.texid_tiles,
-      .tint=0,
-      .alpha=0xff,
-    };
-    struct egg_render_tile vtxv[]={
-      { 80, 20, 0x01,0},
-      {100, 20, 0x02,0},
-      {120, 20, 0x01,EGG_XFORM_XREV},
-      {140, 20, 0x01,EGG_XFORM_YREV},
-      {160, 20, 0x01,EGG_XFORM_XREV|EGG_XFORM_YREV},
-      {180, 20, 0x01,EGG_XFORM_SWAP},
-      {200, 20, 0x01,EGG_XFORM_SWAP|EGG_XFORM_XREV},
-      {220, 20, 0x01,EGG_XFORM_SWAP|EGG_XFORM_YREV},
-      {240, 20, 0x01,EGG_XFORM_SWAP|EGG_XFORM_XREV|EGG_XFORM_YREV},
-    };
-    egg_render(&un,vtxv,sizeof(vtxv));
-  }
-  
-  // Draw a couple fancy tiles.
-  if (1) {
-    struct egg_render_uniform un={
-      .mode=EGG_RENDER_FANCY,
-      .dsttexid=1,
-      .srctexid=g.texid_tiles,
-      .alpha=0xff,
-      .filter=1,
-    };
-    keyt++;
-    // x,y,tileid,xform,rotation,size,tr,tg,tb,ta,pr,pg,pb,a
-    struct egg_render_fancy vtxv[]={
-      { 80, 60,0x51,0,0x00,NS_sys_tilesize,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0xff},
-      {100, 60,0x51,0,0x00,12             ,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0xff},
-      {120, 60,0x51,0,0x00,20             ,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff},
-      {140, 60,0x51,0,keyt,NS_sys_tilesize,0x00,0x00,0x00,0x00,0xff,0x00,0x80,0xff},
-    };
-    egg_render(&un,vtxv,sizeof(vtxv));
-  }
-  
-  // Draw a fancy with each xform.
-  {
-    struct egg_render_uniform un={
-      .mode=EGG_RENDER_FANCY,
-      .dsttexid=1,
-      .srctexid=g.texid_tiles,
-      .alpha=0xff,
-      .filter=0,
-    };
-    uint8_t t=keyt;
-    struct egg_render_fancy vtxv[]={
-      { 20,100,0x51,0,t,NS_sys_tilesize*3,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0xff},
-      { 60,100,0x51,1,t,NS_sys_tilesize*3,0x00,0x00,0x00,0x00,0xff,0x80,0x00,0xff},
-      {100,100,0x51,2,t,NS_sys_tilesize*3,0x00,0x00,0x00,0x00,0xff,0xff,0x00,0xff},
-      {140,100,0x51,3,t,NS_sys_tilesize*3,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0xff},
-      {180,100,0x51,4,t,NS_sys_tilesize*3,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xff},
-      {220,100,0x51,5,t,NS_sys_tilesize*3,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff},
-      {260,100,0x51,6,t,NS_sys_tilesize*3,0x00,0x00,0x00,0x00,0xff,0x00,0xff,0xff},
-      {300,100,0x51,7,t,NS_sys_tilesize*3,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff},
-    };
-    egg_render(&un,vtxv,sizeof(vtxv));
-  }
-  
-  // Blending is broken initially in the web runtime. Draw a quad to expose it.
-  {
-    struct egg_render_uniform un={
-      .mode=EGG_RENDER_TRIANGLE_STRIP,
-      .dsttexid=1,
-      .alpha=0x80,
-    };
-    const int margin=10;
-    struct egg_render_raw vtxv[]={
-      {  0,  0, 0,0,0xff,0x00,0x00,0xaf},
-      {  0,FBH, 0,0,0x00,0xff,0x00,0xaf},
-      {FBW,  0, 0,0,0x00,0x00,0xff,0xaf},
-      {FBW,FBH, 0,0,0xff,0x00,0x00,0xaf},
-    };
-    egg_render(&un,vtxv,sizeof(vtxv));
-  }
-  
-  // Show the song playhead.
-  {
-    double s=egg_song_get_playhead();
-    int ms=(int)(s*1000.0);
-    int sec=ms/1000; ms%=1000;
-    int min=s/60; sec%=60;
-    struct egg_render_uniform un={
-      .mode=EGG_RENDER_TILE,
-      .dsttexid=1,
-      .srctexid=g.texid_tiles,
-      .alpha=0xff,
-    };
-    struct egg_render_tile vtxv[]={
-      { 10,160,0x80+'0'+min%10,0},
-      { 17,160,0x80+':',0},
-      { 24,160,0x80+'0'+sec/10,0},
-      { 31,160,0x80+'0'+sec%10,0},
-      { 38,160,0x80+';',0}, // dot
-      { 45,160,0x80+'0'+ms/100,0},
-      { 52,160,0x80+'0'+(ms/10)%10,0},
-      { 59,160,0x80+'0'+ms%10,0},
-    };
-    egg_render(&un,vtxv,sizeof(vtxv));
-  }
+  // Tiles.
+  graf_set_image(&g.graf,RID_image_tiles);
+  graf_tile(&g.graf, 40, 40,0x00,0); // Top row: Reference images (pre-transformed)
+  graf_tile(&g.graf, 60, 40,0x01,0);
+  graf_tile(&g.graf, 80, 40,0x02,0);
+  graf_tile(&g.graf,100, 40,0x03,0);
+  graf_tile(&g.graf,120, 40,0x04,0);
+  graf_tile(&g.graf,140, 40,0x05,0);
+  graf_tile(&g.graf,160, 40,0x06,0);
+  graf_tile(&g.graf,180, 40,0x07,0);
+  graf_tile(&g.graf, 40, 60,0x00,0); // Second row: Exact same images effected with a transform.
+  graf_tile(&g.graf, 60, 60,0x00,1);
+  graf_tile(&g.graf, 80, 60,0x00,2);
+  graf_tile(&g.graf,100, 60,0x00,3);
+  graf_tile(&g.graf,120, 60,0x00,4);
+  graf_tile(&g.graf,140, 60,0x00,5);
+  graf_tile(&g.graf,160, 60,0x00,6);
+  graf_tile(&g.graf,180, 60,0x00,7);
+  graf_fancy(&g.graf, 40, 80,0x00,0,0,16,0,0xff0000ff); // Third row: Exact same images using "fancy" tiles and primary color.
+  graf_fancy(&g.graf, 60, 80,0x00,1,0,16,0,0x00ff00ff);
+  graf_fancy(&g.graf, 80, 80,0x00,2,0,16,0,0x0000ffff);
+  graf_fancy(&g.graf,100, 80,0x00,3,0,16,0,0xffff00ff);
+  graf_fancy(&g.graf,120, 80,0x00,4,0,16,0,0xff00ffff);
+  graf_fancy(&g.graf,140, 80,0x00,5,0,16,0,0x00ffffff);
+  graf_fancy(&g.graf,160, 80,0x00,6,0,16,0,0xc0c0c0ff);
+  graf_fancy(&g.graf,180, 80,0x00,7,0,16,0,0x404040ff);
+
+  graf_flush(&g.graf);
 }

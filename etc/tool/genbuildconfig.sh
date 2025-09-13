@@ -81,7 +81,7 @@ EGG_TARGETS="$EGG_TARGETS $ADDL"
 #-----------------------------------------------------------------------------------------
 # Prepare config for each target.
 
-STDRTOPT="fs serial synth res hostio render image real_stdlib"
+STDRTOPT="fs serial synth res graf hostio render image real_stdlib"
 
 for TARGET in $EGG_TARGETS ; do
   case "$TARGET" in
