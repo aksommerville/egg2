@@ -1,20 +1,21 @@
 /* DecalsheetEditor.js
- * TODO validation: Numeric ID outside 1..255, duplicate ID, string ID not listed in shared symbols.
  */
  
 import { Dom } from "../Dom.js";
 import { Data } from "../Data.js";
+import { SharedSymbols } from "../SharedSymbols.js";
 import { Decalsheet } from "./Decalsheet.js";
 
 export class DecalsheetEditor {
   static getDependencies() {
-    return [HTMLElement, Dom, Data, Window];
+    return [HTMLElement, Dom, Data, Window, SharedSymbols];
   }
-  constructor(element, dom, data, window) {
+  constructor(element, dom, data, window, sharedSymbols) {
     this.element = element;
     this.dom = dom;
     this.data = data;
     this.window = window;
+    this.sharedSymbols = sharedSymbols;
     
     this.res = null; // REQUIRED
     this.decalsheet = null; // REQUIRED
@@ -49,14 +50,16 @@ export class DecalsheetEditor {
   setup(res) {
     this.res = res;
     this.decalsheet = new Decalsheet(res.serial);
-    this.data.getImageAsync(res.rid).then(image => {
-      this.image = image;
-      this.buildUi();
-    }).catch(e => {
-      // Won't be much use without an image, but do let them carry on.
-      this.image = null;
-      this.buildUi();
-    });
+    this.sharedSymbols.whenLoaded()
+      .then(() => this.data.getImageAsync(res.rid))
+      .then(image => {
+        this.image = image;
+        this.buildUi();
+      }).catch(e => {
+        // Won't be much use without an image, but do let them carry on.
+        this.image = null;
+        this.buildUi();
+      });
   }
   
   /* UI.
@@ -66,14 +69,16 @@ export class DecalsheetEditor {
     this.element.innerHTML = "";
     const sidebar = this.dom.spawn(this.element, "DIV", ["sidebar"]);
     
+    const panelsByIndex = [];
     for (const decal of this.decalsheet.decals) {
       const panel = this.dom.spawn(sidebar, "DIV", ["panel"], {
         "on-input": e => this.onInput(e, decal),
         "on-mouseenter": e => this.onHoverDecal(decal),
         "on-mouseleave": e => this.onUnhoverDecal(decal),
       });
+      panelsByIndex.push(panel);
       this.dom.spawn(panel, "DIV", ["row"],
-        this.dom.spawn(null, "INPUT", { type: "text", name: "id", value: decal.id }),
+        this.dom.spawn(null, "INPUT", { type: "text", name: "id", value: decal.id, "on-input": e => this.validateId(e) }),
         this.dom.spawn(null, "DIV", ["spacer"]),
         this.dom.spawn(null, "INPUT", { type: "button", value: "tight", "on-click": () => this.onBeginSelection("tight", decal, event) }),
         this.dom.spawn(null, "INPUT", { type: "button", value: "loose", "on-click": () => this.onBeginSelection("loose", decal, event) }),
@@ -86,7 +91,19 @@ export class DecalsheetEditor {
         this.dom.spawn(null, "INPUT", ["coords"], { type: "number", name: "w", min: 0, max: 0xffff, value: decal.w }),
         this.dom.spawn(null, "INPUT", ["coords"], { type: "number", name: "h", min: 0, max: 0xffff, value: decal.h }),
       );
-      this.dom.spawn(panel, "INPUT", { type: "text", name: "comment", value: this.reprComment(decal.comment) });
+      this.dom.spawn(panel, "INPUT", { type: "text", name: "comment", value: this.reprComment(decal.comment), "on-input": e => this.validateComment(e) });
+      this.dom.spawn(panel, "DIV", ["advice", "validation"]);
+    }
+    
+    // With the panels all created, run thru again and validate initial values.
+    // This is a separate pass because they need to look at each other.
+    for (let i=0; i<panelsByIndex.length; i++) {
+      const decal = this.decalsheet.decals[i];
+      const panel = panelsByIndex[i];
+      const msg = this.getIdValidationMessage(decal.id);
+      if (!msg) continue;
+      panel.querySelector("input[name='id']").classList.add("invalid");
+      panel.querySelector(".validation").innerText = msg;
     }
     
     this.dom.spawn(sidebar, "INPUT", { type: "button", value: "+", "on-click": () => this.onAdd() });
@@ -188,6 +205,75 @@ export class DecalsheetEditor {
   dirty() {
     if (!this.decalsheet) return;
     this.data.dirty(this.res.path, () => this.decalsheet.encode());
+  }
+  
+  /* Highlight this ID field if we can determine it's invalid.
+   * Note that we do not prevent saving when invalid.
+   * It's possible the user hasn't gotten around to defining his decal names yet, that's fine.
+   */
+  validateId(event) {
+    let panel = event.target;
+    while (panel && !panel.classList.contains("panel")) panel = panel.parentNode;
+    const validation = panel?.querySelector(".validation");
+    const msg = this.getIdValidationMessage(event.target.value);
+    if (msg) {
+      event.target.classList.add("invalid");
+      if (validation) validation.innerText = msg;
+    } else {
+      event.target.classList.remove("invalid");
+      if (validation) validation.innerText = "";
+    }
+  }
+  
+  // Empty if valid.
+  getIdValidationMessage(v) {
+  
+    // First some gross sanity checks.
+    if (!v || (typeof(v) !== "string")) return "ID required.";
+    if (v.match(/[^a-zA-Z0-9_]/)) return "ID must be 1..255 or C ident.";
+    
+    // If the first character is a digit, they must all be digits and must be in 1..255.
+    // Check collisions numerically.
+    const lead = v.charCodeAt(0);
+    if ((lead >= 0x30) && (lead <= 0x39)) { // Decimal integer?
+      if (!v.match(/^\d+$/)) return "Malformed integer.";
+      v = +v;
+      if ((v < 1) || (v > 255)) return "ID must be in 1..255.";
+      let samec = 0;
+      for (const fld of this.element.querySelectorAll(".panel input[name='id']")) {
+        const fldv = +fld.value;
+        if (fldv === v) {
+          if (++samec > 1) return "Duplicate ID.";
+        }
+      }
+      return "";
+    }
+    
+    // String IDs must be listed in shared symbols.
+    const vn = this.sharedSymbols.getValue("NS", "decal", v);
+    if (!vn) return "Expected 1..255 or NS_decal_ symbol.";
+    if ((vn < 1) || (vn > 255)) return `NS_decal_${v} = ${vn}, must be 1..255.`;
+    
+    // Check for collisions by string compare, and also numeric.
+    // We're not checking for decal symbols that resolve to integers that collide. Maybe we should.
+    let samec = 0;
+    for (const fld of this.element.querySelectorAll(".panel input[name='id']")) {
+      if ((fld.value === v) || (+fld.value === vn)) {
+        if (++samec > 1) return "Duplicate ID.";
+      }
+    }
+    
+    return "";
+  }
+  
+  validateComment(event) {
+    // Allow spaces; we'll harmlessly discard them at encode and the user might want them for visual separation.
+    const invalid = event.target.value.match(/[^0-9a-fA-F ]/);
+    if (invalid) {
+      event.target.classList.add("invalid");
+    } else {
+      event.target.classList.remove("invalid");
+    }
   }
   
   onResize(event) {

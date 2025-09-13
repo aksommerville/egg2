@@ -27,4 +27,11 @@
 #define NS_physics_solid 1
 #define NS_physics_water 2
 
+// For testing DecalsheetEditor's validation.
+#define NS_decal_hero 1
+#define NS_decal_also1 1
+#define NS_decal_forty 40
+#define NS_decal_mill 1000
+#define NS_decal_subzero -1
+
 #endif

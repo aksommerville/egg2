@@ -36,8 +36,6 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 ## TODO
 
 - [ ] Flesh out and validate Prereqs, above.
-- [x] I'd really like `make run` from this project to rebuild the demo when libeggrt changes. Would be nice in external projects too.
-- - When in an external project, you still need to `make -C../egg2` if you change egg. But beyond that, yes, we'll now detect libeggrt changes.
 - [ ] Programmatic access to a song eg for ocarinas or sustained notes. API change.
 - - The synthesizers currently aren't built for infinitely-sustaining notes.
 - - Need to think this thru carefully, and ensure we have some safeguards against stuck notes.
@@ -50,23 +48,17 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] SongService: Should we auto-re-play on dirty?
 - - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
 - - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
-- - [x] HexEditor: Paging, offset, ASCII, multi-byte edits.
-- - [x] ImageEditor: Animation preview like we had in v1.
-- - [x] ImageEditor: Detect fonts and provide a specific preview mode for them? ...DECLINE. We don't have a firm standard for bitmap fonts, and I don't want to impose one here.
-- - [x] ImageEditor: Animation preview does not accomodate oblong decals (see ImageEditor.renderPreviewNow).
-- - [ ] DecalsheetEditor: Validation.
+- - [x] DecalsheetEditor: Validation.
 - - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
 - - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
 - - [ ] PostModal fields per stage type.
-- - [x] Launch game.
 - - [ ] Song actions (SongChannelsUi)
 - - [ ] ModecfgModal for drum: Spawn SongEditor in a modal per drum.
 - - [ ] SpriteEditor: Adding a blank row at load is good, but don't dirty the resource because of it.
 - [ ] eggdev
 - - [ ] project: Update Makefile for serving runtime. Also confirm re MacOS, I didn't look.
 - - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
-- - [x] project: README.md
 - - [ ] `eggdev project`: Prep overrides.
 - - [ ] eggdev build: Replace `<title>` in HTMLs.
 - - [ ] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.
@@ -110,7 +102,4 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] Standard instruments and sound effects.
 - [ ] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet.
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
-- [x] Standalone native app with a Wasm runtime that runs Egg, HTML, or ZIP files.
-- - This shouldn't require much, just the WAMR plumbing.
-- - Ensure eggdev and games can be built without it. Don't require all dev hosts to have WAMR.
 - [ ] macos: eggrun

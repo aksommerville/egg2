@@ -483,11 +483,18 @@ input.toggle:checked + label.toggle.light {
 .DecalsheetEditor input.coords {
   flex: 1;
 }
+.DecalsheetEditor input.invalid {
+  border: 1px solid #f00;
+  background-color: #faa;
+}
 .DecalsheetEditor .panel:hover input {
   background-color: #def;
 }
 .DecalsheetEditor .panel input.autoSetting {
   background-color: #ff0;
+}
+.DecalsheetEditor .panel .advice {
+  height: 1lh;
 }
 .DecalsheetEditor .previewWrapper {
   flex: 1;
