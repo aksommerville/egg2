@@ -479,7 +479,16 @@ static int eau_midi_encode_events(struct eau_midi_context *ctx) {
   }
   if (err<0) return fail(ctx,"Error streaming MIDI events.");
   eau_midi_write_delay(ctx,delay);
-  if (ctx->holdc&&ctx->path) fprintf(stderr,"%s:WARNING: %d notes were not released.\n",ctx->path,ctx->holdc);
+  if (ctx->holdc&&ctx->path) {
+    fprintf(stderr,"%s:WARNING: %d notes were not released.\n",ctx->path,ctx->holdc);
+    /**
+    const struct hold *hold=ctx->holdv;
+    int i=ctx->holdc;
+    for (;i-->0;hold++) {
+      fprintf(stderr,"  %d: 0x%02x @ %.03fs\n",hold->chid,hold->noteid,hold->starttime);
+    }
+    /**/
+  }
   return 0;
 }
 

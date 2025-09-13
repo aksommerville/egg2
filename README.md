@@ -66,7 +66,8 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - - We're not. And if it seems burdensome, we can change the spec to require CHDR.
 - - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
 - - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
-- - [ ] `src/demo/src/data/song/8-doors_without_walls.mid:WARNING: 3 notes were not released.`
+- - [x] `src/demo/src/data/song/8-doors_without_walls.mid:WARNING: 3 notes were not released.`
+- - - Unclear what the actual problem was, but poking in midevil fixed it.
 - [ ] Native runtime.
 - - [ ] Input.
 - - - [ ] Interactive reconfig.
