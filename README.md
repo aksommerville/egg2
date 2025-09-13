@@ -55,12 +55,13 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] PostModal fields per stage type.
 - - [ ] Song actions (SongChannelsUi)
 - - [ ] ModecfgModal for drum: Spawn SongEditor in a modal per drum.
-- - [ ] SpriteEditor: Adding a blank row at load is good, but don't dirty the resource because of it.
+- - [x] SpriteEditor: Adding a blank row at load is good, but don't dirty the resource because of it.
+- - - ...just don't dirty on add; wait for an actual change. Easy!
 - [ ] eggdev
-- - [ ] project: Update Makefile for serving runtime. Also confirm re MacOS, I didn't look.
-- - [ ] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
-- - [ ] `eggdev project`: Prep overrides.
-- - [ ] eggdev build: Replace `<title>` in HTMLs.
+- - [x] project: Update Makefile for serving runtime. Also confirm re MacOS, I didn't look.
+- - [x] eggdev_main_project.c:gen_makefile(): Serve editor and overrides.
+- - [x] `eggdev project`: Prep overrides.
+- - [x] eggdev build: Replace `<title>` in HTMLs.
 - - [ ] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.
 - - - We're not. And if it seems burdensome, we can change the spec to require CHDR.
 - - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.

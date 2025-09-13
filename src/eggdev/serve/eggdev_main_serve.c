@@ -6,21 +6,65 @@
 
 static int eggdev_cb_get_other(struct http_xfer *req,struct http_xfer *rsp);
 
+/* Project name, for GET /api/webpath and GET /api/projname
+ */
+ 
+static int eggdev_get_proper_project_name(char *dst,int dsta) {
+
+  // If (g.project) unset, we have no answer.
+  if (!g.project) {
+    if (dsta>0) dst[0]=0;
+    return 0;
+  }
+  
+  // If (g.project) is exactly ".", use the basename of the working directory.
+  // This is the usual case; our default project launches with `--project=.` for `make edit`.
+  if ((g.project[0]=='.')&&!g.project[1]) {
+    char wd[1024];
+    if (getcwd(wd,sizeof(wd))==wd) {
+      const char *base=wd;
+      int basec=0,srcp=0;
+      for (;wd[srcp];srcp++) {
+        if (wd[srcp]=='/') {
+          base=wd+srcp+1;
+          basec=0;
+        } else {
+          basec++;
+        }
+      }
+      if (basec<=dsta) {
+        memcpy(dst,base,basec);
+        if (basec<dsta) dst[basec]=0;
+      }
+      return basec;
+    }
+  }
+  
+  // Extract basename from (g.project).
+  const char *base=g.project;
+  int basec=0,srcp=0;
+  for (;g.project[srcp];srcp++) {
+    if (g.project[srcp]=='/') {
+      base=g.project+srcp+1;
+      basec=0;
+    } else {
+      basec++;
+    }
+  }
+  if (basec<=dsta) {
+    memcpy(dst,base,basec);
+    if (basec<dsta) dst[basec]=0;
+  }
+  return basec;
+}
+
 /* GET /api/webpath
  */
 
 static int eggdev_cb_get_webpath(struct http_xfer *req,struct http_xfer *rsp) {
-  if (g.project) {
-    const char *pname=g.project;
-    int pnamec=0,srcp=0;
-    for (;g.project[srcp];srcp++) {
-      if (g.project[srcp]=='/') {
-        pname=g.project+srcp+1;
-        pnamec=0;
-      } else {
-        pnamec++;
-      }
-    }
+  char pname[64];
+  int pnamec=eggdev_get_proper_project_name(pname,sizeof(pname));
+  if ((pnamec>0)&&(pnamec<=sizeof(pname))) {
     /* Realistically, the target should always be "web".
      * But we'll do it right and check each configured target until we find one with "web" packaging,
      * then infer the output path from that.
@@ -52,17 +96,9 @@ static int eggdev_cb_get_webpath(struct http_xfer *req,struct http_xfer *rsp) {
  */
  
 static int eggdev_cb_get_projname(struct http_xfer *req,struct http_xfer *rsp) {
-  if (!g.project) return http_xfer_set_status(rsp,404,"No project established at command line.");
-  const char *pname=g.project;
-  int pnamec=0,srcp=0;
-  for (;g.project[srcp];srcp++) {
-    if (g.project[srcp]=='/') {
-      pname=g.project+srcp+1;
-      pnamec=0;
-    } else {
-      pnamec++;
-    }
-  }
+  char pname[64];
+  int pnamec=eggdev_get_proper_project_name(pname,sizeof(pname));
+  if ((pnamec<1)||(pnamec>sizeof(pname))) return http_xfer_set_status(rsp,404,"No project established at command line.");
   struct sr_encoder *dst=http_xfer_get_body(rsp);
   if (sr_encode_raw(dst,pname,pnamec)<0) return -1;
   return http_xfer_set_status(rsp,200,"OK");
@@ -457,6 +493,14 @@ static int eggdev_cb_unmatched(struct http_xfer *req,struct http_xfer *rsp) {
  */
  
 static int eggdev_cb_serve(struct http_xfer *req,struct http_xfer *rsp,void *userdata) {
+  /**
+  char method[32];
+  int methodc=http_xfer_get_method(method,sizeof(method),req);
+  if ((methodc<0)||(methodc>sizeof(method))) methodc=0;
+  const char *path=0;
+  int pathc=http_xfer_get_path(&path,req);
+  fprintf(stderr,"%s: %.*s %.*s\n",__func__,methodc,method,pathc,path);
+  /**/
   return http_dispatch(req,rsp,
     HTTP_METHOD_GET,"/api/webpath",eggdev_cb_get_webpath,
     HTTP_METHOD_GET,"/api/projname",eggdev_cb_get_projname,

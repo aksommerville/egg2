@@ -171,11 +171,18 @@ static int gen_makefile(struct eggdev_project_context *ctx) {
   ,-1)<0) return -1;
   
   if (sr_encode_fmt(&ctx->scratch,
-    "web-run:all;$(EGGDEV) serve --htdocs=out --project=.\n"
+    "web-run:all;$(EGGDEV) serve --htdocs=out/%.*s-web.zip --project=.\n",
+    ctx->namec,ctx->name
   )<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,
-    //TODO Serve editor and overrides.
-    "edit:;$(EGGDEV) serve --htdocs=/data:src/data --htdocs=EGG_SDK/src/editor --htdocs=src/editor --htdocs=/out:out --writeable=src/data --project=.\n"
+    "edit:;$(EGGDEV) serve \\\n"
+    "  --htdocs=/data:src/data \\\n"
+    "  --htdocs=EGG_SDK/src/web \\\n"
+    "  --htdocs=EGG_SDK/src/editor \\\n"
+    "  --htdocs=src/editor \\\n"
+    "  --htdocs=/out:out \\\n"
+    "  --writeable=src/data \\\n"
+    "  --project=.\n"
   )<0) return -1;
   
   return eggdev_project_write(ctx,"Makefile",ctx->scratch.v,ctx->scratch.c);

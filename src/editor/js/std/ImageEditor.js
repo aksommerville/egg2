@@ -457,8 +457,8 @@ export class ImageEditor {
     const dsth = Math.round(this.res.image.naturalHeight * zoom);
     const dstx = (bounds.width >> 1) - this.midx * zoom;
     const dsty = (bounds.height >> 1) - this.midy * zoom;
-    const imgx = Math.round(((uix - dstx) * this.res.image.naturalWidth) / dstw);
-    const imgy = Math.round(((uiy - dsty) * this.res.image.naturalHeight) / dsth);
+    const imgx = Math.floor(((uix - dstx) * this.res.image.naturalWidth) / dstw);
+    const imgy = Math.floor(((uiy - dsty) * this.res.image.naturalHeight) / dsth);
     return { uix, uiy, imgx, imgy };
   }
   
@@ -473,8 +473,8 @@ export class ImageEditor {
     const dsth = Math.round(this.res.image.naturalHeight * zoom);
     const dstx = (bounds.width >> 1) - this.midx * zoom;
     const dsty = (bounds.height >> 1) - this.midy * zoom;
-    const imgx = Math.round(((anchor.uix - dstx) * this.res.image.naturalWidth) / dstw);
-    const imgy = Math.round(((anchor.uiy - dsty) * this.res.image.naturalHeight) / dsth);
+    const imgx = Math.floor(((anchor.uix - dstx) * this.res.image.naturalWidth) / dstw);
+    const imgy = Math.floor(((anchor.uiy - dsty) * this.res.image.naturalHeight) / dsth);
     this.midx -= imgx - anchor.imgx;
     this.midy -= imgy - anchor.imgy;
   }
@@ -619,8 +619,8 @@ export class ImageEditor {
     const dsth = Math.round(this.res.image.naturalHeight * zoom);
     const dstx = (bounds.width >> 1) - this.midx * zoom;
     const dsty = (bounds.height >> 1) - this.midy * zoom;
-    const imgx = Math.round(((uix - dstx) * this.res.image.naturalWidth) / dstw);
-    const imgy = Math.round(((uiy - dsty) * this.res.image.naturalHeight) / dsth);
+    const imgx = Math.floor(((uix - dstx) * this.res.image.naturalWidth) / dstw);
+    const imgy = Math.floor(((uiy - dsty) * this.res.image.naturalHeight) / dsth);
     if ((imgx < 0) || (imgy < 0) || (imgx >= this.res.image.naturalWidth) || (imgy >= this.res.image.naturalHeight)) return null;
     return [imgx, imgy];
   }

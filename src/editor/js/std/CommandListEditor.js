@@ -126,6 +126,5 @@ export class CommandListEditor {
     this.model.commands.push([]);
     const input = this.spawnRow(this.element.querySelector(".list"), this.model.commands.length - 1);
     input.focus();
-    this.dirty();
   }
 }

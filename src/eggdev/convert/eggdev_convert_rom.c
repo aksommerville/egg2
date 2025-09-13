@@ -3,6 +3,7 @@
  */
 
 #include "eggdev/eggdev_internal.h"
+#include "eggdev/convert/eggdev_rom.h"
 #include "opt/zip/zip.h"
 
 /* Validate and measure ROM.
@@ -121,11 +122,99 @@ int eggdev_egg_from_html(struct eggdev_convert_context *ctx) {
   return 0;
 }
 
+/* Gather the things we need from a ROM file, for generating either of the HTMLs.
+ */
+ 
+struct eggdev_html_rom_bits {
+  const char *title;
+  int titlec;
+  const void *icon;
+  int iconc;
+  int iconid;
+};
+
+static void eggdev_html_rom_bits_from_metadata(struct eggdev_html_rom_bits *bits,const uint8_t *src,int srcc) {
+  if ((srcc<4)||memcmp(src,"\0EMD",4)) return;
+  int srcp=4;
+  while (srcp<srcc) {
+    uint8_t kc=src[srcp++];
+    if (!kc||(srcp>=srcc)) return;
+    uint8_t vc=src[srcp++];
+    if (srcp>srcc-vc-kc) return;
+    const char *k=(char*)(src+srcp); srcp+=kc;
+    const char *v=(char*)(src+srcp); srcp+=vc;
+    
+    if ((kc==5)&&!memcmp(k,"title",5)) {
+      bits->title=v;
+      bits->titlec=vc;
+      
+    } else if ((kc==9)&&!memcmp(k,"iconImage",9)) {
+      bits->iconid=0;
+      int i=0; for (;i<vc;i++) {
+        int digit=v[i]-'0';
+        if ((digit<0)||(digit>9)) {
+          bits->iconid=0;
+          break;
+        }
+        bits->iconid*=10;
+        bits->iconid+=digit;
+      }
+    }
+  }
+}
+
+static void eggdev_html_rom_bits_extract(struct eggdev_html_rom_bits *bits,const void *rom,int romc) {
+  struct eggdev_rom_reader reader;
+  if (eggdev_rom_reader_init(&reader,rom,romc)<0) return;
+  struct eggdev_res res;
+  while (eggdev_rom_reader_next(&res,&reader)>0) {
+    
+    if ((res.tid==EGG_TID_metadata)&&(res.rid==1)) {
+      eggdev_html_rom_bits_from_metadata(bits,res.v,res.c);
+      
+    } else if ((res.tid==EGG_TID_image)&&(res.rid==bits->iconid)) {
+      // Don't worry; (iconid) will always be populated before we see any images (or not at all).
+      bits->icon=res.v;
+      bits->iconc=res.c;
+      return; // No further resources needed after the icon.
+    }
+  }
+}
+
 /* Populate Separate HTML template.
+ * We do not embed (rom); we just use it for metadata extraction.
  */
  
 static int eggdev_populate_separate_html(struct sr_encoder *dst,const char *src,int srcc,const void *rom,int romc) {
-  return sr_encode_raw(dst,src,srcc);//TODO title, canvas size, icon, etc...
+  struct eggdev_html_rom_bits bits={0};
+  eggdev_html_rom_bits_extract(&bits,rom,romc);
+  
+  /* Locate "<title>...</title>" and replace with both icon and title, whatever we have in (bits).
+   * If (bits.title) is empty, remove the <title> tag altogether.
+   */
+  int srcp=0;
+  for (;;) {
+    int cpc=0;
+    while (srcp+cpc<srcc) {
+      if ((srcp+cpc<=srcc-7)&&!memcmp(src+srcp+cpc,"<title>",7)) break;
+      cpc++;
+    }
+    if (sr_encode_raw(dst,src+srcp,cpc)<0) return -1;
+    if ((srcp+=cpc)>=srcc) break;
+    srcp+=7;
+    while ((srcp<=srcc-8)&&memcmp(src+srcp,"</title>",8)) srcp++;
+    if (srcp<srcc) srcp+=8;
+    
+    if (bits.iconc) {
+      if (sr_encode_raw(dst,"<link rel=\"icon\" type=\"image/png\" href=\"data:;base64,",-1)<0) return -1;
+      if (sr_encode_base64(dst,bits.icon,bits.iconc)<0) return -1;
+      if (sr_encode_raw(dst,"\" />\n",-1)<0) return -1;
+    }
+    if (bits.titlec) {
+      if (sr_encode_fmt(dst,"<title>%.*s</title>\n",bits.titlec,bits.title)<0) return -1;
+    }
+  }
+  return 0;
 }
 
 /* Zip from ROM.
@@ -178,32 +267,60 @@ int eggdev_zip_from_egg(struct eggdev_convert_context *ctx) {
  */
  
 int eggdev_html_from_egg(struct eggdev_convert_context *ctx) {
-  //TODO Other insertions like title, canvas size...
+  /* The platform's CSS and JS have already been inlined to the template.
+   * We do three more things:
+   *  - Insert a favicon link.
+   *  - <egg-rom> gets the base64-encoded ROM.
+   *  - <title> gets the game's default title.
+   * The actual title the user will see gets set at runtime, but it's good to have a sensible static <title> tag too, for external tools to consume.
+   */
   const char *tm=0;
   int tmc=eggdev_get_standalone_html_template(&tm);
   if (tmc<0) return eggdev_convert_error(ctx,"Failed to acquire Standalone HTML template.");
-  const char *marker="<egg-rom></egg-rom>";
-  const int markerc=19;
-  int stopp=tmc-markerc;
-  int tmp=0; for (;tmp<=stopp;tmp++) {
-    if (!memcmp(tm+tmp,marker,markerc)) {
-      if (sr_encode_raw(ctx->dst,tm,tmp)<0) return -1;
-      if (sr_encode_raw(ctx->dst,"<egg-rom>\n",-1)<0) return -1;
-      int rowlen=90; // Binary bytes. 90 => 120 bytes text.
-      const uint8_t *src=ctx->src;
-      int srcp=0;
-      for (;srcp<ctx->srcc;srcp+=rowlen) {
-        int rdc=ctx->srcc-srcp;
-        if (rdc>rowlen) rdc=rowlen;
-        if (sr_encode_base64(ctx->dst,src+srcp,rdc)<0) return -1;
-        if (sr_encode_u8(ctx->dst,0x0a)<0) return -1;
+  struct eggdev_html_rom_bits bits={0};
+  eggdev_html_rom_bits_extract(&bits,ctx->src,ctx->srcc);
+  // It's ridiculously inefficient, but to preserve my sanity, we're going to process the template one byte at a time:
+  const char *src=tm;
+  int srcc=tmc,srcp=0,got_title=0,got_rom=0;
+  while (srcp<srcc) {
+  
+    if ((srcp<=srcc-7)&&!memcmp(src+srcp,"<title>",7)) {
+      if (got_title) return eggdev_convert_error(ctx,"Standalone HTML template has multiple <title> tags.");
+      got_title=1;
+      srcp+=7;
+      for (;;) {
+        if (srcp>srcc-8) return eggdev_convert_error(ctx,"Unclosed <title> tag in Standalone HTML template.");
+        if (!memcmp(src+srcp,"</title>",8)) {
+          srcp+=8;
+          break;
+        }
+        srcp++;
       }
-      if (sr_encode_raw(ctx->dst,"</egg-rom>",-1)<0) return -1;
-      if (sr_encode_raw(ctx->dst,tm+tmp+markerc,tmc-markerc-tmp)<0) return -1;
-      return 0;
+      if (bits.iconc) {
+        if (sr_encode_raw(ctx->dst,"<link rel=\"icon\" type=\"image/png\" href=\"data:;base64,",-1)<0) return -1;
+        if (sr_encode_base64(ctx->dst,bits.icon,bits.iconc)<0) return -1;
+        if (sr_encode_raw(ctx->dst,"\" />\n",-1)<0) return -1;
+      }
+      if (bits.titlec) {
+        if (sr_encode_fmt(ctx->dst,"<title>%.*s</title>\n",bits.titlec,bits.title)<0) return -1;
+      }
+      
+    } else if ((srcp<=srcc-19)&&!memcmp(src+srcp,"<egg-rom></egg-rom>",19)) {
+      if (got_rom) return eggdev_convert_error(ctx,"Standalone HTML template has multiple <egg-rom> tags.");
+      got_rom=1;
+      srcp+=19;
+      if (sr_encode_raw(ctx->dst,"<egg-rom>\n",-1)<0) return -1;
+      if (sr_encode_base64(ctx->dst,ctx->src,ctx->srcc)<0) return -1;
+      if (sr_encode_raw(ctx->dst,"\n</egg-rom>",-1)<0) return -1;
+      
+    } else {
+      if (sr_encode_u8(ctx->dst,src[srcp])<0) return -1;
+      srcp++;
     }
   }
-  return eggdev_convert_error(ctx,"Standalone HTML template does not contain a ROM insertion point (%s)",marker);
+  if (!got_rom) return eggdev_convert_error(ctx,"No <egg-rom> tag in Standalone HTML.");
+  // Don't fail for missing <title>; it's optional.
+  return 0;
 }
 
 /* Fetch the HTML templates.
