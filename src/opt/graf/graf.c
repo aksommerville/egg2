@@ -211,16 +211,19 @@ void graf_triangle_tex(struct graf *graf,
   vtx->y=ay;
   vtx->tx=atx;
   vtx->ty=aty;
+  vtx->r=vtx->g=vtx->b=vtx->a=0;
   vtx=graf_add_vertex(graf);
   vtx->x=bx;
   vtx->y=by;
   vtx->tx=btx;
   vtx->ty=bty;
+  vtx->r=vtx->g=vtx->b=vtx->a=0;
   vtx=graf_add_vertex(graf);
   vtx->x=cx;
   vtx->y=cy;
   vtx->tx=ctx;
   vtx->ty=cty;
+  vtx->r=vtx->g=vtx->b=vtx->a=0;
 }
 
 void graf_triangle_strip_begin(struct graf *graf,
@@ -278,16 +281,19 @@ void graf_triangle_strip_tex_begin(struct graf *graf,
   vtx->y=ay;
   vtx->tx=atx;
   vtx->ty=aty;
+  vtx->r=vtx->g=vtx->b=vtx->a=0;
   vtx=graf_add_vertex(graf);
   vtx->x=bx;
   vtx->y=by;
   vtx->tx=btx;
   vtx->ty=bty;
+  vtx->r=vtx->g=vtx->b=vtx->a=0;
   vtx=graf_add_vertex(graf);
   vtx->x=cx;
   vtx->y=cy;
   vtx->tx=ctx;
   vtx->ty=cty;
+  vtx->r=vtx->g=vtx->b=vtx->a=0;
 }
 
 void graf_triangle_strip_tex_more(struct graf *graf,int16_t x,int16_t y,int16_t tx,int16_t ty) {
@@ -297,6 +303,22 @@ void graf_triangle_strip_tex_more(struct graf *graf,int16_t x,int16_t y,int16_t 
   vtx->y=y;
   vtx->tx=tx;
   vtx->ty=ty;
+  vtx->r=vtx->g=vtx->b=vtx->a=0;
+}
+
+/* Convenience: Textured quad.
+ */
+ 
+void graf_decal(struct graf *graf,int dstx,int dsty,int srcx,int srcy,int w,int h) {
+  graf_triangle_strip_tex_begin(graf,
+    dstx  ,dsty  ,0,0,
+    dstx+w,dsty  ,w,0,
+    dstx  ,dsty+h,0,h
+  );
+  graf_triangle_strip_tex_more(graf,
+    dstx+w,dsty+h,w,h
+  );
+  graf_flush(graf);
 }
 
 /* Point sprites.

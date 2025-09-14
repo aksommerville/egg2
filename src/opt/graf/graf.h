@@ -110,6 +110,10 @@ void graf_triangle_strip_tex_begin(struct graf *graf,
 );
 void graf_triangle_strip_tex_more(struct graf *graf,int16_t x,int16_t y,int16_t tx,int16_t ty);
 
+/* Convenience to do a complete triangle-strip batch with one textured quad.
+ */
+void graf_decal(struct graf *graf,int dstx,int dsty,int srcx,int srcy,int w,int h);
+
 /* Queue a tile for render.
  * This is the performance workhorse of Egg Render.
  * Try to batch tiles by their source image so we can deliver large batches at once.

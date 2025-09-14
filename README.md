@@ -89,7 +89,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - [ ] Client utilities.
 - - [x] stdlib
 - - [x] graf
-- - [ ] font
+- - [x] font
 - - [ ] Standard instruments and sound effects.
 - [ ] Robust demo ROM.
 - [ ] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet.

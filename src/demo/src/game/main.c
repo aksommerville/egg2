@@ -20,7 +20,18 @@ int egg_client_init() {
   egg_rom_get(g.rom,g.romc);
   fprintf(stderr,"rom size %d\n",g.romc);
   
-  //TODO Prep font and graphics.
+  if (!(g.font=font_new())) return -1;
+  const char *msg;
+  if (msg=font_add_image(g.font,RID_image_font9_0020,0x0020)) { fprintf(stderr,"Font error: %s\n",msg); return -1; }
+  if (msg=font_add_image(g.font,RID_image_font9_00a1,0x00a1)) { fprintf(stderr,"Font error: %s\n",msg); return -1; }
+  if (msg=font_add_image(g.font,RID_image_font9_0400,0x0400)) { fprintf(stderr,"Font error: %s\n",msg); return -1; }
+  
+  if ((g.label_texid=font_render_to_texture(0,g.font,
+    "The quick brown fox jumps over the lazy dog 1234567890 times.\n"
+    "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG 1234567890 TIMES!\n"
+    "Those first two lines were terminated by LFs. The remainder of this text is not, and we should see it breaking sensibly."
+  ,-1,FBW,FBH,0xffffffff))<1) return -1;
+  egg_texture_get_size(&g.label_w,&g.label_h,g.label_texid);
 
   return 0;
 }
@@ -68,6 +79,18 @@ void egg_client_render() {
   graf_fancy(&g.graf,140, 80,0x00,5,0,16,0,0x00ffffff);
   graf_fancy(&g.graf,160, 80,0x00,6,0,16,0,0xc0c0c0ff);
   graf_fancy(&g.graf,180, 80,0x00,7,0,16,0,0x404040ff);
+  
+  { // Text, rendered at init.
+    int dstx=(FBW>>1)-(g.label_w>>1);
+    int dsty=(FBH>>1)-(g.label_h>>1)+30;
+    graf_set_input(&g.graf,g.label_texid);
+    graf_set_tint(&g.graf,0x000000ff);
+    graf_set_alpha(&g.graf,0x80);
+    graf_decal(&g.graf,dstx,dsty,0,0,g.label_w,g.label_h);
+    graf_set_tint(&g.graf,0);
+    graf_set_alpha(&g.graf,0xff);
+    graf_decal(&g.graf,dstx-1,dsty-1,0,0,g.label_w,g.label_h);
+  }
 
   graf_flush(&g.graf);
 }
