@@ -306,7 +306,7 @@ void graf_triangle_strip_tex_more(struct graf *graf,int16_t x,int16_t y,int16_t 
   vtx->r=vtx->g=vtx->b=vtx->a=0;
 }
 
-/* Convenience: Textured quad.
+/* Quad conveniences.
  */
  
 void graf_decal(struct graf *graf,int dstx,int dsty,int srcx,int srcy,int w,int h) {
@@ -317,6 +317,32 @@ void graf_decal(struct graf *graf,int dstx,int dsty,int srcx,int srcy,int w,int 
   );
   graf_triangle_strip_tex_more(graf,
     dstx+w,dsty+h,w,h
+  );
+  graf_flush(graf);
+}
+
+void graf_fill_rect(struct graf *graf,int x,int y,int w,int h,uint32_t rgba) {
+  graf_set_input(graf,0);
+  graf_triangle_strip_begin(graf,
+    x  ,y  ,rgba,
+    x+w,y  ,rgba,
+    x  ,y+h,rgba
+  );
+  graf_triangle_strip_more(graf,
+    x+w,y+h,rgba
+  );
+  graf_flush(graf);
+}
+
+void graf_gradient_rect(struct graf *graf,int x,int y,int w,int h,uint32_t nw,uint32_t ne,uint32_t sw,uint32_t se) {
+  graf_set_input(graf,0);
+  graf_triangle_strip_begin(graf,
+    x  ,y  ,nw,
+    x+w,y  ,ne,
+    x  ,y+h,sw
+  );
+  graf_triangle_strip_more(graf,
+    x+w,y+h,se
   );
   graf_flush(graf);
 }

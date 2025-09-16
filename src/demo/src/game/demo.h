@@ -9,6 +9,7 @@
 #include "shared_symbols.h"
 #include "egg_res_toc.h"
 #include <limits.h>
+#include "modal.h"
 
 #define FBW 320
 #define FBH 180
@@ -18,8 +19,11 @@ extern struct g {
   int romc;
   struct graf graf;
   struct font *font;
-  int label_texid;
-  int label_w,label_h;
+  int pvinput;
+  
+  // Only the top modal renders or receives input. The stack is never empty.
+  struct modal **modalv;
+  int modalc,modala;
 } g;
 
 #endif

@@ -26,71 +26,72 @@ int egg_client_init() {
   if (msg=font_add_image(g.font,RID_image_font9_00a1,0x00a1)) { fprintf(stderr,"Font error: %s\n",msg); return -1; }
   if (msg=font_add_image(g.font,RID_image_font9_0400,0x0400)) { fprintf(stderr,"Font error: %s\n",msg); return -1; }
   
-  if ((g.label_texid=font_render_to_texture(0,g.font,
-    "The quick brown fox jumps over the lazy dog 1234567890 times.\n"
-    "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG 1234567890 TIMES!\n"
-    "Those first two lines were terminated by LFs. The remainder of this text is not, and we should see it breaking sensibly."
-  ,-1,FBW,FBH,0xffffffff))<1) return -1;
-  egg_texture_get_size(&g.label_w,&g.label_h,g.label_texid);
+  if (!modal_new_home()) return -1;
 
   return 0;
 }
 
 void egg_client_update(double elapsed) {
-  //TODO
+  if (g.modalc<1) {
+    egg_terminate(0);
+    return;
+  }
+  struct modal *modal=g.modalv[g.modalc-1];
+  
+  int input=egg_input_get_one(0);
+  int pvinput=g.pvinput;
+  if (input!=g.pvinput) {
+    if (modal->input) {
+      uint16_t bit=0x8000;
+      for (;bit;bit>>=1) {
+        if ((input&bit)&&!(g.pvinput&bit)) modal->input(modal,bit,1);
+        else if (!(input&bit)&&(g.pvinput&bit)) modal->input(modal,bit,0);
+      }
+    }
+    if (!modal->suppress_exit) {
+      if ((input&EGG_BTN_WEST)&&!(g.pvinput&EGG_BTN_WEST)) modal->defunct=1;
+    }
+    g.pvinput=input;
+  }
+  if (modal->update) {
+    modal->update(modal,elapsed,input,pvinput);
+  }
+  
+  modal_drop_defunct();
+  if (g.modalc<1) {
+    egg_terminate(0);
+    return;
+  }
+  struct modal *nfocus=g.modalv[g.modalc-1];
+  if ((nfocus!=modal)&&input) {
+    if (modal_is_resident(modal)) { // A new modal got pushed. Report loss of input to the old one.
+      if (modal->input) {
+        uint16_t bit=0x8000;
+        for (;bit;bit>>=1) {
+          if (input&bit) modal->input(modal,bit,0);
+        }
+      }
+      if (modal->update) {
+        modal->update(modal,0.0,0,input);
+      }
+    }
+    if (nfocus->input) {
+      uint16_t bit=0x8000;
+      for (;bit;bit>>=1) {
+        if (input&bit) modal->input(modal,bit,1);
+      }
+    }
+    // No need to update (nfocus); they'll figure it out via regular updates.
+  }
 }
 
 void egg_client_render() {
+  if (g.modalc<1) return;
+  struct modal *modal=g.modalv[g.modalc-1];
   graf_reset(&g.graf);
-  
-  // Fill background with a gradient.
-  graf_triangle_strip_begin(&g.graf,
-    0,0,  0xa06060ff,
-    FBW,0,0x60a060ff,
-    0,FBH,0x6060a0ff
-  );
-  graf_triangle_strip_more(&g.graf,
-    FBW,FBH,0x808080ff
-  );
-  
-  // Tiles.
-  graf_set_image(&g.graf,RID_image_tiles);
-  graf_tile(&g.graf, 40, 40,0x00,0); // Top row: Reference images (pre-transformed)
-  graf_tile(&g.graf, 60, 40,0x01,0);
-  graf_tile(&g.graf, 80, 40,0x02,0);
-  graf_tile(&g.graf,100, 40,0x03,0);
-  graf_tile(&g.graf,120, 40,0x04,0);
-  graf_tile(&g.graf,140, 40,0x05,0);
-  graf_tile(&g.graf,160, 40,0x06,0);
-  graf_tile(&g.graf,180, 40,0x07,0);
-  graf_tile(&g.graf, 40, 60,0x00,0); // Second row: Exact same images effected with a transform.
-  graf_tile(&g.graf, 60, 60,0x00,1);
-  graf_tile(&g.graf, 80, 60,0x00,2);
-  graf_tile(&g.graf,100, 60,0x00,3);
-  graf_tile(&g.graf,120, 60,0x00,4);
-  graf_tile(&g.graf,140, 60,0x00,5);
-  graf_tile(&g.graf,160, 60,0x00,6);
-  graf_tile(&g.graf,180, 60,0x00,7);
-  graf_fancy(&g.graf, 40, 80,0x00,0,0,16,0,0xff0000ff); // Third row: Exact same images using "fancy" tiles and primary color.
-  graf_fancy(&g.graf, 60, 80,0x00,1,0,16,0,0x00ff00ff);
-  graf_fancy(&g.graf, 80, 80,0x00,2,0,16,0,0x0000ffff);
-  graf_fancy(&g.graf,100, 80,0x00,3,0,16,0,0xffff00ff);
-  graf_fancy(&g.graf,120, 80,0x00,4,0,16,0,0xff00ffff);
-  graf_fancy(&g.graf,140, 80,0x00,5,0,16,0,0x00ffffff);
-  graf_fancy(&g.graf,160, 80,0x00,6,0,16,0,0xc0c0c0ff);
-  graf_fancy(&g.graf,180, 80,0x00,7,0,16,0,0x404040ff);
-  
-  { // Text, rendered at init.
-    int dstx=(FBW>>1)-(g.label_w>>1);
-    int dsty=(FBH>>1)-(g.label_h>>1)+30;
-    graf_set_input(&g.graf,g.label_texid);
-    graf_set_tint(&g.graf,0x000000ff);
-    graf_set_alpha(&g.graf,0x80);
-    graf_decal(&g.graf,dstx,dsty,0,0,g.label_w,g.label_h);
-    graf_set_tint(&g.graf,0);
-    graf_set_alpha(&g.graf,0xff);
-    graf_decal(&g.graf,dstx-1,dsty-1,0,0,g.label_w,g.label_h);
+  if (!modal->opaque) {
+    graf_gradient_rect(&g.graf,0,0,FBW,FBH,0x100808ff,0x302020ff,0x302020ff,0x100808ff);
   }
-
+  if (modal->render) modal->render(modal);
   graf_flush(&g.graf);
 }
