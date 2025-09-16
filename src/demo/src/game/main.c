@@ -49,7 +49,10 @@ void egg_client_update(double elapsed) {
       }
     }
     if (!modal->suppress_exit) {
-      if ((input&EGG_BTN_WEST)&&!(g.pvinput&EGG_BTN_WEST)) modal->defunct=1;
+      if ((input&EGG_BTN_WEST)&&!(g.pvinput&EGG_BTN_WEST)) {
+        egg_play_sound(RID_sound_uicancel,0.5,0.0);
+        modal->defunct=1;
+      }
     }
     g.pvinput=input;
   }

@@ -14,7 +14,7 @@ void modal_del(struct modal *modal) {
  
 struct modal *modal_new(int len) {
   if (len<(int)sizeof(struct modal)) return 0;
-  struct modal *modal=calloc(1,sizeof(struct modal));
+  struct modal *modal=calloc(1,len);
   if (!modal) return 0;
   return modal;
 }

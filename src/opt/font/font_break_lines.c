@@ -57,6 +57,7 @@ int font_break_lines(int *startv,int starta,const struct font *font,const char *
     int c=font_measure_line(font,src+srcp,srcc-srcp,wlimit);
     if (c<1) break;
     srcp+=c;
+    if (srcp>=srcc) break;
     startv[startc++]=srcp;
   }
   return startc;

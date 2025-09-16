@@ -311,12 +311,12 @@ void graf_triangle_strip_tex_more(struct graf *graf,int16_t x,int16_t y,int16_t 
  
 void graf_decal(struct graf *graf,int dstx,int dsty,int srcx,int srcy,int w,int h) {
   graf_triangle_strip_tex_begin(graf,
-    dstx  ,dsty  ,0,0,
-    dstx+w,dsty  ,w,0,
-    dstx  ,dsty+h,0,h
+    dstx  ,dsty  ,srcx  ,srcy  ,
+    dstx+w,dsty  ,srcx+w,srcy  ,
+    dstx  ,dsty+h,srcx  ,srcy+h
   );
   graf_triangle_strip_tex_more(graf,
-    dstx+w,dsty+h,w,h
+    dstx+w,dsty+h,srcx+w,srcy+h
   );
   graf_flush(graf);
 }

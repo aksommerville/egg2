@@ -33,5 +33,11 @@ int modal_is_resident(const struct modal *modal);
  *****************************************************************************/
  
 struct modal *modal_new_home();
+struct modal *modal_new_video();
+struct modal *modal_new_audio();
+struct modal *modal_new_input();
+struct modal *modal_new_regression();
+struct modal *modal_new_storage();
+struct modal *modal_new_misc();
 
 #endif
