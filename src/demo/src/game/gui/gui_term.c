@@ -131,6 +131,57 @@ void gui_term_writef(struct gui_term *term,int x,int y,const char *fmt,...) {
   gui_term_write(term,x,y,tmp,tmpc);
 }
 
+/* Scroll cells.
+ */
+ 
+void gui_term_scroll(struct gui_term *term,int dx,int dy) {
+
+  // Some noop or invalid cases.
+  if (!term) return;
+  if (!dx&&!dy) return;
+  
+  // Scrolling by the size of the terminal or more is the same as clearing.
+  if ((dx<=-term->colc)||(dx>=term->colc)||(dy<=-term->rowc)||(dy>=term->rowc)) {
+    memset(term->text,0,term->colc*term->rowc);
+    term->dirty=1;
+    return;
+  }
+  
+  // Shuffle horizontally. This is the more complicated axis, since we're stored LRTB.
+  if (dx<0) {
+    int cpc=term->colc+dx;
+    char *dstp=term->text;
+    const char *srcp=term->text-dx;
+    char *clrp=term->text+term->colc+dx;
+    int clrc=-dx;
+    int i=term->rowc;
+    for (;i-->0;dstp+=term->colc,srcp+=term->colc,clrp+=term->colc) {
+      memmove(dstp,srcp,cpc);
+      memset(clrp,0,clrc);
+    }
+  } else if (dx>0) {
+    int cpc=term->colc-dx;
+    char *dstp=term->text+dx;
+    char *srcp=term->text;
+    int i=term->rowc;
+    for (;i-->0;dstp+=term->colc,srcp+=term->colc) {
+      memmove(dstp,srcp,cpc);
+      memset(srcp,0,dx);
+    }
+  }
+  
+  // Shuffle vertically. Just one pair of (memmove,memset).
+  if (dy<0) {
+    memmove(term->text,term->text-dy*term->colc,term->colc*(term->rowc+dy));
+    memset(term->text+term->colc*(term->rowc+dy),0,-dy*term->colc);
+  } else if (dy>0) {
+    memmove(term->text+dy*term->colc,term->text,term->colc*(term->rowc-dy));
+    memset(term->text,0,dy*term->colc);
+  }
+  
+  term->dirty=1;
+}
+
 /* Update.
  */
 

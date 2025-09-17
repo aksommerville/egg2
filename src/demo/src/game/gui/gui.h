@@ -72,6 +72,10 @@ void gui_term_clear(struct gui_term *term);
 void gui_term_write(struct gui_term *term,int x,int y,const char *src,int srcc);
 void gui_term_writef(struct gui_term *term,int x,int y,const char *fmt,...);
 
+/* Move content by (dx,dy). eg if you're appending a line at the bottom (0,-1).
+ */
+void gui_term_scroll(struct gui_term *term,int dx,int dy);
+
 void gui_term_update(struct gui_term *term,double elapsed);
 void gui_term_render(struct gui_term *term);
 

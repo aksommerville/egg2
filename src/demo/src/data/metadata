@@ -1,5 +1,5 @@
 fb=320x180
-players=1
+players=1..8
 lang=en
 title=Egg Demo
 title$=2
