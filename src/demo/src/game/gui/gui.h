@@ -47,4 +47,32 @@ int gui_list_text_by_optionid(void *dstpp,const struct gui_list *list,int option
 void gui_list_update(struct gui_list *list,double elapsed,int input,int pvinput);
 void gui_list_render(struct gui_list *list);
 
+/* Terminal.
+ * Uniform grid of 8x8-pixel glyphs.
+ * Space and anything outside G0 is blank.
+ * Doesn't use font. So it's a better choice for text that changes often.
+ * Non-interactive.
+ **********************************************************************/
+ 
+struct gui_term;
+
+void gui_term_del(struct gui_term *term);
+
+struct gui_term *gui_term_new(int x,int y,int w,int h);
+
+void gui_term_get_size(int *colc,int *rowc,const struct gui_term *term); // (w,h)/8, you can already know it.
+void gui_term_set_background(struct gui_term *term,uint32_t rgba); // Default 0x000000ff.
+void gui_term_set_foreground(struct gui_term *term,uint32_t rgba); // Default 0xffffffff. If alpha<1, our own background will show thru.
+void gui_term_get_bounds(int *x,int *y,int *w,int *h,const struct gui_term *term,int col,int row,int colc,int rowc); // Clamps to main bounds.
+
+/* Writing modifies multiple cells but only in one row.
+ * We don't do line breaking.
+ */
+void gui_term_clear(struct gui_term *term);
+void gui_term_write(struct gui_term *term,int x,int y,const char *src,int srcc);
+void gui_term_writef(struct gui_term *term,int x,int y,const char *fmt,...);
+
+void gui_term_update(struct gui_term *term,double elapsed);
+void gui_term_render(struct gui_term *term);
+
 #endif

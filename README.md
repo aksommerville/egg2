@@ -94,7 +94,7 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - [ ] Robust demo ROM.
 - - [x] Generic menu widget.
 - - [ ] video
-- - [ ] audio: Play song, adjust playhead, play effects.
+- - [x] audio: Play song, adjust playhead, play effects.
 - - [ ] input: Show all states plus an event log.
 - - [ ] misc: Local time, real time, log.
 - - [ ] storage: Prefs, store, rom.

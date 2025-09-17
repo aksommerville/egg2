@@ -8,6 +8,7 @@
 #define EGG_STDLIB_H
 
 #include <stdint.h>
+#include <stdarg.h>
 
 /* Define USE_real_stdlib nonzero if you actually have real libc and libm.
  * eg compiling your Egg game for the true-native case.
@@ -72,6 +73,7 @@ extern void *stderr;
 extern void *stdout;
 int fprintf(void *unused,const char *fmt,...);
 int snprintf(char *dst,unsigned long int dsta,const char *fmt,...);
+int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs);
 
 /* Yoinked from newlib.
  */

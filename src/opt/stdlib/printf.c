@@ -1,6 +1,5 @@
 #include "egg-stdlib.h"
 #include "egg/egg.h"
-#include <stdarg.h>
 #include <limits.h>
 
 void *stdout=0;
@@ -9,7 +8,7 @@ void *stderr=0;
 /* vsnprintf
  */
  
-int vsnprintf(char *dst,int dsta,const char *fmt,va_list vargs) {
+int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs) {
   int dstc=0;
   if (fmt) {
     while (*fmt) {
