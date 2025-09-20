@@ -15,6 +15,32 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - eggdev --help reads from etc/doc/eggdev-cli.md directly.
 - Default instruments live somewhere in the SDK.
 
+## Should I use Egg?
+
+Target use case is low-resolution 2d sprite graphics with beepy sound and local multiplayer.
+Think SNES.
+
+Some common game features that Egg *does not* support:
+ - Analogue joysticks.
+ - Text from the keyboard. (keyboard masquerades as a gamepad).
+ - Mouse, touch, accelerometer.
+ - Networking.
+ - Recorded sound.
+ - Arbitrary FS access.
+ - 3d graphics.
+ - Script languages. Our API is geared for C. C++, Rust, and the like should be possible. Lua, JS, Python, and the like will never work.
+ 
+Features we *do* support:
+ - 2d sprite graphics.
+ - Beepy music and sound.
+ - Access to music's playhead (eg for rhythm games).
+ - Local multiplayer. Most hosts can go up to at least 8.
+ - Multiple languages. Easy for strings, but you're on your own for text written in images.
+ - Universal input config. Individual games never need to worry about it.
+ - Highly portable.
+ - Security guarantees. If paranoid, a user can extract the ROM from a web build and run that safely in their own runtime.
+ - No unnecessary branding. For the most part, users don't know that you're using Egg, why should they care.
+
 ## Prereqs
 
 - All use cases:
@@ -93,8 +119,9 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - - [ ] Standard instruments and sound effects.
 - [ ] Robust demo ROM.
 - - [x] Generic menu widget.
-- - [ ] video
+- - [x] video
 - - [x] audio: Play song, adjust playhead, play effects.
+- - [ ] audio: Track playhead and show a warning toast when the incoming value <= previous. That must only happen when it repeats or song changes.
 - - [x] input: Show all states plus an event log.
 - - [ ] misc: Local time, real time, log.
 - - [ ] storage: Prefs, store, rom.
@@ -102,3 +129,5 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - [ ] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet.
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
 - [ ] macos: eggrun
+- [ ] Line strip cuts corners. See NW corner of line strip in demo/Video/Primitives, both xegl and web. I want the corner filled. Is that possible?
+- - Also the SE corners get doubled; apparent at low alpha.

@@ -35,7 +35,9 @@ static void _video_render(struct modal *modal) {
 static void modal_video_cb_activate(struct gui_list *list,int optionid) {
   struct modal *modal=gui_list_get_userdata(list);
   switch (optionid) {
-    //TODO
+    #define _(tag) case VIDEO_TEST_##tag: modal_new_video_##tag(); break;
+    VIDEO_FOR_EACH_TEST
+    #undef _
   }
 }
 
@@ -50,7 +52,9 @@ static int _video_init(struct modal *modal) {
   if (!(MODAL->list=gui_list_new(0,0,FBW,FBH))) return -1;
   gui_list_set_userdata(MODAL->list,modal);
   gui_list_cb_activate(MODAL->list,0,modal_video_cb_activate);
-  gui_list_insert(MODAL->list,-1,0,"TODO modal_video",-1,0);//TODO
+  #define _(tag) gui_list_insert(MODAL->list,-1,0,#tag,-1,1);
+  VIDEO_FOR_EACH_TEST
+  #undef _
   
   return 0;
 }

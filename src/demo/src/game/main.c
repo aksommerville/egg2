@@ -13,6 +13,9 @@ void egg_client_quit(int status) {
 
 int egg_client_init() {
 
+  // We do use rand(), esp in video tests.
+  srand_auto();
+
   // Validate framebuffer size. It's wise to do this during init, because it's easy to mess up.
   int fbw=0,fbh=0;
   egg_texture_get_size(&fbw,&fbh,1);
