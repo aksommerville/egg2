@@ -92,7 +92,7 @@ Features we *do* support:
 - - - - - Maybe a metadata field "incfgMask" containing characters "dswne123lrLR". "d" being the dpad, all others correspond to one button.
 - - [ ] Record and playback session.
 - - [ ] System language, for MacOS and Windows.
-- - [ ] Global config file.
+- - [ ] Global config file. Command-line options, and also persist `egg_prefs_set()` here.
 - [ ] Web runtime.
 - - [ ] Input.
 - - - [ ] Mapping.
@@ -125,7 +125,7 @@ Features we *do* support:
 - - [x] audio: Track playhead and show a warning toast when the incoming value <= previous. That must only happen when it repeats or song changes.
 - - - Ho ho! Looks like we're doing this wrong in native, good thing I added this.
 - - [x] input: Show all states plus an event log.
-- - [ ] misc: Local time, real time, log.
+- - [x] misc: Local time, real time, log.
 - - [ ] storage: Prefs, store, rom.
 - - [ ] regression framework
 - [ ] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet.
@@ -134,3 +134,5 @@ Features we *do* support:
 - [ ] Line strip cuts corners. See NW corner of line strip in demo/Video/Primitives, both xegl and web. I want the corner filled. Is that possible?
 - - Also the SE corners get doubled; apparent at low alpha.
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
+- [ ] stdlib: Leading zeroes in snprintf.
+- [ ] web: prefs. Not implemented or what? See demo.

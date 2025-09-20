@@ -1,6 +1,6 @@
 fb=320x180
 players=1..8
-lang=en
+lang=en,fr
 title=Egg Demo
 title$=2
 author=AK Sommerville
