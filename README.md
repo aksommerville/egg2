@@ -117,11 +117,13 @@ Features we *do* support:
 - - [x] graf
 - - [x] font
 - - [ ] Standard instruments and sound effects.
+- - [ ] Can we make native builds use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - [ ] Robust demo ROM.
 - - [x] Generic menu widget.
 - - [x] video
 - - [x] audio: Play song, adjust playhead, play effects.
-- - [ ] audio: Track playhead and show a warning toast when the incoming value <= previous. That must only happen when it repeats or song changes.
+- - [x] audio: Track playhead and show a warning toast when the incoming value <= previous. That must only happen when it repeats or song changes.
+- - - Ho ho! Looks like we're doing this wrong in native, good thing I added this.
 - - [x] input: Show all states plus an event log.
 - - [ ] misc: Local time, real time, log.
 - - [ ] storage: Prefs, store, rom.
@@ -131,3 +133,4 @@ Features we *do* support:
 - [ ] macos: eggrun
 - [ ] Line strip cuts corners. See NW corner of line strip in demo/Video/Primitives, both xegl and web. I want the corner filled. Is that possible?
 - - Also the SE corners get doubled; apparent at low alpha.
+- [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?

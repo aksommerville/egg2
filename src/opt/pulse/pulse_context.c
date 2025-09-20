@@ -17,8 +17,8 @@ static void *pulse_iothd(void *arg) {
     } else {
       memset(pulse->buf,0,pulse->bufa<<1);
     }
-    pthread_mutex_unlock(&pulse->iomtx);
     pulse->buffer_time_us=pulse_now();
+    pthread_mutex_unlock(&pulse->iomtx);
     
     int err=0,result;
     pthread_testcancel();
@@ -132,6 +132,7 @@ static int pulse_init_buffer(struct pulse *pulse,const struct pulse_setup *setup
     return -1;
   }
   pulse->buftime_s=(double)(pulse->bufa/pulse->chanc)/(double)pulse->rate;
+  pulse->buftime_s*=4.0; // XXX Increasing to account for buffering on Pulse and driver's end. Can we do better than this? This 4.0 is essentially random.
   
   return 0;
 }

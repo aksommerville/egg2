@@ -1,10 +1,14 @@
 #include "../demo.h"
 #include "../gui/gui.h"
 
+#define PLAYHEAD_ALERT_TIME 0.500
+
 struct modal_audio {
   struct modal hdr;
   struct gui_term *term;
   int focusp; // term row 1..5
+  double pvplayhead; // For tracking unexpected playhead motion.
+  double playhead_alert; // Counts down while alerting.
   
   int songidp;
   int *songidv;
@@ -167,10 +171,21 @@ static void _audio_input(struct modal *modal,int btnid,int value) {
  */
  
 static void _audio_update(struct modal *modal,double elapsed,int input,int pvinput) {
+  if ((MODAL->playhead_alert-=elapsed)<=0.0) MODAL->playhead_alert=0.0;
   int songid=egg_song_get_id();
   if (songid==MODAL->dispsongid) {
     if (songid) { // Something still playing; update the playhead display.
       double sf=egg_song_get_playhead();
+      
+      // The playhead should always increase frame by frame.
+      // Except when a song changes or repeats or whatever.
+      // But during normal play, if we get the same or lesser playhead, it warrants attention.
+      if ((sf<=MODAL->pvplayhead)&&(sf>0.0)) {
+        fprintf(stderr,"Playhead: %.06f => %.06f\n",MODAL->pvplayhead,sf);
+        MODAL->playhead_alert=PLAYHEAD_ALERT_TIME;
+      }
+      MODAL->pvplayhead=sf;
+      
       int ms=(int)(sf*1000.0);
       if (ms<0) ms=0;
       int sec=ms/1000; ms%=1000;
@@ -196,6 +211,19 @@ static void _audio_render(struct modal *modal) {
     graf_fill_rect(&g.graf,x,y,w,h,0x102060ff);
   }
   gui_term_render(MODAL->term);
+  
+  // If the playhead did something unexpected, show a quick "hey!".
+  if (MODAL->playhead_alert>0.0) {
+    int x,y,w,h;
+    gui_term_get_bounds(&x,&y,&w,&h,MODAL->term,21,10,1,1);
+    x+=w>>1;
+    y+=h>>1;
+    int alpha=(int)((MODAL->playhead_alert*255.0)/PLAYHEAD_ALERT_TIME);
+    if (alpha<1) alpha=1; else if (alpha>0xff) alpha=0xff;
+    graf_set_image(&g.graf,RID_image_tiles);
+    graf_set_alpha(&g.graf,alpha);
+    graf_tile(&g.graf,x,y,0x22,0);
+  }
 }
 
 /* Populate (songidv) and (soundidv).

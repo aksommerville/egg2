@@ -166,9 +166,14 @@ int egg_song_get_id() {
 }
 
 double egg_song_get_playhead() {
+  if (hostio_audio_lock(eggrt.hostio)<0) return 0.0;
   double p=synth_get_playhead(eggrt.synth);
-  if (p<=0.0) return 0.0;
+  if (p<=0.0) {
+    hostio_audio_unlock(eggrt.hostio);
+    return 0.0;
+  }
   double remaining=hostio_audio_estimate_remaining_buffer(eggrt.hostio->audio);
+  hostio_audio_unlock(eggrt.hostio);
   if (remaining>=p) return 0.0;
   return p-remaining;
 }
