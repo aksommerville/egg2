@@ -15,14 +15,14 @@ export class SharedSymbols {
   constructor(comm) {
     this.comm = comm;
     
-    this.symv = []; // {nstype,ns,k,v}
+    this.symv = []; // {nstype,ns,k,v,comment?,argc?}
     this.instruments = null; // null or Song
     this.instrumentsPromise = null;
     this.projname = "";
     
     this.loadingPromise = this.comm.httpJson("GET", "/api/symbols").then(rsp => {
       if (!(rsp instanceof Array)) throw new Error(`Expected array from /api/symbols`);
-      this.symv = rsp;
+      this.symv = this.digestSymbols(rsp);
     }).catch(error => {
       this.symv = [];
     }).then(() => {
@@ -69,6 +69,20 @@ export class SharedSymbols {
         this.instruments = new Song();
       }
       return this.instruments;
+    });
+  }
+  
+  digestSymbols(symv) {
+    return symv.map(sym => {
+      if (sym.nstype === "CMD") {
+        sym = {...sym};
+        if (sym.comment) {
+          sym.argc = sym.comment.split(/[,\s]+/g).length;
+        } else {
+          sym.argc = 0;
+        }
+      }
+      return sym;
     });
   }
 }

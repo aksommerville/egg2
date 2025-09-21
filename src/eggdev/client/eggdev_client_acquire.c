@@ -5,6 +5,7 @@
   
 static void eggdev_sym_cleanup(struct eggdev_sym *sym) {
   if (sym->k) free(sym->k);
+  if (sym->comment) free(sym->comment);
 }
   
 static void eggdev_ns_cleanup(struct eggdev_ns *ns) {
@@ -41,13 +42,23 @@ int eggdev_client_set_root(const char *path,int pathc) {
 /* Define a symbol.
  */
  
-static int eggdev_client_define(int nstype,const char *nsname,int nsnamec,const char *k,int kc,int v) {
+static int eggdev_client_define(int nstype,const char *nsname,int nsnamec,const char *k,int kc,int v,const char *comment,int commentc) {
   if (!nsname) nsnamec=0; else if (nsnamec<0) { nsnamec=0; while (nsname[nsnamec]) nsnamec++; }
   if (!k) kc=0; else if (kc<0) { kc=0; while (k[kc]) kc++; }
   struct eggdev_ns *ns=eggdev_client_ns_intern(nstype,nsname,nsnamec);
   if (!ns) return -1;
   struct eggdev_sym *sym=eggdev_client_sym_intern(ns,k,kc,v);
   if (!sym) return -1;
+  if (comment) {
+    if (commentc<0) { commentc=0; while (comment[commentc]) commentc++; }
+    if (commentc>0) {
+      if (sym->comment=malloc(commentc+1)) {
+        memcpy(sym->comment,comment,commentc);
+        sym->comment[commentc]=0;
+        sym->commentc=commentc;
+      }
+    }
+  }
   return 0;
 }
 
@@ -95,7 +106,7 @@ static int eggdev_client_load_restoc_bottom(const char *path,const char *base,ch
     //rid|=lang<<6; // For naming purposes, use the plain 6-bit rid.
   }
 
-  return eggdev_client_define(EGGDEV_NSTYPE_RES,tname,-1,name,namec,rid);
+  return eggdev_client_define(EGGDEV_NSTYPE_RES,tname,-1,name,namec,rid,0,0);
 }
 
 /* Load symbols from data directory, top level.
@@ -120,7 +131,7 @@ static int eggdev_client_load_restoc_top(const char *path,const char *base,char 
   if ((base[0]>='0')&&(base[0]<='9')) ;
   else if (eggdev_tid_eval_standard(base,basec)>0) ;
   else {
-    if (eggdev_client_define(EGGDEV_NSTYPE_RESTYPE,0,0,base,basec,0)<0) return -1;
+    if (eggdev_client_define(EGGDEV_NSTYPE_RESTYPE,0,0,base,basec,0,0,0)<0) return -1;
   }
   
   // Enter directory to list named resources.
@@ -209,7 +220,17 @@ static int eggdev_client_load_symbols_from_text(const char *src,int srcc,const c
       fprintf(stderr,"%s:%d:WARNING: Ignoring symbol '%.*s' in namespace '%.*s' due to malformed value '%.*s'.\n",path,lineno,kc,k,nsc,ns,vsrcc,vsrc);
       continue;
     }
-    if (eggdev_client_define(nstype,ns,nsc,k,kc,v)<0) return -1;
+    while ((linep<linec)&&((unsigned char)line[linep]<=0x20)) linep++;
+    const char *comment=0;
+    int commentc=0;
+    if ((linep<linec-4)&&!memcmp(line+linep,"/*",2)&&!memcmp(line+linec-2,"*/",2)) {
+      linep+=2;
+      while ((linep<linec)&&((unsigned char)line[linep]<=0x20)) linep++;
+      comment=line+linep;
+      commentc=linec-linep-2;
+      while (commentc&&((unsigned char)comment[commentc-1]<=0x20)) commentc--;
+    }
+    if (eggdev_client_define(nstype,ns,nsc,k,kc,v,comment,commentc)<0) return -1;
   }
   return 0;
 }

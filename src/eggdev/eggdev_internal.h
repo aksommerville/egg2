@@ -57,6 +57,8 @@ extern struct g {
         int v;
         char *k;
         int kc;
+        char *comment;
+        int commentc;
       } *symv;
       int symc,syma;
     } *nsv;

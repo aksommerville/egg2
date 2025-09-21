@@ -8,6 +8,7 @@ import { Data } from "../Data.js";
 import { Injector } from "../Injector.js";
 import { SharedSymbols } from "../SharedSymbols.js";
 import { CommandList } from "./CommandList.js";
+import { CommandListCommandModal } from "./CommandListCommandModal.js";
 
 export class CommandListEditor {
   static getDependencies() {
@@ -79,6 +80,34 @@ export class CommandListEditor {
     return this.dom.spawn(row, "INPUT", { type: "text", name: "command", value: this.model.commands[p].join(" "), "on-input": e => this.onInput(p, e) });
   }
   
+  /* Schema support.
+   ******************************************************************************/
+   
+  proposeCommands(p) {
+    const symv = this.sharedSymbols.symv.filter(sym => ((sym.nstype === "CMD") && (sym.ns === this.ns)));
+    const modal = this.dom.spawnModal(CommandListCommandModal);
+    modal.setupFresh(symv);
+    modal.result.then(rsp => {
+      if (!rsp) return;
+      this.model.commands[p] = rsp;
+      const input = this.element.querySelector(`.row[data-index='${p}'] input[name='command']`);
+      if (input) input.value = rsp.join(" ");
+      this.dirty();
+    });
+  }
+  
+  describeCommand(p, command) {
+    const modal = this.dom.spawnModal(CommandListCommandModal);
+    modal.setupExisting(command, this.sharedSymbols.symv.find(sym => ((sym.nstype === "CMD") && (sym.ns === this.ns) && (sym.k === command[0]))));
+    modal.result.then(rsp => {
+      if (!rsp) return;
+      this.model.commands[p] = rsp;
+      const input = this.element.querySelector(`.row[data-index='${p}'] input[name='command']`);
+      if (input) input.value = rsp.join(" ");
+      this.dirty();
+    });
+  }
+  
   /* Events.
    ********************************************************************************/
    
@@ -113,7 +142,9 @@ export class CommandListEditor {
   onHelp(p) {
     if (!this.model || (p < 0) || (p >= this.model.commands.length)) return;
     if (this.onhelp?.(this.model.commands[p], p)) return;
-    //TODO Generic command list details?
+    const command = this.model.commands[p];
+    if (command.length < 1) return this.proposeCommands(p);
+    this.describeCommand(p, command);
   }
   
   onInput(p, e) {

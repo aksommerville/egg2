@@ -64,7 +64,7 @@ export class SpriteEditor {
   }
   
   reprImage() {
-    return this.model?.getFirstArg("image") || "";
+    return this.model?.getFirstArg("image") || "Select image...";
   }
   
   populateUpperUi() {

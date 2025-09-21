@@ -61,7 +61,7 @@ Features we *do* support:
 
 ## TODO
 
-- [ ] Flesh out and validate Prereqs, above.
+- [x] Flesh out and validate Prereqs, above. ...what we have is fine. Season to taste as we onboard new hosts.
 - [x] Programmatic access to a song eg for ocarinas or sustained notes. API change.
 - - The synthesizers currently aren't built for infinitely-sustaining notes.
 - - Need to think this thru carefully, and ensure we have some safeguards against stuck notes.
@@ -69,7 +69,7 @@ Features we *do* support:
 - - [ ] SongService: Should we auto-re-play on dirty?
 - - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
 - - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
-- - [ ] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
+- - [x] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
 - - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
 - - [ ] PostModal fields per stage type.

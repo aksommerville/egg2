@@ -524,6 +524,12 @@ input.toggle:checked + label.toggle.light {
   min-width: 40vw;
 }
 
+.CommandListCommandModal {
+  min-width: 75vw;
+  display: flex;
+  flex-direction: column;
+}
+
 .SpriteEditor .topRow {
   align-items: center;
 }

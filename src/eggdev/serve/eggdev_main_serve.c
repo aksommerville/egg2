@@ -163,6 +163,9 @@ static int eggdev_cb_get_symbols(struct http_xfer *req,struct http_xfer *rsp) {
       sr_encode_json_string(dst,"ns",2,ns->name,ns->namec);
       sr_encode_json_string(dst,"k",1,sym->k,sym->kc);
       sr_encode_json_int(dst,"v",1,sym->v);
+      if (sym->commentc) {
+        sr_encode_json_string(dst,"comment",7,sym->comment,sym->commentc);
+      }
       if (sr_encode_json_end(dst,jsonctx)<0) return -1;
     }
   }

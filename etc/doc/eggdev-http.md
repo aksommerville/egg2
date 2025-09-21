@@ -52,7 +52,7 @@ If it succeeds, or no `--project` was provided, proceed with `GET /**`.
 
 ### GET /api/symbols
 
-Returns an array of `{nstype,ns,k,v}` for the symbols declared in the project's `shared_symbols.h`.
+Returns an array of `{nstype,ns,k,v,comment?}` for the symbols declared in the project's `shared_symbols.h`.
 If no project was specified at launch, or anything else goes wrong, returns an empty array.
 
 ### GET /api/instruments
