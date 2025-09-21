@@ -182,6 +182,18 @@ void gui_term_scroll(struct gui_term *term,int dx,int dy) {
   term->dirty=1;
 }
 
+/* Manual edit.
+ */
+ 
+char *gui_term_manual_edit(struct gui_term *term,int x,int y,int c) {
+  if (!term||(x<0)||(y<0)||(x>=term->colc)||(y>=term->rowc)||(c<0)) return 0;
+  int p=y*term->colc+x;
+  int a=term->colc*term->rowc;
+  if (p>a-c) return 0;
+  term->dirty=1;
+  return term->text+p;
+}
+
 /* Update.
  */
 

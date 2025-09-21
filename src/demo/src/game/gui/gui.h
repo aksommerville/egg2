@@ -76,6 +76,12 @@ void gui_term_writef(struct gui_term *term,int x,int y,const char *fmt,...);
  */
 void gui_term_scroll(struct gui_term *term,int dx,int dy);
 
+/* Announce your intention to edit (c) cells starting at (x,y).
+ * If that fits, we mark ourselves dirty and return a pointer to it.
+ * Cells are stored LRTB packed.
+ */
+char *gui_term_manual_edit(struct gui_term *term,int x,int y,int c);
+
 void gui_term_update(struct gui_term *term,double elapsed);
 void gui_term_render(struct gui_term *term);
 

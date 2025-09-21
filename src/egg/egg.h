@@ -74,6 +74,9 @@ void egg_time_local(int *dst,int dsta);
 #define EGG_STRING_IS_LANG(str) ( \
   ((str)[0]>='a')&&((str)[0]<='z')&&((str)[1]>='a')&&((str)[1]<='z') \
 )
+#define EGG_LANG_STRING_SANITIZE(str) { \
+  if (((str)[0]<'a')||((str)[0]>'z')||((str)[1]<'a')||((str)[1]>'z')) (str)[0]=(str)[1]='?'; \
+}
 
 /* Read or write a global preference.
  * Do not change these unless the user has prompted you to.

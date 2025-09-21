@@ -118,7 +118,7 @@ Features we *do* support:
 - - [x] font
 - - [ ] Standard instruments and sound effects.
 - - [ ] Can we make native builds use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
-- [ ] Robust demo ROM.
+- [x] Robust demo ROM.
 - - [x] Generic menu widget.
 - - [x] video
 - - [x] audio: Play song, adjust playhead, play effects.
@@ -126,8 +126,8 @@ Features we *do* support:
 - - - Ho ho! Looks like we're doing this wrong in native, good thing I added this.
 - - [x] input: Show all states plus an event log.
 - - [x] misc: Local time, real time, log.
-- - [ ] storage: Prefs, store, rom.
-- - [ ] regression framework
+- - [x] storage: Prefs, store, rom.
+- - [x] regression framework -- punt this until i have something to test.
 - [ ] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet.
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
 - [ ] macos: eggrun
@@ -136,3 +136,5 @@ Features we *do* support:
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
 - [ ] stdlib: Leading zeroes in snprintf.
 - [ ] web: prefs. Not implemented or what? See demo.
+- [ ] web: Input is not setting CD.
+- [ ] web: El Cheapo triggers have 1 and 2 swapped. Is that a real bug, or just bad luck with Standard Mapping?
