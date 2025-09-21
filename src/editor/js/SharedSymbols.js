@@ -46,6 +46,11 @@ export class SharedSymbols {
     return this.symv.find(s => ((s.nstype === nstype) && (s.ns === ns) && (s.k === name)))?.v;
   }
   
+  // Nonzero if we have at least one "CMD_" symbol for the given type.
+  typeNameIsCommandList(tname) {
+    return !!this.symv.find(sym => ((sym.nstype === "CMD") && (sym.ns === tname)));
+  }
+  
   /* Resolves to an Instruments instance containing the SDK's default instruments.
    * Logs errors and never rejects.
    */

@@ -16,20 +16,23 @@ import { SpriteEditor } from "./std/SpriteEditor.js";
 import { MapEditor } from "./map/MapEditor.js";
 import { SongEditor } from "./song/SongEditor.js";
 import { StringsEditor } from "./std/StringsEditor.js";
+import { MissingResourcesService } from "./std/MissingResourcesService.js";
  
 export class Actions {
   static getDependencies() {
-    return [Override, Dom, Window, LaunchService];
+    return [Override, Dom, Window, LaunchService, MissingResourcesService];
   }
-  constructor(override, dom, window, launchService) {
+  constructor(override, dom, window, launchService, missingResourcesService) {
     this.override = override;
     this.dom = dom;
     this.window = window;
     this.launchService = launchService;
+    this.missingResourcesService = missingResourcesService;
     
     this.actions = [
       ...this.override.actions,
       { name: "launch", label: "Launch", fn: () => this.launchService.launch() },
+      { name: "missingResources", label: "Missing Resources...", fn: () => this.missingResourcesService.detectAndReport() },
       //TODO standard actions
     ];
     

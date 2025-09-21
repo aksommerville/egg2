@@ -97,40 +97,8 @@ export class StringsEditor {
     return result;
   }
   
-  /* Return a contiguous array of strings for an encoded resource.
-   * Includes an empty zero, so array index is the same as string index.
-   * Input may be string, Uint8Array, or anything false.
-   */
   decode(src) {
-    const dst = [""];
-    if (src) {
-      if (src instanceof Uint8Array) src = new TextDecoder("utf-8").decode(src);
-      for (let srcp=0, lineno=1; srcp<src.length; lineno++) {
-        let nlp = src.indexOf("\n", srcp);
-        if (nlp < 0) nlp = src.length;
-        const line = src.substring(srcp, nlp).trim();
-        srcp = nlp + 1;
-        if (!line || line.startsWith("#")) continue;
-        const sepp = line.indexOf(" ");
-        if (sepp < 0) throw new Error(`strings:${this.res.rid}:${lineno}: Missing separator.`);
-        const ix = +line.substring(0, sepp);
-        if (isNaN(ix) || (ix < 1) || (ix > 1023)) throw new Error(`strings:${this.res.rid}:${lineno}: Invalid index.`);
-        const pre = line.substring(sepp).trim();
-        let string;
-        if (pre.startsWith("\"")) {
-          try {
-            string = JSON.parse(pre);
-          } catch (e) {
-            throw new Error(`strings:${this.res.rid}:${lineno}: Malformed JSON string.`);
-          }
-        } else {
-          string = pre;
-        }
-        while (dst.length <= ix) dst.push(""); // (dst) must be contiguous.
-        dst[ix] = string;
-      }
-    }
-    return dst;
+    return decodeStrings(src, this.res.rid);
   }
   
   // (pfx) is "res:" or "ref:", what the <input [name]> start with.
@@ -177,4 +145,40 @@ export class StringsEditor {
     input.focus();
     // Don't dirty at this point; a new string at the end doesn't actually change the resource.
   }
+}
+
+/* Return a contiguous array of strings for an encoded resource.
+ * Includes an empty zero, so array index is the same as string index.
+ * Input may be string, Uint8Array, or anything false.
+ */
+export function decodeStrings(src, rid) {
+  const dst = [""];
+  if (src) {
+    if (src instanceof Uint8Array) src = new TextDecoder("utf-8").decode(src);
+    for (let srcp=0, lineno=1; srcp<src.length; lineno++) {
+      let nlp = src.indexOf("\n", srcp);
+      if (nlp < 0) nlp = src.length;
+      const line = src.substring(srcp, nlp).trim();
+      srcp = nlp + 1;
+      if (!line || line.startsWith("#")) continue;
+      const sepp = line.indexOf(" ");
+      if (sepp < 0) throw new Error(`strings:${rid}:${lineno}: Missing separator.`);
+      const ix = +line.substring(0, sepp);
+      if (isNaN(ix) || (ix < 1) || (ix > 1023)) throw new Error(`strings:${rid}:${lineno}: Invalid index.`);
+      const pre = line.substring(sepp).trim();
+      let string;
+      if (pre.startsWith("\"")) {
+        try {
+          string = JSON.parse(pre);
+        } catch (e) {
+          throw new Error(`strings:${rid}:${lineno}: Malformed JSON string.`);
+        }
+      } else {
+        string = pre;
+      }
+      while (dst.length <= ix) dst.push(""); // (dst) must be contiguous.
+      dst[ix] = string;
+    }
+  }
+  return dst;
 }
