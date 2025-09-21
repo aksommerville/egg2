@@ -87,7 +87,7 @@ int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs) {
       
         case 'd':
         case 'i': {
-            // TODO Width, Zero-Pad.
+            int dstc0=dstc;
             int v=va_arg(vargs,int);
             int digitc=1;
             if (v<0) {
@@ -109,10 +109,27 @@ int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs) {
               }
               dstc+=digitc;
             }
+            int dstc1=dstc-dstc0;
+            if ((width>dstc1)) {
+              int addc=width-dstc1;
+              if (dstc<=dsta-addc) {
+                if (leftalign) {
+                  memset(dst+dstc,' ',addc);
+                } else if (zeropad&&(dst[dstc0]=='-')) {
+                  memmove(dst+dstc0+addc+1,dst+dstc0+1,dstc1-1);
+                  memset(dst+dstc0+1,'0',addc);
+                } else {
+                  memmove(dst+dstc0+addc,dst+dstc0,dstc1);
+                  if (zeropad) memset(dst+dstc0,'0',addc);
+                  else memset(dst+dstc0,' ',addc);
+                }
+              }
+              dstc+=addc;
+            }
           } break;
           
         case 'o': {
-            // TODO Width, Zero-Pad.
+            int dstc0=dstc;
             unsigned int v=va_arg(vargs,unsigned int);
             int digitc=1;
             unsigned int limit=8;
@@ -129,10 +146,24 @@ int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs) {
               int i=digitc; for (;i-->0;v>>=3) dst[dstc+i]='0'+(v&7);
             }
             dstc+=digitc;
+            int dstc1=dstc-dstc0;
+            if ((width>dstc1)) {
+              int addc=width-dstc1;
+              if (dstc<=dsta-addc) {
+                if (leftalign) {
+                  memset(dst+dstc,' ',addc);
+                } else {
+                  memmove(dst+dstc0+addc,dst+dstc0,dstc1);
+                  if (zeropad) memset(dst+dstc0,'0',addc);
+                  else memset(dst+dstc0,' ',addc);
+                }
+              }
+              dstc+=addc;
+            }
           } break;
           
         case 'u': {
-            // TODO Width, Zero-Pad.
+            int dstc0=dstc;
             unsigned int v=va_arg(vargs,unsigned int);
             int digitc=1;
             unsigned int limit=10;
@@ -142,11 +173,25 @@ int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs) {
               int i=digitc; for (;i-->0;v/=10) dst[dstc+i]='0'+(v%10);
             }
             dstc+=digitc;
+            int dstc1=dstc-dstc0;
+            if ((width>dstc1)) {
+              int addc=width-dstc1;
+              if (dstc<=dsta-addc) {
+                if (leftalign) {
+                  memset(dst+dstc,' ',addc);
+                } else {
+                  memmove(dst+dstc0+addc,dst+dstc0,dstc1);
+                  if (zeropad) memset(dst+dstc0,'0',addc);
+                  else memset(dst+dstc0,' ',addc);
+                }
+              }
+              dstc+=addc;
+            }
           } break;
           
         case 'x':
         case 'X': {
-            // TODO Width, Zero-Pad.
+            int dstc0=dstc;
             unsigned int v=va_arg(vargs,unsigned int);
             int digitc=1;
             unsigned int limit=16;
@@ -164,13 +209,30 @@ int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs) {
               int i=digitc; for (;i-->0;v>>=4) dst[dstc+i]=alphabet[v&15];
             }
             dstc+=digitc;
+            int dstc1=dstc-dstc0;
+            if ((width>dstc1)) {
+              int addc=width-dstc1;
+              if (dstc<=dsta-addc) {
+                if (leftalign) {
+                  memset(dst+dstc,' ',addc);
+                } else if (zeropad&&prefix&&(dstc1>2)) {
+                  memmove(dst+dstc0+addc+2,dst+dstc0+2,dstc1-2);
+                  memset(dst+dstc0+2,'0',addc);
+                } else {
+                  memmove(dst+dstc0+addc,dst+dstc0,dstc1);
+                  if (zeropad) memset(dst+dstc0,'0',addc);
+                  else memset(dst+dstc0,' ',addc);
+                }
+              }
+              dstc+=addc;
+            }
           } break;
           
         case 'e': case 'E':
         case 'f': case 'F':
         case 'g': case 'G':
         case 'a': case 'A': {
-            // TODO Width, Zero-Pad.
+            int dstc0=dstc;
             double v=va_arg(vargs,double);
             if (v<0.0) {
               if (dstc<dsta) dst[dstc]='-';
@@ -217,10 +279,27 @@ int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs) {
                 dstc+=fractc;
               }
             }
+            
+            int dstc1=dstc-dstc0;
+            if ((width>dstc1)) {
+              int addc=width-dstc1;
+              if (dstc<=dsta-addc) {
+                if (leftalign) {
+                  memset(dst+dstc,' ',addc);
+                } else if (zeropad&&(dst[dstc0]=='-')) {
+                  memmove(dst+dstc0+addc+1,dst+dstc0+1,dstc1-1);
+                  memset(dst+dstc0+1,'0',addc);
+                } else {
+                  memmove(dst+dstc0+addc,dst+dstc0,dstc1);
+                  if (zeropad) memset(dst+dstc0,'0',addc);
+                  else memset(dst+dstc0,' ',addc);
+                }
+              }
+              dstc+=addc;
+            }
           } break;
           
         case 'c': {
-            // TODO Width.
             int v=va_arg(vargs,int);
             if (dstc<dsta) {
               if ((v>=0x20)&&(v<=0x7e)) dst[dstc]=v;
@@ -230,7 +309,6 @@ int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs) {
           } break;
           
         case 'p': {
-            // TODO Width, Zero-Pad.
             uintptr_t v=(uintptr_t)va_arg(vargs,void*);
             if (dstc<=dsta-2) {
               dst[dstc]='0';
@@ -245,7 +323,7 @@ int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs) {
           } break;
           
         case 's': {
-            //TODO Width.
+            int dstc0=dstc;
             const char *v=va_arg(vargs,char*);
             int c=0;
             if (v) {
@@ -257,6 +335,19 @@ int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs) {
             }
             if (dstc<dsta-c) memcpy(dst+dstc,v,c);
             dstc+=c;
+            int dstc1=dstc-dstc0;
+            if (dstc1<width) {
+              int addc=width-dstc1;
+              if (dstc<=dsta-addc) {
+                if (leftalign) {
+                  memset(dst+dstc,' ',addc);
+                } else {
+                  memmove(dst+dstc0+addc,dst+dstc0,addc);
+                  memset(dst+dstc0,' ',addc);
+                }
+              }
+              dstc+=addc;
+            }
           } break;
       
         default: {

@@ -63,6 +63,21 @@ int egg_client_init() {
   
   // Create the home menu.
   if (!modal_new_home()) return -1;
+  
+  /* Test printf.
+   * Alas we can't write unit tests for any of the fake stdlib, because those would be built natively and use real stdlib instead.
+   */
+  if (0) {
+    fprintf(stderr,"Decimal plain(%d) pad(%5d) zeropad(%05d) leftalign(%-5d)\n",123,123,123,123);
+    fprintf(stderr,"Negative plain(%d) pad(%5d) zeropad(%05d) leftalign(%-5d)\n",-123,-123,-123,-123);
+    fprintf(stderr,"Unsigned plain(%u) pad(%5u) zeropad(%05u) leftalign(%-5u)\n",123,123,123,123);
+    fprintf(stderr,"Octal plain(%o) pad(%5o) zeropad(%05o) leftalign(%-5o)\n",511,511,511,511);
+    fprintf(stderr,"Hex plain(%x) pad(%6x) zeropad(%06x) leftalign(%-6x)\n",0xbee,0xbee,0xbee,0xbee);
+    fprintf(stderr,"Hex-prefix plain(%#x) pad(%#6x) zeropad(%#06x) leftalign(%#-6x)\n",0xbee,0xbee,0xbee,0xbee);
+    fprintf(stderr,"Float plain(%.3f) pad(%7.3f) zeropad(%07.3f) leftalign(%-7.3f)\n",3.141,3.141,3.141,3.141);
+    fprintf(stderr,"Float plain(%.3f) pad(%7.3f) zeropad(%07.3f) leftalign(%-7.3f)\n",-3.141,-3.141,-3.141,-3.141);
+    fprintf(stderr,"String plain(%s) pad(%6s) leftalign(%-6s)\n","egg","egg","egg");
+  }
 
   fprintf(stderr,"init ok\n");
   return 0;

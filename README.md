@@ -110,13 +110,16 @@ Features we *do* support:
 - [ ] Client utilities.
 - - [ ] Standard instruments and sound effects.
 - - [ ] Can we make native builds use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
-- [ ] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet.
+- [x] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet. ...NO, too complicated.
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
 - [ ] macos: eggrun
-- [ ] Line strip cuts corners. See NW corner of line strip in demo/Video/Primitives, both xegl and web. I want the corner filled. Is that possible?
+- [x] Line strip cuts corners. See NW corner of line strip in demo/Video/Primitives, both xegl and web. I want the corner filled. Is that possible?
 - - Also the SE corners get doubled; apparent at low alpha.
+- - ...Fudging coordinates across the board doesn't help, tho it can move the missing pixels to the SE. I don't see how we could fudge them selectively.
+- - There isn't anything like "line join mode" in GLES.
+- - I don't believe this is solvable.
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
-- [ ] stdlib: Leading zeroes in snprintf.
+- [x] stdlib: Leading zeroes in snprintf.
 - [ ] web: prefs. Not implemented or what? See demo.
 - [ ] web: Input is not setting CD.
 - [ ] web: El Cheapo triggers have 1 and 2 swapped. Is that a real bug, or just bad luck with Standard Mapping?
