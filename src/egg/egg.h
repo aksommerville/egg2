@@ -184,9 +184,22 @@ void egg_play_sound(int soundid,double trim,double pan);
  */
 void egg_play_song(int songid,int force,int repeat);
 
+/* Programmatic access to synthesizer.
+ * These use the same channels as the song. You must arrange your songs so as to support this.
+ * Starting a note requires a maximum duration in milliseconds, and returns a "holdid".
+ * You may cut it off early via egg_release_note().
+ * (noteid,velocity) are both in 0..127.
+ * Wheel in -512..511. The actual bend from wheel is established in the song's channel headers.
+ * Changing song releases all programmatic notes too.
+ * Intended for rhythm games and maybe ocarina-like interactions.
+ */
+int egg_play_note(int chid,int noteid,int velocity,int durms);
+void egg_release_note(int holdid);
+void egg_adjust_wheel(int chid,int v/*-512..511*/);
+
 /* Current song ID is zero if the song didn't exist or finished playing, regardless of what ID was requested.
  * When a song repeats, its playhead repeats too.
- * Behavior of setting to an OOB playhead is undefined, but will never cause the song to stop or anything crazy.
+ * Behavior of setting to an OOB playhead is undefined, but will never cause a repeating song to stop or anything crazy.
  * Playhead is in seconds.
  * The platform may impose a transition period between songs.
  * Anything you ask for during that period relates to the new song, even if it hasn't actually started yet.

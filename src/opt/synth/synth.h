@@ -40,6 +40,13 @@ void synth_play_song(struct synth *synth,int songid,int force,int repeat);
  */
 void synth_play_sound(struct synth *synth,int soundid,float trim,float pan);
 
+/* Play on the song's channels manually.
+ * Semantics identical to the similarly-named Egg Platform API functions.
+ */
+int synth_play_note(struct synth *synth,int chid,int noteid,int velocity,int durms);
+void synth_release_note(struct synth *synth,int holdid);
+void synth_adjust_wheel(struct synth *synth,int chid,int v);
+
 /* Advance time and generate (c) samples (not frames, not bytes).
  * (c) must be a multiple of (chanc).
  * Floating-point is more natural to us, but we can quantize to s16 for you.

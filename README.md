@@ -62,7 +62,7 @@ Features we *do* support:
 ## TODO
 
 - [ ] Flesh out and validate Prereqs, above.
-- [ ] Programmatic access to a song eg for ocarinas or sustained notes. API change.
+- [x] Programmatic access to a song eg for ocarinas or sustained notes. API change.
 - - The synthesizers currently aren't built for infinitely-sustaining notes.
 - - Need to think this thru carefully, and ensure we have some safeguards against stuck notes.
 - [ ] Editor.
@@ -120,3 +120,4 @@ Features we *do* support:
 - [ ] web: prefs. Not implemented or what? See demo.
 - [ ] web: Input is not setting CD.
 - [ ] web: El Cheapo triggers have 1 and 2 swapped. Is that a real bug, or just bad luck with Standard Mapping?
+- [ ] web: Releasing manual synth note cuts off cold. It ought to enter the envelope's release stage.

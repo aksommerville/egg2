@@ -27,7 +27,8 @@ export class SongPlayer {
     this.eventsFinished = false; // True if we've processed them all, and not repeating.
     this.running = false;
     this.node = new GainNode(ctx, { gain: 1 });
-    this.droppables = []; // {node,time}
+    this.droppables = []; // {node,time,holdid}
+    this.holdid = 1;
     
     this.tempo = 0; // Serves as flag for "\0EAU" present.
     this.loopp = 0;
@@ -70,6 +71,11 @@ export class SongPlayer {
       this.events = new Uint8Array([0x7f]);
     }
     if (this.loopp > this.events.length) throw new Error("Malformed EAU");
+  }
+  
+  holdidNext() {
+    if (this.holdid >= 0x01000000) this.holdid = 1;
+    return this.holdid++;
   }
   
   receiveChannelHeader(src) {
@@ -189,6 +195,29 @@ export class SongPlayer {
       }
     }
     return true;
+  }
+  
+  playNote(chid, noteid, velocity, durms) {
+    const channel = this.channelsByChid[chid];
+    if (!channel) return 0;
+    return channel.note(this.ctx.currentTime, noteid, velocity / 127, durms / 1000);
+  }
+  
+  releaseNote(holdid) {
+    for (let i=this.droppables.length; i-->0; ) {
+      const dr = this.droppables[i];
+      if (dr.holdid !== holdid) continue;
+      //TODO I would rather enter the release stage. This logic will drop them cold. Can it be done gently?
+      dr.node.stop?.();
+      dr.node.disconnect?.();
+      this.droppables.splice(i, 1);
+    }
+  }
+  
+  adjustWheel(chid, v) {
+    const channel = this.channelsByChid[chid];
+    if (!channel) return;
+    channel.wheel(this.ctx.currentTime, v);
   }
   
   /* Private.

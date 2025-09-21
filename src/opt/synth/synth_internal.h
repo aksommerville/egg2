@@ -209,7 +209,8 @@ struct synth_channel *synth_channel_new(struct synth *synth,int chanc,int tempo,
  */
 void synth_channel_update(float *v,int framec,struct synth_channel *channel);
 
-void synth_channel_note(struct synth_channel *channel,uint8_t noteid,float velocity,int durframes);
+int synth_channel_note(struct synth_channel *channel,uint8_t noteid,float velocity,int durframes); // =>holdid
+void synth_channel_release(struct synth_channel *channel,int holdid);
 void synth_channel_wheel(struct synth_channel *channel,int v); // -512..0..511
 void synth_channel_release_all(struct synth_channel *channel);
 
@@ -255,7 +256,8 @@ int synth_song_measure_frames(const struct synth_song *song); // => sum of delay
  */
 int synth_song_update(float *v,int framec,struct synth_song *song);
 
-void synth_song_note(struct synth_song *song,uint8_t chid,uint8_t noteid,float velocity,int durframes);
+int synth_song_note(struct synth_song *song,uint8_t chid,uint8_t noteid,float velocity,int durframes); // =>holdid
+void synth_song_release(struct synth_song *song,int holdid);
 void synth_song_wheel(struct synth_song *song,uint8_t chid,int v); // -512..0..511
 
 /* Synth context.
@@ -286,11 +288,15 @@ struct synth {
   
   struct synth_song *song;
   struct synth_song *pvsong;
+  
+  int holdid_next;
 };
 
 int synth_frames_from_ms(const struct synth *synth,int ms);
 void synth_apply_pan(float *triml,float *trimr,float trim,float pan);
 
 struct synth_pcm *synth_begin_print(struct synth *synth,const void *v,int c); // => STRONG
+
+int synth_holdid_next(struct synth *synth);
 
 #endif

@@ -161,6 +161,29 @@ void egg_play_song(int songid,int force,int repeat) {
   hostio_audio_unlock(eggrt.hostio);
 }
 
+int egg_play_note(int chid,int noteid,int velocity,int durms) {
+  if (!eggrt.music_enable) return 0;
+  if (hostio_audio_lock(eggrt.hostio)<0) return 0;
+  int holdid=synth_play_note(eggrt.synth,chid,noteid,velocity,durms);
+  hostio_audio_unlock(eggrt.hostio);
+  return holdid;
+}
+
+void egg_release_note(int holdid) {
+  if (holdid<1) return;
+  if (!eggrt.music_enable) return;
+  if (hostio_audio_lock(eggrt.hostio)<0) return;
+  synth_release_note(eggrt.synth,holdid);
+  hostio_audio_unlock(eggrt.hostio);
+}
+
+void egg_adjust_wheel(int chid,int v) {
+  if (!eggrt.music_enable) return;
+  if (hostio_audio_lock(eggrt.hostio)<0) return;
+  synth_adjust_wheel(eggrt.synth,chid,v);
+  hostio_audio_unlock(eggrt.hostio);
+}
+
 int egg_song_get_id() {
   return synth_get_songid(eggrt.synth);
 }

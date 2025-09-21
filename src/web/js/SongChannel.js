@@ -201,20 +201,20 @@ export class SongChannel {
   }
   
   playDrum(when, note, velocity) {
-    if (!note) return;
+    if (!note) return 0;
     if (!note.pcm) {
       if (note.pending) {
         // We got a request for a note that's currently being printed.
         // This is normal, especially for hi hats at the start of a song.
         // Hold them in (note.pending) until it resolves.
         note.pending.push({ when, velocity });
-        return;
+        return 0;
       }
       const framec = calculateEauDuration(note.serial, this.player.ctx.sampleRate);
       if (framec < 1) {
         const p = this.notes.indexOf(note);
         if (p >= 0) this.notes[p] = null;
-        return;
+        return 0;
       }
       const subctx = new OfflineAudioContext(1, framec, this.player.ctx.sampleRate);
       const songPlayer = new SongPlayer(subctx, note.serial, 1.0, 0.0, false, 0);
@@ -230,7 +230,7 @@ export class SongChannel {
           this.playDrum(p.when, note, p.velocity);
         }
       });
-      return;
+      return 0;
     }
     const node = new AudioBufferSourceNode(this.player.ctx, {
       buffer: note.pcm,
@@ -238,6 +238,7 @@ export class SongChannel {
     node.connect(this.postStart);
     node.start(when);
     this.player.droppables.push({ node, time: when + note.pcm.duration + 0.010 }); // It's silly, but we do need this in case of playhead changes.
+    return 0;
   }
   
   /* Tuned voices: FM, HARSH, HARM.
@@ -347,20 +348,22 @@ export class SongChannel {
    
   tunedNote(when, noteid, velocity, durs) {
     const osc = this.osc(when, eauNotev[noteid & 0x7f], velocity, durs);
-    if (!osc) return;
+    if (!osc) return 0;
+    const holdid = this.player.holdidNext();
     const env = new GainNode(this.player.ctx, { gain: 0 });
     const pts = eauEnvApply(this.levelenv, when, velocity, durs);
     env.gain.setValueAtTime(pts[0].v, when);
     for (const pt of pts) env.gain.linearRampToValueAtTime(pt.v, pt.t);
     osc.connect(env);
     env.connect(this.postStart);
-    this.player.droppables.push({ node: osc });
-    this.player.droppables.push({ node: env });
+    this.player.droppables.push({ node: osc, holdid });
+    this.player.droppables.push({ node: env, holdid });
     const endTime = pts[pts.length - 1].t;
     for (const d of this.player.droppables) if (!d.time) {
       d.time = endTime;
       this.addTunable(d.node, endTime);
     }
+    return holdid;
   }
   
   tunedWheel(when, v) {

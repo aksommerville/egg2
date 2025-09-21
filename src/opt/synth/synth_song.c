@@ -175,13 +175,24 @@ int synth_song_measure_frames(const struct synth_song *song) {
 /* Receive events.
  */
 
-void synth_song_note(struct synth_song *song,uint8_t chid,uint8_t noteid,float velocity,int durframes) {
-  if (song->terminated) return;
-  if (noteid&0x80) return;
-  if (chid&0xf0) return;
+int synth_song_note(struct synth_song *song,uint8_t chid,uint8_t noteid,float velocity,int durframes) {
+  if (song->terminated) return 0;
+  if (noteid&0x80) return 0;
+  if (chid&0xf0) return 0;
   struct synth_channel *channel=song->channel_by_chid[chid];
-  if (!channel) return; //TODO Spec mandates a default.
-  synth_channel_note(channel,noteid,velocity,durframes);
+  if (!channel) return 0; //TODO Spec mandates a default.
+  return synth_channel_note(channel,noteid,velocity,durframes);
+}
+
+void synth_song_release(struct synth_song *song,int holdid) {
+  // We could track holdid in play to remember which channel generated them.
+  // But I don't feel it's worth the trouble. Just send the event to every channel.
+  if (holdid<1) return;
+  struct synth_channel **p=song->channelv;
+  int i=song->channelc;
+  for (;i-->0;p++) {
+    synth_channel_release(*p,holdid);
+  }
 }
 
 void synth_song_wheel(struct synth_song *song,uint8_t chid,int v) {

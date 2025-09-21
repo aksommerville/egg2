@@ -2,6 +2,7 @@
 #include "../gui/gui.h"
 
 #define PLAYHEAD_ALERT_TIME 0.500
+#define HOLD_LIMIT 2 /* How many note buttons do we have. */
 
 struct modal_audio {
   struct modal hdr;
@@ -24,6 +25,9 @@ struct modal_audio {
   double pan; // -1..1
   
   int dispsongid; // The one we think the platform is playing.
+  int holdv[HOLD_LIMIT]; // holdid for notes playing.
+  int wheeltarget;
+  int wheelcurrent;
 };
 
 #define MODAL ((struct modal_audio*)modal)
@@ -153,6 +157,20 @@ static void modal_audio_activate(struct modal *modal) {
   }
 }
 
+/* Play or release a manual note.
+ */
+ 
+static void modal_audio_note(struct modal *modal,int holdp,int value) {
+  if ((holdp<0)||(holdp>=HOLD_LIMIT)) return;
+  if (value) {
+    int noteid=0x38+holdp*4;
+    MODAL->holdv[holdp]=egg_play_note(0,noteid,0x40,2000);
+  } else if (MODAL->holdv[holdp]>0) {
+    egg_release_note(MODAL->holdv[holdp]);
+    MODAL->holdv[holdp]=0;
+  }
+}
+
 /* Input.
  */
  
@@ -164,6 +182,12 @@ static void _audio_input(struct modal *modal,int btnid,int value) {
     case EGG_BTN_RIGHT: modal_audio_adjust(modal,1); break;
     case EGG_BTN_SOUTH: modal_audio_activate(modal); break;
     case EGG_BTN_WEST: egg_play_song(0,0,0); break; // Not perfect, but try to stop the music when we dismiss.
+  }
+  switch (btnid) { // regardless of value...
+    // EAST and NORTH to play notes manually.
+    case EGG_BTN_EAST: modal_audio_note(modal,0,value); break;
+    case EGG_BTN_NORTH: modal_audio_note(modal,1,value); break;
+    // L1 and R1 to adjust the wheel -- we poll for those.
   }
 }
 
@@ -198,6 +222,31 @@ static void _audio_update(struct modal *modal,double elapsed,int input,int pvinp
     gui_term_writef(MODAL->term,15,9,"%d     ",songid);
     gui_term_write(MODAL->term,11,10,"          ",-1); // Blank the playhead output; we'll get it next frame.
   }
+  
+  // Adjust the wheel.
+  switch (input&(EGG_BTN_L1|EGG_BTN_R1)) {
+    case EGG_BTN_L1: {
+        if ((MODAL->wheeltarget-=10)<-512) MODAL->wheeltarget=-512;
+      } break;
+    case EGG_BTN_R1: {
+        if ((MODAL->wheeltarget+=10)>511) MODAL->wheeltarget=511;
+      } break;
+    default: {
+        if (MODAL->wheeltarget>0) {
+          if ((MODAL->wheeltarget-=10)<0) MODAL->wheeltarget=0;
+        } else if (MODAL->wheeltarget<0) {
+          if ((MODAL->wheeltarget+=10)>0) MODAL->wheeltarget=0;
+        }
+      }
+  }
+  if (MODAL->wheelcurrent<MODAL->wheeltarget) {
+    MODAL->wheelcurrent+=1;
+    egg_adjust_wheel(0,MODAL->wheelcurrent);
+  } else if (MODAL->wheelcurrent>MODAL->wheeltarget) {
+    MODAL->wheelcurrent-=1;
+    egg_adjust_wheel(0,MODAL->wheelcurrent);
+  }
+  
   gui_term_update(MODAL->term,elapsed);
 }
 

@@ -27,6 +27,7 @@ struct synth_tuned_extra {
   // One voice object that suits all three modes. The modes may use different bits. No cleanup.
   struct synth_voice {
     int playseq; // Lower values are older.
+    int holdid;
     struct synth_env levelenv; // all
     struct synth_env rangeenv; // fm_basic,fm_full
     struct synth_env pitchenv; // wave_bend,fm_full
@@ -375,7 +376,7 @@ int synth_channel_init_HARM(struct synth_channel *channel,const uint8_t *src,int
 /* Play note.
  */
  
-void synth_channel_note_tuned(struct synth_channel *channel,uint8_t noteid,float velocity,int durframes) {
+int synth_channel_note_tuned(struct synth_channel *channel,uint8_t noteid,float velocity,int durframes) {
   
   struct synth_voice *voice;
   if (EXTRA->voicec<SYNTH_CHANNEL_VOICE_LIMIT) {
@@ -401,6 +402,7 @@ void synth_channel_note_tuned(struct synth_channel *channel,uint8_t noteid,float
   voice->cardp_base=channel->synth->rateiv[noteid];
   voice->cardp=(uint32_t)((float)voice->cardp_base*EXTRA->wheelm);
   voice->modp=0;
+  return voice->holdid=synth_holdid_next(channel->synth);
 }
 
 /* Adjust wheel.
@@ -419,6 +421,20 @@ void synth_channel_wheel_tuned(struct synth_channel *channel,int v) {
   }
 }
 
+/* Release one note.
+ */
+ 
+void synth_channel_release_one_tuned(struct synth_channel *channel,int holdid) {
+  struct synth_voice *voice=EXTRA->voicev;
+  int i=EXTRA->voicec;
+  for (;i-->0;voice++) {
+    if (voice->holdid!=holdid) continue;
+    synth_env_release(&voice->levelenv);
+    synth_env_release(&voice->rangeenv);
+    synth_env_release(&voice->pitchenv);
+  }
+}
+
 /* Release all notes.
  */
  
@@ -427,5 +443,7 @@ void synth_channel_release_tuned(struct synth_channel *channel) {
   int i=EXTRA->voicec;
   for (;i-->0;voice++) {
     synth_env_release(&voice->levelenv);
+    synth_env_release(&voice->rangeenv);
+    synth_env_release(&voice->pitchenv);
   }
 }

@@ -33,6 +33,9 @@ export class Exec {
       
       egg_play_sound: (soundid, trim, pan) => this.rt.audio.egg_play_sound(soundid, trim, pan),
       egg_play_song: (songid, force, repeat) => this.rt.audio.egg_play_song(songid, force, repeat),
+      egg_play_note: (chid, noteid, velocity, durms) => this.rt.audio.egg_play_note(chid, noteid, velocity, durms),
+      egg_release_note: (holdid) => this.rt.audio.egg_release_note(holdid),
+      egg_adjust_wheel: (chid, v) => this.rt.audio.egg_adjust_wheel(chid, v),
       egg_song_get_id: () => this.rt.audio.egg_song_get_id(),
       egg_song_get_playhead: () => this.rt.audio.egg_song_get_playhead(),
       egg_song_set_playhead: ph => this.rt.audio.egg_song_set_playhead(ph),

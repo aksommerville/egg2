@@ -310,6 +310,27 @@ void synth_play_sound(struct synth *synth,int soundid,float trim,float pan) {
   }
 }
 
+/* Manual notes.
+ */
+ 
+int synth_play_note(struct synth *synth,int chid,int noteid,int velocity,int durms) {
+  if (synth->framec_in_progress) return 0;
+  if (!synth->song) return 0;
+  return synth_song_note(synth->song,chid,noteid,velocity,synth_frames_from_ms(synth,durms));
+}
+
+void synth_release_note(struct synth *synth,int holdid) {
+  if (synth->framec_in_progress) return;
+  if (!synth->song) return;
+  synth_song_release(synth->song,holdid);
+}
+
+void synth_adjust_wheel(struct synth *synth,int chid,int v) {
+  if (synth->framec_in_progress) return;
+  if (!synth->song) return;
+  synth_song_wheel(synth->song,chid,v);
+}
+
 /* Frames from milliseconds.
  */
  
@@ -340,4 +361,12 @@ void synth_apply_pan(float *triml,float *trimr,float trim,float pan) {
     *triml=trim;
     *trimr=trim;
   }
+}
+
+/* Next holdid.
+ */
+ 
+int synth_holdid_next(struct synth *synth) {
+  if (synth->holdid_next<1) synth->holdid_next=1;
+  return synth->holdid_next++;
 }

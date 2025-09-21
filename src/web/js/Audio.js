@@ -107,6 +107,21 @@ export class Audio {
     this.song.play();
   }
   
+  egg_play_note(chid, noteid, velocity, durms) {
+    if (!this.song) return 0;
+    return this.song.playNote(chid, noteid, velocity, durms);
+  }
+  
+  egg_release_note(holdid) {
+    if (!this.song) return;
+    this.song.releaseNote(holdid);
+  }
+  
+  egg_adjust_wheel(chid, v) {
+    if (!this.song) return;
+    this.song.adjustWheel(chid, v);
+  }
+  
   egg_song_get_id() {
     return this.song?.id || 0;
   }
