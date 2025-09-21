@@ -61,66 +61,49 @@ Features we *do* support:
 
 ## TODO
 
-- [x] Flesh out and validate Prereqs, above. ...what we have is fine. Season to taste as we onboard new hosts.
-- [x] Programmatic access to a song eg for ocarinas or sustained notes. API change.
-- - The synthesizers currently aren't built for infinitely-sustaining notes.
-- - Need to think this thru carefully, and ensure we have some safeguards against stuck notes.
-- [ ] Editor.
+- [ ] Audio
+- - Editor...
 - - [ ] SongService: Should we auto-re-play on dirty?
 - - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
 - - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
-- - [x] Generic command list support. Can we read a command schema off a comment in shared_symbols.h?
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
 - - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
 - - [ ] PostModal fields per stage type.
 - - [ ] Song actions (SongChannelsUi)
 - - [ ] ModecfgModal for drum: Spawn SongEditor in a modal per drum.
-- [ ] eggdev
+- - [ ] Special tooling to compare native vs web synth, in editor.
+- - Synth (both)...
 - - [ ] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.
 - - - We're not. And if it seems burdensome, we can change the spec to require CHDR.
 - - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
 - - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
-- [ ] Native runtime.
-- - [ ] Input.
-- - - [ ] Interactive reconfig.
-- - - - [ ] Let the client declare which buttons it uses, so when configuring we don't ask for all 15 buttons.
-- - - - - Maybe a metadata field "incfgMask" containing characters "dswne123lrLR". "d" being the dpad, all others correspond to one button.
-- - [ ] Record and playback session.
-- - [ ] System language, for MacOS and Windows.
-- - [ ] Global config file. Command-line options, and also persist `egg_prefs_set()` here.
-- [ ] Web runtime.
-- - [ ] Input.
-- - - [ ] Mapping.
-- - - [ ] Live config.
-- - [ ] prefs
-- - [ ] web: Detect loss of focus. At a minimum, pause audio. Maybe pause everything? Probly needs new soft-pause support in synth.
-- - [ ] web Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
-- - [ ] web: Quantize final scale-up, don't use `object-fit:contain`.
-- - [ ] web: Player count
-- - [ ] synth: Test perceptually.
-- - - Pay close attention to FM. I hacked it fast and loose for web, probably got it all wrong.
-- - - Add some editor tooling to print a song both native and web, and play them back with an easy toggle.
-- - [ ] synth: Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
+- - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
+- - Synth (web)...
 - - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
 - - - Probably related to that, FM voices really can't bend at all, the modulator goes out of sync.
 - - [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter. Apparent in drumtest.
-- [ ] Generic menu: Input config, quit, audio, language.
-- - [ ] Native.
-- - [ ] Web.
-- [ ] Client utilities.
-- - [ ] Standard instruments and sound effects.
-- - [ ] Can we make native builds use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
-- [x] Should we allow strings to use symbolic names in place of index? I'm leaning No but give it some thought. We do something like that for decalsheet. ...NO, too complicated.
+- - And finally...
+- - [ ] Standard instruments.
+- [ ] In-game menu. Quit, Audio prefs, Language, Input config.
+- - [ ] Native menu.
+- - [ ] Native input config.
+- - [ ] Web menu.
+- - [ ] Web input config.
+- [ ] Web. I skipped a lot of details first time thru.
+- - [ ] prefs
+- - [ ] Detect loss of focus. At a minimum, pause audio. Maybe pause everything? Probly needs new soft-pause support in synth.
+- - [ ] Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
+- - [ ] Quantize final scale-up, don't use `object-fit:contain`.
+- - [ ] Player count
+- - [ ] prefs. Not implemented or what? See demo.
+- - [ ] Input is not setting CD.
+- - [ ] El Cheapo triggers have 1 and 2 swapped. Is that a real bug, or just bad luck with Standard Mapping?
+- - [ ] Releasing manual synth note cuts off cold. It ought to enter the envelope's release stage.
+- [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
+- [ ] native: Record and playback session.
+- [ ] macos: System language
+- [ ] windows; System language
+- [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
 - [ ] macos: eggrun
-- [x] Line strip cuts corners. See NW corner of line strip in demo/Video/Primitives, both xegl and web. I want the corner filled. Is that possible?
-- - Also the SE corners get doubled; apparent at low alpha.
-- - ...Fudging coordinates across the board doesn't help, tho it can move the missing pixels to the SE. I don't see how we could fudge them selectively.
-- - There isn't anything like "line join mode" in GLES.
-- - I don't believe this is solvable.
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
-- [x] stdlib: Leading zeroes in snprintf.
-- [ ] web: prefs. Not implemented or what? See demo.
-- [ ] web: Input is not setting CD.
-- [ ] web: El Cheapo triggers have 1 and 2 swapped. Is that a real bug, or just bad luck with Standard Mapping?
-- [ ] web: Releasing manual synth note cuts off cold. It ought to enter the envelope's release stage.
