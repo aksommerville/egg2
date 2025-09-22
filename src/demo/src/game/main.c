@@ -133,12 +133,6 @@ void egg_client_update(double elapsed) {
         modal->update(modal,0.0,0,input);
       }
     }
-    if (nfocus->input) {
-      uint16_t bit=0x8000;
-      for (;bit;bit>>=1) {
-        if (input&bit) nfocus->input(nfocus,bit,1);
-      }
-    }
     // No need to update (nfocus); they'll figure it out via regular updates.
   }
 }

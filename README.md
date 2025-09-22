@@ -82,6 +82,7 @@ Features we *do* support:
 - - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
 - - - Probably related to that, FM voices really can't bend at all, the modulator goes out of sync.
 - - [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter. Apparent in drumtest.
+- - [ ] Print PCM for sound effects.
 - - And finally...
 - - [ ] Standard instruments.
 - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
@@ -90,8 +91,8 @@ Features we *do* support:
 - - [ ] Web menu.
 - - [ ] Web input config.
 - [ ] Web. I skipped a lot of details first time thru.
-- - [ ] prefs
-- - [ ] Detect loss of focus. At a minimum, pause audio. Maybe pause everything? Probly needs new soft-pause support in synth.
+- - [x] prefs
+- - [x] Detect loss of focus. At a minimum, pause audio. Maybe pause everything? Probly needs new soft-pause support in synth.
 - - [ ] Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
 - - [ ] Quantize final scale-up, don't use `object-fit:contain`.
 - - [ ] Player count
@@ -102,7 +103,7 @@ Features we *do* support:
 - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - [ ] native: Record and playback session.
 - [ ] macos: System language
-- [ ] windows; System language
+- [ ] windows: System language
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
 - [ ] macos: eggrun

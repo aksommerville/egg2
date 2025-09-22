@@ -15,10 +15,20 @@ export class Audio {
     this.pvsong = null; // SongPlayer, winding down.
     this.sounds = []; // SongPlayer. TODO Maybe something else, once we get printing implemented.
     this.ctx = null; // AudioContext
+    this.musicEnabled = true;
+    this.soundEnabled = true;
     eauNotevRequire();
   }
   
-  //TODO I think we need a softer concept of "pause", to temporarily stop output eg when the page loses focus.
+  pause() {
+    if (!this.ctx) return;
+    this.ctx.suspend();
+  }
+  
+  resume() {
+    if (!this.ctx) return;
+    this.ctx.resume();
+  }
   
   start() {
     if (!this.ctx) {
@@ -81,8 +91,43 @@ export class Audio {
   /* Egg Platform API.
    ********************************************************************************/
    
+  enableMusic(enable) {
+    if (enable) {
+      if (this.musicEnabled) return;
+      this.musicEnabled = true;
+      if (this.songParams) {
+        const ph = this.songParams[3];
+        this.egg_play_song(this.songParams[0], this.songParams[1], this.songParams[2]);
+        if (this.song) this.song.setPlayhead(ph);
+      }
+    } else {
+      if (!this.musicEnabled) return;
+      this.musicEnabled = false;
+      if (this.song) {
+        if (this.songParams) this.songParams[3] = this.song.getPlayhead();
+        if (this.pvsong) this.pvsong.stop();
+        this.pvsong = this.song;
+        this.song.stopSoon();
+        this.song = null;
+      }
+    }
+  }
+  
+  enableSound(enable) {
+    if (enable) {
+      if (this.soundEnabled) return;
+      this.soundEnabled = true;
+    } else {
+      if (!this.soundEnabled) return;
+      this.soundEnabled = false;
+      for (const sound of this.sounds) sound.stop();
+      this.sounds = [];
+    }
+  }
+   
   egg_play_sound(soundid, trim, pan) {
     if (!this.ctx) return;
+    if (!this.soundEnabled) return;
     //TODO Print and cache.
     const serial = this.rt.rom.getRes(EGG_TID_sound, soundid);
     if (!serial) return;
@@ -93,7 +138,9 @@ export class Audio {
   
   egg_play_song(songid, force, repeat) {
     if (!this.ctx) return;
+    if (!this.musicEnabled) return;
     if (!force && (songid === this.song?.id)) return;
+    this.songParams = [songid, force, repeat, 0]; // To restore when prefs change.
     const serial = this.rt.rom.getRes(EGG_TID_song, songid);
     if (!serial) songid = 0;
     if (this.song) {

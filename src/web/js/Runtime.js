@@ -30,6 +30,8 @@ export class Runtime {
     this.minUpdateTime     = 0.012000; // 83 hz; if we update faster than this, we'll deliberately skip frames.
     this.defaultUpdateTime = 0.016666; // 60 hz; if we need to make something up.
     this.maxUpdateTime     = 0.020000; // 50 hz; if we update slower than this, we'll lie about the elapsed time.
+    this.focus = true;
+    this.focusListener = null;
   }
   
   start() {
@@ -38,6 +40,11 @@ export class Runtime {
     this.exitStatus = 0;
     this.selectLanguage();
     this.populateDocument();
+    if (!this.focusListener) {
+      this.focusListener = e => this.onFocus(e);
+      window.addEventListener("focus", this.focusListener);
+      window.addEventListener("blur", this.focusListener);
+    }
     this.loadWasmAndImages().then(() => {
       this.video.start();
       this.audio.start();
@@ -58,6 +65,11 @@ export class Runtime {
       this.exec.egg_client_quit(this.exitStatus);
       this.clientInit = false;
     }
+    if (this.focusListener) {
+      window.removeEventListener("focus", this.focusListener);
+      window.removeEventListener("blur", this.focusListener);
+      this.focusListener = null;
+    }
     this.video.stop();
     this.audio.stop();
     this.input.stop();
@@ -74,12 +86,30 @@ export class Runtime {
     alert(error?.message || error);
   }
   
+  onFocus(event) {
+    if (event.type === "focus") {
+      if (!this.focus) {
+        this.focus = true;
+        if (!this.terminated && !this.pendingFrame) {
+          this.pendingFrame = requestAnimationFrame(() => this.update());
+        }
+        this.audio.resume();
+      }
+    } else if (event.type === "blur") {
+      if (this.focus) {
+        this.focus = false;
+        this.audio.pause();
+      }
+    }
+  }
+  
   /* Update.
    ****************************************************************************/
    
   update() {
     this.pendingFrame = null;
     if (this.terminated) return this.stop();
+    if (!this.focus) return;
 
     this.audio.update();
     this.input.update();
@@ -158,6 +188,10 @@ export class Runtime {
     document.body.innerHTML = '<canvas id="eggfb"></canvas>';
   }
   
+  languageChanged() {
+    document.title = this.rom.getMeta("title", this.lang);
+  }
+  
   /* Loading of async things (wasm and images).
    ***************************************************************************/
    
@@ -228,20 +262,28 @@ export class Runtime {
   
   egg_prefs_get(k) {
     switch (k) {
-      case 1: break; // TODO prefs LANG
-      case 2: break; // TODO prefs MUSIC
-      case 3: break; // TODO prefs SOUND
+      case 1: return this.lang;
+      case 2: return this.audio.musicEnabled ? 1 : 0;
+      case 3: return this.audio.soundEnabled ? 1 : 0;
     }
     return 0;
   }
   
   egg_prefs_set(k, v) {
     switch (k) {
-      case 1: break; // TODO prefs LANG
-      case 2: break; // TODO prefs MUSIC
-      case 3: break; // TODO prefs SOUND
+      case 1: if (v === this.lang) return 0; if (!this.validLang(v)) return -1; this.lang = v; this.languageChanged(); return 0;
+      case 2: this.audio.enableMusic(v); return 0;
+      case 3: this.audio.enableSound(v); return 0;
     }
     return -1;
+  }
+  
+  validLang(v) {
+    if ((typeof(v) !== "number") || (v & ~0x3ff)) return false;
+    const hi = v >> 5;
+    const lo = v & 0x1f;
+    if ((hi < 1) || (hi > 26) || (lo < 1) || (lo > 26)) return false;
+    return true;
   }
   
   egg_rom_get(p, a) {

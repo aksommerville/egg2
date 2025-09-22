@@ -80,6 +80,7 @@ void egg_time_local(int *dst,int dsta);
 
 /* Read or write a global preference.
  * Do not change these unless the user has prompted you to.
+ * When music is disabled, it will not pretend to play. egg_song_get_id and egg_song_get_playhead report zero while disabled.
  */
 int egg_prefs_get(int k);
 int egg_prefs_set(int k,int v);
