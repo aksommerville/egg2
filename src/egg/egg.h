@@ -170,6 +170,7 @@ int egg_input_get_one(int playerid);
 #define EGG_BTN_AUX1   0x1000
 #define EGG_BTN_AUX2   0x2000
 #define EGG_BTN_AUX3   0x4000
+#define EGG_BTN_CD     0x8000
 
 /* Audio.
  **********************************************************************************************/

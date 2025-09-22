@@ -21,11 +21,12 @@ const BTN_R2     = 0x0800;
 const BTN_AUX1   = 0x1000;
 const BTN_AUX2   = 0x2000;
 const BTN_AUX3   = 0x4000;
+const BTN_CD     = 0x8000;
  
 export class Input {
   constructor(rt) {
     this.rt = rt;
-    this.statev = [0]; // Player states, including player zero.
+    this.statev = [0x8000, 0x8000]; // Player states, including player zero. The keyboard is always connected, hence a pair of CDs.
     this.playerc = 1;
     this.keyListener = null;
     this.gamepads = []; // Sparse, indexed by (gamepad.index). {id,index,axes:(-1,0,1)[],buttons:(0,1)[],playerid,state}
@@ -88,7 +89,7 @@ export class Input {
       BTN_SOUTH, BTN_EAST, BTN_WEST, BTN_NORTH,
       BTN_L1, BTN_R1, BTN_L2, BTN_R2,
       BTN_AUX2, BTN_AUX1, // Select, Start
-      0, ACTION_QUIT, // Plungers.
+      BTN_AUX3, ACTION_QUIT, // Plungers.
       BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT,
       BTN_AUX3,
     ];
@@ -104,7 +105,7 @@ export class Input {
         else if (this.playerc > 8) this.playerc = 8;
       }
     } catch (e) {}
-    this.statev = [0];
+    this.statev = [BTN_CD, BTN_CD];
     if (!this.keyListener) {
       this.keyListener = e => this.onKey(e);
       window.addEventListener("keydown", this.keyListener);
@@ -148,7 +149,6 @@ export class Input {
     // Locate in keyMap. If it's not named there, ignore and do not consume.
     const btnid = this.keyMap[event.code];
     if (!btnid) {
-      if (event.type === "keydown") console.log(`IGNORE KEY: ${event.code}`);
       return;
     }
     
@@ -191,7 +191,7 @@ export class Input {
         axes: [0, 0], // Two axes, regardless of what the device has.
         buttons: event.gamepad.buttons.map(v => 0), // Buttons match the device.
         playerid: 0, // Zero until the first significant event.
-        state: 0,
+        state: BTN_CD,
       };
       // Standard Mapping only describes 17 buttons. If there are more, ignore the excess.
       if (record.buttons.length > 17) record.buttons = record.buttons.slice(0, 17);
@@ -204,6 +204,8 @@ export class Input {
       if (gamepad.playerid) {
         this.statev[gamepad.playerid] &= ~gamepad.state;
         this.statev[0] &= ~gamepad.state;
+        this.statev[0] |= BTN_CD; // Always present.
+        this.statev[1] |= BTN_CD;
       }
     }
   }
@@ -258,7 +260,23 @@ export class Input {
   
   requireGamepadPlayer(record) {
     if (record.playerid) return;
-    record.playerid = 1;
+    if (this.playerc < 2) {
+      record.playerid = 1;
+    } else {
+      const countByPlayerid = [];
+      for (const record of this.gamepads) {
+        if (!record?.playerid) continue;
+        while (record.playerid >= countByPlayerid.length) countByPlayerid.push(0);
+        countByPlayerid[record.playerid]++;
+      }
+      record.playerid = 1;
+      for (let i=1; i<=this.playerc; i++) {
+        if ((countByPlayerid[i] || 0) < countByPlayerid[record.playerid]) record.playerid = i;
+      }
+    }
+    if (!this.statev[record.playerid]) this.statev[record.playerid] = 0;
+    this.statev[record.playerid] |= BTN_CD;
+    this.statev[record.playerid] |= BTN_CD;
   }
   
   /* Platform API.

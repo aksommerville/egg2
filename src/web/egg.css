@@ -23,4 +23,5 @@ egg-rom {
 
 canvas#eggfb {
   image-rendering: pixelated;
+  cursor: none;
 }

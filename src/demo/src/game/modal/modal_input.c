@@ -37,8 +37,8 @@ static const char *modal_input_btnid_repr(int btnid) {
     _(SOUTH) _(WEST) _(EAST) _(NORTH)
     _(L1) _(R1) _(L2) _(R2)
     _(AUX1) _(AUX2) _(AUX3)
+    _(CD)
     #undef _
-    case 0x8000: return "8000";
   }
   return "?";
 }

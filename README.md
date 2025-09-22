@@ -83,6 +83,8 @@ Features we *do* support:
 - - - Probably related to that, FM voices really can't bend at all, the modulator goes out of sync.
 - - [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter. Apparent in drumtest.
 - - [ ] Print PCM for sound effects.
+- - [ ] Trim and pan for sound effects, seems we are currently ignoring.
+- - [ ] Releasing manual synth note cuts off cold. It ought to enter the envelope's release stage.
 - - And finally...
 - - [ ] Standard instruments.
 - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
@@ -95,11 +97,9 @@ Features we *do* support:
 - - [x] Detect loss of focus. At a minimum, pause audio. Maybe pause everything? Probly needs new soft-pause support in synth.
 - - [ ] Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
 - - [x] Quantize final scale-up, don't use `object-fit:contain`.
-- - [ ] Player count
-- - [ ] prefs. Not implemented or what? See demo.
-- - [ ] Input is not setting CD.
-- - [ ] El Cheapo triggers have 1 and 2 swapped. Is that a real bug, or just bad luck with Standard Mapping?
-- - [ ] Releasing manual synth note cuts off cold. It ought to enter the envelope's release stage.
+- - [x] Player count
+- - [x] Input is not setting CD.
+- - [x] El Cheapo triggers have 1 and 2 swapped. Is that a real bug, or just bad luck with Standard Mapping? ...We're mapping correctly; my browser is not. Leave it.
 - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - [ ] native: Record and playback session.
 - [ ] macos: System language
