@@ -12,9 +12,15 @@ egg-rom {
   display: none;
 }
 
-canvas#eggfb {
+#fbouter {
   width: 100vw;
   height: 100vh;
-  object-fit: contain;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+}
+
+canvas#eggfb {
   image-rendering: pixelated;
 }

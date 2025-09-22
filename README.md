@@ -94,7 +94,7 @@ Features we *do* support:
 - - [x] prefs
 - - [x] Detect loss of focus. At a minimum, pause audio. Maybe pause everything? Probly needs new soft-pause support in synth.
 - - [ ] Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
-- - [ ] Quantize final scale-up, don't use `object-fit:contain`.
+- - [x] Quantize final scale-up, don't use `object-fit:contain`.
 - - [ ] Player count
 - - [ ] prefs. Not implemented or what? See demo.
 - - [ ] Input is not setting CD.

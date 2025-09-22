@@ -15,10 +15,12 @@ export class Video {
     this.vbuf = new Uint8Array(48).buffer; // struct egg_render raw: 12 bytes, 4 of them.
     this.vbufs16 = new Uint16Array(this.vbuf);
     this.tex_current = null;
+    this.resizeObserver = new ResizeObserver(e => this.onResize(e));
   }
   
   start() {
     this.texv = [];
+    this.resizeObserver.observe(document.getElementById("fbouter"));
     this.canvas = document.getElementById("eggfb");
     if (this.canvas?.tagName !== "CANVAS") throw new Error(`Canvas not found.`);
     const [w, h] = (this.rt.rom.getMeta("fb") || "640x360").split("x").map(v => +v);
@@ -27,6 +29,7 @@ export class Video {
     }
     this.canvas.width = w;
     this.canvas.height = h;
+    this.onResize(null); // Force canvas element size.
     this.gl = this.canvas.getContext("webgl");
     this.texv[1] = {
       gltexid: 0,
@@ -46,6 +49,19 @@ export class Video {
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+  }
+  
+  onResize(event) {
+    const outer = document.getElementById("fbouter");
+    if (!outer || !this.canvas) return;
+    const bounds = outer.getBoundingClientRect();
+    const fbw = this.canvas.width;
+    const fbh = this.canvas.height;
+    const xscale = Math.floor(bounds.width / fbw);
+    const yscale = Math.floor(bounds.height / fbh);
+    const scale = Math.max(1, Math.min(xscale, yscale));
+    this.canvas.style.width = (fbw * scale) + "px";
+    this.canvas.style.height = (fbh * scale) + "px";
   }
   
   beginFrame() {

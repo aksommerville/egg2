@@ -185,7 +185,7 @@ export class Runtime {
   populateDocument() {
     document.title = this.rom.getMeta("title", this.lang);
     // In theory we could yoink and apply the favicon, but don't: (1) It should already done at build time, and (2) we would need a base64 encoder.
-    document.body.innerHTML = '<canvas id="eggfb"></canvas>';
+    document.body.innerHTML = '<div id="fbouter"><canvas id="eggfb"></canvas></div>';
   }
   
   languageChanged() {
