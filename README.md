@@ -40,11 +40,15 @@ Features we *do* support:
  - Highly portable.
  - Security guarantees. If paranoid, a user can extract the ROM from a web build and run that safely in their own runtime.
  - No unnecessary branding. For the most part, users don't know that you're using Egg, why should they care.
+ - Small builds. <1MB is typical.
+ - Fast builds. Egg itself might take a minute once, and games usually <10s from scratch.
+ - Built-in generic metadata for indexing a collection of games.
 
 ## Prereqs
 
 - All use cases:
 - - gcc, make, etc. Can use a different C compiler; set it up in `local/config.mk`. But its semantics must be close to `gcc`.
+- - Graphics, music, and text, bring your own tools. Graphics must be PNG, and music MIDI.
 - Linux native (can take these a la carte):
 - - xegl
 - - libdrm, libgbm
@@ -108,3 +112,4 @@ Features we *do* support:
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
 - [ ] macos: eggrun
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
+- [x] eggdev: Process PNG files during compilation, eg remove comments.

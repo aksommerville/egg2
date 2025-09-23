@@ -81,6 +81,7 @@ int eggdev_zip_from_exe(struct eggdev_convert_context *ctx); // Fails if code:1 
 int eggdev_html_from_egg(struct eggdev_convert_context *ctx);
 int eggdev_html_from_zip(struct eggdev_convert_context *ctx); // Uses SDK's Standalone HTML template.
 int eggdev_html_from_exe(struct eggdev_convert_context *ctx); // Fails if code:1 absent, which will usually be the case.
+int eggdev_png_from_png(struct eggdev_convert_context *ctx); // Same format, but some optimizations.
 int eggdev_wav_from_eau(struct eggdev_convert_context *ctx); // Stands a synthesizer and records it.
 int eggdev_wav_from_eaut(struct eggdev_convert_context *ctx);
 int eggdev_wav_from_mid(struct eggdev_convert_context *ctx);

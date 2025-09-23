@@ -2,6 +2,13 @@
 
 EGGDEV=$EGG_SDK/out/eggdev
 
+if [ -n "$EGG_TEST_FILTER" ] ; then
+  if ! grep -q 20250712-minify <<<"$EGG_TEST_FILTER" ; then
+    echo "EGG_TEST SKIP 20250712-minify"
+    exit 0
+  fi
+fi
+
 # Input.js:209: `for (let i=0; i<2; i++) {` became `for (let h1 = 0; hZ < 2; hZ++) {`.
 RESULT=$($EGGDEV minify <<EOF
 let sum = 0;

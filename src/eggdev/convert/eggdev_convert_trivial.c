@@ -3,6 +3,7 @@
  */
 
 #include "eggdev/eggdev_internal.h"
+#include "opt/image/image.h"
 
 /* Noop is as trivial as you'd think.
  */
@@ -71,4 +72,24 @@ int eggdev_sprtxt_from_sprite(struct eggdev_convert_context *ctx) {
   modctx.src=(char*)ctx->src+4;
   modctx.srcc=ctx->srcc-4;
   return eggdev_cmdltxt_from_cmdlist(&modctx);
+}
+
+/* Images are trivial -- the "image" unit does all the real work.
+ */
+ 
+int eggdev_png_from_png(struct eggdev_convert_context *ctx) {
+  int w=0,h=0;
+  if (image_measure(&w,&h,ctx->src,ctx->srcc)<0) {
+    return eggdev_convert_error(ctx,"Failed to decode PNG file.");
+  }
+  void *pixels=calloc(w<<2,h);
+  if (!pixels) return -1;
+  if (image_decode(pixels,w*h*4,ctx->src,ctx->srcc)<0) {
+    free(pixels);
+    return eggdev_convert_error(ctx,"Failed to decode PNG file.");
+  }
+  int err=image_encode(ctx->dst,pixels,w*h*4,w,h);
+  free(pixels);
+  if (err<0) return eggdev_convert_error(ctx,"Failed to reencode PNG file.");
+  return 0;
 }

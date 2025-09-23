@@ -307,6 +307,12 @@ const char *eggdev_guess_mime_type(const void *src,int srcc,const char *path,int
  
 eggdev_convert_fn eggdev_get_converter(int dstfmt,int srcfmt) {
 
+  /* Certain same-to-same conversions do have a "converter" for optimization or what-have-you.
+   */
+  if (dstfmt==srcfmt) switch (dstfmt) {
+    case EGGDEV_FMT_png: return eggdev_png_from_png;
+  }
+
   /* Either format unspecified, or same to same, use the "noop" converter.
    * We fail only if two concrete formats are provided, and we can't do it.
    */

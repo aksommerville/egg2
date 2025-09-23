@@ -2,6 +2,13 @@
 
 EGGDEV=$EGG_SDK/out/eggdev
 
+if [ -n "$EGG_TEST_FILTER" ] ; then
+  if ! grep -q 20250511-minify <<<"$EGG_TEST_FILTER" ; then
+    echo "EGG_TEST SKIP 20250511-minify"
+    exit 0
+  fi
+fi
+
 # At mf_output.c, we had been checking for parens for OP nodes, but not for INDEX nodes.
 # So there was some operator-precedence confusion around constructions like: (a || b)[c]
 RESULT=$($EGGDEV minify <<EOF
