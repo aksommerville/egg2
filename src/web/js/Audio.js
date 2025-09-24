@@ -13,7 +13,8 @@ export class Audio {
     this.rt = rt; // Will be undefined when loaded in editor.
     this.song = null; // SongPlayer, target for songid and playhead.
     this.pvsong = null; // SongPlayer, winding down.
-    this.sounds = []; // SongPlayer. TODO Maybe something else, once we get printing implemented.
+    this.sounds = []; // Sparse AudioBuffer, indexed by soundid.
+    this.soundPlayers = []; // { node, endTime }
     this.ctx = null; // AudioContext
     this.musicEnabled = true;
     this.soundEnabled = true;
@@ -42,8 +43,11 @@ export class Audio {
   }
   
   stop() {
-    for (const sound of this.sounds) sound.stop();
-    this.sounds = [];
+    for (const sound of this.soundPlayers) {
+      sound.node?.stop();
+      sound.node.disconnect();
+    }
+    this.soundPlayers = [];
     if (this.song) {
       this.song.stop();
       this.song = null;
@@ -58,11 +62,13 @@ export class Audio {
   }
   
   update() {
-    for (let i=this.sounds.length; i-->0; ) {
-      const sound = this.sounds[i];
-      if (!sound.update()) {
-        sound.stop();
-        this.sounds.splice(i, 1);
+    if (!this.ctx) return;
+    for (let i=this.soundPlayers.length; i-->0; ) {
+      const sp = this.soundPlayers[i];
+      if (this.ctx.currentTime > sp.endTime) {
+        sp.node.stop?.();
+        sp.node.disconnect();
+        this.soundPlayers.splice(i, 1);
       }
     }
     if (this.song && !this.song.update()) this.song = null;
@@ -86,6 +92,29 @@ export class Audio {
       if (playhead > 0) this.song.setPlayhead(playhead);
       this.update(); // Editor updates on a long period; ensure we get one initial priming update.
     }
+  }
+  
+  playSoundBuffer(buffer, trim, pan) {
+    if (!this.ctx) return;
+    if (this.ctx.state === "suspended") return;
+    if (trim <= 0) return;
+    const node = new AudioBufferSourceNode(this.ctx, { buffer });
+    let tail = node;
+    if (trim < 1) {
+      const gain = new GainNode(this.ctx, { gain: trim });
+      tail.connect(gain);
+      tail = gain;
+    }
+    if (pan) {
+      const panner = new StereoPannerNode(this.ctx, { pan });
+      tail.connect(panner);
+      tail = panner;
+    }
+    tail.connect(this.ctx.destination);
+    const endTime = this.ctx.currentTime + buffer.duration + 0.010;
+    this.soundPlayers.push({ node, endTime });
+    if (tail !== node) this.soundPlayers.push({ node: tail, endTime });
+    node.start();
   }
   
   /* Egg Platform API.
@@ -120,20 +149,37 @@ export class Audio {
     } else {
       if (!this.soundEnabled) return;
       this.soundEnabled = false;
-      for (const sound of this.sounds) sound.stop();
-      this.sounds = [];
+      for (const sound of this.soundPlayers) {
+        sound.node.stop?.();
+        sound.node.disconnect();
+      }
+      this.soundPlayers = [];
     }
   }
    
   egg_play_sound(soundid, trim, pan) {
     if (!this.ctx) return;
     if (!this.soundEnabled) return;
-    //TODO Print and cache.
+    
+    const buffer = this.sounds[soundid];
+    if (buffer) {
+      if (buffer === "pending") return; // Drop it; the printer will also play it, once ready.
+      return this.playSoundBuffer(buffer, trim, pan);
+    }
+    this.sounds[soundid] = "pending";
+    
     const serial = this.rt.rom.getRes(EGG_TID_sound, soundid);
     if (!serial) return;
-    const song = new SongPlayer(this.ctx, serial, trim, pan, false, 0);
+    const durms = Math.min(5000, Math.max(1, SongPlayer.calculateDuration(serial)));
+    const framec = Math.ceil((durms * this.ctx.sampleRate) / 1000);
+    const ctx = new OfflineAudioContext(1, framec, this.ctx.sampleRate);
+    const song = new SongPlayer(ctx, serial, 1.0, 0.0, false, 0);
     song.play();
-    this.sounds.push(song);
+    song.update(5.0);
+    ctx.startRendering().then(buffer => {
+      this.sounds[soundid] = buffer;
+      this.playSoundBuffer(buffer, trim, pan);
+    });
   }
   
   egg_play_song(songid, force, repeat) {

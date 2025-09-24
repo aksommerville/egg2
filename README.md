@@ -63,6 +63,10 @@ Features we *do* support:
 - MacOS: (anything?)
 - Windows: (not supported)
 
+## Games
+
+- [Zen Garden](https://github.com/aksommerville/zennoniwa)
+
 ## TODO
 
 - [ ] Audio
@@ -82,12 +86,13 @@ Features we *do* support:
 - - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
 - - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
 - - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
+- - [ ] Native and web do not sound the same. Once better tooling is in place, figure out why and tweak them closer.
 - - Synth (web)...
 - - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
 - - - Probably related to that, FM voices really can't bend at all, the modulator goes out of sync.
 - - [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter. Apparent in drumtest.
-- - [ ] Print PCM for sound effects.
-- - [ ] Trim and pan for sound effects, seems we are currently ignoring.
+- - [x] Print PCM for sound effects.
+- - [x] Trim and pan for sound effects, seems we are currently ignoring.
 - - [ ] Releasing manual synth note cuts off cold. It ought to enter the envelope's release stage.
 - - And finally...
 - - [ ] Standard instruments.
@@ -113,3 +118,33 @@ Features we *do* support:
 - [ ] macos: eggrun
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
 - [x] eggdev: Process PNG files during compilation, eg remove comments.
+- [ ] Rewrite or migrate eggsamples for v2.
+- [ ] Migrate existing v1 projects to v2.
+- - [ ] Season of Penance
+- - [ ] Spelling Bee
+- - [ ] Thirty Seconds Apothecary
+- - [ ] Presto Changeo
+- - [ ] Reddin Iggle
+- - [ ] Dot's Wicked Garden
+- - [ ] Gobblin Kabobblin'
+- - [ ] Dead Weight
+- - [ ] Cherteau
+- - [ ] Sam-Sam
+- [ ] Enormous effort, but how do you feel about migrating or rewriting old non-Egg games? Could make provisioning new kiosks a lot smoother.
+- - [ ] Sitter 2009
+- - [ ] Tag Team Adventure Quest
+- - [ ] Campaign Trail of the Mummy
+- - [ ] Plunder Squad
+- - [ ] Full Moon
+- - [ ] Too Heavy (JS; would be a full rewrite)
+- - [ ] Upsy-Downsy
+- - Definitely not in scope: Chetyorska, Economy of Motion, Opener of Cages, Nine Lives
+- [ ] "eggzotics": Sample games that build for something weird, and also Egg.
+- - [ ] Tiny Arcade
+- - - If this works, migrate all my Tiny games.
+- - [ ] Thumby
+- - [ ] Thumby Color
+- - [ ] PicoSystem
+- - [ ] Playdate
+- - [ ] Pre-OSX Mac?
+- - [ ] NES? SNES? Gameboy? That's probably insane, right?
