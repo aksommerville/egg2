@@ -93,7 +93,7 @@ Features we *do* support:
 - - [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter. Apparent in drumtest.
 - - [x] Print PCM for sound effects.
 - - [x] Trim and pan for sound effects, seems we are currently ignoring.
-- - [ ] Releasing manual synth note cuts off cold. It ought to enter the envelope's release stage.
+- - [x] Releasing manual synth note cuts off cold. It ought to enter the envelope's release stage.
 - - And finally...
 - - [ ] Standard instruments.
 - [ ] In-game menu. Quit, Audio prefs, Language, Input config.

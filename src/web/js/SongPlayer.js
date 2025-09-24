@@ -204,13 +204,20 @@ export class SongPlayer {
   }
   
   releaseNote(holdid) {
+    if (!this.ctx) return;
+    const stopTime = this.ctx.currentTime + 0.250;
     for (let i=this.droppables.length; i-->0; ) {
       const dr = this.droppables[i];
       if (dr.holdid !== holdid) continue;
-      //TODO I would rather enter the release stage. This logic will drop them cold. Can it be done gently?
-      dr.node.stop?.();
-      dr.node.disconnect?.();
-      this.droppables.splice(i, 1);
+      // In a perfect world, we'd enter the configured release stage. That's what native does.
+      // We're wrestling with WebAudio so it's a bit more complicated... just fade out linear over 250 ms, that should be close enough.
+      if (dr.time < stopTime) continue;
+      dr.time = stopTime;
+      dr.node.stop?.(stopTime);
+      if (dr.node instanceof GainNode) {
+        dr.node.gain.setValueAtTime(dr.node.gain.value, this.ctx.currentTime);
+        dr.node.gain.linearRampToValueAtTime(0, stopTime);
+      }
     }
   }
   
