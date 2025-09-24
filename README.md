@@ -90,10 +90,6 @@ Features we *do* support:
 - - Synth (web)...
 - - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
 - - - Probably related to that, FM voices really can't bend at all, the modulator goes out of sync.
-- - [x] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter. Apparent in drumtest.
-- - [x] Print PCM for sound effects.
-- - [x] Trim and pan for sound effects, seems we are currently ignoring.
-- - [x] Releasing manual synth note cuts off cold. It ought to enter the envelope's release stage.
 - - And finally...
 - - [ ] Standard instruments.
 - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
@@ -101,14 +97,8 @@ Features we *do* support:
 - - [ ] Native input config.
 - - [ ] Web menu.
 - - [ ] Web input config.
-- [ ] Web. I skipped a lot of details first time thru.
-- - [x] prefs
-- - [x] Detect loss of focus. At a minimum, pause audio. Maybe pause everything? Probly needs new soft-pause support in synth.
+- [ ] Web.
 - - [ ] Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
-- - [x] Quantize final scale-up, don't use `object-fit:contain`.
-- - [x] Player count
-- - [x] Input is not setting CD.
-- - [x] El Cheapo triggers have 1 and 2 swapped. Is that a real bug, or just bad luck with Standard Mapping? ...We're mapping correctly; my browser is not. Leave it.
 - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - [ ] native: Record and playback session.
 - [ ] macos: System language
@@ -117,7 +107,6 @@ Features we *do* support:
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
 - [ ] macos: eggrun
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
-- [x] eggdev: Process PNG files during compilation, eg remove comments.
 - [ ] Rewrite or migrate eggsamples for v2.
 - [ ] Migrate existing v1 projects to v2.
 - - [ ] Season of Penance
@@ -131,7 +120,7 @@ Features we *do* support:
 - - [ ] Cherteau
 - - [ ] Sam-Sam
 - [ ] Enormous effort, but how do you feel about migrating or rewriting old non-Egg games? Could make provisioning new kiosks a lot smoother.
-- - [ ] Sitter 2009
+- - [ ] Sitter 2009 (a full rewrite is warranted)
 - - [ ] Tag Team Adventure Quest
 - - [ ] Campaign Trail of the Mummy
 - - [ ] Plunder Squad

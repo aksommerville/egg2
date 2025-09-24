@@ -108,7 +108,7 @@ export class EauDecoder {
     const susp_ptc = this.src[this.srcp++] || 0;
     const ptc = susp_ptc & 15;
     const ptlen = env.hi ? 8 : 4;
-    if (this.srcp > this.src.length - ptlen) {
+    if (this.srcp > this.src.length - ptlen * ptc) {
       this.srcp = this.src.length;
       return this.defaultEnv(usage);
     }
@@ -213,6 +213,7 @@ export function encodeEnv(encoder, usage, env) {
   
   // Sustain point and point count. Fudge sustain point if it would otherwise produce 0,0.
   let susp = env.susp - 1;
+  if (susp < 0) susp = -1;
   if (!flags && (env.lo.length <= 1) && !susp) susp = 15;
   encoder.u8((susp << 4) | (env.lo.length - 1));
   

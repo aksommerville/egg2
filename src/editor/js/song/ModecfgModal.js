@@ -556,7 +556,6 @@ export class ModecfgModal {
   onSubmit(event) {
     event.stopPropagation();
     event.preventDefault();
-    console.log(`submitting model`, this.model);
     this.resolve(this.encodeModel());
     this.element.remove();
   }
