@@ -30,6 +30,7 @@ export class SongPlayer {
     this.droppables = []; // {node,time,holdid}
     this.holdid = 1;
     
+    this.duration = 0;
     this.tempo = 0; // Serves as flag for "\0EAU" present.
     this.loopp = 0;
     this.events = null; // Uint8Array
@@ -71,6 +72,7 @@ export class SongPlayer {
       this.events = new Uint8Array([0x7f]);
     }
     if (this.loopp > this.events.length) throw new Error("Malformed EAU");
+    this.duration = SongPlayer.calculateEventsDuration(this.events) / 1000;
   }
   
   holdidNext() {
@@ -139,11 +141,7 @@ export class SongPlayer {
   
   getPlayhead() {
     if (!this.running) return 0.0;
-    const now = this.ctx.currentTime;
-    if (now >= this.nextLoopTime) {
-      this.loopTime = this.nextLoopTime;
-    }
-    return Math.max(0, now - this.loopTime);
+    return (this.ctx.currentTime - this.startTime) % this.duration;
   }
   
   setPlayhead(ph) {

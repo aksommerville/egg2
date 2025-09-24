@@ -90,7 +90,7 @@ Features we *do* support:
 - - Synth (web)...
 - - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
 - - - Probably related to that, FM voices really can't bend at all, the modulator goes out of sync.
-- - [ ] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter. Apparent in drumtest.
+- - [x] Web playhead incorrect for songs shorter than the forward period. That's a tricky one, and not likely to matter. Apparent in drumtest.
 - - [x] Print PCM for sound effects.
 - - [x] Trim and pan for sound effects, seems we are currently ignoring.
 - - [x] Releasing manual synth note cuts off cold. It ought to enter the envelope's release stage.
