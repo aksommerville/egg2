@@ -29,6 +29,8 @@ struct render *render_new() {
   render->winw=1;
   render->winh=1;
   render->dstdirty=1;
+
+  render->scale=1.0;
   
   // Reserve texid 1 for the framebuffer.
   render->texid_next=2;
@@ -50,6 +52,14 @@ struct render *render_new() {
   #endif
   
   return render;
+}
+
+/* Trivial accessors.
+ */
+
+void render_set_scale(struct render *render,double scale) {
+  if (!render) return;
+  render->scale=scale;
 }
 
 /* Scratch buffer.

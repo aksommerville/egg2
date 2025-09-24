@@ -127,7 +127,7 @@ static const struct hostio_input_type *hostio_input_typev[]={
     return driver; \
   }
   
-DRIVERTYPE(video,{driver->viewscale=1;})
+DRIVERTYPE(video,{driver->scale=1;})
 DRIVERTYPE(audio,)
 DRIVERTYPE(input,)
 

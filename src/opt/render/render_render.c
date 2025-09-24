@@ -46,7 +46,7 @@ static const char render_vshader_TEX[]=
       "((udstborder+apos.y)*2.0)/(udstborder*2.0+uscreensize.y)-1.0\n"
     ");\n"
     "gl_Position=vec4(npos,0.0,1.0);\n"
-    "vtexcoord=atexcoord/usrcsize;\n"
+    "vtexcoord=(atexcoord+usrcborder)/(usrcsize+usrcborder*2.0);\n"
   "}\n"
 "";
 
@@ -413,16 +413,15 @@ void render_render(struct render *render,const struct egg_render_uniform *unifor
   if (dsttex) {
     if (dsttex->gltexid!=render->current_dsttexid) {
       glBindFramebuffer(GL_FRAMEBUFFER,dsttex->fbid);
-      glViewport(dsttex->border,dsttex->border,dsttex->w,dsttex->h);
+      glViewport(0,0,dsttex->w+dsttex->border*2,dsttex->h+dsttex->border*2);
       render->current_dsttexid=dsttex->gltexid;
     }
-    //TODO does this need to include the border?
     screenw=dsttex->w;
     screenh=dsttex->h;
   } else {
     if (render->current_dsttexid) {
       glBindFramebuffer(GL_FRAMEBUFFER,0);
-      glViewport(0,0,render->winw,render->winh);
+      glViewport(0,0,render->winw*render->scale,render->winh*render->scale);
       render->current_dsttexid=0;
     }
     screenw=render->winw;
@@ -442,7 +441,7 @@ void render_render(struct render *render,const struct egg_render_uniform *unifor
     glUniform1f(program->u_dstborder,0.0f);
   }
   if (srctex) {
-    glUniform2f(program->u_srcsize,srctex->w,srctex->h);//TODO border?
+    glUniform2f(program->u_srcsize,srctex->w,srctex->h);
     glUniform1f(program->u_srcborder,srctex->border);
     glUniform1i(program->u_sampler,0);
     glActiveTexture(GL_TEXTURE0);

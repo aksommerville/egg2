@@ -149,6 +149,7 @@ static int eggrt_init_video() {
   }
   if (!(eggrt.render=render_new())) return -1;
   render_set_size(eggrt.render,eggrt.hostio->video->w,eggrt.hostio->video->h);
+  render_set_scale(eggrt.render,eggrt.hostio->video->scale);
   if (render_set_framebuffer_size(eggrt.render,setup.fbw,setup.fbh)<0) return -1;
   return 0;
 }

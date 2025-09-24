@@ -16,6 +16,9 @@ struct egg_render_uniform;
 void render_del(struct render *render);
 struct render *render_new();
 
+// Normally 1, but on MacOS we have to give glViewport "real" pixels, not Mac's fake ones.
+void render_set_scale(struct render *render,double scale);
+
 void render_begin(struct render *render);
 void render_commit(struct render *render);
 

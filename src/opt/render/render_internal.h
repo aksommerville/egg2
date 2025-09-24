@@ -63,6 +63,7 @@ struct render {
   int fbw,fbh,winw,winh;
   int dstdirty;
   int dstx,dsty,dstw,dsth; // Framebuffer position in window space.
+  double scale; // For MacOS with high-resolution monitors only. glViewport expects "real" pixels.
   
   struct render_texture *texturev;
   int texturec,texturea;

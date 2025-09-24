@@ -6,6 +6,9 @@
 static int render_texture_border_size(struct render *render) {
   //TODO Let texture borders be configurable by the user. Maybe they are needed in places other than MacOS.
   //TODO For MacOS, try to guess the tilesize, and border must be more than half of that.
+  #if USE_macos
+    return 16;
+  #endif
   return 0;
 }
 
@@ -104,6 +107,7 @@ struct render_texture *render_texturev_insert(struct render *render,int p,int te
   memset(texture,0,sizeof(struct render_texture));
   texture->texid=texid;
   texture->gltexid=gltexid;
+  if (texid==1) texture->border=render_texture_border_size(render);
   return texture;
 }
 

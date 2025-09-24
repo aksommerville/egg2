@@ -27,7 +27,7 @@ struct hostio_video {
   int w,h,fullscreen;
   int cursor_visible;
   int cursor_locked;
-  int viewscale; // Multiply by (w,h) for the GL viewport's size. The fuck. Thanks, Apple.
+  double scale; // Multiply by (w,h) for the GL viewport's size. The fuck. Thanks, Apple.
 };
 
 struct hostio_video_setup {

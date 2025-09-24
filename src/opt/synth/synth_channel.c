@@ -165,6 +165,7 @@ int synth_channel_note(struct synth_channel *channel,uint8_t noteid,float veloci
     case 1: synth_channel_note_drum(channel,noteid,velocity); return 0; // Drums are not sustainable.
     case 2: case 3: case 4: return synth_channel_note_tuned(channel,noteid,velocity,durframes);
   }
+  return 0;
 }
 
 /* Release.
