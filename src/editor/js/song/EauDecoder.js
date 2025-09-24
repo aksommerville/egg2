@@ -56,7 +56,7 @@ export class EauDecoder {
    * Returns a live env model:
    * {
    *   usage
-   *   susp: <0 if no sustain
+   *   susp: 0 if no sustain. NB We do count the fake initial point, but it's not sustainable.
    *   lo: { // minimum one, first point must have (t==0)
    *     t: ms, absolute, must be sorted (NB relative when encoded, absolute here)
    *     v: u16
@@ -77,7 +77,7 @@ export class EauDecoder {
     }
     const env = {
       usage,
-      susp: -1,
+      susp: 0,
       lo: [],
       isDefault: false,
     };
@@ -113,9 +113,8 @@ export class EauDecoder {
       return this.defaultEnv(usage);
     }
     if (flags & 0x04) { // Sustain
-      env.susp = susp_ptc >> 4;
-      if (env.susp >= ptc) env.susp = -1;
-      else env.susp++; // Models have an initial point; the encoded format does not.
+      env.susp = (susp_ptc >> 4) + 1;
+      if (env.susp > ptc) env.susp = 0;
     }
     
     let nowlo=0, nowhi=0;
@@ -156,20 +155,20 @@ export class EauDecoder {
         };
       case "range": return {
           usage: "range",
-          susp: -1,
+          susp: 0,
           lo: [{ t: 0, v: 0xffff }],
           isDefault: true,
         };
       case "pitch": return {
           usage: "pitch",
-          susp: -1,
+          susp: 0,
           lo: [{ t: 0, v: 0x8000 }],
           isDefault: true,
         };
     }
     return {
       usage,
-      susp: -1,
+      susp: 0,
       lo: [{ t: 0, v: 0 }],
       isDefault: true,
     };
@@ -213,7 +212,6 @@ export function encodeEnv(encoder, usage, env) {
   
   // Sustain point and point count. Fudge sustain point if it would otherwise produce 0,0.
   let susp = env.susp - 1;
-  if (susp < 0) susp = -1;
   if (!flags && (env.lo.length <= 1) && !susp) susp = 15;
   encoder.u8((susp << 4) | (env.lo.length - 1));
   

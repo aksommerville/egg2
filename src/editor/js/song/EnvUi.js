@@ -86,18 +86,19 @@ export class EnvUi {
       "on-contextmenu": e => e.preventDefault(),
     });
     
+    let velocityToggle;
     this.dom.spawn(this.element, "DIV", ["controls"],
-      this.dom.spawn(null, "INPUT", ["toggle",], {
+      velocityToggle = this.dom.spawn(null, "INPUT", ["toggle",], {
         id: `EnvUi-${this.nonce}-velocity`,
         type: "checkbox",
         name: "velocity",
-        checked: this.env.hi ? "checked" : undefined,
         "on-change": e => this.onVelocityChange(e),
       }),
       this.dom.spawn(null, "LABEL", ["toggle", "light"], { for: `EnvUi-${this.nonce}-velocity` }, "Velocity"),
       this.dom.spawn(null, "INPUT", { type: "number", name: "susp", min: 0, max: 15, value: this.env.susp, "on-input": () => this.onSuspChange() }),
       this.dom.spawn(null, "DIV", ["tattle"])
     );
+    if (this.env.hi) velocityToggle.checked = true;
     
     this.renderSoon();
   }
