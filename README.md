@@ -75,17 +75,11 @@ Features we *do* support:
 - - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
 - - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
-- - [x] Sounds require an explicit terminal delay. Have editor create this automagically from the events. ...manual action
 - - [ ] PostModal fields per stage type.
 - - [ ] Song actions (SongChannelsUi). Four remain unimplemented; all four require parameters from the user.
 - - [ ] ModecfgModal for drum: Spawn SongEditor in a modal per drum.
 - - [ ] Special tooling to compare native vs web synth, in editor.
 - - Synth (both)...
-- - [x] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.
-- - - We're not. And if it seems burdensome, we can change the spec to require CHDR.
-- - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
-- - - ...changed spec, now missing CHDR means noop notes. Confirmed both synths ignore, and `eau_cvt_eau_midi` does generate a default.
-- - [x] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
 - - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
 - - [ ] Native and web do not sound the same. Once better tooling is in place, figure out why and tweak them closer.
 - - Synth (web)...
@@ -100,6 +94,7 @@ Features we *do* support:
 - - [ ] Web input config.
 - [ ] Web.
 - - [ ] Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
+- - - This might cause inappropriate culling on MacOS (in browsers). Pretty big deal.
 - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - [ ] native: Record and playback session.
 - [ ] macos: System language
@@ -108,6 +103,8 @@ Features we *do* support:
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
 - [ ] macos: eggrun
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
+- [ ] Review all "TODO" in source, there's a ton of them.
+- With the above complete, we can start migrating games:
 - [ ] Rewrite or migrate eggsamples for v2.
 - [ ] Migrate existing v1 projects to v2.
 - - [ ] Season of Penance
@@ -127,7 +124,7 @@ Features we *do* support:
 - - [ ] Plunder Squad
 - - [ ] Full Moon
 - - [ ] Too Heavy (JS; would be a full rewrite)
-- - [ ] Upsy-Downsy
+- - [ ] Upsy-Downsy -- least difficult and most beneficial of these. We could then retire `pebble`
 - - Definitely not in scope: Chetyorska, Economy of Motion, Opener of Cages, Nine Lives
 - [ ] "eggzotics": Sample games that build for something weird, and also Egg.
 - - [ ] Tiny Arcade
