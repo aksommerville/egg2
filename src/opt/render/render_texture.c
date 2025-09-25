@@ -177,7 +177,9 @@ int render_texture_load_raw(struct render *render,int texid,int w,int h,int stri
   if (texid==1) {
     if (!src) {
       if (texture->w||texture->h) return -1;
-      if (render_texture_upload(render,texture,w,h,0)<0) return -1;
+      if (render_texture_upload(render,texture,w+texture->border*2,h+texture->border*2,0)<0) return -1;
+      texture->w=w;
+      texture->h=h;
     } else {
       if ((w!=texture->w)||(h!=texture->h)) return -1;
       int minstride=w<<2;
@@ -193,6 +195,7 @@ int render_texture_load_raw(struct render *render,int texid,int w,int h,int stri
         err=render_texture_upload(render,texture,w,h,src);
       }
       if (err<0) return err;
+      texture->border=0;
     }
     render->fbw=texture->w;
     render->fbh=texture->h;
@@ -235,6 +238,8 @@ int render_texture_load_raw(struct render *render,int texid,int w,int h,int stri
     render_texture_drop_fb(render,texture);
     texture->border=render_texture_border_size(render);
     if (render_texture_upload(render,texture,w+texture->border*2,h+texture->border*2,0)<0) return -1;
+    texture->w=w;
+    texture->h=h;
   }
 
   return 0;
