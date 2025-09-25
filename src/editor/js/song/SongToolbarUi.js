@@ -191,19 +191,48 @@ export class SongToolbarUi {
    ***********************************************************************************/
   
   action_dropUnusedNames() {
-    console.log(`TODO SongToolbarUi.dropUnusedNames`, this);
+    if (!this.songService.song) return;
+    let changed = false;
+    for (let i=this.songService.song.text.length; i-->0; ) {
+      const label = this.songService.song.text[i];
+      if (label[1]) {
+        if (this.songService.song.noteInUse(label[0], label[1])) continue;
+      } else {
+        if (this.songService.song.channelsByChid[label[0]]) continue;
+      }
+      this.songService.song.text.splice(i, 1);
+      changed = true;
+    }
+    if (!changed) return;
+    this.songService.broadcast("dirty");
   }
   
   action_dropAllNames() {
-    console.log(`TODO SongToolbarUi.dropAllNames`);
+    if (!this.songService.song?.text.length) return;
+    this.songService.song.text = [];
+    this.songService.broadcast("dirty");
+    this.songService.broadcast("channelSetChanged");
   }
   
   action_autoStartTime() {
-    console.log(`TODO SongToolbarUi.autoStartTime`);
+    if (!this.songService.song) return;
+    if (!this.songService.song.events.length) return;
+    if (!this.songService.song.events[0].time) return; // Already aligned.
+    const d = -this.songService.song.events[0].time;
+    for (const event of this.songService.song.events) {
+      event.time -= d;
+    }
+    this.songService.broadcast("dirty");
+    this.songService.broadcast("eventsChanged");
   }
   
   action_autoEndTime() {
-    console.log(`TODO SongToolbarUi.autoEndTime`);
+    if (!this.songService.song) return;
+    if (this.songService.song.forceMinimumEndTime()) {
+      this.songService.broadcast("dirty");
+      this.songService.broadcast("eventsChanged");
+      //TODO If the song contains any Delay stages, can we show a gentle toast or something to remind the user that delay tails are not accounted for?
+    }
   }
   
   action_transpose() {

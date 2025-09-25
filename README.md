@@ -75,9 +75,9 @@ Features we *do* support:
 - - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
 - - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
 - - [ ] PostModal: Mysterious "invalid input" error on a newish channel. Can't repro.
-- - [ ] Sounds require an explicit terminal delay. Have editor create this automagically from the events.
+- - [x] Sounds require an explicit terminal delay. Have editor create this automagically from the events. ...manual action
 - - [ ] PostModal fields per stage type.
-- - [ ] Song actions (SongChannelsUi)
+- - [ ] Song actions (SongChannelsUi). Four remain unimplemented; all four require parameters from the user.
 - - [ ] ModecfgModal for drum: Spawn SongEditor in a modal per drum.
 - - [ ] Special tooling to compare native vs web synth, in editor.
 - - Synth (both)...

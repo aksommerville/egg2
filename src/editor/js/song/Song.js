@@ -7,6 +7,7 @@
  */
  
 import { Encoder } from "../Encoder.js";
+import { EauDecoder } from "./EauDecoder.js";
  
 export class Song {
 
@@ -202,6 +203,12 @@ export class Song {
     return c;
   }
   
+  noteInUse(chid, noteid) {
+    const channel = this.channelsByChid[chid];
+    if (!channel) return false;
+    return !!this.events.find(e => ((e.type === "note") && (e.chid === chid) && (e.noteid === noteid)));
+  }
+  
   encode() {
     const encoder = new Encoder();
     
@@ -333,6 +340,62 @@ export class Song {
   sortEvents() {
     this.events.sort((a, b) => a.time - b.time);
   }
+  
+  /* Examine events and channel configs to determine the exact time that sound ends, then tweak our final event to match.
+   * This is way more expensive than you think, even in noop cases.
+   * We do not account for tails due to Delay stages, because mathematically those tails are infinite.
+   * This is appropriate for sound effects, not so much for songs.
+   * Returns true if anything changed.
+   */
+  forceMinimumEndTime() {
+    if (this.events.length < 1) return false;
+  
+    // Determine the tail length for each channel, split by low and high velocity, and before and after sustain.
+    const tailByChid = []; // Sparse array of [prelo,prehi,postlo,posthi] ms, per channel. (postlo) zero means no sustain; we clamp to 1 if sustainable.
+    for (let chid=0; chid<this.channelsByChid.length; chid++) {
+      const channel = this.channelsByChid[chid];
+      if (!channel) continue;
+      tailByChid[chid] = channel.calculateTailTimes();
+    }
+    
+    // Calculate end time for each note and record the highest.
+    let endTime = 0;
+    for (const event of this.events) {
+      if (event.type === "note") {
+        const tail = tailByChid[event.chid];
+        if (!tail) continue;
+        const channel = this.channelsByChid[event.chid];
+        if (!channel) continue;
+        const hiv = Math.min(0, Math.max(1, event.velocity / 127));
+        const lov = 1 - hiv;
+        let noteEndTime = event.time + Math.ceil(tail[0] * lov + tail[1] * hiv);
+        if (tail[2]) { // Sustainable.
+          noteEndTime += event.durms + Math.ceil(tail[2] * lov + tail[3] * hiv);
+        }
+        if (noteEndTime > endTime) endTime = noteEndTime;
+      }
+    }
+    
+    // If we don't already have a noop event at the end, push one and we're done.
+    const final = this.events[this.events.length - 1];
+    if (final.type !== "noop") {
+      if (endTime < final.time) return false; // oops?
+      this.events.push(new SongEvent(endTime, "noop"));
+      return true;
+    }
+    
+    // If there's at least two events, confirm that the penultimate is before our new end time.
+    // It might not be! eg a bunch of redundant Wheel events at the end. In that case, I'm not sure what to do, so do nothing.
+    if (this.events.length >= 2) {
+      const penny = this.events[this.events.length - 2];
+      if (penny.time > endTime) return false;
+    }
+    
+    // Change the final event if it's different.
+    if (final.time === endTime) return false;
+    final.time = endTime;
+    return true;
+  }
 }
 
 /* SongChannel.
@@ -399,6 +462,58 @@ export class SongChannel {
     this.mode = src.mode;
     this.modecfg = new Uint8Array(src.modecfg);
     this.post = new Uint8Array(src.post);
+  }
+  
+  /* [prelo,prehi,postlo,posthi]
+   * Calculate parameters for notes' duration based on mode and modecfg.
+   * (postlo) zero is special, it means notes are unsustainable and (pre) contains the entire duration.
+   */
+  calculateTailTimes() {
+    const decoder = new EauDecoder(this.modecfg);
+    let env = null;
+    switch (this.mode) {
+      /* Doing for DRUM would mean decoding every drum and returning the longest.
+       * That's a ton of work and I just don't think it's worth it -- Drums are a song thing, and auto-end-time is a sound thing.
+       */
+      case 2: { // FM
+          decoder.u16(0); // rate
+          decoder.u8_8(0); // range
+          env = decoder.env("level");
+        } break;
+      case 3: { // HARSH
+          decoder.u8(0); // shape
+          env = decoder.env("level");
+        } break;
+      case 4: { // HARM
+          let harmc = decoder.u8(0);
+          if (decoder.srcp > decoder.src.length - harmc * 2) break;
+          while (harmc-- > 0) decoder.u16(0);
+          env = decoder.env("level");
+        } break;
+    }
+    const tail = [0, 0, 0, 0];
+    if (!env) return tail;
+    let i;
+    if (env.flags & 0x04) { // Sustain in play.
+      for (i=1; i<env.susp; i++) tail[0] += env.lo[i].t;
+      for (; i<env.lo.length; i++) tail[2] += env.lo[i].t;
+      if (!tail[2]) tail[2] = 1; // Can't be zero, it's the "sustain" flag too.
+      if (env.hi) {
+        for (i=1; i<env.susp; i++) tail[1] += env.hi[i].t;
+        for (; i<env.hi.length; i++) tail[3] += env.hi[i].t;
+      } else {
+        tail[1] = tail[0];
+        tail[3] = tail[2];
+      }
+    } else {
+      for (const pt of env.lo) tail[0] += pt.t;
+      if (env.hi) {
+        for (const pt of env.hi) tail[1] += pt.t;
+      } else {
+        tail[1] = tail[0];
+      }
+    }
+    return tail;
   }
 }
 
