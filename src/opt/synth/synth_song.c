@@ -153,7 +153,7 @@ void synth_song_set_playhead(struct synth_song *song,float s) {
   }
 }
 
-int synth_song_frames_for_bytes(const struct synth_song *song,int dstp) {
+int synth_song_frames_for_bytes(const struct synth_song *song,int dstp,int limitms) {
   int p=0,ms=0;
   while (p<dstp) {
     if (p>=song->c) break;
@@ -165,11 +165,12 @@ int synth_song_frames_for_bytes(const struct synth_song *song,int dstp) {
       case 0xc0: p+=1; break;
     }
   }
+  if (ms>limitms) ms=limitms;
   return synth_frames_from_ms(song->synth,ms);
 }
 
-int synth_song_measure_frames(const struct synth_song *song) {
-  return synth_song_frames_for_bytes(song,song->c);
+int synth_song_measure_frames(const struct synth_song *song,int limitms) {
+  return synth_song_frames_for_bytes(song,song->c,limitms);
 }
 
 /* Receive events.
@@ -258,7 +259,7 @@ static int synth_song_update_events(struct synth_song *song,int limit) {
       if (song->repeat) {
         if (song->loopp) {
           song->p=song->loopp;
-          song->phframes=synth_song_frames_for_bytes(song,song->loopp);
+          song->phframes=synth_song_frames_for_bytes(song,song->loopp,INT_MAX);
         } else {
           song->p=0;
           song->phframes=0;

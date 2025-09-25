@@ -131,7 +131,7 @@ struct synth_printer *synth_printer_new(struct synth *synth,const void *src,int 
     synth_printer_del(printer);
     return 0;
   }
-  if (!(printer->pcm=synth_pcm_new(synth_song_measure_frames(printer->song)))) {
+  if (!(printer->pcm=synth_pcm_new(synth_song_measure_frames(printer->song,5000)))) {
     synth_printer_del(printer);
     return 0;
   }

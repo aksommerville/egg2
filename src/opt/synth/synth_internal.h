@@ -246,8 +246,8 @@ void synth_song_terminate(struct synth_song *song);
 
 float synth_song_get_playhead(const struct synth_song *song);
 void synth_song_set_playhead(struct synth_song *song,float s);
-int synth_song_frames_for_bytes(const struct synth_song *song,int p);
-int synth_song_measure_frames(const struct synth_song *song); // => sum of delays only
+int synth_song_frames_for_bytes(const struct synth_song *song,int p,int limitms);
+int synth_song_measure_frames(const struct synth_song *song,int limitms); // => sum of delays only; never more than (limitms).
 
 /* Advance song's clock by the given frame count, reading new events and generating a signal.
  * You must be aware of (song->chanc) and provide an agreeable buffer.
