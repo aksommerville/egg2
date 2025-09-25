@@ -179,6 +179,46 @@ export class SongToolbarUi {
     const select = this.element.querySelector("select[name='actions']");
     const value = select.value;
     select.value = "";
-    console.log(`TODO SongToolbarUi.onActionsChange: ${value}`);
+    const fn = this["action_" + value];
+    if (!fn) {
+      this.dom.modalError(`SongToolbarUi: Unknown action ${JSON.stringify(value)}`);
+      return;
+    }
+    fn.bind(this)();
+  }
+  
+  /* Actions.
+   ***********************************************************************************/
+  
+  action_dropUnusedNames() {
+    console.log(`TODO SongToolbarUi.dropUnusedNames`, this);
+  }
+  
+  action_dropAllNames() {
+    console.log(`TODO SongToolbarUi.dropAllNames`);
+  }
+  
+  action_autoStartTime() {
+    console.log(`TODO SongToolbarUi.autoStartTime`);
+  }
+  
+  action_autoEndTime() {
+    console.log(`TODO SongToolbarUi.autoEndTime`);
+  }
+  
+  action_transpose() {
+    console.log(`TODO SongToolbarUi.transpose`);
+  }
+  
+  action_filter() {
+    console.log(`TODO SongToolbarUi.filter`);
+  }
+  
+  action_reduceWheels() {
+    console.log(`TODO SongToolbarUi.reduceWheels`);
+  }
+  
+  action_adjustVelocities() {
+    console.log(`TODO SongToolbarUi.adjustVelocities`);
   }
 }
