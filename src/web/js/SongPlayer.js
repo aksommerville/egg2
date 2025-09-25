@@ -293,7 +293,7 @@ export class SongPlayer {
           const velocity = ((a & 7) << 4) | (b >> 4);
           const durms = (((b & 15) << 8) | c) << 2;
           const channel = this.channelsByChid[chid];
-          if (!channel) break; //TODO Spec mandates a default.
+          if (!channel) break;
           channel.note(this.eventTime, noteid, velocity / 127, durms / 1000);
         } break;
       case 0xc0: { // Wheel.
@@ -301,7 +301,7 @@ export class SongPlayer {
           const chid = (lead >> 2) & 15;
           const v = (((lead & 3) << 8) | a) - 512;
           const channel = this.channelsByChid[chid];
-          if (!channel) break; // TODO Spec mandates a default.
+          if (!channel) break;
           channel.wheel(this.eventTime, v);
         } break;
     }

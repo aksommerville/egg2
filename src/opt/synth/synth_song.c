@@ -180,7 +180,7 @@ int synth_song_note(struct synth_song *song,uint8_t chid,uint8_t noteid,float ve
   if (noteid&0x80) return 0;
   if (chid&0xf0) return 0;
   struct synth_channel *channel=song->channel_by_chid[chid];
-  if (!channel) return 0; //TODO Spec mandates a default.
+  if (!channel) return 0;
   return synth_channel_note(channel,noteid,velocity,durframes);
 }
 
@@ -199,7 +199,7 @@ void synth_song_wheel(struct synth_song *song,uint8_t chid,int v) {
   if (song->terminated) return;
   if (chid&0xf0) return;
   struct synth_channel *channel=song->channel_by_chid[chid];
-  if (!channel) return; //TODO Spec mandates a default.
+  if (!channel) return;
   synth_channel_wheel(channel,v);
 }
 

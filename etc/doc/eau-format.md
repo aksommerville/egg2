@@ -154,7 +154,7 @@ Required, once only, and must be the first chunk.
 ### Chunk "CHDR"
 
 Optional. Forbidden after "EVTS".
-Events for a channel with no header will get a non-silent default instrument.
+Events for a channel with no header will be ignored.
 Decoder behavior re duplicate chid is undefined. Use the first or last or fail.
 An empty CHDR is technically legal but meaningless.
 CHDR for channels 16 and above are perfectly legal. We may use EAU and EAU-Text as instrument repositories.

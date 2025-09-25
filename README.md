@@ -81,9 +81,10 @@ Features we *do* support:
 - - [ ] ModecfgModal for drum: Spawn SongEditor in a modal per drum.
 - - [ ] Special tooling to compare native vs web synth, in editor.
 - - Synth (both)...
-- - [ ] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.
+- - [x] `eau-format.md`: "Events for a channel with no header will get a non-silent default instrument.". Confirm we're doing this in both implementations.
 - - - We're not. And if it seems burdensome, we can change the spec to require CHDR.
 - - - If we change the spec, ensure that MIDI=>EAU generates all CHDR. Not sure whether it does.
+- - - ...changed spec, now missing CHDR means noop notes. Confirmed both synths ignore, and `eau_cvt_eau_midi` does generate a default.
 - - [ ] `eau-format.md`: "Duration of a sound is strictly limited to 5 seconds.". I didn't implement this yet.
 - - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
 - - [ ] Native and web do not sound the same. Once better tooling is in place, figure out why and tweak them closer.
