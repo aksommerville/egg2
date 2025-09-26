@@ -289,6 +289,7 @@ static int gen_header(struct eggdev_project_context *ctx) {
     "#include \"egg/egg.h\"\n"
     "#include \"opt/stdlib/egg-stdlib.h\"\n"
     "#include \"opt/graf/graf.h\"\n"
+    "#include \"egg_res_toc.h\"\n"
     "#include \"shared_symbols.h\"\n"
     "\n"
   ,-1)<0) return -1;

@@ -74,10 +74,10 @@ export class Video {
 
     const fbw=this.canvas.width, fbh=this.canvas.height;
     const sv = this.vbufs16;
-    sv[ 0] = 0;   sv[ 1] = 0;   sv[ 2] = srctex.border; sv[ 3] = srctex.border + srctex.h;
-    sv[ 6] = 0;   sv[ 7] = fbh; sv[ 8] = srctex.border; sv[ 9] = srctex.border;
-    sv[12] = fbw; sv[13] = 0;   sv[14] = srctex.border + srctex.w; sv[15] = srctex.border + srctex.h;
-    sv[18] = fbw; sv[19] = fbh; sv[20] = srctex.border + srctex.w; sv[21] = srctex.border;
+    sv[ 0] = 0;   sv[ 1] = 0;   sv[ 2] = 0; sv[ 3] = srctex.h;
+    sv[ 6] = 0;   sv[ 7] = fbh; sv[ 8] = 0; sv[ 9] = 0;
+    sv[12] = fbw; sv[13] = 0;   sv[14] = srctex.w; sv[15] = srctex.h;
+    sv[18] = fbw; sv[19] = fbh; sv[20] = srctex.w; sv[21] = 0;
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, this.vbuf, this.gl.STREAM_DRAW);
     
@@ -85,7 +85,7 @@ export class Video {
     this.gl.viewport(0, 0, fbw, fbh);
     this.gl.useProgram(this.pgm_tex);
     this.gl.uniform2f(this.u_tex.uscreensize, fbw, fbh);
-    this.gl.uniform2f(this.u_tex.usrcsize, fbw + srctex.border * 2, fbh + srctex.border * 2);
+    this.gl.uniform2f(this.u_tex.usrcsize, fbw, fbh);
     this.gl.uniform1f(this.u_tex.udstborder, 0);
     this.gl.uniform1f(this.u_tex.usrcborder, srctex.border);
     this.gl.uniform1i(this.u_tex.usampler, 0);
@@ -257,7 +257,7 @@ export class Video {
     if (stride < 1) stride = minstride;
     else if (stride < minstride) return -1;
     const reqlen = stride * h;
-    if (srcc < reqlen) return -1;
+    if (srcc && (srcc < reqlen)) return -1;
     let src = null;
     if (srcp || srcc) {
       if (!(src = this.rt.exec.getMemory(srcp, srcc))) return -1;
@@ -374,14 +374,14 @@ export class Video {
     // Bind to the output texture if it's not currently bound.
     if (dsttex !== this.tex_current) {
       this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, dsttex.fbid);
-      this.gl.viewport(dsttex.border, dsttex.border, dsttex.w, dsttex.h);
+      this.gl.viewport(0, 0, dsttex.w + dsttex.border * 2, dsttex.h + dsttex.border * 2);
       this.tex_current = dsttex;
     }
   
     // Bind to the program if it's not currently bound, and set uniforms.
     this.gl.useProgram(pgm);
     this.gl.uniform2f(ul.uscreensize, dsttex.w, dsttex.h);
-    this.gl.uniform1f(ul.udstborder, 0);
+    this.gl.uniform1f(ul.udstborder, dsttex.border);
     if (srctex) {
       this.gl.uniform2f(ul.usrcsize, srctex.w, srctex.h);
       this.gl.uniform1f(ul.usrcborder, srctex.border);
@@ -504,7 +504,7 @@ vec2 npos=vec2(
 ((udstborder+apos.y)*2.0)/(udstborder*2.0+uscreensize.y)-1.0
 );
 gl_Position=vec4(npos,0.0,1.0);
-vtexcoord=atexcoord/usrcsize;
+vtexcoord=(atexcoord+usrcborder)/(usrcsize+usrcborder*2.0);
 }
 `,
     

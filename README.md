@@ -93,8 +93,7 @@ Features we *do* support:
 - - [ ] Web menu.
 - - [ ] Web input config.
 - [ ] Web.
-- - [ ] Video: Determine whether border is necessary. Apply to main fb as needed too; right now it's only situated for id>1 textures.
-- - - This might cause inappropriate culling on MacOS (in browsers). Pretty big deal.
+- - [ ] Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
 - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - [ ] native: Record and playback session.
 - [ ] macos: System language
