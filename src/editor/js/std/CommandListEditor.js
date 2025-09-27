@@ -42,7 +42,7 @@ export class CommandListEditor {
    * Otherwise it's a CommandList model which we will modify in place, and we'll call (this.ondirty) after each modification.
    * It's safe to call again to force a refresh, and you're free to kick us into a different mode then (um, but why?).
    */
-  setup(modelOrRes, ns) {
+  setup(modelOrRes, ns, suppressBlankRow) {
     if (modelOrRes instanceof CommandList) {
       this.res = null;
       this.model = modelOrRes;
@@ -56,7 +56,7 @@ export class CommandListEditor {
     }
     this.buildUi();
     // Pretend they clicked "+" immediately. If they do nothing with the new row, it's noop.
-    this.onAdd();
+    if (!suppressBlankRow) this.onAdd();
   }
   
   /* UI.

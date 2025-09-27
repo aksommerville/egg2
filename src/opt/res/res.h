@@ -73,7 +73,30 @@ struct map_res {
 };
 int map_res_decode(struct map_res *map,const void *src,int srcc);
 
-//TODO tilesheet
-//TODO decalsheet
+struct tilesheet_reader {
+  const unsigned char *v;
+  int c,p;
+};
+struct tilesheet_entry {
+  unsigned char tableid;
+  unsigned char tileid;
+  int c;
+  const unsigned char *v;
+};
+int tilesheet_reader_init(struct tilesheet_reader *reader,const void *v,int c);
+int tilesheet_reader_next(struct tilesheet_entry *entry,struct tilesheet_reader *reader);
+
+struct decalsheet_reader {
+  const unsigned char *v;
+  int c,p;
+  int comment_size;
+};
+struct decalsheet_entry {
+  unsigned char decalid;
+  int x,y,w,h;
+  const unsigned char *comment; // (reader.comment_size)
+};
+int decalsheet_reader_init(struct decalsheet_reader *reader,const void *v,int c);
+int decalsheet_reader_next(struct decalsheet_entry *entry,struct decalsheet_reader *reader);
 
 #endif

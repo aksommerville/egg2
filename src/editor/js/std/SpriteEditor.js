@@ -170,7 +170,7 @@ export class SpriteEditor {
       break;
     }
     if (!ok) this.model.commands.push(["image", src]);
-    this.clctl.setup(this.model, "sprite");
+    this.clctl.setup(this.model, "sprite", true);
     this.populateUpperUi();
     this.dirty();
   }
@@ -185,7 +185,7 @@ export class SpriteEditor {
       break;
     }
     if (!ok) this.model.commands.push(["tile", tileid.toString(), "0"]);
-    this.clctl.setup(this.model, "sprite");
+    this.clctl.setup(this.model, "sprite", true);
     this.populateUpperUi();
     this.dirty();
   }

@@ -96,6 +96,7 @@ Features we *do* support:
 - - [ ] Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
 - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - [ ] native: Record and playback session.
+- [x] CommandListEditor: New blank fields are getting created as I set up a new sprite.
 - [ ] macos: System language
 - [ ] windows: System language
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.

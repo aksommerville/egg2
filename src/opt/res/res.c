@@ -193,3 +193,56 @@ int map_res_decode(struct map_res *map,const void *src,int srcc) {
   map->cmdc=srcc-srcp;
   return 0;
 }
+
+/* Tilesheet.
+ */
+ 
+int tilesheet_reader_init(struct tilesheet_reader *reader,const void *v,int c) {
+  if (!v||(c<4)) return -1;
+  SIGCK(v,"\0ETS")
+  reader->v=v;
+  reader->c=c;
+  reader->p=4;
+  return 0;
+}
+
+int tilesheet_reader_next(struct tilesheet_entry *entry,struct tilesheet_reader *reader) {
+  if (reader->p>reader->c-3) return 0;
+  entry->tableid=reader->v[reader->p++];
+  entry->tileid=reader->v[reader->p++];
+  entry->c=reader->v[reader->p++]+1;
+  // Important here, we guarantee that (tileid+c) be within 256:
+  if ((reader->p>reader->c-entry->c)||(entry->tileid+entry->c>0x100)) {
+    reader->p=reader->c;
+    return -1;
+  }
+  entry->v=reader->v+reader->p;
+  reader->p+=entry->c;
+  return 1;
+}
+ 
+/* Decalsheet.
+ */
+ 
+int decalsheet_reader_init(struct decalsheet_reader *reader,const void *v,int c) {
+  if (!v||(c<5)) return -1;
+  SIGCK(v,"\0EDS")
+  reader->v=v;
+  reader->c=c;
+  reader->p=5;
+  reader->comment_size=reader->v[4];
+  return 0;
+}
+
+int decalsheet_reader_next(struct decalsheet_entry *entry,struct decalsheet_reader *reader) {
+  int entry_size=reader->comment_size+9;
+  if (reader->p>reader->c-entry_size) return 0;
+  entry->decalid=reader->v[reader->p++];
+  entry->x=(reader->v[reader->p]<<8)|reader->v[reader->p+1]; reader->p+=2;
+  entry->y=(reader->v[reader->p]<<8)|reader->v[reader->p+1]; reader->p+=2;
+  entry->w=(reader->v[reader->p]<<8)|reader->v[reader->p+1]; reader->p+=2;
+  entry->h=(reader->v[reader->p]<<8)|reader->v[reader->p+1]; reader->p+=2;
+  entry->comment=reader->v+reader->p;
+  reader->p+=reader->comment_size;
+  return 1;
+}
