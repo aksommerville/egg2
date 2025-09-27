@@ -416,8 +416,8 @@ export class SongChannel {
     this.trim = 0x40;
     this.pan = 0x80;
     this.mode = 2;
-    this.modecfg = []; // Read-only Uint8Array if not empty.
-    this.post = []; // ''
+    this.modecfg = new Uint8Array();
+    this.post = new Uint8Array();
     this.stash = []; // Sparse Uint8Array indexed by (mode). Prior configs we can return to when user toggles mode.
   }
   

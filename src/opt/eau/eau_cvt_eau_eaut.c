@@ -120,6 +120,7 @@ struct eautc {
   int emitted_lead; // Zero or position in (dst) of the start of the lead's 4-byte payload.
   int events_done;
   int strip_names;
+  int env_tokens;
 };
 
 static void eautc_cleanup(struct eautc *ctx) {
@@ -173,7 +174,7 @@ static int eautc_fail(struct eautc *ctx,const char *loc,const char *fmt,...) {
  
 static int eautc_unread(struct eautc *ctx,const char *token) {
   int p=token-ctx->src;
-  if ((p<0)||(p>=ctx->srcp)) return eautc_fail(ctx,0,"Illegal unread to %p. src=%p srcp=%d/%d.",token,ctx->src,ctx->srcp,ctx->srcc);
+  if ((p<0)||(p>ctx->srcp)) return eautc_fail(ctx,0,"Illegal unread to %p. src=%p srcp=%d/%d.",token,ctx->src,ctx->srcp,ctx->srcc);
   ctx->srcp=p;
   return 0;
 }
@@ -186,7 +187,10 @@ static int eautc_next(void *dstpp,struct eautc *ctx) {
   for (;;) {
     const char *token=ctx->src+ctx->srcp;
     int tokena=ctx->srcc-ctx->srcp;
-    if (tokena<1) return 0;
+    if (tokena<1) {
+      *(const void**)dstpp=token; // Important we set this, in case caller unreads on EOF. (eg eautc_events)
+      return 0;
+    }
     int tokenc=0;
     
     // Whitespace, including LF.
@@ -223,6 +227,18 @@ static int eautc_next(void *dstpp,struct eautc *ctx) {
       }
       *(const void**)dstpp=token;
       return tokenc;
+    }
+    
+    // With (env_tokens), accept "+" and "=" prefixes, and "*" suffix.
+    if (ctx->env_tokens) {
+      if ((token[0]=='+')||(token[0]=='=')) {
+        tokenc=1;
+        ctx->srcp++;
+        while ((ctx->srcp<ctx->srcc)&&eautc_isident(token[tokenc])) { ctx->srcp++; tokenc++; }
+        if ((ctx->srcp<ctx->srcc)&&(token[tokenc]=='*')) { ctx->srcp++; tokenc++; }
+        *(const void**)dstpp=token;
+        return tokenc;
+      }
     }
     
     // Identifiers and numbers.
@@ -509,10 +525,11 @@ static int eautc_env(struct eautc *ctx,const char *src,int srcc) {
     .dst=ctx->dst,
     .osrc=ctx->osrc,
     .osrcc=ctx->osrcc,
-    .src=ctx->src,
-    .srcc=ctx->srcc,
+    .src=src,
+    .srcc=srcc,
     .path=ctx->path,
     .strip_names=ctx->strip_names,
+    .env_tokens=1,
   };
   const char *token;
   int tokenc,err;
@@ -526,7 +543,7 @@ static int eautc_env(struct eautc *ctx,const char *src,int srcc) {
     flags|=0x01; // Initials.
     if (initlo!=inithi) flags|=0x02; // Velocity.
   } else {
-    eautc_unread(ctx,token);
+    eautc_unread(&subctx,token);
   }
   
   /* Remaining tokens are in (TIME,LEVEL) pairs, each pair corresponding to one point.

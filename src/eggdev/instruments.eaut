@@ -435,27 +435,91 @@ chdr { chid 0x0080; name "Default Inoffensive Kit";
   #--- BEGIN GM DRUMS ---
 
   drum { trim 0x40 0xc0; pan 0x80; noteid 0x23; name "Acoustic Bass Drum"; serial {
+    chdr { chid 0x01; trim 0xff; mode fm; modecfg {
+      rate 0x0080;
+      range 0x0200;
+      levelenv +10 =0xffff +20 =0x3000 +150 =0;
+      pitchenv =0x8000 +200 =0x7800;
+    }}
+    events {
+      note 1 0x20 0x7f 0;
+      delay 200;
+    }
   }}
   
   drum { trim 0x40 0xc0; pan 0x80; noteid 0x24; name "Bass Drum 1"; serial {
+    chdr { chid 0x01; trim 0xff; mode fm; modecfg {
+      rate 0x0080;
+      range 0x0200;
+      levelenv +10 =0xffff +20 =0x3000 +150 =0;
+      pitchenv =0x8000 +200 =0x7800;
+      rangeenv =0x8000 +10 =0xffff +20 =0xc000 +150 =0x4000;
+    }}
+    events {
+      note 1 0x30 0x7f 0;
+      delay 200;
+    }
   }}
   
-  drum { trim 0x40 0xc0; pan 0x80; noteid 0x25; name "Side Stick"; serial {
+  drum { trim 0x40 0xc0; pan 0x70; noteid 0x25; name "Side Stick"; serial {
+    chdr { chid 0x01; trim 0xb0; mode fm; modecfg {
+      rate 0x0377;
+      range 0x0666;
+      levelenv +10 =0xffff +15 =0x1800 +80 =0;
+    }}
+    events {
+      note 1 0x50 0x7f 0;
+      delay 100;
+    }
   }}
   
-  drum { trim 0x40 0xc0; pan 0x80; noteid 0x26; name "Acoustic Snare"; serial {
+  drum { trim 0x40 0xc0; pan 0x78; noteid 0x26; name "Acoustic Snare"; serial {
+    chdr { chid 0x01; trim 0xff; mode fm; modecfg {
+      rate 0x0977;
+      range 0x0555;
+      levelenv +15 =0xffff +20 =0x3000 +120 =0;
+      rangeenv =0xffff +150 =0x2000;
+    }}
+    events {
+      note 1 0x38 0x7f 0;
+      delay 160;
+    }
   }}
   
   drum { trim 0x40 0xc0; pan 0x80; noteid 0x27; name "Hand Clap"; serial {
   }}
   
-  drum { trim 0x40 0xc0; pan 0x80; noteid 0x28; name "Electric Snare"; serial {
+  drum { trim 0x40 0xc0; pan 0x78; noteid 0x28; name "Electric Snare"; serial {
+    tempo 100;
+    chdr { chid 0x01; trim 0x60; mode fm; modecfg {
+      rate 0x0a77;
+      range 0x0777;
+      levelenv +15 =0xffff +20 =0x3000 +190 =0;
+      rangeenv =0xffff +190 =0x8000;
+      pitchenv =0x8000 +160 =0x7f00;
+    } post {
+      waveshaper 0xf000 0xf800 0xfc00 0xfe00 0xff00 0xffff;
+      tremolo 0x0080 0xc0;
+    }}
+    events {
+      note 1 0x39 0x7f 0;
+      delay 250;
+    }
   }}
   
   drum { trim 0x40 0xc0; pan 0x80; noteid 0x29; name "Low Floor Tom"; serial {
   }}
   
-  drum { trim 0x40 0xc0; pan 0x80; noteid 0x2a; name "Closed Hi Hat"; serial {
+  drum { trim 0x40 0xc0; pan 0x60; noteid 0x2a; name "Closed Hi Hat"; serial {
+    chdr { chid 0x01; trim 0x80; mode fm; modecfg {
+      rate 0x0354;
+      range 0x0567;
+      levelenv +10 =0xffff +12 =0x1000 +80 =0;
+    }}
+    events {
+      note 1 0x70 0x7f 0;
+      delay 110;
+    }
   }}
   
   drum { trim 0x40 0xc0; pan 0x80; noteid 0x2b; name "High Floor Tom"; serial {
@@ -464,10 +528,29 @@ chdr { chid 0x0080; name "Default Inoffensive Kit";
   drum { trim 0x40 0xc0; pan 0x80; noteid 0x2c; name "Pedal Hi Hat"; serial {
   }}
   
-  drum { trim 0x40 0xc0; pan 0x80; noteid 0x2d; name "Low Tom"; serial {
+  drum { trim 0x40 0xc0; pan 0xa0; noteid 0x2d; name "Low Tom"; serial {
+    chdr { chid 0x01; trim 0xff; mode fm; modecfg {
+      rate 0x0080;
+      range 0x0300;
+      levelenv +28 =0xffff +25 =0x2000 +140 =0;
+      pitchenv =0x8000 +200 =0x7e00;
+    }}
+    events {
+      note 1 0x30 0x7f 0;
+      delay 200;
+    }
   }}
   
-  drum { trim 0x40 0xc0; pan 0x80; noteid 0x2e; name "Open Hi Hat"; serial {
+  drum { trim 0x40 0xc0; pan 0x60; noteid 0x2e; name "Open Hi Hat"; serial {
+    chdr { chid 0x01; trim 0x80; mode fm; modecfg {
+      rate 0x0456;
+      range 0x05ee;
+      levelenv +20 =0xffff +20 =0x1000 +60 =0;
+    }}
+    events {
+      note 1 0x68 0x7f 0;
+      delay 100;
+    }
   }}
   
   drum { trim 0x40 0xc0; pan 0x80; noteid 0x2f; name "Low Mid Tom"; serial {
@@ -476,7 +559,17 @@ chdr { chid 0x0080; name "Default Inoffensive Kit";
   drum { trim 0x40 0xc0; pan 0x80; noteid 0x30; name "Hi Mid Tom"; serial {
   }}
   
-  drum { trim 0x40 0xc0; pan 0x80; noteid 0x31; name "Crash Cymbal 1"; serial {
+  drum { trim 0x40 0xc0; pan 0xc0; noteid 0x31; name "Crash Cymbal 1"; serial {
+    chdr { chid 0x01; trim 0xff; mode fm; modecfg {
+      rate 0x0389;
+      range 0x0511;
+      levelenv +30 =0x4000 +25 =0x1000 +250 =0;
+      rangeenv =0xffff +50 =0xf800 +250 =0x8000;
+    }}
+    events {
+      note 1 0x60 0x7f 0;
+      delay 400;
+    }
   }}
   
   drum { trim 0x40 0xc0; pan 0x80; noteid 0x32; name "Hi Tom"; serial {
