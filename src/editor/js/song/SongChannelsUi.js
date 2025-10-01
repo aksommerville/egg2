@@ -13,13 +13,14 @@ import { decodeDrumModecfg } from "./EauDecoder.js";
 
 export class SongChannelsUi {
   static getDependencies() {
-    return [HTMLElement, Dom, SongService, SharedSymbols];
+    return [HTMLElement, Dom, SongService, SharedSymbols, "nonce"];
   }
-  constructor(element, dom, songService, sharedSymbols) {
+  constructor(element, dom, songService, sharedSymbols, nonce) {
     this.element = element;
     this.dom = dom;
     this.songService = songService;
     this.sharedSymbols = sharedSymbols;
+    this.nonce = nonce;
     
     this.songServiceListener = this.songService.listen(e => this.onSongServiceEvent(e));
     
@@ -61,7 +62,20 @@ export class SongChannelsUi {
       this.dom.spawn(null, "INPUT", { type: "range", min: 0, max: 255, value: channel.pan, name: "pan", "on-input": e => this.onPanChange(e, channel) })
     );
     
-    const modeSelect = this.dom.spawn(card, "SELECT", { name: "mode", "on-change": e => this.onModeChange(e, channel) });
+    const bottom = this.dom.spawn(card, "DIV", ["row"]);
+    
+    const playback = this.dom.spawn(bottom, "DIV", ["col", "playback"], { "on-change": e => this.onPlaybackControlsChanged(e) });
+    this.dom.spawn(playback, "INPUT", ["toggle"], { id: `SongChannelUi-${this.nonce}-${channel.chid}-mute`, type: "checkbox" });
+    this.dom.spawn(playback, "LABEL", ["toggle"], { for: `SongChannelUi-${this.nonce}-${channel.chid}-mute` }, "M");
+    this.dom.spawn(playback, "INPUT", ["toggle"], { id: `SongChannelUi-${this.nonce}-${channel.chid}-solo`, type: "checkbox" });
+    this.dom.spawn(playback, "LABEL", ["toggle"], { for: `SongChannelUi-${this.nonce}-${channel.chid}-solo` }, "S");
+    const postInput = this.dom.spawn(playback, "INPUT", ["toggle"], { id: `SongChannelUi-${this.nonce}-${channel.chid}-post`, type: "checkbox" });
+    this.dom.spawn(playback, "LABEL", ["toggle"], { for: postInput.id }, "P");
+    postInput.checked = true;
+    
+    const voicing = this.dom.spawn(bottom, "DIV", ["col"]);
+    
+    const modeSelect = this.dom.spawn(voicing, "SELECT", { name: "mode", "on-change": e => this.onModeChange(e, channel) });
     this.dom.spawn(modeSelect, "OPTION", { value: 0 }, "0: NOOP");
     this.dom.spawn(modeSelect, "OPTION", { value: 1 }, "1: DRUM");
     this.dom.spawn(modeSelect, "OPTION", { value: 2 }, "2: FM");
@@ -70,15 +84,15 @@ export class SongChannelsUi {
     for (let i=5; i<256; i++) this.dom.spawn(modeSelect, "OPTION", { value: i }, i);
     modeSelect.value = channel.mode;
     
-    this.dom.spawn(card, "DIV", ["row"],
+    this.dom.spawn(voicing, "DIV", ["row"],
       this.dom.spawn(null, "INPUT", { type: "button", value: "...", "on-click": e => this.onEditModecfg(e, channel) }),
       this.dom.spawn(null, "DIV", ["sublabel"], `${channel.modecfg.length} bytes modecfg`)
     );
-    this.dom.spawn(card, "DIV", ["row"],
+    this.dom.spawn(voicing, "DIV", ["row"],
       this.dom.spawn(null, "INPUT", { type: "button", value: "...", "on-click": e => this.onEditPost(e, channel) }),
       this.dom.spawn(null, "DIV", ["sublabel"], `${channel.post.length} bytes post`)
     );
-    this.dom.spawn(card, "DIV", ["advice"], "ctl-click to edit raw");
+    this.dom.spawn(voicing, "DIV", ["advice"], "ctl-click to edit raw");
   }
   
   /* Events.
@@ -190,6 +204,15 @@ export class SongChannelsUi {
       this.populateCard(this.element.querySelector(`.channel.chid-${channel.chid}`), channel);
       this.songService.broadcast("dirty");
     });
+  }
+  
+  onPlaybackControlsChanged(event) {
+    const input = event.target;
+    const splits = (input?.id || "").split('-');
+    if (splits.length < 4) return;
+    const chid = +splits[2];
+    const name = splits[3];
+    this.songService.setPlaybackControl(name, chid, input.checked);
   }
   
   onSongServiceEvent(event) {

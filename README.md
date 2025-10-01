@@ -66,13 +66,14 @@ Features we *do* support:
 ## Games
 
 - [Zen Garden](https://github.com/aksommerville/zennoniwa)
+- [Humm Fu](https://github.com/aksommerville/hummfu)
 
 ## TODO
 
 - [ ] Audio
 - - Editor...
-- - [ ] SongService: Should we auto-re-play on dirty?
-- - [ ] SongService+SongChannelsUi: Mute and Solo buttons per channel.
+- - [x] SongService: Should we auto-re-play on dirty? ...NO
+- - [x] SongService+SongChannelsUi: Mute and Solo buttons per channel.
 - - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
 - - [x] PostModal: Mysterious "invalid input" error on a newish channel. ...due to initializing with empty arrays instead of empty Uint8Arrays.
 - - [ ] PostModal fields per stage type.
@@ -82,10 +83,14 @@ Features we *do* support:
 - - [ ] Can we get the EAU unit logging out for delivery via eggdev http when appropriate? (eg tweaking standard instruments, have to jump back and forth to console to see errors).
 - - Synth (both)...
 - - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
+- - - Humm Fu had pretty decent hihats, but I had trouble with snare. I think we do need subtractive noise.
 - - [ ] Native and web do not sound the same. Once better tooling is in place, figure out why and tweak them closer.
+- - [ ] Music level is too high relative to sound effects. Cheat it down globally. Fudged a correction in both Zen Garden and Humm Fu.
 - - Synth (web)...
 - - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
 - - - Probably related to that, FM voices really can't bend at all, the modulator goes out of sync.
+- - Synth (native)...
+- - [ ] In Humm Fu, there's a pop as you enter gameover. Due to terminating song with Delay posts?
 - - And finally...
 - - [ ] Standard instruments.
 - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
@@ -97,6 +102,7 @@ Features we *do* support:
 - - [ ] Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
 - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - [ ] native: Record and playback session.
+- [ ] native: Add an initial audio delay like we did in v1. I've noticed missed notes in Humm Fu.
 - [x] CommandListEditor: New blank fields are getting created as I set up a new sprite.
 - [ ] macos: System language
 - [ ] windows: System language

@@ -24,6 +24,9 @@ export class SongService {
     this.songDuration = 0; // s
     this.visChid = null; // null or chid, visibility filter.
     this.playing = false;
+    this.muteChids = []; // Per-channel switches, set by SongChannelsUi and influencing playSong().
+    this.soloChids = [];
+    this.noPostChids = [];
     
     this.listeners = []; // {id,cb}
     this.nextListenerId = 1;
@@ -43,6 +46,9 @@ export class SongService {
     this.song = song;
     this.rid = rid;
     this.visChid = null;
+    this.muteChids = [];
+    this.soloChids = [];
+    this.noPostChids = [];
   }
   
   /* SongEditor calls this on the way out.
@@ -59,7 +65,7 @@ export class SongService {
       if (typeof(rid) !== "number") rid = this.rid;
       let serial = null, duration = 0;
       if (song instanceof Song) {
-        serial = song.encode();
+        serial = song.encodeWithChidFilters(this.muteChids, this.soloChids, this.noPostChids);
         duration = song.calculateDuration();
       } else if (song instanceof Uint8Array) serial = song;
       else if (!song) ;
@@ -122,6 +128,45 @@ export class SongService {
     if (serial[2] !== 0x41) return false;
     if (serial[3] !== 0x55) return false;
     return true;
+  }
+  
+  /* (name) is "solo", "mute", "post".
+   * Note that "post" is backward; its default state should be true.
+   * This does not take effect until you restart the song.
+   */
+  setPlaybackControl(name, chid, checked) {
+    switch (name) {
+      case "solo": {
+          const p = this.soloChids.indexOf(chid);
+          if (checked) {
+            if (p >= 0) return;
+            this.soloChids.push(chid);
+          } else {
+            if (p < 0) return;
+            this.soloChids.splice(p, 1);
+          }
+        } break;
+      case "mute": {
+          const p = this.muteChids.indexOf(chid);
+          if (checked) {
+            if (p >= 0) return;
+            this.muteChids.push(chid);
+          } else {
+            if (p < 0) return;
+            this.muteChids.splice(p, 1);
+          }
+        } break;
+      case "post": {
+          const p = this.noPostChids.indexOf(chid);
+          if (!checked) {
+            if (p >= 0) return;
+            this.noPostChids.push(chid);
+          } else {
+            if (p < 0) return;
+            this.noPostChids.splice(p, 1);
+          }
+        } break;
+    }
   }
   
   listen(cb) {

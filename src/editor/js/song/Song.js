@@ -232,7 +232,12 @@ export class Song {
       });
     }
     
+    const skippedChids = new Set();
     for (const channel of this.channels) {
+      if (channel.skipEncode) {
+        skippedChids.add(channel.chid);
+        continue;
+      }
       encoder.raw("CHDR");
       encoder.pfxlen(4, () => {
         encoder.u8(channel.chid);
@@ -242,9 +247,11 @@ export class Song {
         if (channel.modecfg.length > 0xffff) throw new Error(`Channel ${channel.chid} modecfg length ${channel.modecfg.length} > 65535`);
         encoder.u16be(channel.modecfg.length);
         encoder.raw(channel.modecfg);
-        if (channel.post.length > 0xffff) throw new Error(`Channel ${channel.chid} post length ${channel.post.length} > 65535`);
-        encoder.u16be(channel.post.length);
-        encoder.raw(channel.post);
+        if (!channel.skipPost) {
+          if (channel.post.length > 0xffff) throw new Error(`Channel ${channel.chid} post length ${channel.post.length} > 65535`);
+          encoder.u16be(channel.post.length);
+          encoder.raw(channel.post);
+        }
       });
     }
     
@@ -253,6 +260,8 @@ export class Song {
       const chunkstart = encoder.c;
       let now = 0;
       for (const event of this.events) {
+      
+        if (skippedChids.has(event.chid)) continue;
       
         // Sync delay at each event. There's never a case where we need to aggregate them.
         let delay = ~~(event.time - now);
@@ -299,6 +308,22 @@ export class Song {
     });
     
     return encoder.finish();
+  }
+  
+  encodeWithChidFilters(mute, solo, noPost) {
+    for (const channel of this.channels) {
+      if (mute.includes(channel.chid)) channel.skipEncode = true;
+      else if (solo.includes(channel.chid)) channel.skipEncode = false;
+      else if (solo.length > 0) channel.skipEncode = true;
+      else channel.skipEncode = false;
+      channel.skipPost = noPost.includes(channel.chid);
+    }
+    const serial = this.encode();
+    for (const channel of this.channels) {
+      delete channel.skipEncode;
+      delete channel.skipPost;
+    }
+    return serial;
   }
   
   calculateDuration() {

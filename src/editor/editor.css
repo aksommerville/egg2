@@ -709,6 +709,9 @@ input.toggle:checked + label.toggle.light {
 .SongChannelsUi .sublabel {
   margin-left: 5px;
 }
+.SongChannelsUi .playback {
+  margin-right: 5px;
+}
 
 .SongEventsUi {
   flex: 1;
