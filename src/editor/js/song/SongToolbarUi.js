@@ -18,6 +18,7 @@ export class SongToolbarUi {
     this.window = window;
     
     this.animationFrame = null;
+    this.playheadBackground = null; // Canvas
     
     this.buildUi();
   }
@@ -63,7 +64,12 @@ export class SongToolbarUi {
     this.dom.spawn(this.element, "INPUT", { type: "button", value: "+Event", "on-click": () => this.onAddEvent() });
     
     this.populateVisibility();
-    this.renderPlayhead();
+    // Rendering the playhead determines channel colors by searching for the channel header elements.
+    // That's stupid and hacky, but it's the best I could do to not have to repeat the CSS channel color rules.
+    // We are usually created before the channel header cards, so defer the first playhead render by a smidgeon.
+    this.window.setTimeout(() => {
+      this.renderPlayhead(true);
+    }, 20);
   }
   
   populateVisibility() {
@@ -83,14 +89,18 @@ export class SongToolbarUi {
     }
   }
   
-  renderPlayhead() {
+  renderPlayhead(refreshEvents) {
     const canvas = this.element.querySelector(".playhead");
     const bounds = canvas.getBoundingClientRect();
     canvas.width = bounds.width;
     canvas.height = bounds.height;
+    if (refreshEvents || !this.playheadBackground || (this.playheadBackground.width !== bounds.width) || (this.playheadBackground.height !== bounds.height)) {
+      this.renderPlayheadBackground(bounds.width, bounds.height, this.songService.song);
+    }
     const ctx = canvas.getContext("2d");
-    ctx.fillStyle = this.songService.playing ? "#630" : "#555";
+    ctx.fillStyle = this.songService.playing ? "#fff" : "#aaa";
     ctx.fillRect(0, 0, bounds.width, bounds.height);
+    ctx.drawImage(this.playheadBackground, 0, 0, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
     ctx.moveTo(0.5, 0.5);
     ctx.lineTo(bounds.width - 0.5, 0.5);
     ctx.lineTo(bounds.width - 0.5, bounds.height - 0.5);
@@ -105,12 +115,68 @@ export class SongToolbarUi {
     ctx.stroke();
   }
   
-  requirePlayhead() {
+  renderPlayheadBackground(w, h, song) {
+    if (!this.playheadBackground) {
+      this.playheadBackground = this.dom.document.createElement("CANVAS");
+    }
+    this.playheadBackground.width = w;
+    this.playheadBackground.height = h;
+    const ctx = this.playheadBackground.getContext("2d");
+    ctx.clearRect(0, 0, w, h);
+    if ((song?.channels?.length || 0) < 1) return;
+    const durs = song.calculateDuration();
+    if (durs < 0.250) return; // Allow low durations, tho it won't be helpful, but stop if it's zero.
+    const pxPerMs = w / (durs * 1000);
+    const timeFuzz = 3 / pxPerMs; // How far apart must events be, in ms, to break the line?
+    const yspacing = h / (song.channels.length + 1);
+    ctx.lineWidth = 2;
+    for (let i=0, y=yspacing; i<song.channels.length; i++, y+=yspacing) {
+      const channel = song.channels[i];
+      let color = "";
+      const element = this.dom.document.querySelector(`.chid-${channel.chid}`);
+      if (element) {
+        const style = this.window.getComputedStyle(element);
+        color = style.backgroundColor;
+      }
+      ctx.strokeStyle = color || "#fff";
+      const yq = Math.floor(y);
+      ctx.beginPath();
+      
+      // The interesting part: Scan all events for this channel and break them into horizontal lines.
+      let startTime=null, recentTime=null;
+      for (let evtp=0; evtp<song.events.length; evtp++) {
+        const event = song.events[evtp];
+        if (event.chid !== channel.chid) continue;
+        if (startTime === null) {
+          startTime = recentTime = event.time;
+        } else if (event.time > recentTime + timeFuzz) {
+          let xa=startTime*pxPerMs, xz=recentTime*pxPerMs;
+          if (xz < xa + 3) xz = xa + 3;
+          ctx.moveTo(xa, yq);
+          ctx.lineTo(xz, yq);
+          startTime = recentTime = event.time;
+        } else {
+          recentTime = event.time;
+        }
+      }
+      if (recentTime) {
+        let xa=startTime*pxPerMs, xz=recentTime*pxPerMs;
+        if (xz < xa + 3) xz = xa + 3;
+        ctx.moveTo(xa, yq);
+        ctx.lineTo(xz, yq);
+      }
+      
+      ctx.stroke();
+    }
+    ctx.lineWidth = 1;
+  }
+  
+  requirePlayhead(refreshEvents) {
     if (this.animationFrame) return;
     this.animationFrame = this.window.requestAnimationFrame(() => {
       this.animationFrame = null;
-      this.renderPlayhead();
-      this.requirePlayhead();
+      this.renderPlayhead(refreshEvents);
+      this.requirePlayhead(false);
     });
   }
   
@@ -118,7 +184,7 @@ export class SongToolbarUi {
     if (!this.animationFrame) return;
     this.window.cancelAnimationFrame(this.animationFrame);
     this.animationFrame = null;
-    this.renderPlayhead(); // Once more to draw it neutral.
+    this.renderPlayhead(false); // Once more to draw it neutral.
   }
   
   /* Events.
@@ -131,7 +197,7 @@ export class SongToolbarUi {
   
   onPlay() {
     this.songService.playSong(this.songService.song);
-    this.requirePlayhead();
+    this.requirePlayhead(true);
   }
   
   onClickPlayhead(event) {

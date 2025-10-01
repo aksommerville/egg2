@@ -81,9 +81,13 @@ Features we *do* support:
 - - [ ] IMPORTANT! ModecfgModal for drum: Spawn SongEditor in a modal per drum.
 - - [ ] Special tooling to compare native vs web synth, in editor.
 - - [ ] Can we get the EAU unit logging out for delivery via eggdev http when appropriate? (eg tweaking standard instruments, have to jump back and forth to console to see errors).
+- - [x] Show events in SongToolbar's playhead minimap.
 - - Synth (both)...
 - - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
 - - - Humm Fu had pretty decent hihats, but I had trouble with snare. I think we do need subtractive noise.
+- - - [ ] Use a precalculated noise buffer, say one second long, generated with a private PRNG. That way, native and web can produce exactly the same noise.
+- - - - They'll still sound different at different sample rates but I don't think we can avoid that.
+- - [ ] Also add IIR post stages. They will make the HARSH voice mode much more useful.
 - - [ ] Native and web do not sound the same. Once better tooling is in place, figure out why and tweak them closer.
 - - [ ] Music level is too high relative to sound effects. Cheat it down globally. Fudged a correction in both Zen Garden and Humm Fu.
 - - Synth (web)...
