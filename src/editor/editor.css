@@ -56,6 +56,7 @@ label.toggle {
 }
 input.toggle:checked + label.toggle {
   background-color: #123;
+  color: #ff0;
 }
 label.toggle.light {
   color: #555;

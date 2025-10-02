@@ -74,7 +74,7 @@ Features we *do* support:
 - - Editor...
 - - [x] SongService: Should we auto-re-play on dirty? ...NO
 - - [x] SongService+SongChannelsUi: Mute and Solo buttons per channel.
-- - [ ] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
+- - [x] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
 - - [x] PostModal: Mysterious "invalid input" error on a newish channel. ...due to initializing with empty arrays instead of empty Uint8Arrays.
 - - [ ] PostModal fields per stage type.
 - - [ ] Song actions (SongChannelsUi). Four remain unimplemented; all four require parameters from the user.
@@ -93,6 +93,7 @@ Features we *do* support:
 - - Synth (web)...
 - - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
 - - - Probably related to that, FM voices really can't bend at all, the modulator goes out of sync.
+- - [ ] Check default envelopes. I think I'm hearing some clicking when unconfigured.
 - - Synth (native)...
 - - [ ] In Humm Fu, there's a pop as you enter gameover. Due to terminating song with Delay posts?
 - - And finally...

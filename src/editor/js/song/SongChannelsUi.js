@@ -9,7 +9,7 @@ import { ModecfgModal } from "./ModecfgModal.js";
 import { PostModal } from "./PostModal.js";
 import { SharedSymbols } from "../SharedSymbols.js";
 import { InstrumentsModal } from "./InstrumentsModal.js";
-import { decodeDrumModecfg } from "./EauDecoder.js";
+import { decodeDrumModecfg, mergeModecfg } from "./EauDecoder.js";
 
 export class SongChannelsUi {
   static getDependencies() {
@@ -65,13 +65,15 @@ export class SongChannelsUi {
     const bottom = this.dom.spawn(card, "DIV", ["row"]);
     
     const playback = this.dom.spawn(bottom, "DIV", ["col", "playback"], { "on-change": e => this.onPlaybackControlsChanged(e) });
-    this.dom.spawn(playback, "INPUT", ["toggle"], { id: `SongChannelUi-${this.nonce}-${channel.chid}-mute`, type: "checkbox" });
+    const muteInput = this.dom.spawn(playback, "INPUT", ["toggle"], { id: `SongChannelUi-${this.nonce}-${channel.chid}-mute`, type: "checkbox" });
     this.dom.spawn(playback, "LABEL", ["toggle"], { for: `SongChannelUi-${this.nonce}-${channel.chid}-mute` }, "M");
-    this.dom.spawn(playback, "INPUT", ["toggle"], { id: `SongChannelUi-${this.nonce}-${channel.chid}-solo`, type: "checkbox" });
+    const soloInput = this.dom.spawn(playback, "INPUT", ["toggle"], { id: `SongChannelUi-${this.nonce}-${channel.chid}-solo`, type: "checkbox" });
     this.dom.spawn(playback, "LABEL", ["toggle"], { for: `SongChannelUi-${this.nonce}-${channel.chid}-solo` }, "S");
     const postInput = this.dom.spawn(playback, "INPUT", ["toggle"], { id: `SongChannelUi-${this.nonce}-${channel.chid}-post`, type: "checkbox" });
     this.dom.spawn(playback, "LABEL", ["toggle"], { for: postInput.id }, "P");
-    postInput.checked = true;
+    muteInput.checked = this.songService.getPlaybackControl("mute", channel.chid);
+    soloInput.checked = this.songService.getPlaybackControl("solo", channel.chid);
+    postInput.checked = this.songService.getPlaybackControl("post", channel.chid);
     
     const voicing = this.dom.spawn(bottom, "DIV", ["col"]);
     
@@ -173,14 +175,9 @@ export class SongChannelsUi {
     if ((typeof(mode) !== "number") || (mode < 0) || (mode > 0xff)) return;
     if (mode === channel.mode) return;
     channel.stash[channel.mode] = channel.modecfg;
+    channel.modecfg = mergeModecfg(mode, channel.stash[mode], channel.mode, channel.modecfg);
     channel.mode = mode;
-    if (channel.stash[mode]) {
-      channel.modecfg = channel.stash[mode];
-      //TODO Should we try to transfer common things like level envelope?
-    } else {
-      channel.modecfg = [];
-      //TODO Default config per mode. Empty is always legal but I think we can do better.
-    }
+    this.populateCard(this.element.querySelector(`.channel.chid-${channel.chid}`), channel);
     this.songService.broadcast("dirty");
   }
   

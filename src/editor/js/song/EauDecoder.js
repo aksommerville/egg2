@@ -2,6 +2,8 @@
  * Structured support for reading EAU bits like modecfg and post stages.
  */
  
+import { Encoder } from "../Encoder.js";
+ 
 export class EauDecoder {
   constructor(src) {
     this.src = src;
@@ -247,4 +249,241 @@ export function decodeDrumModecfg(src) {
     srcp += len;
   }
   return dst;
+}
+
+/* Given (mode) 0..4 and (modecfg) Uint8Array, return a live model object.
+ * Creates all top-level fields whether or not they exist in the serial.
+ * All models:
+ *   {
+ *     mode: per input
+ *     extra: Uint8Array
+ *   }
+ * 1=DRUM: {
+ *   drums: {
+ *     noteid: u8
+ *     trimlo: u8
+ *     trimhi: u8
+ *     pan: u8
+ *     serial: Uint8Array
+ *   }[]
+ * }
+ * 2=FM: {
+ *   rate: float, relative or qnotes(absrate)
+ *   absrate: boolean
+ *   range: float
+ *   levelenv: env
+ *   rangeenv: env
+ *   pitchenv: env
+ *   wheelrange: u16
+ *   lforate: float
+ *   lfodepth: float
+ *   lfophase: float
+ * }
+ * 3=HARSH: {
+ *   shape: u8
+ *   levelenv: env
+ *   pitchenv: env
+ *   wheelrange: u16
+ * }
+ * 4=HARM: {
+ *   harmonics: u16[]
+ *   levelenv: env
+ *   pitchenv: env
+ *   wheelrange: u16
+ * }
+ */
+export function decodeModecfg(mode, modecfg) {
+  const model = { mode };
+  if (!modecfg) modecfg = new Uint8Array(0);
+  const decoder = new EauDecoder(modecfg);
+  switch (mode) {
+  
+    case 1: { // DRUM
+        model.drums = [];
+        while (!decoder.finished()) {
+          const drum = {};
+          drum.noteid = decoder.u8(0);
+          drum.trimlo = decoder.u8(255);
+          drum.trimhi = decoder.u8(255);
+          drum.pan = decoder.u8(128);
+          if (!(drum.serial = decoder.u16len(null))) break;
+          model.drums.push(drum);
+        }
+      } break;
+      
+    case 2: { // FM
+        const rate = decoder.u16(0);
+        if (rate & 0x8000) {
+          model.rate = (rate & 0x7fff) / 256;
+          model.absrate = true;
+        } else {
+          model.rate = rate / 256;
+          model.absrate = false;
+        }
+        model.range = decoder.u8_8(0);
+        model.levelenv = decoder.env("level");
+        model.rangeenv = decoder.env("range");
+        model.pitchenv = decoder.env("pitch");
+        model.wheelrange = decoder.u16(200);
+        model.lforate = decoder.u8_8(0);
+        model.lfodepth = decoder.u0_8(1);
+        model.lfophase = decoder.u0_8(0);
+      } break;
+      
+    case 3: { // HARSH
+        model.shape = decoder.u8(0);
+        model.levelenv = decoder.env("level");
+        model.pitchenv = decoder.env("pitch");
+        model.wheelrange = decoder.u16(200);
+      } break;
+      
+    case 4: { // HARM
+        model.harmonics = [];
+        let harmc = decoder.u8(0);
+        if (decoder.srcp <= decoder.src.length - harmc * 2) {
+          while (harmc-- > 0) model.harmonics.push(decoder.u16(0));
+        }
+        model.levelenv = decoder.env("level");
+        model.pitchenv = decoder.env("pitch");
+        model.wheelrange = decoder.u16(200);
+      } break;
+      
+  }
+  model.extra = decoder.remainder();
+  return model;
+}
+
+export function encodeModecfg(model) {
+  const encoder = new Encoder();
+  switch (model.mode) {
+    case 0: return model.extra;
+    case 1: {
+        for (const drum of model.drums) {
+          encoder.u8(drum.noteid);
+          encoder.u8(drum.trimlo);
+          encoder.u8(drum.trimhi);
+          encoder.u8(drum.pan);
+          encoder.pfxlen(2, () => encoder.raw(drum.serial));
+        }
+      } break;
+    case 2: {
+        let reqc = 0;
+        if (model.extra.length) reqc = 10;
+        else if (model.lfophase && model.lfodepth && model.lforate) reqc = 9;
+        else if (model.lfodepth !== 1 && model.lforate) reqc = 8;
+        else if (model.lforate) reqc = 7;
+        else if (model.wheelrange !== 200) reqc = 6;
+        else if (!model.pitchenv.isDefault) reqc = 5;
+        else if (!model.rangeenv.isDefault) reqc = 4;
+        else if (!model.levelenv.isDefault) reqc = 3;
+        else if (model.range) reqc = 2;
+        else if (model.rate) reqc = 1;
+        if (reqc <= 0) break;
+        let rate = Math.max(0, Math.min(0xffff, ~~(model.rate * 256)));
+        if (model.absrate) rate |= 0x8000; else rate &= 0x7fff;
+        encoder.u16be(rate);
+        if (reqc <= 1) break;
+        encoder.u16be(model.range * 256);
+        if (reqc <= 2) break;
+        encodeEnv(encoder, "level", model.levelenv);
+        if (reqc <= 3) break;
+        encodeEnv(encoder, "range", model.rangeenv);
+        if (reqc <= 4) break;
+        encodeEnv(encoder, "pitch", model.pitchenv);
+        if (reqc <= 5) break;
+        encoder.u16be(model.wheelrange);
+        if (reqc <= 6) break;
+        encoder.u16be(model.lforate * 256);
+        if (reqc <= 7) break;
+        encoder.u8(Math.max(0, Math.min(0xff, ~~(model.lfodepth * 256))));
+        if (reqc <= 8) break;
+        encoder.u8(Math.max(0, Math.min(0xff, ~~(model.lfophase * 256))));
+        if (reqc <= 9) break;
+        encoder.raw(model.extra);
+      } break;
+    case 3: {
+        let reqc = 0;
+        if (model.extra.length) reqc = 5;
+        else if (model.wheelrange !== 200) reqc = 4;
+        else if (!model.pitchenv.isDefault) reqc = 3;
+        else if (!model.levelenv.isDefault) reqc = 2;
+        else if (model.shape) reqc = 1;
+        if (reqc <= 0) break;
+        encoder.u8(model.shape);
+        if (reqc <= 1) break;
+        encodeEnv(encoder, "level", model.levelenv);
+        if (reqc <= 2) break;
+        encodeEnv(encoder, "pitch", model.pitchenv);
+        if (reqc <= 3) break;
+        encoder.u16be(model.wheelrange);
+        if (reqc <= 4) break;
+        encoder.raw(model.extra);
+      } break;
+    case 4: {
+        let reqc = 0;
+        if (model.extra.length) reqc = 5;
+        else if (model.wheelrange !== 200) reqc = 4;
+        else if (!model.pitchenv.isDefault) reqc = 3;
+        else if (!model.levelenv.isDefault) reqc = 2;
+        else if ((model.harmonics.length > 1) || ((model.harmonics.length === 1) && (model.harmonics[0] !== 0xffff))) reqc = 1;
+        if (reqc <= 0) break;
+        encoder.u8(model.harmonics.length);
+        for (const harm of model.harmonics) {
+          encoder.u16be(harm);
+        }
+        if (reqc <= 1) break;
+        encodeEnv(encoder, "level", model.levelenv);
+        if (reqc <= 2) break;
+        encodeEnv(encoder, "pitch", model.pitchenv);
+        if (reqc <= 3) break;
+        encoder.u16be(model.wheelrange);
+        if (reqc <= 4) break;
+        encoder.raw(model.extra);
+      } break;
+  }
+  return encoder.finish();
+}
+
+/* Generate a new modecfg, when user changes mode.
+ *  - (newMode) 0..4, what we're generating for.
+ *  - (stashConfig) Uint8Array of a previous modecfg for (newMode), if you have one. null is fine.
+ *  - (oldMode) mode you're coming from.
+ *  - (oldConfig) config you're coming from, must match (oldMode).
+ * In general:
+ *  - If a field for (newMode) also exists in (oldMode), you'll get its value from (oldConfig).
+ *  - The remainder is taken from (stashConfig) if provided.
+ *  - We'll fill in defaults where necessary.
+ *  - Empty modecfg are always legal, and we'll land there as a final default.
+ * It works out simpler than you'd think.
+ */
+export function mergeModecfg(newMode, stashConfig, oldMode, oldConfig) {
+  
+  // Current mode not configured at all? Return the stash or empty.
+  if (!oldConfig?.length) {
+    if (stashConfig) return new Uint8Array(stashConfig);
+    return new Uint8Array(0);
+  }
+  
+  // To or from 0 (NOOP) or 1 (DRUM), there's nothing we can do.
+  if ((newMode === 0) || (newMode === 1) || (oldMode === 0) || (oldMode === 1)) {
+    if (stashConfig) return new Uint8Array(stashConfig);
+    return new Uint8Array(0);
+  }
+  
+  /* The common voiced modes (2=FM, 3=HARSH, 4=HARM) have three fields in common:
+   *   levelenv, pitchenv, wheelrange
+   * Do a full decode of each, reassign in the models, and reencode.
+   */
+  if ((newMode >= 2) && (newMode <= 4) && (oldMode >= 2) && (oldMode <= 4)) {
+    const oldModel = decodeModecfg(oldMode, oldConfig);
+    const stashModel = decodeModecfg(newMode, stashConfig);
+    stashModel.levelenv = oldModel.levelenv;
+    stashModel.pitchenv = oldModel.pitchenv;
+    stashModel.wheelrange = oldModel.wheelrange;
+    return encodeModecfg(stashModel);
+  }
+  
+  // And finally, stash or empty.
+  if (stashConfig) return new Uint8Array(stashConfig);
+  return new Uint8Array(0);
 }

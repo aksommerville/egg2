@@ -169,6 +169,15 @@ export class SongService {
     }
   }
   
+  getPlaybackControl(name, chid) {
+    switch (name) {
+      case "solo": return (this.soloChids.indexOf(chid) >= 0);
+      case "mute": return (this.muteChids.indexOf(chid) >= 0);
+      case "post": return (this.noPostChids.indexOf(chid) < 0);
+    }
+    return false;
+  }
+  
   listen(cb) {
     const id = this.nextListenerId++;
     this.listeners.push({ cb, id });

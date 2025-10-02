@@ -4,7 +4,7 @@
  */
  
 import { Dom } from "../Dom.js";
-import { EauDecoder, encodeEnv } from "./EauDecoder.js";
+import { EauDecoder, encodeEnv, decodeModecfg, encodeModecfg } from "./EauDecoder.js";
 import { Encoder } from "../Encoder.js";
 import { SongService } from "./SongService.js";
 import { GM_DRUM_NAMES } from "./MidiConstants.js";
@@ -21,51 +21,7 @@ export class ModecfgModal {
     this.songService = songService;
     
     /* (model) is the live model derived from (modecfg) and encodable to the same.
-     * Its shape depends on (mode):
-     *   1 DRUM: {
-     *     mode: 1
-     *     drums: {
-     *       noteid: 0..255
-     *       trimlo: 0..255
-     *       trimhi: 0..255
-     *       pan: 0..128..255
-     *       serial: Uint8Array(EAU)
-     *     }[]
-     *   }
-     *   2 FM: {
-     *     mode: 2
-     *     rate: float (u7.8)
-     *     absrate: boolean
-     *     range: float (u8.8)
-     *     levelenv: env
-     *     rangeenv: env
-     *     pitchenv: env
-     *     wheelrange: u16
-     *     lforate: float (u8.8)
-     *     lfodepth: float (u0.8)
-     *     lfophase: float (u0.8)
-     *     extra: Uint8Array
-     *   }
-     *   3 HARSH: {
-     *     mode: 3
-     *     shape: (0,1,2,3) = (sine,square,saw,triangle). Others up to 255 permitted
-     *     levelenv: env
-     *     pitchenv: env
-     *     wheelrange: u16
-     *     extra: Uint8Array
-     *   }
-     *   4 HARM: {
-     *     mode: 4
-     *     harmonics: u16[]
-     *     levelenv: env
-     *     pitchenv: env
-     *     wheelrange: u16
-     *     extra: Uint8Array
-     *   }
-     *   Anything else: {
-     *     mode: 0, regardless of outer mode
-     *     extra: Uint8Array
-     *   }
+     * See EauDecoder.js:decodeModecfg().
      */
     this.model = {};
     
@@ -87,168 +43,8 @@ export class ModecfgModal {
     this.mode = mode;
     this.modecfg = modecfg;
     this.chid = chid;
-    this.model = this.decodeModel(mode, modecfg);
+    this.model = decodeModecfg(mode, modecfg);
     this.buildUi();
-  }
-  
-  /* Model.
-   ************************************************************************************/
-   
-  decodeModel(mode, src) {
-    const model = { mode };
-    const decoder = new EauDecoder(src);
-    switch (mode) {
-    
-      case 1: { // DRUM
-          model.drums = [];
-          while (!decoder.finished()) {
-            const drum = {};
-            drum.noteid = decoder.u8(0);
-            drum.trimlo = decoder.u8(255);
-            drum.trimhi = decoder.u8(255);
-            drum.pan = decoder.u8(128);
-            if (!(drum.serial = decoder.u16len(null))) return defaultModel(src);
-            model.drums.push(drum);
-          }
-        } break;
-        
-      case 2: { // FM
-          const rate = decoder.u16(0);
-          if (rate & 0x8000) {
-            model.rate = (rate & 0x7fff) / 256;
-            model.absrate = true;
-          } else {
-            model.rate = rate / 256;
-            model.absrate = false;
-          }
-          model.range = decoder.u8_8(0);
-          model.levelenv = decoder.env("level");
-          model.rangeenv = decoder.env("range");
-          model.pitchenv = decoder.env("pitch");
-          model.wheelrange = decoder.u16(200);
-          model.lforate = decoder.u8_8(0);
-          model.lfodepth = decoder.u0_8(1);
-          model.lfophase = decoder.u0_8(0);
-          model.extra = decoder.remainder();
-        } break;
-        
-      case 3: { // HARSH
-          model.shape = decoder.u8(0);
-          model.levelenv = decoder.env("level");
-          model.pitchenv = decoder.env("pitch");
-          model.wheelrange = decoder.u16(200);
-          model.extra = decoder.remainder();
-        } break;
-        
-      case 4: { // HARM
-          let harmc = decoder.u8(0);
-          if (decoder.srcp > decoder.src.length - harmc * 2) return this.defaultModel(src);
-          model.harmonics = [];
-          while (harmc-- > 0) model.harmonics.push(decoder.u16(0));
-          model.levelenv = decoder.env("level");
-          model.pitchenv = decoder.env("pitch");
-          model.wheelrange = decoder.u16(200);
-          model.extra = decoder.remainder();
-        } break;
-        
-      default: return this.defaultModel(src);
-    }
-    return model;
-  }
-  
-  defaultModel(src) {
-    return { mode: 0, extra: new Uint8Array(src) };
-  }
-  
-  encodeModel() {
-    const encoder = new Encoder();
-    switch (this.model.mode) {
-      case 0: return model.extra;
-      case 1: {
-          for (const drum of this.model.drums) {
-            encoder.u8(drum.noteid);
-            encoder.u8(drum.trimlo);
-            encoder.u8(drum.trimhi);
-            encoder.u8(drum.pan);
-            encoder.pfxlen(2, () => encoder.raw(drum.serial));
-          }
-        } break;
-      case 2: {
-          let reqc = 0;
-          if (this.model.extra.length) reqc = 10;
-          else if (this.model.lfophase && this.model.lfodepth && this.model.lforate) reqc = 9;
-          else if (this.model.lfodepth !== 1 && this.model.lforate) reqc = 8;
-          else if (this.model.lforate) reqc = 7;
-          else if (this.model.wheelrange !== 200) reqc = 6;
-          else if (!this.model.pitchenv.isDefault) reqc = 5;
-          else if (!this.model.rangeenv.isDefault) reqc = 4;
-          else if (!this.model.levelenv.isDefault) reqc = 3;
-          else if (this.model.range) reqc = 2;
-          else if (this.model.rate) reqc = 1;
-          if (reqc <= 0) break;
-          let rate = Math.max(0, Math.min(0xffff, ~~(this.model.rate * 256)));
-          if (this.model.absrate) rate |= 0x8000; else rate &= 0x7fff;
-          encoder.u16be(rate);
-          if (reqc <= 1) break;
-          encoder.u16be(this.model.range * 256);
-          if (reqc <= 2) break;
-          encodeEnv(encoder, "level", this.model.levelenv);
-          if (reqc <= 3) break;
-          encodeEnv(encoder, "range", this.model.rangeenv);
-          if (reqc <= 4) break;
-          encodeEnv(encoder, "pitch", this.model.pitchenv);
-          if (reqc <= 5) break;
-          encoder.u16be(this.model.wheelrange);
-          if (reqc <= 6) break;
-          encoder.u16be(this.model.lforate * 256);
-          if (reqc <= 7) break;
-          encoder.u8(Math.max(0, Math.min(0xff, ~~(this.model.lfodepth * 256))));
-          if (reqc <= 8) break;
-          encoder.u8(Math.max(0, Math.min(0xff, ~~(this.model.lfophase * 256))));
-          if (reqc <= 9) break;
-          encoder.raw(this.model.extra);
-        } break;
-      case 3: {
-          let reqc = 0;
-          if (this.model.extra.length) reqc = 5;
-          else if (this.model.wheelrange !== 200) reqc = 4;
-          else if (!this.model.pitchenv.isDefault) reqc = 3;
-          else if (!this.model.levelenv.isDefault) reqc = 2;
-          else if (this.model.shape) reqc = 1;
-          if (reqc <= 0) break;
-          encoder.u8(this.model.shape);
-          if (reqc <= 1) break;
-          encodeEnv(encoder, "level", this.model.levelenv);
-          if (reqc <= 2) break;
-          encodeEnv(encoder, "pitch", this.model.pitchenv);
-          if (reqc <= 3) break;
-          encoder.u16be(this.model.wheelrange);
-          if (reqc <= 4) break;
-          encoder.raw(this.model.extra);
-        } break;
-      case 4: {
-          let reqc = 0;
-          if (this.model.extra.length) reqc = 5;
-          else if (this.model.wheelrange !== 200) reqc = 4;
-          else if (!this.model.pitchenv.isDefault) reqc = 3;
-          else if (!this.model.levelenv.isDefault) reqc = 2;
-          else if ((this.model.harmonics.length > 1) || ((this.model.harmonics.length === 1) && (this.model.harmonics[0] !== 0xffff))) reqc = 1;
-          if (reqc <= 0) break;
-          encoder.u8(this.model.harmonics.length);
-          for (const harm of this.model.harmonics) {
-            encoder.u16be(harm);
-          }
-          if (reqc <= 1) break;
-          encodeEnv(encoder, "level", this.model.levelenv);
-          if (reqc <= 2) break;
-          encodeEnv(encoder, "pitch", this.model.pitchenv);
-          if (reqc <= 3) break;
-          encoder.u16be(this.model.wheelrange);
-          if (reqc <= 4) break;
-          encoder.raw(this.model.extra);
-        } break;
-    }
-    return encoder.finish();
   }
   
   /* UI.
@@ -556,7 +352,7 @@ export class ModecfgModal {
   onSubmit(event) {
     event.stopPropagation();
     event.preventDefault();
-    this.resolve(this.encodeModel());
+    this.resolve(encodeModecfg(this.model));
     this.element.remove();
   }
 }
