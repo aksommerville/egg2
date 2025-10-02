@@ -849,7 +849,15 @@ input.toggle:checked + label.toggle.light {
   display: flex;
   flex-direction: row;
 }
-.PostModal .stage input[name='serial'] {
+.PostModal .stage .payload {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+}
+.PostModal .stage input[type='number'] {
+  width: 60px;
+}
+.PostModal .stage input[name='extra'] {
   flex: 1;
 }
 

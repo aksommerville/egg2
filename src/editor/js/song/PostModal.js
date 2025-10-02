@@ -4,6 +4,7 @@
  
 import { Dom } from "../Dom.js";
 import { Encoder } from "../Encoder.js";
+import { EauDecoder, encodePostStage, decodePostStage } from "./EauDecoder.js";
 
 export class PostModal {
   static getDependencies() {
@@ -55,7 +56,7 @@ export class PostModal {
   }
   
   spawnStage(parent, stage) {
-    const row = this.dom.spawn(parent, "DIV", ["stage"]);
+    const row = this.dom.spawn(parent, "DIV", ["stage"], { "data-stage-id": stage.id });
     this.dom.spawn(row, "INPUT", { type: "button", value: "X", "on-click": e => this.onDeleteStage(stage.id) });
     this.dom.spawn(row, "INPUT", { type: "button", value: "^", "on-click": e => this.onMoveStage(stage.id, -1) });
     this.dom.spawn(row, "INPUT", { type: "button" , value: "v", "on-click": e => this.onMoveStage(stage.id, 1) });
@@ -70,8 +71,38 @@ export class PostModal {
     }
     stageidSelect.value = stage.stageid;
     
-    //TODO friendlier per-stage-type ui
-    this.dom.spawn(row, "INPUT", { type: "text", name: "serial", value: this.hexdump(stage.serial), "on-input": e => this.onStageInput(stage.id, e.target.value) });
+    const payload = this.dom.spawn(row, "DIV", ["payload"]);
+    this.populateStageRow(stage);
+  }
+  
+  populateStageRow(stage) {
+    const element = this.element.querySelector(`.stage[data-stage-id='${stage.id}'] > .payload`);
+    if (!element) {
+      console.error(`PostModal: payload container for stage ${stage.id} not found`);
+      return;
+    }
+    element.innerHTML = "";
+    const discardKeys = ["id", "stageid"];
+    const keysOrder = [
+      "period", "depth", "phase",
+      "dry", "wet", "store", "feedback", "sparkle",
+      "extra",
+    ];
+    const keys = Object.keys(stage).filter(k => !discardKeys.includes(k));
+    keys.sort((a, b) => {
+      return keysOrder.indexOf(a) - keysOrder.indexOf(b);
+    });
+    for (let p=0; (p<keys.length) && !keysOrder.includes(keys[p]); p++) {
+      console.error(`Please add key ${JSON.stringify(keys[p])} to keysOrder in PostModal.populateStageRow`);
+    }
+    for (const k of keys) {
+      // [title] produces a tooltip
+      if (k === "extra") {
+        const input = this.dom.spawn(element, "INPUT", { type: "text", name: k, title: k, value: this.hexdump(stage[k]), "on-input": e => this.onPayloadHexInput(stage.id, k, e.target.value) });
+      } else {
+        const input = this.dom.spawn(element, "INPUT", { type: "number", name: k, title: k, value: stage[k], "on-input": e => this.onPayloadNumberInput(stage.id, k, e.target.value) });
+      }
+    }
   }
   
   hexdump(src) {
@@ -122,15 +153,30 @@ export class PostModal {
   }
   
   onStageIdChange(id, stageid) {
-    const stage = this.post.stages.find(s => s.id === id);
-    if (!stage) return;
-    stage.stageid = stageid;
+    const p = this.post.stages.findIndex(s => s.id === id);
+    if (p < 0) return;
+    const oldStage = this.post.stages[p];
+    if (oldStage.stageid === stageid) return;
+    // Lean on EauDecoder to produce the default model for this stageid.
+    const newStage = decodePostStage(new EauDecoder(new Uint8Array([stageid])));
+    newStage.id = oldStage.id;
+    this.post.stages[p] = newStage;
+    this.populateStageRow(newStage);
   }
   
-  onStageInput(id, value) {
+  onPayloadHexInput(id, k, v) {
+    v = this.unhexdump(v);
     const stage = this.post.stages.find(s => s.id === id);
     if (!stage) return;
-    stage.serial = this.unhexdump(value);
+    stage[k] = v;
+  }
+  
+  onPayloadNumberInput(id, k, v) {
+    v = +v;
+    if (isNaN(v)) return;
+    const stage = this.post.stages.find(s => s.id === id);
+    if (!stage) return;
+    stage[k] = v;
   }
   
   onSubmit(event) {
@@ -155,30 +201,30 @@ export class Post {
   
   _init() {
     if (!Post.nextStageId) Post.nextStageId = 1;
-    this.stages = []; // {id,stageid,serial}
+    this.stages = []; // { id, stageid, extra, ...more fields per EauDecoder.js:decodePostStage... }
   }
   
   _decode(src) {
-    for (let srcp=0; srcp<src.length;) {
-      const stageid = src[srcp++];
-      const len = src[srcp++] || 0;
-      if (srcp > src.length - len) break;
-      const serial = new Uint8Array(src.buffer, src.byteOffset + srcp, len);
-      this.stages.push({ id: Post.nextStageId++, stageid, serial });
-      srcp += len;
+    const decoder = new EauDecoder(src);
+    while (!decoder.finished()) {
+      const stage = decodePostStage(decoder);
+      stage.id = Post.nextStageId++;
+      this.stages.push(stage);
     }
   }
   
   addStage() {
-    this.stages.push({ id: Post.nextStageId++, stageid: 0, serial: new Uint8Array([]) });
+    const stage = {
+      id: Post.nextStageId++,
+      stageid: 0,
+      extra: new Uint8Array(0),
+    };
+    this.stages.push(stage);
   }
   
   encode() {
     const dst = new Encoder();
-    for (const stage of this.stages) {
-      dst.u8(stage.stageid);
-      dst.pfxlen(1, () => dst.raw(stage.serial));
-    }
+    for (const stage of this.stages) encodePostStage(dst, stage);
     return dst.finish();
   }
 }

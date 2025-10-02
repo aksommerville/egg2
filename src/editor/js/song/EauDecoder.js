@@ -38,6 +38,15 @@ export class EauDecoder {
     return v;
   }
   
+  u8len(fallback) {
+    if (this.srcp >= this.src.length) return fallback || new Uint8Array(0);
+    const len = this.src[this.srcp++];
+    if (this.srcp > this.src.length - len) { this.srcp = this.src.length; return fallback || new Uint8Array(0); }
+    const body = new Uint8Array(this.src.buffer, this.src.byteOffset + this.srcp, len);
+    this.srcp += len;
+    return body;
+  }
+  
   u16len(fallback) {
     if (this.srcp > this.src.length - 2) { this.srcp = this.src.length; return fallback; }
     const len = (this.src[this.srcp] << 8) | this.src[this.srcp + 1];
@@ -486,4 +495,100 @@ export function mergeModecfg(newMode, stashConfig, oldMode, oldConfig) {
   // And finally, stash or empty.
   if (stashConfig) return new Uint8Array(stashConfig);
   return new Uint8Array(0);
+}
+
+/* Decode one post stage, starting from (stageid).
+ * The full post block is a packed set of these, no other data.
+ * You provide a prepared EauDecoder.
+ * All stageid: {
+ *   stageid: u8
+ *   extra: Uint8Array
+ * }
+ * 1=DELAY: {
+ *   period: float, qnotes
+ *   dry: u8
+ *   wet: u8
+ *   store: u8
+ *   feedback: u8
+ *   sparkle: u8 (0..128..255)
+ * }
+ * 2=WAVESHAPER: {
+ *   // u16 levels in (extra)
+ * }
+ * 3=TREMOLO: {
+ *   period: float, qnotes
+ *   depth: u8
+ *   phase: u8
+ * }
+ */
+export function decodePostStage(decoder) {
+  const stage = {};
+  stage.stageid = decoder.u8();
+  const serial = decoder.u8len();
+  decoder = new EauDecoder(serial);
+  switch (stage.stageid) {
+    case 1: { // DELAY
+        stage.period = decoder.u8_8(1);
+        stage.dry = decoder.u8(0x80);
+        stage.wet = decoder.u8(0x80);
+        stage.store = decoder.u8(0x80);
+        stage.feedback = decoder.u8(0x80);
+        stage.sparkle = decoder.u8(0x80);
+      } break;
+    case 2: { // WAVESHAPER
+      } break;
+    case 3: { // TREMOLO
+        stage.period = decoder.u8_8(1);
+        stage.depth = decoder.u8(0xff);
+        stage.phase = decoder.u8(0);
+      } break;
+  }
+  stage.extra = decoder.remainder();
+  return stage;
+}
+
+/* Encode one post stage to your Encoder.
+ */
+export function encodePostStage(encoder, stage) {
+  encoder.u8(stage.stageid);
+  encoder.pfxlen(1, () => {
+    switch (stage.stageid) {
+    
+      case 1: { // DELAY
+          const fldc =
+            stage.extra.length ? 6 :
+            (stage.sparkle !== 0x80) ? 6 :
+            (stage.feedback !== 0x80) ? 5 :
+            (stage.store !== 0x80) ? 4 :
+            (stage.wet !== 0x80) ? 3 :
+            (stage.dry !== 0x80) ? 2 :
+            (stage.period !== 1) ? 1 :
+            0;
+          if (fldc < 1) break; encoder.u8_8(stage.period);
+          if (fldc < 2) break; encoder.u8(stage.dry);
+          if (fldc < 3) break; encoder.u8(stage.wet);
+          if (fldc < 4) break; encoder.u8(stage.store);
+          if (fldc < 5) break; encoder.u8(stage.feedback);
+          if (fldc < 6) break; encoder.u8(stage.sparkle);
+        } break;
+        
+      case 2: { // WAVESHAPER
+          // All content in (extra)
+        } break;
+        
+      case 3: { // TREMOLO
+          const fldc =
+            stage.extra.length ? 3 :
+            (stage.phase !== 0x00) ? 3 :
+            (stage.depth !== 0xff) ? 2 :
+            (stage.period !== 1) ? 1 :
+            0;
+          if (fldc < 1) break; encoder.u8_8(stage.period);
+          if (fldc < 2) break; encoder.u8(stage.depth);
+          if (fldc < 3) break; encoder.u8(stage.phase);
+        } break;
+        
+    }
+    encoder.raw(stage.extra);
+  });
 }
