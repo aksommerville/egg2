@@ -6,6 +6,7 @@ import { Dom } from "../Dom.js";
 import { SongService } from "./SongService.js";
 import { SongChannel } from "./Song.js";
 import { EventModal } from "./EventModal.js";
+import { EventFilterModal } from "./EventFilterModal.js";
 
 export class SongToolbarUi {
   static getDependencies() {
@@ -297,23 +298,64 @@ export class SongToolbarUi {
     if (this.songService.song.forceMinimumEndTime()) {
       this.songService.broadcast("dirty");
       this.songService.broadcast("eventsChanged");
-      //TODO If the song contains any Delay stages, can we show a gentle toast or something to remind the user that delay tails are not accounted for?
+      let hasDelay = !!this.songService.song.channels.find((channel) => {
+        for (let srcp=0; srcp<channel.post.length; ) {
+          if (channel.post[srcp++] === 0x01) {
+            return true;
+          }
+          const len = channel.post[srcp++];
+          srcp += len;
+        }
+        return false;
+      });
+      if (hasDelay) {
+        this.dom.toast("Delay tails not accounted for in auto end time.", "#ff0");
+      }
     }
   }
   
   action_transpose() {
-    console.log(`TODO SongToolbarUi.transpose`);
+    if (!this.songService.song) return;
+    const modal = this.dom.spawnModal(EventFilterModal);
+    modal.setup("transpose", this.songService.song);
+    modal.result.then(rsp => {
+      if (!rsp) return;
+      this.songService.song.events = rsp;
+      this.songService.broadcast("dirty");
+      this.songService.broadcast("eventsChanged");
+    }).catch(e => this.dom.modalError(e));
   }
   
   action_filter() {
-    console.log(`TODO SongToolbarUi.filter`);
+    if (!this.songService.song) return;
+    const modal = this.dom.spawnModal(EventFilterModal);
+    modal.setup("filter", this.songService.song);
+    modal.result.then(rsp => {
+      this.songService.song.events = rsp;
+      this.songService.broadcast("dirty");
+      this.songService.broadcast("eventsChanged");
+    }).catch(e => this.dom.modalError(e));
   }
   
   action_reduceWheels() {
-    console.log(`TODO SongToolbarUi.reduceWheels`);
+    if (!this.songService.song) return;
+    const modal = this.dom.spawnModal(EventFilterModal);
+    modal.setup("reduceWheels", this.songService.song);
+    modal.result.then(rsp => {
+      this.songService.song.events = rsp;
+      this.songService.broadcast("dirty");
+      this.songService.broadcast("eventsChanged");
+    }).catch(e => this.dom.modalError(e));
   }
   
   action_adjustVelocities() {
-    console.log(`TODO SongToolbarUi.adjustVelocities`);
+    if (!this.songService.song) return;
+    const modal = this.dom.spawnModal(EventFilterModal);
+    modal.setup("adjustVelocities", this.songService.song);
+    modal.result.then(rsp => {
+      this.songService.song.events = rsp;
+      this.songService.broadcast("dirty");
+      this.songService.broadcast("eventsChanged");
+    }).catch(e => this.dom.modalError(e));
   }
 }

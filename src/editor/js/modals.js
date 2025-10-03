@@ -111,3 +111,26 @@ export class ModalError {
     this.element.innerText = error;
   }
 }
+
+/* Toast: Definitely not "modal" but similar usage pattern. Show a self-dismissing message at the bottom of the window.
+ ******************************************************************************************/
+ 
+export class Toast {
+  static getDependencies() {
+    return [HTMLElement, Dom, Window];
+  }
+  constructor(element, dom, window) {
+    this.element = element;
+    this.dom = dom;
+    this.window = window;
+    this.element.addEventListener("animationend", e => {
+      this.element.remove();
+    }, { once: true });
+  }
+  
+  setup(message, color) {
+    this.element.innerHTML = "";
+    const msgelem = this.dom.spawn(this.element, "DIV", ["message"], message);
+    if (color) msgelem.style.backgroundColor = color;
+  }
+}

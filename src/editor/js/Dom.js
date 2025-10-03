@@ -4,7 +4,7 @@
  */
  
 import { Injector } from "./Injector.js";
-import { ModalPickOne, ModalText, ModalError } from "./modals.js";
+import { ModalPickOne, ModalText, ModalError, Toast } from "./modals.js";
 
 export class Dom {
   static getDependencies() {
@@ -110,6 +110,12 @@ export class Dom {
   modalError(error) {
     const modal = this.spawnModal(ModalError);
     modal.setup(error);
+  }
+  
+  // (color) optional; white if unspecified. Text is black.
+  toast(message, color) {
+    const toast = this.spawnController(this.document.body, Toast);
+    toast.setup(message, color);
   }
   
   /* If you're going to reparent an element (even moving around within the same parent),

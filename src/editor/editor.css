@@ -84,6 +84,27 @@ input.toggle:checked + label.toggle.light {
   min-height: 50vh;
 }
 
+.Toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50vw;
+  transform: translate(-50%, 0);
+  max-width: 50vw;
+}
+.Toast > .message {
+  padding: 10px;
+  border: 1px solid #000;
+  border-radius: 10px;
+  background-color: #fff;
+  color: #000;
+  animation: 4s fade-out;
+}
+@keyframes fade-out {
+  0% { opacity: 1 }
+  50% { opacity: 1 }
+  100% { opacity: 0 }
+}
+
 /* Root, sidebar, and associated bits.
  *************************************************************************************************/
 
@@ -891,4 +912,24 @@ input.toggle:checked + label.toggle.light {
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+.EventFilterModal .channelSelect {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.EventFilterModal .box {
+  padding: 2px;
+  border: 1px solid #000;
+  margin: 2px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #222;
+  color: #fff;
+}
+.EventFilterModal h2 {
+  margin: 0;
+  margin-bottom: 0.5em;
 }
