@@ -182,7 +182,7 @@ export class SongChannelsUi {
   }
   
   onEditModecfg(event, channel) {
-    const modal = this.dom.spawnModal(ModecfgModal);
+    const modal = this.dom.spawnModal(ModecfgModal, [this.songService]);
     modal.setup(event.ctrlKey ? 0 : channel.mode, channel.modecfg, channel.chid); // mode zero forces raw presentation
     modal.result.then(rsp => {
       if (!rsp) return;

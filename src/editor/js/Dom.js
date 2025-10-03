@@ -65,7 +65,7 @@ export class Dom {
   /* Like spawnController, but it goes in a new modal.
    * We add some logic to dismiss on OOB clicks (why isn't that the browser's default?), and to remove on close.
    */
-  spawnModal(controllerClass) {
+  spawnModal(controllerClass, overrides) {
     let downInBounds = true;
     const element = this.spawn(this.document.body, "DIALOG", [controllerClass.name], {
       "on-mousedown": event => { // Obnoxious hack to prevent dismissing when one drags from inside the modal to outside, eg selecting text.
@@ -85,7 +85,7 @@ export class Dom {
         element.remove();
       },
     });
-    const controller = this.injector.instantiate(controllerClass, [element]);
+    const controller = this.injector.instantiate(controllerClass, [element, ...(overrides || [])]);
     element.__egg_controller = controller;
     element.showModal();
     return controller;

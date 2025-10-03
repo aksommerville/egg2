@@ -10,6 +10,7 @@ import { SongService } from "./SongService.js";
 import { GM_DRUM_NAMES } from "./MidiConstants.js";
 import { HarmonicsUi } from "./HarmonicsUi.js";
 import { EnvUi } from "./EnvUi.js";
+import { SongEditor } from "./SongEditor.js";
 
 export class ModecfgModal {
   static getDependencies() {
@@ -278,9 +279,12 @@ export class ModecfgModal {
   }
   
   onEditDrum(drum) {
-    console.log(`TODO ModecfgModal.onEditDrum`, { drum });
-    //TODO Open a new SongEditor in a modal.
-    // Oh no, it will need its own SongService instance.
+    // DO NOT override SongService here; we explicitly want a new one:
+    const modal = this.dom.spawnModal(SongEditor);
+    modal.setupSerial(drum.serial, (song) => {
+      drum.serial = song.encode();
+      this.buildUi(); // Overkill. Can we defer until the modal dismisses?
+    });
   }
   
   // (note,trimlo,trimhi,pan), the scalar fields per drum

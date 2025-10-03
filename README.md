@@ -78,7 +78,7 @@ Features we *do* support:
 - - [x] PostModal: Mysterious "invalid input" error on a newish channel. ...due to initializing with empty arrays instead of empty Uint8Arrays.
 - - [x] PostModal fields per stage type.
 - - [x] Song actions (SongChannelsUi). Four remain unimplemented; all four require parameters from the user.
-- - [ ] IMPORTANT! ModecfgModal for drum: Spawn SongEditor in a modal per drum.
+- - [x] IMPORTANT! ModecfgModal for drum: Spawn SongEditor in a modal per drum.
 - - [ ] Special tooling to compare native vs web synth, in editor.
 - - [ ] Can we get the EAU unit logging out for delivery via eggdev http when appropriate? (eg tweaking standard instruments, have to jump back and forth to console to see errors).
 - - [x] Show events in SongToolbar's playhead minimap.

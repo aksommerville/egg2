@@ -1,5 +1,7 @@
 /* SongService.js
  * Proxies Data with extra Song-specific logic.
+ * ** We are not a singleton! **
+ * A new SongService gets created for each SongEditor, and must be passed as an override to all the sub-controllers.
  */
  
 import { Data } from "../Data.js";
@@ -10,14 +12,15 @@ import { Audio } from "../Audio.js"; // From the Egg Web Runtime, not part of ed
 
 export class SongService {
   static getDependencies() {
-    return [Data, Comm, Audio, Dom, Window];
+    return [Data, Comm, Audio, Dom, Window, "nonce"];
   }
-  constructor(data, comm, audio, dom, window) {
+  constructor(data, comm, audio, dom, window, nonce) {
     this.data = data;
     this.comm = comm;
     this.audio = audio;
     this.dom = dom;
     this.window = window;
+    this.nonce = nonce;
     
     this.song = null; // Set by SongEditor when it's alive.
     this.rid = 0;
@@ -38,6 +41,7 @@ export class SongService {
   
   /* We're a singleton, but we're also pretty context-sensitive.
    * SongEditor should call reset() as it loads so we can clear any transient state.
+   * XXX This shouldn't be necessary anymore; we're not a singleton now.
    */
   reset(song, rid) {
     this.audio.playEauSong(null, 0, false);
@@ -202,4 +206,3 @@ export class SongService {
   }
 }
 
-SongService.singleton = true;

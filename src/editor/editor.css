@@ -672,6 +672,13 @@ input.toggle:checked + label.toggle.light {
   display: flex;
   flex-direction: column;
   height: 100vh !important;
+  /* Set the default colors, because sometimes we're in a modal. */
+  background-color: #444;
+  color: #fff;
+}
+.SongEditor.shorter {
+  height: 90vh !important;
+  width: 90vw !important;
 }
 .SongEditor > .bottom {
   flex: 1;
