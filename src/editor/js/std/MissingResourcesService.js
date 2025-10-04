@@ -38,6 +38,7 @@ export class MissingResourcesService {
       switch (res.type) {
       
         // Some types, we know there's nothing to validate.
+        //XXX Not true! We could look for drum channels in a song, report missing drums. Or in general, unconfigured channels.
         case "sound":
         case "song":
           continue;

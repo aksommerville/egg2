@@ -17,6 +17,7 @@ import { MapEditor } from "./map/MapEditor.js";
 import { SongEditor } from "./song/SongEditor.js";
 import { StringsEditor } from "./std/StringsEditor.js";
 import { MissingResourcesService } from "./std/MissingResourcesService.js";
+import { AudioCompareModal } from "./song/AudioCompareModal.js";
  
 export class Actions {
   static getDependencies() {
@@ -33,7 +34,7 @@ export class Actions {
       ...this.override.actions,
       { name: "launch", label: "Launch", fn: () => this.launchService.launch() },
       { name: "missingResources", label: "Missing Resources...", fn: () => this.missingResourcesService.detectAndReport() },
-      //TODO standard actions
+      { name: "audioCompare", label: "Compare native/web audio...", fn: () => this.dom.spawnModal(AudioCompareModal) },
     ];
     
     this.editors = [

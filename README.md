@@ -79,7 +79,7 @@ Features we *do* support:
 - - [x] PostModal fields per stage type.
 - - [x] Song actions (SongChannelsUi). Four remain unimplemented; all four require parameters from the user.
 - - [x] IMPORTANT! ModecfgModal for drum: Spawn SongEditor in a modal per drum.
-- - [ ] Special tooling to compare native vs web synth, in editor.
+- - [x] Special tooling to compare native vs web synth, in editor.
 - - [ ] Can we get the EAU unit logging out for delivery via eggdev http when appropriate? (eg tweaking standard instruments, have to jump back and forth to console to see errors).
 - - [x] Show events in SongToolbar's playhead minimap.
 - - Synth (both)...
@@ -106,6 +106,8 @@ Features we *do* support:
 - [ ] Web.
 - - [ ] Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
 - - [ ] Touch input, on-screen gamepad.
+- [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
+- [ ] editor: MissingResourcesService: For song, Report missing drums and unconfigured channels.
 - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - [ ] native: Record and playback session.
 - [ ] native: Add an initial audio delay like we did in v1. I've noticed missed notes in Humm Fu.
