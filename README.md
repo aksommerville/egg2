@@ -71,17 +71,6 @@ Features we *do* support:
 ## TODO
 
 - [ ] Audio
-- - Editor...
-- - [x] SongService: Should we auto-re-play on dirty? ...NO
-- - [x] SongService+SongChannelsUi: Mute and Solo buttons per channel.
-- - [x] SongChannelsUi: Copy levelenv when changing mode, and maybe do a per-mode default.
-- - [x] PostModal: Mysterious "invalid input" error on a newish channel. ...due to initializing with empty arrays instead of empty Uint8Arrays.
-- - [x] PostModal fields per stage type.
-- - [x] Song actions (SongChannelsUi). Four remain unimplemented; all four require parameters from the user.
-- - [x] IMPORTANT! ModecfgModal for drum: Spawn SongEditor in a modal per drum.
-- - [x] Special tooling to compare native vs web synth, in editor.
-- - [ ] Can we get the EAU unit logging out for delivery via eggdev http when appropriate? (eg tweaking standard instruments, have to jump back and forth to console to see errors).
-- - [x] Show events in SongToolbar's playhead minimap.
 - - Synth (both)...
 - - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
 - - - Humm Fu had pretty decent hihats, but I had trouble with snare. I think we do need subtractive noise.

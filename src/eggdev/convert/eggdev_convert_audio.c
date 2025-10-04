@@ -20,19 +20,11 @@ static int eggdev_get_chdr(void *dstpp,int fqpid) {
  
 static int eggdev_cvt_eau(
   struct eggdev_convert_context *ctx,
-  int (*eaufn)(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names)
+  int (*eaufn)(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg)
 ) {
   const char *refname=ctx->refname;
   if (ctx->errmsg&&!refname) refname="<EAU>"; // EAU won't log at all without a refname.
-  int err=eaufn(ctx->dst,ctx->src,ctx->srcc,refname,eggdev_get_chdr,ctx->flags&EGGDEV_CVTFLAG_STRIP);
-  if (err<0) {
-    if (err==-2) {
-      /* eggdev allows redirection of error messages but eau does not.
-       * If the caller requested redirection, give them a little "oops" message letting them know that stderr has the useful details.
-       */
-      if (ctx->errmsg) sr_encode_fmt(ctx->errmsg,"%s: Convert failed. More detail in server logs.\n",refname);
-    }
-  }
+  int err=eaufn(ctx->dst,ctx->src,ctx->srcc,refname,eggdev_get_chdr,ctx->flags&EGGDEV_CVTFLAG_STRIP,ctx->errmsg);
   return err;
 }
 

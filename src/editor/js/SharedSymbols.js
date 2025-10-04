@@ -7,13 +7,15 @@
  
 import { Comm } from "./Comm.js";
 import { Song } from "./song/Song.js";
+import { Dom } from "./Dom.js"; // for error messages only
 
 export class SharedSymbols {
   static getDependencies() {
-    return [Comm];
+    return [Comm, Dom];
   }
-  constructor(comm) {
+  constructor(comm, dom) {
     this.comm = comm;
+    this.dom = dom;
     
     this.symv = []; // {nstype,ns,k,v,comment?,argc?}
     this.instruments = null; // null or Song
@@ -58,14 +60,15 @@ export class SharedSymbols {
     if (this.instruments) return Promise.resolve(this.instruments);
     if (this.instrumentsPromise) return this.instrumentsPromise;
     return this.instrumentsPromise = this.comm.httpBinary("GET", "/api/instruments").catch(e => {
-      console.log(`GET /api/instruments failed`, e);
+      if (e?.text) e?.text().then(msg => this.dom.modalError(msg || e));
+      else this.dom.modalError(e);
       return null;
     }).then(rsp => {
       this.instrumentsPromise = null;
       try {
         this.instruments = new Song(new Uint8Array(rsp));
       } catch (e) {
-        console.log(`decode instruments failed`, e);
+        this.dom.modalError(e);
         this.instruments = new Song();
       }
       return this.instruments;

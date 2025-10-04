@@ -37,6 +37,7 @@ struct midi_eau_context {
   const void *text;
   int textc;
   int strip_names;
+  struct sr_encoder *errmsg; // WEAK
 };
 
 static void midi_eau_context_cleanup(struct midi_eau_context *ctx) {
@@ -56,7 +57,8 @@ static int fail(struct midi_eau_context *ctx,const char *fmt,...) {
   int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
   if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
   while (msgc&&((unsigned char)msg[msgc-1]<=0x20)) msgc--;
-  fprintf(stderr,"%s: %.*s\n",ctx->path,msgc,msg);
+  if (ctx->errmsg) sr_encode_fmt(ctx->errmsg,"%s: %.*s\n",ctx->path,msgc,msg);
+  else fprintf(stderr,"%s: %.*s\n",ctx->path,msgc,msg);
   ctx->logged_error=1;
   return -2;
 }
@@ -335,8 +337,8 @@ static int midi_eau_inner(struct midi_eau_context *ctx,const void *src,int srcc)
 /* MIDI from EAU, main entry point.
  */
  
-int eau_cvt_midi_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names) {
-  struct midi_eau_context ctx={.dst=dst,.path=path,.strip_names=strip_names};
+int eau_cvt_midi_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg) {
+  struct midi_eau_context ctx={.dst=dst,.path=path,.strip_names=strip_names,.errmsg=errmsg};
   int err=midi_eau_inner(&ctx,src,srcc);
   midi_eau_context_cleanup(&ctx);
   return err;

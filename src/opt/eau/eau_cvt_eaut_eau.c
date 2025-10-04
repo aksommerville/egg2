@@ -76,6 +76,7 @@ struct eautd {
   struct eautd_ns ns;
   int indent;
   int strip_names;
+  struct sr_encoder *errmsg; // WEAK
 };
 
 static void eautd_cleanup(struct eautd *ctx) {
@@ -94,7 +95,8 @@ static int eautd_fail(struct eautd *eautd,const char *fmt,...) {
   int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
   if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
   while (msgc&&(msg[msgc-1]==0x0a)) msgc--;
-  fprintf(stderr,"%s: %.*s\n",eautd->path,msgc,msg);
+  if (eautd->errmsg) sr_encode_fmt(eautd->errmsg,"%s: %.*s\n",eautd->path,msgc,msg);
+  else fprintf(stderr,"%s: %.*s\n",eautd->path,msgc,msg);
   return eautd->error=-2;
 }
  
@@ -106,7 +108,8 @@ static void eautd_warn(struct eautd *eautd,const char *fmt,...) {
   int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
   if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
   while (msgc&&(msg[msgc-1]==0x0a)) msgc--;
-  fprintf(stderr,"%s:WARNING: %.*s\n",eautd->path,msgc,msg);
+  if (eautd->errmsg) sr_encode_fmt(eautd->errmsg,"%s:WARNING: %.*s\n",eautd->path,msgc,msg);
+  else fprintf(stderr,"%s:WARNING: %.*s\n",eautd->path,msgc,msg);
 }
 
 /* Append output, managing indent and newline.
@@ -624,8 +627,8 @@ static int eautd_inner(struct eautd *ctx,const uint8_t *src,int srcc) {
 /* EAU-Text from EAU, main entry point.
  */
  
-int eau_cvt_eaut_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names) {
-  struct eautd ctx={.dst=dst,.path=path,.strip_names=strip_names};
+int eau_cvt_eaut_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg) {
+  struct eautd ctx={.dst=dst,.path=path,.strip_names=strip_names,.errmsg=errmsg};
   int err=eautd_inner(&ctx,src,srcc);
   eautd_cleanup(&ctx);
   return err;

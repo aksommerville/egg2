@@ -13,6 +13,7 @@ struct eau_midi_context {
   struct sr_encoder *dst;
   struct midi_file *midi;
   const char *path;
+  struct sr_encoder *errmsg; // WEAK
   eau_get_chdr_fn get_chdr;
   int logged_error;
   int tempo; // ms/qnote. 500 unless a Meta Set Tempo replaces it.
@@ -72,8 +73,21 @@ static int fail(struct eau_midi_context *ctx,const char *fmt,...) {
   int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
   if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
   while (msgc&&((unsigned char)msg[msgc-1]<=0x20)) msgc--;
-  fprintf(stderr,"%s: %.*s\n",ctx->path,msgc,msg);
+  if (ctx->errmsg) sr_encode_fmt(ctx->errmsg,"%s: %.*s\n",ctx->path,msgc,msg);
+  else fprintf(stderr,"%s: %.*s\n",ctx->path,msgc,msg);
   return -2;
+}
+
+static void warn(struct eau_midi_context *ctx,const char *fmt,...) {
+  if (!ctx->path) return;
+  char msg[256];
+  va_list vargs;
+  va_start(vargs,fmt);
+  int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
+  if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
+  while (msgc&&((unsigned char)msg[msgc-1]<=0x20)) msgc--;
+  if (ctx->errmsg) sr_encode_fmt(ctx->errmsg,"%s:WARNING: %.*s\n",ctx->path,msgc,msg);
+  else fprintf(stderr,"%s:WARNING: %.*s\n",ctx->path,msgc,msg);
 }
 
 /* Add channel.
@@ -149,7 +163,7 @@ static int eau_midi_collect_headers(struct eau_midi_context *ctx) {
                   int chid=((uint8_t*)event.block.v)[0];
                   struct eau_midi_channel *channel=eau_midi_require_channel(ctx,chid);
                   if (!channel) return -1;
-                  if (channel->chdr&&ctx->path) fprintf(stderr,"%s:WARNING: Multiple CHDR for channel %d. Using the last.\n",ctx->path,chid);
+                  if (channel->chdr&&ctx->path) warn(ctx,"Multiple CHDR for channel %d. Using the last.",ctx->path,chid);
                   channel->chdr=event.block.v;
                   channel->chdrc=event.block.c;
                 }
@@ -414,8 +428,8 @@ static int eau_midi_encode_events(struct eau_midi_context *ctx) {
                   int dur=(int)((rtime-hold->starttime)*1000.0)>>2;
                   if (dur>0) {
                     if (dur>0xfff) {
-                      if (ctx->path) fprintf(stderr,
-                        "%s:WARNING: Reducing duration of note 0x%02x on channel %d around time %.03f to 4095 ms from %d.\n",
+                      if (ctx->path) warn(ctx,
+                        "Reducing duration of note 0x%02x on channel %d around time %.03f to 4095 ms from %d.",
                         ctx->path,hold->noteid,hold->chid,hold->starttime,dur
                       );
                       dur=0xff;
@@ -435,8 +449,8 @@ static int eau_midi_encode_events(struct eau_midi_context *ctx) {
               delay=eau_midi_write_delay(ctx,delay);
               struct hold *hold=eau_midi_add_hold(ctx);
               if (!hold) {
-                if (ctx->path) fprintf(stderr,
-                  "%s:WARNING: Failed to add hold. Note 0x%02x on channel %d around %.03f will have minimum duration.\n",
+                if (ctx->path) warn(ctx,
+                  "Failed to add hold. Note 0x%02x on channel %d around %.03f will have minimum duration.",
                   ctx->path,event.cv.a,event.cv.chid,rtime
                 );
               } else {
@@ -480,12 +494,12 @@ static int eau_midi_encode_events(struct eau_midi_context *ctx) {
   if (err<0) return fail(ctx,"Error streaming MIDI events.");
   eau_midi_write_delay(ctx,delay);
   if (ctx->holdc&&ctx->path) {
-    fprintf(stderr,"%s:WARNING: %d notes were not released.\n",ctx->path,ctx->holdc);
+    warn(ctx,"%d notes were not released.",ctx->path,ctx->holdc);
     /**
     const struct hold *hold=ctx->holdv;
     int i=ctx->holdc;
     for (;i-->0;hold++) {
-      fprintf(stderr,"  %d: 0x%02x @ %.03fs\n",hold->chid,hold->noteid,hold->starttime);
+      warn(ctx,"  %d: 0x%02x @ %.03fs",hold->chid,hold->noteid,hold->starttime);
     }
     /**/
   }
@@ -527,8 +541,8 @@ static int eau_cvt_eau_midi_inner(struct eau_midi_context *ctx,const void *src,i
 /* EAU from MIDI, main entry point.
  */
  
-int eau_cvt_eau_midi(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names) {
-  struct eau_midi_context ctx={.dst=dst,.path=path,.get_chdr=get_chdr,.strip_names=strip_names};
+int eau_cvt_eau_midi(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg) {
+  struct eau_midi_context ctx={.dst=dst,.path=path,.get_chdr=get_chdr,.strip_names=strip_names,.errmsg=errmsg};
   int err=eau_cvt_eau_midi_inner(&ctx,src,srcc);
   eau_midi_context_cleanup(&ctx);
   return err;

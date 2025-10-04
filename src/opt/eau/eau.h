@@ -34,19 +34,21 @@ typedef int (*eau_get_chdr_fn)(void *dstpp,int fqpid);
  * If (srcfmt) is UNKNOWN, we'll guess or fail.
  * If (dstfmt) is UNKNOWN, EAU converts to MIDI and everything else to EAU.
  * (an edge case: If both formats are unknown, we fail, we don't consider those equivalent).
+ * (errmsg) to redirect logging, null to use stderr or suppress entirely if (path) null.
  */
 int eau_convert(
   struct sr_encoder *dst,int dstfmt,
   const void *src,int srcc,int srcfmt,
   const char *path,
   eau_get_chdr_fn get_chdr,
-  int strip_names
+  int strip_names,
+  struct sr_encoder *errmsg
 );
 
-int eau_cvt_eau_eaut(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names);
-int eau_cvt_eau_midi(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names);
-int eau_cvt_eaut_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names);
-int eau_cvt_midi_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names);
+int eau_cvt_eau_eaut(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg);
+int eau_cvt_eau_midi(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg);
+int eau_cvt_eaut_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg);
+int eau_cvt_midi_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg);
 
 /* EAU files.
  **********************************************************************/
