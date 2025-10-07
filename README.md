@@ -67,46 +67,56 @@ Features we *do* support:
 
 - [Zen Garden](https://github.com/aksommerville/zennoniwa)
 - [Humm Fu](https://github.com/aksommerville/hummfu)
+- [Mysteries of the Crypt](https://github.com/aksommerville/myscrypt)
 
 ## TODO
 
-- [ ] Audio
-- - Synth (both)...
+- [ ] Major changes.
 - - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
 - - - Humm Fu had pretty decent hihats, but I had trouble with snare. I think we do need subtractive noise.
 - - - [ ] Use a precalculated noise buffer, say one second long, generated with a private PRNG. That way, native and web can produce exactly the same noise.
 - - - - They'll still sound different at different sample rates but I don't think we can avoid that.
 - - [ ] Also add IIR post stages. They will make the HARSH voice mode much more useful.
-- - [ ] Native and web do not sound the same. Once better tooling is in place, figure out why and tweak them closer.
-- - [ ] Music level is too high relative to sound effects. Cheat it down globally. Fudged a correction in both Zen Garden and Humm Fu.
-- - Synth (web)...
+- - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
+- - [ ] Standard instruments.
+- - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
+- - - [ ] Native menu.
+- - - [ ] Native input config.
+- - - [ ] Web menu.
+- - - [ ] Web input config.
+- - [ ] Web: Touch input, on-screen gamepad.
+- [ ] Audio
 - - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
 - - - Probably related to that, FM voices really can't bend at all, the modulator goes out of sync.
 - - [ ] Check default envelopes. I think I'm hearing some clicking when unconfigured.
-- - Synth (native)...
 - - [ ] In Humm Fu, there's a pop as you enter gameover. Due to terminating song with Delay posts?
-- - And finally...
-- - [ ] Standard instruments.
-- [ ] In-game menu. Quit, Audio prefs, Language, Input config.
-- - [ ] Native menu.
-- - [ ] Native input config.
-- - [ ] Web menu.
-- - [ ] Web input config.
-- [ ] Web.
-- - [ ] Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
-- - [ ] Touch input, on-screen gamepad.
-- [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
-- [ ] editor: MissingResourcesService: For song, Report missing drums and unconfigured channels.
-- [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
-- [ ] native: Record and playback session.
-- [ ] native: Add an initial audio delay like we did in v1. I've noticed missed notes in Humm Fu.
-- [x] CommandListEditor: New blank fields are getting created as I set up a new sprite.
-- [ ] macos: System language
-- [ ] windows: System language
-- [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
-- [ ] EGG_GLSL_VERSION. Currently pretty hacky.
-- [ ] macos: eggrun
-- [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
+- [ ] Audio review, when close to ready.
+- - [ ] Native and web do not sound the same. Once better tooling is in place, figure out why and tweak them closer.
+- - [ ] Music level is too high relative to sound effects. Cheat it down globally. Fudged a correction in both Zen Garden and Humm Fu.
+- [ ] Minor bugs and tweaks outstanding.
+- - [ ] editor: World map. Ugh, I needed this badly during Mysteries of the Crypt. :(
+- - [ ] MapEditor: Producing 3-byte "position" commands, which can never be legal.
+- - [ ] eggdev: Builds still do not appear to pull in their deps correctly; I'm needing to `make clean` when I shouldn't need to.
+- - [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
+- - [ ] editor: Rainbow pencil overwrites appointment-only neighbors, it shouldn't.
+- - [ ] MapEditor: We can do better with the edit-poi modal...
+- - - [ ] Drop-down for sprites.
+- - - [ ] If `NS_sprtype_` exists and the selected sprite links to it, use its comment as the remainder of the command.
+- - - - This bit me in Mysteries of the Crypt. Would have been great to get a little hint about the arg format when placing a sprite.
+- - [ ] MapEditor: Can we handle transparent tiles better? Maybe `NS_sys_bgcolor` or something?
+- - [ ] TilesheetEditor: Weird when the image is mostly transparent. Use a different color for the margin.
+- - [ ] editor: New map modal doesn't dismiss after creating map, in "position" regime. Also, got a wildly incorrect position.
+- - [ ] editor: Maps get created with 3-param position. There are no 3-param command sizes. Make it 2 or 4.
+- - [ ] editor: MissingResourcesService: For song, Report missing drums and unconfigured channels.
+- - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
+- - [ ] native: Record and playback session.
+- - [ ] native: Add an initial audio delay like we did in v1. I've noticed missed notes in Humm Fu.
+- - [ ] macos: System language
+- - [ ] windows: System language
+- - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
+- - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
+- - [ ] macos: eggrun
+- - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
 - [ ] Review all "TODO" in source, there's a ton of them.
 - With the above complete, we can start migrating games:
 - [ ] Rewrite or migrate eggsamples for v2.

@@ -157,13 +157,23 @@ export class MapService {
   // Resolves with new resource toc entry on success.
   generateNeighbor(map, dx, dy, name, rid) {
     for (const layer of this.layout) {
-      const p = layer.v.findIndex(r => r?.map === map);
-      if (p < 0) continue;
-      const y = Math.floor(p / layer.w);
-      const x = p % layer.w;
-      const nx = x + dx;
-      const ny = y + dy;
-      layer.growTo(nx, ny); // BEWARE: (p) is now invalid.
+
+      let nx, ny;
+      if (this.neighborStrategy === "pointer") {
+        const p = layer.v.findIndex(r => r?.map === map);
+        if (p < 0) continue;
+        const y = Math.floor(p / layer.w);
+        const x = p % layer.w;
+        nx = x + dx;
+        ny = y + dy;
+      } else if (this.neighborStrategy === "coords") {
+        const position = map.cmd.getFirstArgArray("position");
+        if (!position || (position.length < 3)) return Promise.reject("Invalid map position");
+        nx = +position[1] + dx;
+        ny = +position[2] + dy;
+      }
+      
+      layer.growTo(nx, ny);
       const np = ny * layer.w + nx;
       if (layer.v[np]) return Promise.reject("Position already in use.");
       if (!rid) rid = this.data.unusedId("map");
@@ -193,7 +203,7 @@ export class MapService {
         this.replaceNeighborCommand(n?.map, 4, name || rid);
         this.replaceNeighborCommand(s?.map, 3, name || rid);
       } else if (this.neighborStrategy === "coords") {
-        nmap.cmd.commands.push(["position", nx.toString, ny.toString, layer.z.toString()]);
+        nmap.cmd.commands.push(["position", nx.toString(), ny.toString(), layer.z.toString()]);
       }
       // Don't install it in (layer.v). Once we add the resource in Data, it cascades back.
       const serial = nmap.encode();
