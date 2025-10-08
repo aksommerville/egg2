@@ -256,6 +256,7 @@ static int gen_shared_symbols(struct eggdev_project_context *ctx) {
     "// Define (mapw,maph) if you're using fixed-size maps.\n"
     "//#define NS_sys_mapw 20\n"
     "//#define NS_sys_maph 11\n"
+    "#define NS_sys_bgcolor 0x000000\n"
     "\n"
     "#define CMD_map_image     0x20 /* u16:imageid */\n"
     "// 'position' or 'neighbors' (or neither). Not both.\n"

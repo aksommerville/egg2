@@ -103,8 +103,8 @@ Features we *do* support:
 - - - [x] Drop-down for sprites.
 - - - [x] If `NS_sprtype_` exists and the selected sprite links to it, use its comment as the remainder of the command.
 - - - - This bit me in Mysteries of the Crypt. Would have been great to get a little hint about the arg format when placing a sprite.
-- - [ ] MapEditor: Can we handle transparent tiles better? Maybe `NS_sys_bgcolor` or something?
-- - [ ] TilesheetEditor: Weird when the image is mostly transparent. Use a different color for the margin.
+- - [x] MapEditor: Can we handle transparent tiles better? Maybe `NS_sys_bgcolor` or something?
+- - [x] TilesheetEditor: Weird when the image is mostly transparent. Use a different color for the margin.
 - - [x] editor: New map modal doesn't dismiss after creating map, in "position" regime. Also, got a wildly incorrect position.
 - - [x] editor: Maps get created with 3-param position. There are no 3-param command sizes. Make it 2 or 4.
 - - [ ] editor: Delete resource, if selected we should reload with no selected resource.

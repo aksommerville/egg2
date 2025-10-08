@@ -202,6 +202,8 @@ export class TilesheetEditor {
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = "#222";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#333";
+    ctx.fillRect(this.layout.x0, this.layout.y0, this.layout.stride * 16, this.layout.stride * 16);
     if (!this.tilesheet) return;
     
     // Background and image for each cell.

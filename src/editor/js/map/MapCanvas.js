@@ -7,18 +7,20 @@ import { Data } from "../Data.js";
 import { MapService } from "./MapService.js";
 import { MapPaint } from "./MapPaint.js";
 import { TilesheetEditor } from "../std/TilesheetEditor.js";
+import { SharedSymbols } from "../SharedSymbols.js";
 
 export class MapCanvas {
   static getDependencies() {
-    return [HTMLElement, Dom, Data, MapService, MapPaint, Window];
+    return [HTMLElement, Dom, Data, MapService, MapPaint, Window, SharedSymbols];
   }
-  constructor(element, dom, data, mapService, mapPaint, window) {
+  constructor(element, dom, data, mapService, mapPaint, window, sharedSymbols) {
     this.element = element;
     this.dom = dom;
     this.data = data;
     this.mapService = mapService;
     this.mapPaint = mapPaint;
     this.window = window;
+    this.sharedSymbols = sharedSymbols;
     
     this.margin = 200; // Margin on all sides, in framebuffer pixels.
     this.edgeGap = 10; // Within (margin), a gap to accentuate the real map's edge.
@@ -36,6 +38,9 @@ export class MapCanvas {
     this.mapPaintListener = this.mapPaint.listen(e => this.onPaintEvent(e));
     this.refreshSizer();
     this.forceScrollerPosition();
+    
+    this.bgcolor = this.sharedSymbols.getValue("NS", "sys", "bgcolor") || 0;
+    this.bgcolor = "#" + this.bgcolor.toString(16).padStart(6, "0");
     
     this.data.fetchImageByUrl("../../icons.png").then(image => {
       this.icons = image;
@@ -96,7 +101,8 @@ export class MapCanvas {
     this.scrolly = scroller.scrollTop;
     const ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, bounds.width, bounds.height);
+    ctx.fillStyle = this.bgcolor;
+    ctx.fillRect(0, 0, bounds.width, bounds.height);
     const nw = this.coordsMapFromElement(0, 0);
     const se = this.coordsMapFromElement(bounds.width, bounds.height);
     const tilesize = this.mapPaint.tilesize * this.mapPaint.zoom;
