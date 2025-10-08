@@ -35,5 +35,7 @@ The following tables are used by editor if present:
 - `neighbors`: Mask of expected neighbors in the same family. 0x80..0x01 = NW,N,NE,W,E,SW,S,SE
 - `weight`: Inverse relative likelihood of this tile, when there's multiple candidates. 0=likely, 254=unlikely, 255=appointment-only.
 
+`weight==255` (appointment-only) means it participates in neighbor detection, but will never be selected or modified automatically.
+
 Additionally, if you declare a namespace that matches the table name, editor will show hints.
 eg `NS_tilesheet_physics`, then `NS_physics_vacant=0`, `NS_physics_solid=1`, and you'll see helpful "vacant", "solid" in the editor.

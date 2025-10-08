@@ -98,7 +98,7 @@ Features we *do* support:
 - - [x] MapEditor: Producing 3-byte "position" commands, which can never be legal.
 - - [ ] eggdev: Builds still do not appear to pull in their deps correctly; I'm needing to `make clean` when I shouldn't need to.
 - - [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
-- - [ ] editor: Rainbow pencil overwrites appointment-only neighbors, it shouldn't.
+- - [x] editor: Rainbow pencil overwrites appointment-only neighbors, it shouldn't. ...actually you can't even place an appt-only with the rainbow, if neighbors exist. ouch
 - - [x] MapEditor: We can do better with the edit-poi modal...
 - - - [x] Drop-down for sprites.
 - - - [x] If `NS_sprtype_` exists and the selected sprite links to it, use its comment as the remainder of the command.

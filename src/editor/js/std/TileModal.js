@@ -266,7 +266,17 @@ export class TileModal {
   
   describeValue(k, v) {
     if (PROPOSE_UNIQUE_ID.includes(k)) return "";
-    return this.sharedSymbols.getName("NS", k, v);
+    const explicit = this.sharedSymbols.getName("NS", k, v);
+    if (explicit) return explicit;
+    switch (k) {
+      case "weight": switch (v) {
+          case 0: return "likeliest";
+          case 254: return "unlikeliest";
+          case 255: return "appointment-only";
+        } break;
+      // We could describe "neighbors" but no point: There's a visual widget for them, doing the job better.
+    }
+    return "";
   }
   
   updateDesc(k) {

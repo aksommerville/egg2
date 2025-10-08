@@ -471,6 +471,8 @@ export class MapPaint {
     const tileid = this.map.v[p];
     const family = this.tilesheet.tables.family[tileid];
     if (!family) return;
+    const weight = this.tilesheet.tables.weight?.[tileid] || 0;
+    if (weight === 0xff) return;
     const nmask = this.gatherNeighborMask(x, y, p, family);
     const ntileid = this.chooseTile(tileid, family, nmask);
     if (ntileid === tileid) return;
