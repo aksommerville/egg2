@@ -18,6 +18,7 @@
 
 #define CMD_sprite_image 0x20 /* u16:imageid */
 #define CMD_sprite_tile  0x21 /* u8:tileid, u8:xform */
+#define CMD_sprite_type  0x22 /* u16:sprtype */
 
 #define NS_tilesheet_physics 1
 #define NS_tilesheet_family 0
@@ -27,5 +28,10 @@
 #define NS_physics_vacant 0
 #define NS_physics_solid 1
 #define NS_physics_water 2
+
+// Editor uses the comment after a 'sprtype' symbol as a prompt in the new-sprite modal.
+#define NS_sprtype_dummy 0 /* (u16)ABC (u16)XYZ */
+#define FOR_EACH_SPRTYPE \
+  _(dummy)
 
 #endif

@@ -53,6 +53,11 @@ export class SharedSymbols {
     return !!this.symv.find(sym => ((sym.nstype === "CMD") && (sym.ns === tname)));
   }
   
+  // Empty string if undefined.
+  getComment(nstype, ns, name) {
+    return this.symv.find(s => ((s.nstype === nstype) && (s.ns === ns) && (s.k === name)))?.comment || "";
+  }
+  
   /* Resolves to an Instruments instance containing the SDK's default instruments.
    * Logs errors and never rejects.
    */

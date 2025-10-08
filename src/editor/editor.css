@@ -665,6 +665,10 @@ input.toggle:checked + label.toggle.light {
   pointer-events: none;
 }
 
+.EditPoiModal input[name="cmd"] {
+  width: 500px;
+}
+
 /* Song.
  *********************************************************************************************/
  

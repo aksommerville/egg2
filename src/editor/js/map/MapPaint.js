@@ -17,6 +17,7 @@ import { MapResizeModal } from "./MapResizeModal.js";
 import { Actions } from "../Actions.js";
 import { NewMapModal } from "./NewMapModal.js";
 import { Override } from "../../Override.js";
+import { EditPoiModal } from "./EditPoiModal.js";
  
 export class MapPaint {
   static getDependencies() {
@@ -722,20 +723,10 @@ export class MapPaint {
    
   poieditBegin(x, y) {
     const poi = this.getFocusPoi();
-    let prompt, initial;
-    if (!poi) {
-      prompt = "New command:";
-      initial = `KEYWORD @${x},${y}`;
-    } else if (poi.mapid !== this.map.rid) {
-      prompt = `Command in remote map ${poi.mapid}:`;
-      initial = poi.cmd.join(" ");
-    } else {
-      prompt = "Command:";
-      initial = poi.cmd.join(" ");
-    }
-    this.dom.modalText(prompt, initial).then(rsp => {
-      if (typeof(rsp) !== "string") return;
-      if (rsp === initial) return;
+    const modal = this.dom.spawnModal(EditPoiModal);
+    modal.setup(poi, this.map, x, y);
+    modal.result.then(rsp => {
+      if (rsp === null) return;
       let map = this.map;
       if (poi && (poi.mapid !== this.map.rid)) {
         map = this.mapService.getByRid(poi.mapid);
@@ -744,7 +735,11 @@ export class MapPaint {
       if (poi) {
         const cmdp = map.cmd.commands.indexOf(poi.cmd);
         if (cmdp < 0) return;
-        map.cmd.commands[cmdp] = rsp.split(/\s+/g).filter(v => v);
+        if (rsp) {
+          map.cmd.commands[cmdp] = rsp.split(/\s+/g).filter(v => v);
+        } else {
+          map.cmd.commands.splice(cmdp, 1);
+        }
         if (poi.mapid !== this.map.rid) this.mapService.dirtyRid(poi.mapid);
       } else {
         map.cmd.commands.push(rsp.split(/\s+/g).filter(v => v));
@@ -753,7 +748,6 @@ export class MapPaint {
       this.broadcast({ type: "refreshDetailTattle" });
       this.broadcast({ type: "commands" });
     });
-    return false;
   }
   
   poieditMotion(x, y) {
