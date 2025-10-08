@@ -109,6 +109,7 @@ Features we *do* support:
 - - [x] editor: Maps get created with 3-param position. There are no 3-param command sizes. Make it 2 or 4.
 - - [x] editor: Delete resource, if selected we should reload with no selected resource.
 - - [x] editor: MissingResourcesService: For song, Report missing drums and unconfigured channels. ...DECLINE. They're MIDI at that point. Can validate in SongEditor instead.
+- - [ ] editor: SidebarUi scroll bar broken, doesn't appear
 - - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - - [ ] native: Record and playback session.
 - - [ ] native: Add an initial audio delay like we did in v1. I've noticed missed notes in Humm Fu.

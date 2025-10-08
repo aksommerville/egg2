@@ -145,7 +145,7 @@ static int image_encode_idat(struct sr_encoder *dst,const uint8_t *src,int w,int
     if ((err=deflate(&z,Z_FINISH))<0) goto _done_;
     int addc=z.total_out-toa;
     dst->c+=addc;
-    if (err=Z_STREAM_END) break;
+    if (err==Z_STREAM_END) break;
   }
   
  _done_:;
