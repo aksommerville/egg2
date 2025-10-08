@@ -48,7 +48,7 @@ export class NewMapModal {
     }
     // Don't bother asking for dimensions -- when neighbors in play, all maps are supposed to be the same size.
     
-    this.dom.spawn(form, "INPUT", { type: "submit", value: "OK", "on-click": () => this.onSubmit() });
+    this.dom.spawn(form, "INPUT", { type: "submit", value: "OK", "on-click": e => this.onSubmit(event) });
     
     this.window.requestAnimationFrame(() => {
       nameinput.focus();
@@ -56,9 +56,11 @@ export class NewMapModal {
     });
   }
   
-  onSubmit() {
+  onSubmit(event) {
+    event.preventDefault();
     const name = this.element.querySelector("input[name='name']").value;
     const rid = +this.element.querySelector("input[name='rid']").value;
     this.resolve({ name, rid });
+    this.element.remove();
   }
 }

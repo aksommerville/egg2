@@ -18,3 +18,4 @@
 image image:tiles
 hero @4,5
 sprite @5,5 sprite:8 (u32)0
+position 128 128

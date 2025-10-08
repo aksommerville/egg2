@@ -203,7 +203,7 @@ export class MapService {
         this.replaceNeighborCommand(n?.map, 4, name || rid);
         this.replaceNeighborCommand(s?.map, 3, name || rid);
       } else if (this.neighborStrategy === "coords") {
-        nmap.cmd.commands.push(["position", nx.toString(), ny.toString(), layer.z.toString()]);
+        nmap.cmd.commands.push(["position", nx.toString(), ny.toString()]); // , layer.z.toString()]); // "position" commands can't have 3 args. What to do?
       }
       // Don't install it in (layer.v). Once we add the resource in Data, it cascades back.
       const serial = nmap.encode();
@@ -491,5 +491,28 @@ export class MapLayer {
     nsrc = +src;
     if (nsrc === ores.rid) return true;
     return false;
+  }
+  
+  /* Return a new MapLayer with no margins, or null if empty.
+   * (null because MapLayer are not allowed to be empty).
+   */
+  crop() {
+    let x=0, y=0, w=this.w, h=this.h;
+    while (w && !this.rectContainsMap(x + w - 1, y, 1, h)) w--;
+    while (h && !this.rectContainsMap(x, y + h - 1, w, 1)) h--;
+    while (w && !this.rectContainsMap(x, y, 1, h)) { w--; x++; }
+    while (h && !this.rectContainsMap(x, y, w, 1)) { h--; y++; }
+    if (!w || !h) return null;
+    const dst = new MapLayer(w, h);
+    dst.z = this.z;
+    dst.x = this.x + x;
+    dst.y = this.y + y;
+    let dstrowp=0, srcrowp=y*this.w+x;
+    for (let yi=h; yi-->0; dstrowp+=w, srcrowp+=this.w) {
+      for (let xi=w, dstp=dstrowp, srcp=srcrowp; xi-->0; dstp++, srcp++) {
+        dst.v[dstp] = this.v[srcp];
+      }
+    }
+    return dst;
   }
 }

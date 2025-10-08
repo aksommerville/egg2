@@ -11,7 +11,8 @@
 
 #define CMD_map_image     0x20 /* u16:imageid */
 #define CMD_map_hero      0x21 /* u16:position */
-#define CMD_map_neighbors 0x60 /* u16:west, u16:east, u16:north, u16:south */
+#define CMD_map_position  0x22 /* u8:longitude, u8:latitute */
+//#define CMD_map_neighbors 0x60 /* u16:west, u16:east, u16:north, u16:south */
 #define CMD_map_sprite    0x61 /* u16:position, u16:spriteid, u32:arg */
 #define CMD_map_door      0x62 /* u16:position, u16:mapid, u16:dstposition, u16:arg */
 

@@ -94,8 +94,8 @@ Features we *do* support:
 - - [ ] Native and web do not sound the same. Once better tooling is in place, figure out why and tweak them closer.
 - - [ ] Music level is too high relative to sound effects. Cheat it down globally. Fudged a correction in both Zen Garden and Humm Fu.
 - [ ] Minor bugs and tweaks outstanding.
-- - [ ] editor: World map. Ugh, I needed this badly during Mysteries of the Crypt. :(
-- - [ ] MapEditor: Producing 3-byte "position" commands, which can never be legal.
+- - [x] editor: World map. Ugh, I needed this badly during Mysteries of the Crypt. :(
+- - [x] MapEditor: Producing 3-byte "position" commands, which can never be legal.
 - - [ ] eggdev: Builds still do not appear to pull in their deps correctly; I'm needing to `make clean` when I shouldn't need to.
 - - [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
 - - [ ] editor: Rainbow pencil overwrites appointment-only neighbors, it shouldn't.
@@ -105,12 +105,14 @@ Features we *do* support:
 - - - - This bit me in Mysteries of the Crypt. Would have been great to get a little hint about the arg format when placing a sprite.
 - - [ ] MapEditor: Can we handle transparent tiles better? Maybe `NS_sys_bgcolor` or something?
 - - [ ] TilesheetEditor: Weird when the image is mostly transparent. Use a different color for the margin.
-- - [ ] editor: New map modal doesn't dismiss after creating map, in "position" regime. Also, got a wildly incorrect position.
-- - [ ] editor: Maps get created with 3-param position. There are no 3-param command sizes. Make it 2 or 4.
+- - [x] editor: New map modal doesn't dismiss after creating map, in "position" regime. Also, got a wildly incorrect position.
+- - [x] editor: Maps get created with 3-param position. There are no 3-param command sizes. Make it 2 or 4.
+- - [ ] editor: Delete resource, if selected we should reload with no selected resource.
 - - [ ] editor: MissingResourcesService: For song, Report missing drums and unconfigured channels.
 - - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - - [ ] native: Record and playback session.
 - - [ ] native: Add an initial audio delay like we did in v1. I've noticed missed notes in Humm Fu.
+- - [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols.
 - - [ ] macos: System language
 - - [ ] windows: System language
 - - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
