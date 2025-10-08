@@ -40,9 +40,16 @@ export class RootUi {
     }
   }
   
+  noEditor() {
+    const workbench = this.element.querySelector(".workbench");
+    workbench.innerHTML = "";
+    this.actions.selectedPath = "";
+    this.sidebar.highlightOpenResource(null);
+  }
+  
   onHashChange(event) {
     const sepp = event?.newURL?.indexOf("#");
-    if ((typeof(sepp) !== "number") || (sepp < 0)) return;
+    if ((typeof(sepp) !== "number") || (sepp < 0)) return this.noEditor();
     const hash = event.newURL.substring(sepp + 1);
     const req = {};
     for (const field of hash.split("&")) {
@@ -51,10 +58,11 @@ export class RootUi {
       const v = decodeURIComponent(split.slice(1).join("="));
       req[k] = v;
     }
+    if (!req.path) return this.noEditor();
     const res = this.data.resv.find(r => r.path === req.path);
     if (!res) {
       this.dom.modalError(`Resource not found.`);
-      return;
+      return this.noEditor();
     }
     let editor = null;
     if (req.editor) {
@@ -64,7 +72,7 @@ export class RootUi {
     }
     if (!editor) {
       this.dom.modalError(`Editor not found.`);
-      return;
+      return this.noEditor();
     }
     const workbench = this.element.querySelector(".workbench");
     workbench.innerHTML = "";

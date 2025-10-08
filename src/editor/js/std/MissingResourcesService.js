@@ -19,11 +19,11 @@ export class MissingResourcesService {
   }
   
   detectAndReport() {
-    console.log(`MissingResourcesService.detectAndReport`, { resv: this.data.resv });
     const warnings = []; // { path, note }
     let metadataReport = null; // See validateMetadata().
     const strings = []; // res
     const imageRids = new Set();
+    const requireImages = []; // { rid (of image), path (of referrer) }
     for (const res of this.data.resv) {
       
       /* Zero-length resources trigger a warning immediately.
@@ -37,11 +37,9 @@ export class MissingResourcesService {
       
       switch (res.type) {
       
-        // Some types, we know there's nothing to validate.
-        //XXX Not true! We could look for drum channels in a song, report missing drums. Or in general, unconfigured channels.
+        // song and sound have some complex validation.
         case "sound":
-        case "song":
-          continue;
+        case "song": this.validateSong(warnings, res); break;
           
         // image, capture all the rids so we can validate tilesheet and decalsheet.
         case "image": imageRids.add(res.rid); break;
@@ -67,11 +65,7 @@ export class MissingResourcesService {
          * EGG_TID_image is less than both tilesheet and decalsheet, so we'll have the full set already.
          */
         case "tilesheet":
-        case "decalsheet": {
-            if (!imageRids.has(res.rid)) {
-              warnings.push({ path: res.path, note: `image:${res.rid} does not exist` });
-            }
-          } break;
+        case "decalsheet": requireImages.push({ rid: res.rid, path: res.path }); break;
         
         // map and sprite are both command lists, we can validate them generically.
         case "map":
@@ -87,6 +81,11 @@ export class MissingResourcesService {
       }
     }
     this.validateStrings(warnings, strings, metadataReport);
+    
+    // Post validation for tilesheet and decalsheet.
+    for (const { rid, path } of requireImages) {
+      if (!imageRids.has(rid)) warnings.push({ path, note: `image:${rid} does not exist` });
+    }
     
     // Post validation for metadata.
     if (!metadataReport) {
@@ -105,6 +104,14 @@ export class MissingResourcesService {
       }
     }
     console.log({ warnings, metadataReport, imageRids });
+  }
+  
+  validateSong(warnings, res) {
+    /* ...uhhhh maybe not. Problem is, (res.serial) is most likely a MIDI file.
+     * To get it in a useable form, we either need to read MIDI files, or bounce it off the backend for conversion like SongEditor does.
+     * Both options present concerns.
+     * I think for now we'll skip these. We can add more validation in SongEditor if desired, that's a much more amenable venue for it.
+     */
   }
   
   validateMetadata(warnings, res) {
@@ -285,9 +292,9 @@ class MissingResourcesModal {
       const ul = this.dom.spawn(this.element, "UL");
       for (const warning of warnings) {
         if (warning.path) {
-          this.dom.spawn(this.element, "LI", `${warning.path}: ${warning.note}`);
+          this.dom.spawn(ul, "LI", `${warning.path}: ${warning.note}`);
         } else {
-          this.dom.spawn(this.element, "LI", warning.note);
+          this.dom.spawn(ul, "LI", warning.note);
         }
       }
     } else {

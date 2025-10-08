@@ -97,6 +97,19 @@ export class Actions {
     if (editorName) url += "&editor=" + encodeURIComponent(editorName);
     this.window.location = url;
   }
+  
+  // From the URL fragment.
+  getCurrentResourcePath() {
+    const hash = this.window.location.hash;
+    if (!hash) return "";
+    for (const field of hash.substring(1).split("&")) {
+      const split = field.split("=");
+      if (split.length < 2) continue;
+      if (split[0] !== "path") continue;
+      return decodeURIComponent(split[1]);
+    }
+    return ""
+  }
 }
 
 Actions.singleton = true;

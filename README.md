@@ -107,8 +107,8 @@ Features we *do* support:
 - - [x] TilesheetEditor: Weird when the image is mostly transparent. Use a different color for the margin.
 - - [x] editor: New map modal doesn't dismiss after creating map, in "position" regime. Also, got a wildly incorrect position.
 - - [x] editor: Maps get created with 3-param position. There are no 3-param command sizes. Make it 2 or 4.
-- - [ ] editor: Delete resource, if selected we should reload with no selected resource.
-- - [ ] editor: MissingResourcesService: For song, Report missing drums and unconfigured channels.
+- - [x] editor: Delete resource, if selected we should reload with no selected resource.
+- - [x] editor: MissingResourcesService: For song, Report missing drums and unconfigured channels. ...DECLINE. They're MIDI at that point. Can validate in SongEditor instead.
 - - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - - [ ] native: Record and playback session.
 - - [ ] native: Add an initial audio delay like we did in v1. I've noticed missed notes in Humm Fu.

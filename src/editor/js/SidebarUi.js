@@ -164,10 +164,16 @@ export class SidebarUi {
     modal.setup(res);
     modal.result.then(rsp => {
       if (!rsp) return;
+      const editingPath = this.actions.getCurrentResourcePath();
+      const oldPath = res.path;
       if (rsp.action === "delete") {
-        return this.data.deleteResource(res.path);
+        return this.data.deleteResource(res.path).then(() => {
+          if (oldPath === editingPath) this.window.location = "#";
+        });
       } else if (rsp.action === "rename") {
-        return this.data.renameResource(res.path, rsp.path);
+        return this.data.renameResource(res.path, rsp.path).then(() => {
+          if (oldPath == editingPath) this.actions.editResource(rsp.path);
+        });
       } else if (rsp.action === "edit") {
         this.actions.editResource(res.path, rsp.editor?.name);
       } else if (rsp.action === "copy") {

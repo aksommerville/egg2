@@ -669,6 +669,12 @@ input.toggle:checked + label.toggle.light {
   width: 500px;
 }
 
+.MissingResourcesModal ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
 /* Song.
  *********************************************************************************************/
  

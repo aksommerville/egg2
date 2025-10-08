@@ -12,12 +12,13 @@ import { Actions } from "./Actions.js";
 
 export class ResourceDetailsModal {
   static getDependencies() {
-    return [HTMLElement, Dom, Actions];
+    return [HTMLElement, Dom, Actions, Window];
   }
-  constructor(element, dom, actions) {
+  constructor(element, dom, actions, window) {
     this.element = element;
     this.dom = dom;
     this.actions = actions;
+    this.window = window;
     
     this.result = new Promise((resolve, reject) => {
       this.resolve = resolve;
@@ -34,9 +35,15 @@ export class ResourceDetailsModal {
     
     this.dom.spawn(this.element, "DIV", ["path"], res.path);
     
-    const fsopRow = this.dom.spawn(this.element, "DIV", ["fsopRow"]);
-    this.dom.spawn(fsopRow, "INPUT", { type: "text", value: res.path, name: "npath", "on-input": () => this.onNpathInput() });
-    this.dom.spawn(fsopRow, "INPUT", ["renameOrDelete"], { type: "button", value: "Rename", "on-click": () => this.onRenameOrDelete() });
+    const fsopRow = this.dom.spawn(this.element, "FORM", ["fsopRow"], { "on-submit": e => {
+      e.preventDefault();
+      e.stopPropagation();
+    }});
+    const pathInput = this.dom.spawn(fsopRow, "INPUT", { type: "text", value: res.path, name: "npath", "on-input": () => this.onNpathInput() });
+    this.dom.spawn(fsopRow, "INPUT", ["renameOrDelete"], { type: "submit", value: "Rename", "on-click": e => {
+      e.preventDefault();
+      this.onRenameOrDelete();
+    }});
     this.dom.spawn(fsopRow, "INPUT", { type: "button", value: "Copy...", "on-click": () => this.onCopy() });
     
     this.dom.spawn(this.element, "DIV", "Open with...");
@@ -48,6 +55,11 @@ export class ResourceDetailsModal {
         { type: "button", value: editor.name, "on-click": () => this.onEdit(res, editor) }
       );
     }
+    
+    this.window.setTimeout(() => {
+      pathInput.focus();
+      pathInput.select();
+    }, 20);
   }
   
   onNpathInput() {
