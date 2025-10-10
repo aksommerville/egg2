@@ -96,7 +96,9 @@ Features we *do* support:
 - [ ] Minor bugs and tweaks outstanding.
 - - [x] editor: World map. Ugh, I needed this badly during Mysteries of the Crypt. :(
 - - [x] MapEditor: Producing 3-byte "position" commands, which can never be legal.
-- - [ ] eggdev: Builds still do not appear to pull in their deps correctly; I'm needing to `make clean` when I shouldn't need to.
+- - [x] eggdev: Builds still do not appear to pull in their deps correctly; I'm needing to `make clean` when I shouldn't need to.
+- - - I think it's the files with relative paths that don't rebuild. eg `myscrypt/src/sprite/sprite.c` includes "../myscrypt.h" and doesn't rebuild as expected.
+- - - ...indeed the makefile that gcc generates for that does have ".." entries preserved. We need to resolve those during `eggdev build`.
 - - [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
 - - [x] editor: Rainbow pencil overwrites appointment-only neighbors, it shouldn't. ...actually you can't even place an appt-only with the rainbow, if neighbors exist. ouch
 - - [x] MapEditor: We can do better with the edit-poi modal...

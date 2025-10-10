@@ -58,6 +58,38 @@ static int builder_add_dfile_text(struct builder *builder,struct builder_file *o
       tokenc+=2;
     }
     
+    /* When an include path contains ".." entries, gcc emits those verbatim.
+     * We need them canonicalized.
+     */
+    char mangle2[1024];
+    int m2p=0,tp=0;
+    while (tp<tokenc) {
+      if (token[tp]=='/') {
+        if (m2p>=sizeof(mangle2)) { m2p=0; break; }
+        if (m2p&&(mangle2[m2p-1]!='/')) {
+          mangle2[m2p++]='/';
+        }
+        tp++;
+      } else {
+        const char *sub=token+tp;
+        int subc=0;
+        while ((tp<tokenc)&&(token[tp]!='/')) { tp++; subc++; }
+        if ((subc==2)&&(sub[0]=='.')&&(sub[1]=='.')) {
+          while (m2p&&(mangle2[m2p-1]=='/')) m2p--;
+          while (m2p&&(mangle2[m2p-1]!='/')) m2p--;
+          while (m2p&&(mangle2[m2p-1]=='/')) m2p--;
+        } else {
+          if (m2p>sizeof(mangle2)-subc) { m2p=0; break; }
+          memcpy(mangle2+m2p,sub,subc);
+          m2p+=subc;
+        }
+      }
+    }
+    if (!m2p||(m2p>=sizeof(mangle2))) continue;
+    mangle2[m2p]=0;
+    token=mangle2;
+    tokenc=m2p;
+    
     if (tokenc<builder->rootc+5) continue;
     if (memcmp(token,builder->root,builder->rootc)) continue;
     if (memcmp(token+builder->rootc,"/src/",5)) continue;
