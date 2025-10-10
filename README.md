@@ -135,15 +135,20 @@ Features we *do* support:
 - - [ ] Cherteau
 - - [ ] Sam-Sam
 - [ ] Enormous effort, but how do you feel about migrating or rewriting old non-Egg games? Could make provisioning new kiosks a lot smoother.
+- - [ ] Upsy-Downsy -- least difficult and most beneficial of these. We could then retire `pebble`
 - - [ ] Sitter 2009 (a full rewrite is warranted)
 - - [ ] Tag Team Adventure Quest
 - - [ ] Campaign Trail of the Mummy
 - - [ ] Plunder Squad
-- - [ ] Full Moon
+- - [ ] Full Moon. Huge and complex.
 - - [ ] Too Heavy (JS; would be a full rewrite)
-- - [ ] Upsy-Downsy -- least difficult and most beneficial of these. We could then retire `pebble`
-- - Definitely not in scope: Chetyorska, Economy of Motion, Opener of Cages, Nine Lives
+- - [ ] Economny of Motion (JS; full rewrite)
+- - Definitely not in scope: Chetyorska (MIDI-In)
 - [ ] "eggzotics": Sample games that build for something weird, and also Egg.
+- - Anything with a virtual runtime is definitely out. So no Pico-8, and nothing using Java, JS, Lua, etc.
+- - [ ] Shovel. That's my other games framework, specifically to build web apps under 13 kB. I bet we can arrange a way to build for both Egg and Shovel, with Shovel's constraints.
+- - - [ ] Opener of Cages
+- - - [ ] Nine Lives
 - - [ ] Tiny Arcade
 - - - If this works, migrate all my Tiny games.
 - - [ ] Thumby
