@@ -24,6 +24,7 @@ export class SongChannel {
       case 2: this.initFm(modecfg); break;
       case 3: this.initHarsh(modecfg); break;
       case 4: this.initHarm(modecfg); break;
+      case 5: this.initSub(modecfg); break;
       default: this.mode = 0;
     }
     if (!this.mode) return;
@@ -59,6 +60,7 @@ export class SongChannel {
   note(when, noteid, velocity, durs) {
     if (this.mode === 1) return this.playDrum(when, this.notes[noteid], velocity);
     if ((this.mode >= 2) && (this.mode <= 4)) return this.tunedNote(when, noteid, velocity, durs);
+    if (this.mode === 5) return this.subNote(when, noteid, velocity, durs);
   }
   
   // (when) in context seconds, (v) in -512..511.
@@ -457,5 +459,70 @@ export class SongChannel {
     }
     
     return osc;
+  }
+  
+  /* SUB
+   */
+   
+  initSub(src) {
+    const decoder = new EauDecoder(src);
+    this.levelenv = decoder.env("level");
+    this.widthlo = decoder.u16(200);
+    this.widthhi = decoder.u16(200);
+    this.stagec = decoder.u8(1);
+    this.gain = decoder.u16(0x0100) / 256.0;
+  }
+  
+  subNote(when, noteid, velocity, durs) {
+    const osc = new AudioBufferSourceNode(this.player.ctx, {
+      buffer: this.player.noise,
+      loop: true,
+      loopEnd: 1, // Noise buffer is exactly one second long.
+    });
+    let tail = osc;
+    
+    if (this.stagec) {
+      const width = this.widthlo * (1.0 - velocity) + this.widthhi * velocity;
+      const frequency = eauNotev[noteid & 0x7f];
+      const Q = frequency / width;
+      for (let i=0; i<this.stagec; i++) {
+        const filter = new BiquadFilterNode(this.player.ctx, { frequency, Q, type: "bandpass" });
+        tail.connect(filter);
+        tail = filter;
+      }
+    }
+
+    if (this.gain !== 1) {
+      const preamp = new GainNode(this.player.ctx, { gain: this.gain });
+      tail.connect(preamp);
+      tail = preamp;
+    }
+    // There isn't a "ClipNode", so we try to force an edge case out of DynamicsCompressorNode:
+    //TODO This will need tweaking.
+    const clip = new DynamicsCompressorNode(this.player.ctx, {
+      attack: 0,
+      knee: 0,
+      ratio: 1,
+      release: 0,
+      threshold: -50,
+    });
+    tail.connect(clip);
+    tail = clip;
+
+    const holdid = this.player.holdidNext();
+    const env = new GainNode(this.player.ctx, { gain: 0 });
+    const pts = eauEnvApply(this.levelenv, when, velocity, durs);
+    env.gain.setValueAtTime(pts[0].v, when);
+    for (const pt of pts) env.gain.linearRampToValueAtTime(pt.v, pt.t);
+    tail.connect(env);
+    env.connect(this.postStart);
+    this.player.droppables.push({ node: osc, holdid });
+    this.player.droppables.push({ node: env, holdid });
+    const endTime = pts[pts.length - 1].t;
+    for (const d of this.player.droppables) if (!d.time) {
+      d.time = endTime;
+    }
+    osc.start(when);
+    return holdid;
   }
 }

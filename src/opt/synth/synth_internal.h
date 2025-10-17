@@ -290,6 +290,10 @@ struct synth {
   struct synth_song *pvsong;
   
   int holdid_next;
+  
+  // One second of white noise, calculated deterministically the first time someone calls synth_require_noise().
+  float *noisev;
+  int noisec;
 };
 
 int synth_frames_from_ms(const struct synth *synth,int ms);
@@ -298,5 +302,7 @@ void synth_apply_pan(float *triml,float *trimr,float trim,float pan);
 struct synth_pcm *synth_begin_print(struct synth *synth,const void *v,int c); // => STRONG
 
 int synth_holdid_next(struct synth *synth);
+
+int synth_require_noise(struct synth *synth);
 
 #endif

@@ -125,6 +125,7 @@ void graf_tile(struct graf *graf,int16_t x,int16_t y,uint8_t tileid,uint8_t xfor
 
 /* Queue a tile for render, with bells and whistles.
  * These are point sprites like "tiles" but with a much larger vertex size and lots of fun options.
+ * As a special case, (primary) zero we change to the no-op 0x808080ff. If you really want a zero-alpha fancy, give it a non-default primary.
  */
 void graf_fancy(struct graf *graf,
   int16_t x,int16_t y,uint8_t tileid,uint8_t xform, // Same as tile.

@@ -347,6 +347,8 @@ static int gen_main(struct eggdev_project_context *ctx) {
     "  if (!(g.rom=malloc(g.romc))) return -1;\n"
     "  egg_rom_get(g.rom,g.romc);\n"
     "\n"
+    "  srand_auto();\n"
+    "\n"
     "  //TODO\n" // TODO Initialize other standard client-side utilities?
     "\n"
     "  return 0;\n"

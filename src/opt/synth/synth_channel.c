@@ -4,11 +4,15 @@ int synth_channel_init_DRUM(struct synth_channel *channel,const uint8_t *modecfg
 int synth_channel_init_FM(struct synth_channel *channel,const uint8_t *modecfg,int modecfgc);
 int synth_channel_init_HARSH(struct synth_channel *channel,const uint8_t *modecfg,int modecfgc);
 int synth_channel_init_HARM(struct synth_channel *channel,const uint8_t *modecfg,int modecfgc);
+int synth_channel_init_SUB(struct synth_channel *channel,const uint8_t *modecfg,int modecfgc);
 void synth_channel_note_drum(struct synth_channel *channel,uint8_t noteid,float velocity);
 int synth_channel_note_tuned(struct synth_channel *channel,uint8_t noteid,float velocity,int durframes);
 void synth_channel_wheel_tuned(struct synth_channel *channel,int v);
 void synth_channel_release_tuned(struct synth_channel *channel);
 void synth_channel_release_one_tuned(struct synth_channel *channel,int holdid);
+int synth_channel_note_sub(struct synth_channel *channel,uint8_t noteid,float velocity,int durframes);
+void synth_channel_release_sub(struct synth_channel *channel);
+void synth_channel_release_one_sub(struct synth_channel *channel,int holdid);
 
 /* Delete.
  */
@@ -84,6 +88,7 @@ struct synth_channel *synth_channel_new(struct synth *synth,int chanc,int tempo,
     case 2: err=synth_channel_init_FM(channel,modecfg,modecfgc); break;
     case 3: err=synth_channel_init_HARSH(channel,modecfg,modecfgc); break;
     case 4: err=synth_channel_init_HARM(channel,modecfg,modecfgc); break;
+    case 5: err=synth_channel_init_SUB(channel,modecfg,modecfgc); break;
     default: channel->mode=0; // Unknown modes are legal but noop.
   }
   if (err<0) {
@@ -157,40 +162,34 @@ void synth_channel_update(float *v,int framec,struct synth_channel *channel) {
   }
 }
 
-/* Note.
+/* Event dispatch.
  */
 
 int synth_channel_note(struct synth_channel *channel,uint8_t noteid,float velocity,int durframes) {
   switch (channel->mode) {
     case 1: synth_channel_note_drum(channel,noteid,velocity); return 0; // Drums are not sustainable.
     case 2: case 3: case 4: return synth_channel_note_tuned(channel,noteid,velocity,durframes);
+    case 5: return synth_channel_note_sub(channel,noteid,velocity,durframes);
   }
   return 0;
 }
-
-/* Release.
- */
  
 void synth_channel_release(struct synth_channel *channel,int holdid) {
   switch (channel->mode) {
     case 2: case 3: case 4: synth_channel_release_one_tuned(channel,holdid); break;
+    case 5: synth_channel_release_one_sub(channel,holdid); break;
   }
 }
-
-/* Wheel.
- */
  
 void synth_channel_wheel(struct synth_channel *channel,int v) {
   switch (channel->mode) {
     case 2: case 3: case 4: synth_channel_wheel_tuned(channel,v); break;
   }
 }
-
-/* Release all notes.
- */
  
 void synth_channel_release_all(struct synth_channel *channel) {
   switch (channel->mode) {
     case 2: case 3: case 4: synth_channel_release_tuned(channel); break;
+    case 5: synth_channel_release_sub(channel); break;
   }
 }

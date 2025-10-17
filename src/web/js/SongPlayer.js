@@ -11,13 +11,14 @@ export class SongPlayer {
   /* The EAU file is decoded but not 100% validated during construction.
    * Allow for exceptions during construction.
    */
-  constructor(ctx, src, trim, pan, repeat, id) {
+  constructor(ctx, src, trim, pan, repeat, id, noise) {
     this.ctx = ctx;
     this.serial = src;
     this.trim = trim;
     this.pan = pan;
     this.repeat = repeat;
     this.id = id;
+    this.noise = noise;
     
     this.eventp = 0;
     this.eventTime = 0; // Context time at (eventp), does not wrap.

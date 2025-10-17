@@ -24,6 +24,7 @@ void synth_del(struct synth *synth) {
   }
   synth_song_del(synth->song);
   synth_song_del(synth->pvsong);
+  if (synth->noisev) free(synth->noisev);
   free(synth);
 }
 
@@ -369,4 +370,26 @@ void synth_apply_pan(float *triml,float *trimr,float trim,float pan) {
 int synth_holdid_next(struct synth *synth) {
   if (synth->holdid_next<1) synth->holdid_next=1;
   return synth->holdid_next++;
+}
+
+/* Require noise.
+ */
+ 
+int synth_require_noise(struct synth *synth) {
+  if (synth->noisev) return 0;
+  if (!(synth->noisev=malloc(sizeof(float)*synth->rate))) return -1;
+  synth->noisec=synth->rate;
+  float *v=synth->noisev;
+  int i=synth->noisec;
+  
+  // Use the same XorShift PRNG as egg-stdlib, with a simple seed.
+  // The same process can be repeated in other implementations; that's what I'm going for.
+  uint32_t state=0x12345678;
+  for (;i-->0;v++) {
+    state^=state<<13;
+    state^=state>>17;
+    state^=state<<5;
+    *v=((float)state/2147483648.0f)-1.0f;
+  }
+  return 0;
 }

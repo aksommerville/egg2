@@ -61,6 +61,7 @@ export class ModecfgModal {
       case 2: this.buildUiFm(); break;
       case 3: this.buildUiHarsh(); break;
       case 4: this.buildUiHarm(); break;
+      case 5: this.buildUiSub(); break;
     }
     const bottom = this.dom.spawn(this.form, "DIV", ["bottom"]);
     switch (this.model.mode) {
@@ -139,6 +140,19 @@ export class ModecfgModal {
     this.dom.spawn(right, "DIV", ["advice"], "Mouse wheel + ctl,shift to zoom and scroll.");
     this.spawnEnv(right, "levelenv");
     this.spawnEnv(right, "pitchenv");
+  }
+  
+  buildUiSub() {
+    const bigrow = this.dom.spawn(this.form, "DIV", ["bigrow"]);
+    const left = this.dom.spawn(bigrow, "DIV", ["left"]);
+    const table = this.dom.spawn(left, "TABLE");
+    this.spawnRowU16(table, "widthlo");
+    this.spawnRowU16(table, "widthhi");
+    this.spawnRowU8(table, "stagec");
+    this.spawnRowU88(table, "gain");
+    const right = this.dom.spawn(bigrow, "DIV", ["right"]);
+    this.dom.spawn(right, "DIV", ["advice"], "Mouse wheel + ctl,shift to zoom and scroll.");
+    this.spawnEnv(right, "levelenv");
   }
   
   spawnRowU88(table, k) {

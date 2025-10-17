@@ -72,10 +72,14 @@ Features we *do* support:
 ## TODO
 
 - [ ] Major changes.
-- - [ ] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
+- - [x] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
 - - - Humm Fu had pretty decent hihats, but I had trouble with snare. I think we do need subtractive noise.
-- - - [ ] Use a precalculated noise buffer, say one second long, generated with a private PRNG. That way, native and web can produce exactly the same noise.
+- - - [x] Use a precalculated noise buffer, say one second long, generated with a private PRNG. That way, native and web can produce exactly the same noise.
 - - - - They'll still sound different at different sample rates but I don't think we can avoid that.
+- - - [x] eggdev
+- - - [x] native
+- - - [x] editor
+- - - [x] web
 - - [ ] Also add IIR post stages. They will make the HARSH voice mode much more useful.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
 - - [ ] Standard instruments.
@@ -94,6 +98,18 @@ Features we *do* support:
 - - [ ] Native and web do not sound the same. Once better tooling is in place, figure out why and tweak them closer.
 - - [ ] Music level is too high relative to sound effects. Cheat it down globally. Fudged a correction in both Zen Garden and Humm Fu.
 - [ ] Minor bugs and tweaks outstanding.
+- - [ ] Permit command-line and query params to prepopulate the store, for keys specified via metadata.
+- - - I'm picturing printing QR codes that embed a saved game from one machine, that the user can reopen in her browser.
+- - - Could also be super helpful during development: `./mygame --startAtLevel=13`
+- - - Do require games to opt in to this behavior per field by naming the keys in metadata.
+- - [ ] editor: New map in "neighbors" regime created an incorrect (zeroes) command in the new one, and didn't create in the old one.
+- - - ...might only happen to the first map in a layer, or maybe the first in a project. Wishbone got it on the first neighbor creation, and not after.
+- - - ...no, it did happen later in wishbone too.
+- - [ ] editor: Sprite in the edit-poi modal are sorted as strings; prefer to sort numerically by rid.
+- - [ ] editor: "Copy from other resource" option in the channels' "Store..." modal.
+- - [ ] editor: Creating new tilesheet or decalsheet, somehow prompt existing images.
+- - [ ] graf: Can flush due to full buffer in the middle of raw geometry, breaking sets. eg try a bunch of `EGG_RENDER_LINES`.
+- - - Confirm that all impacted cases are single calls into graf. If so, the fix will be easy, just start allocating multiple vertices at once internally.
 - - [x] editor: World map. Ugh, I needed this badly during Mysteries of the Crypt. :(
 - - [x] MapEditor: Producing 3-byte "position" commands, which can never be legal.
 - - [x] eggdev: Builds still do not appear to pull in their deps correctly; I'm needing to `make clean` when I shouldn't need to.

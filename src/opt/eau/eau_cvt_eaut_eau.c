@@ -423,6 +423,24 @@ static int eautd_modecfg_harm(struct eautd *ctx,const uint8_t *src,int srcc) {
   return 0;
 }
 
+/* modecfg for sub
+ */
+ 
+static int eautd_modecfg_sub(struct eautd *ctx,const uint8_t *src,int srcc) {
+  if (eautd_out(ctx,"modecfg {")<0) return -1;
+  ctx->indent+=2;
+  int srcp=0,err;
+  if ((err=eautd_env(ctx,"levelenv",src+srcp,srcc-srcp))<0) return err; srcp+=err;
+  if ((err=eautd_scalar(ctx,"widthlo",src+srcp,srcc-srcp,2))<0) return err; srcp+=err;
+  if ((err=eautd_scalar(ctx,"widthhi",src+srcp,srcc-srcp,2))<0) return err; srcp+=err;
+  if ((err=eautd_scalar(ctx,"stagec",src+srcp,srcc-srcp,1))<0) return err; srcp+=err;
+  if ((err=eautd_scalar(ctx,"gain",src+srcp,srcc-srcp,2))<0) return err; srcp+=err;
+  if (srcp<srcc) eautd_warn(ctx,"Discarding %d bytes of SUB modecfg.",srcc-srcp);
+  ctx->indent-=2;
+  if (eautd_out(ctx,"}")<0) return -1;
+  return 0;
+}
+
 /* generic modecfg
  */
  
@@ -490,6 +508,7 @@ static int eautd_chdr(struct eautd *ctx,const uint8_t *src,int srcc) {
     case 2: if (eautd_out(ctx,"mode fm;")<0) return -1; break;
     case 3: if (eautd_out(ctx,"mode harsh;")<0) return -1; break;
     case 4: if (eautd_out(ctx,"mode harm;")<0) return -1; break;
+    case 5: if (eautd_out(ctx,"mode sub;")<0) return -1; break;
     default: if (eautd_out(ctx,"mode %d;",mode)<0) return -1;
   }
   
@@ -499,6 +518,7 @@ static int eautd_chdr(struct eautd *ctx,const uint8_t *src,int srcc) {
       case 2: err=eautd_modecfg_fm(ctx,modecfg,modecfgc); break;
       case 3: err=eautd_modecfg_harsh(ctx,modecfg,modecfgc); break;
       case 4: err=eautd_modecfg_harm(ctx,modecfg,modecfgc); break;
+      case 5: err=eautd_modecfg_sub(ctx,modecfg,modecfgc); break;
       default: err=eautd_modecfg_generic(ctx,modecfg,modecfgc); break;
     }
   }

@@ -329,6 +329,7 @@ static int eautc_mode_eval(const char *src,int srcc) {
   if ((srcc==2)&&!memcmp(src,"fm",2)) return 2;
   if ((srcc==5)&&!memcmp(src,"harsh",5)) return 3;
   if ((srcc==4)&&!memcmp(src,"harm",4)) return 4;
+  if ((srcc==3)&&!memcmp(src,"sub",3)) return 5;
   int v;
   if ((sr_int_eval(&v,src,srcc)>=2)&&(v>=0)&&(v<=0xff)) return v;
   return -1;
@@ -816,6 +817,49 @@ static int eautc_modecfg_voice(struct eautc *ctx,int mode) {
   return eautc_fail(ctx,0,"Internal error. Entered %s with mode %d.",__func__,mode);
 }
 
+/* modecfg for sub mode.
+ */
+ 
+static int eautc_modecfg_sub(struct eautc *ctx) {
+  const char *levelenv=0;
+  int levelenvc=0,widthlo=200,widthhi=200,stagec=1,gain=0x0100,err;
+  for (;;) {
+    const char *token;
+    int tokenc=eautc_next(&token,ctx);
+    if (!tokenc) break;
+    if (tokenc<0) return tokenc;
+    const char *body;
+    int bodyc=eautc_next_statement(&body,ctx);
+    if (bodyc<0) return bodyc;
+    
+    if ((tokenc==8)&&!memcmp(token,"levelenv",8)) {
+      levelenv=body;
+      levelenvc=bodyc;
+      
+    } else if ((tokenc==7)&&!memcmp(token,"widthlo",7)) {
+      if ((err=eautc_int_eval(&widthlo,ctx,body,bodyc,0,0xffff,200))<0) return err;
+      
+    } else if ((tokenc==7)&&!memcmp(token,"widthhi",7)) {
+      if ((err=eautc_int_eval(&widthhi,ctx,body,bodyc,0,0xffff,200))<0) return err;
+      
+    } else if ((tokenc==6)&&!memcmp(token,"stagec",6)) {
+      if ((err=eautc_int_eval(&stagec,ctx,body,bodyc,0,0xff,1))<0) return err;
+      
+    } else if ((tokenc==4)&&!memcmp(token,"gain",4)) {
+      if ((err=eautc_int_eval(&stagec,ctx,body,bodyc,0,0xffff,0x0100))<0) return err;
+      
+    } else {
+      return eautc_fail(ctx,token,"Unexpected command '%.*s' in sub block. Expected 'levelenv', 'widthlo', 'widthhi', 'gain', or 'stagec'.",tokenc,token);
+    }
+  }
+  if ((err=eautc_env(ctx,levelenv,levelenvc))<0) return err;
+  if ((stagec!=1)||(widthlo!=200)||(widthhi!=200)||(gain!=0x0100)) sr_encode_intbe(ctx->dst,widthlo,2);
+  if ((stagec!=1)||(widthhi!=200)||(gain!=0x0100)) sr_encode_intbe(ctx->dst,widthhi,2);
+  if ((stagec!=1)||(gain!=0x0100)) sr_encode_u8(ctx->dst,stagec);
+  if (gain!=0x0100) sr_encode_intbe(ctx->dst,gain,2);
+  return 0;
+}
+
 /* modecfg for unknown mode.
  * Content is a simple hex dump.
  */
@@ -871,6 +915,7 @@ static int eautc_modecfg(struct eautc *ctx,const char *src,int srcc,int mode,int
     case 2: err=eautc_modecfg_voice(&subctx,mode); break;
     case 3: err=eautc_modecfg_voice(&subctx,mode); break;
     case 4: err=eautc_modecfg_voice(&subctx,mode); break;
+    case 5: err=eautc_modecfg_sub(&subctx); break;
     default: err=eautc_modecfg_generic(&subctx); break;
   }
   if (err<0) {

@@ -300,6 +300,13 @@ export function decodeDrumModecfg(src) {
  *   pitchenv: env
  *   wheelrange: u16
  * }
+ * 5=SUB: {
+ *   levelenv: env
+ *   widthlo: u16
+ *   widthhi: u16
+ *   stagec: u8
+ *   gain: float
+ * }
  */
 export function decodeModecfg(mode, modecfg) {
   const model = { mode };
@@ -355,6 +362,14 @@ export function decodeModecfg(mode, modecfg) {
         model.levelenv = decoder.env("level");
         model.pitchenv = decoder.env("pitch");
         model.wheelrange = decoder.u16(200);
+      } break;
+      
+    case 5: { // SUB
+        model.levelenv = decoder.env("level");
+        model.widthlo = decoder.u16(200);
+        model.widthhi = decoder.u16(200);
+        model.stagec = decoder.u8(1);
+        model.gain = decoder.u8_8(1);
       } break;
       
   }
@@ -449,6 +464,27 @@ export function encodeModecfg(model) {
         if (reqc <= 4) break;
         encoder.raw(model.extra);
       } break;
+    case 5: {
+        let reqc = 0;
+        if (model.extra.length) reqc = 6;
+        else if (model.gain !== 1) reqc = 5;
+        else if (model.stagec !== 1) reqc = 4;
+        else if (model.widthhi !== 200) reqc = 3;
+        else if (model.widthlo !== 200) reqc = 2;
+        else if (!model.levelenv.isDefault) reqc = 1;
+        if (reqc <= 0) break;
+        encodeEnv(encoder, "level", model.levelenv);
+        if (reqc <= 1) break;
+        encoder.u16be(model.widthlo);
+        if (reqc <= 2) break;
+        encoder.u16be(model.widthhi);
+        if (reqc <= 3) break;
+        encoder.u8(model.stagec);
+        if (reqc <= 4) break;
+        encoder.u16be(model.gain * 256);
+        if (reqc <= 5) break;
+        encoder.raw(model.extra);
+      } break;
   }
   return encoder.finish();
 }
@@ -482,8 +518,9 @@ export function mergeModecfg(newMode, stashConfig, oldMode, oldConfig) {
   /* The common voiced modes (2=FM, 3=HARSH, 4=HARM) have three fields in common:
    *   levelenv, pitchenv, wheelrange
    * Do a full decode of each, reassign in the models, and reencode.
+   * Mode 5 SUB has (levelenv) but not the other two. It's OK to let (pitchenv,wheelrange) be undefined.
    */
-  if ((newMode >= 2) && (newMode <= 4) && (oldMode >= 2) && (oldMode <= 4)) {
+  if ((newMode >= 2) && (newMode <= 5) && (oldMode >= 2) && (oldMode <= 5)) {
     const oldModel = decodeModecfg(oldMode, oldConfig);
     const stashModel = decodeModecfg(newMode, stashConfig);
     stashModel.levelenv = oldModel.levelenv;

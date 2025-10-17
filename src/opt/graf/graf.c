@@ -368,6 +368,7 @@ void graf_fancy(struct graf *graf,
   uint32_t tint, // RGBA. A is the tinting amount.
   uint32_t primary // RGBA. A is the master alpha, and RGB is substituted for all pure-gray pixels.
 ) {
+  if (!primary) primary=0x808080ff;
   if (graf->vtxc&&(graf->un.mode!=EGG_RENDER_FANCY)) graf_flush(graf);
   graf->un.mode=EGG_RENDER_FANCY;
   graf->vtxsize=sizeof(struct egg_render_fancy);

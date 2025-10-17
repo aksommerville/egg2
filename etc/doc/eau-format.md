@@ -240,7 +240,7 @@ These should share most of their internal plumbing, and might use the same edito
 ### Channel mode 3: HARSH
 
 ```
-  1 Shape (0,1,2,3) = sine,square,saw,triangle = 0.
+  u8 Shape (0,1,2,3) = sine,square,saw,triangle = 0.
   ... Level env. Complex default.
   ... Pitch env. Value is cents+0x8000. Default constant 0x8000 ie noop.
   u16 Wheel range, cents = 200.
@@ -249,11 +249,21 @@ These should share most of their internal plumbing, and might use the same edito
 ### Channel mode 4: HARM
 
 ```
-  1 Harmonics count. Zero is equivalent to one harmonic at full amplitude. No DC.
+  u8 Harmonics count. Zero is equivalent to one harmonic at full amplitude. No DC.
   ... Harmonics, u0.16 each.
   ... Level env. Complex default.
   ... Pitch env. Value is cents+0x8000. Default constant 0x8000 ie noop.
   u16 Wheel range, cents = 200.
+```
+
+### Channel mode 5: SUB
+
+```
+  ... Level env. Complex default.
+  u16 Width low, Hz = 200.
+  u16 Width high, Hz = 200. NB Default is 200 regardless of low.
+  u8 Stage count = 1. Zero is legal, in which case Center and Width are ignored and we produce white noise.
+  u8.8 Gain = 1.
 ```
 
 ### Envelope
@@ -325,7 +335,7 @@ name STRING ;
 chid 0..255 ;
 trim 0..255 ;
 pan 0..128..255 ;
-mode ( 0..255 | noop | drum | fm | harsh | harm ) ;
+mode ( 0..255 | noop | drum | fm | harsh | harm | sub ) ;
 modecfg { ... }   # For modes (drum,fm,harsh,harm). See below.
 modecfg HEXDUMP ; # For all other modes, of which none exist yet.
 post { ... }
@@ -378,6 +388,15 @@ harmonics HEXDUMP ; # 2 bytes per
 levelenv ENV ;
 pitchenv ENV ;
 wheelrange CENTS_U16 ;
+```
+
+Within `modecfg {...}` for `mode sub` (any order):
+```
+levelenv ENV ;
+widthlo HZ ;
+widthhi HZ ; # NB Default is 200 regardless of 'widthlo'.
+stagec U8 ;
+gain U88 ;
 ```
 
 ENV:

@@ -83,7 +83,8 @@ export class SongChannelsUi {
     this.dom.spawn(modeSelect, "OPTION", { value: 2 }, "2: FM");
     this.dom.spawn(modeSelect, "OPTION", { value: 3 }, "3: HARSH");
     this.dom.spawn(modeSelect, "OPTION", { value: 4 }, "4: HARM");
-    for (let i=5; i<256; i++) this.dom.spawn(modeSelect, "OPTION", { value: i }, i);
+    this.dom.spawn(modeSelect, "OPTION", { value: 5 }, "5: SUB");
+    for (let i=6; i<256; i++) this.dom.spawn(modeSelect, "OPTION", { value: i }, i);
     modeSelect.value = channel.mode;
     
     this.dom.spawn(voicing, "DIV", ["row"],

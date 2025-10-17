@@ -18,6 +18,7 @@ export class Audio {
     this.ctx = null; // AudioContext
     this.musicEnabled = true;
     this.soundEnabled = true;
+    this.noise = null; // AudioBuffer
     eauNotevRequire();
   }
   
@@ -36,6 +37,7 @@ export class Audio {
       this.ctx = new AudioContext({
         latencyHint: "interactive",
       });
+      this.requireNoise();
     }
     if (this.ctx.state === "suspended") {
       this.ctx.resume();
@@ -87,7 +89,7 @@ export class Audio {
     }
     if (serial) {
       if (!this.ctx) this.start();
-      this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid);
+      this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid, this.noise);
       this.song.play();
       if (playhead > 0) this.song.setPlayhead(playhead);
       this.update(); // Editor updates on a long period; ensure we get one initial priming update.
@@ -115,6 +117,26 @@ export class Audio {
     this.soundPlayers.push({ node, endTime });
     if (tail !== node) this.soundPlayers.push({ node: tail, endTime });
     node.start();
+  }
+  
+  requireNoise() {
+    if (!this.noise) {
+      if (!this.ctx) throw new Error(`Requesting noise without an AudioContext`);
+      // Generate a noise buffer the same way the native implementation does.
+      this.noise = new AudioBuffer({
+        length: this.ctx.sampleRate,
+        sampleRate: this.ctx.sampleRate,
+      });
+      const v = this.noise.getChannelData(0);
+      let state = 0x12345678;
+      for (let i=0; i<v.length; i++) {
+        state ^= state << 13;
+        state ^= state >> 17;
+        state ^= state << 5;
+        v[i] = state / 2147483648.0 - 1.0;
+      }
+    }
+    return this.noise;
   }
   
   /* Egg Platform API.
@@ -173,7 +195,7 @@ export class Audio {
     const durms = Math.min(5000, Math.max(1, SongPlayer.calculateDuration(serial)));
     const framec = Math.ceil((durms * this.ctx.sampleRate) / 1000);
     const ctx = new OfflineAudioContext(1, framec, this.ctx.sampleRate);
-    const song = new SongPlayer(ctx, serial, 1.0, 0.0, false, 0);
+    const song = new SongPlayer(ctx, serial, 1.0, 0.0, false, 0, this.noise);
     song.play();
     song.update(5.0);
     ctx.startRendering().then(buffer => {
@@ -196,7 +218,7 @@ export class Audio {
       this.song = null;
     }
     if (!serial) return;
-    this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid);
+    this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid, this.noise);
     this.song.play();
   }
   
