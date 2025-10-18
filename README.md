@@ -68,6 +68,7 @@ Features we *do* support:
 - [Zen Garden](https://github.com/aksommerville/zennoniwa)
 - [Humm Fu](https://github.com/aksommerville/hummfu)
 - [Mysteries of the Crypt](https://github.com/aksommerville/myscrypt)
+- [When You Wish Upon A Bone](https://github.com/aksommerville/wishbone)
 
 ## TODO
 
@@ -80,7 +81,7 @@ Features we *do* support:
 - - - [x] native
 - - - [x] editor
 - - - [x] web
-- - [ ] Also add IIR post stages. They will make the HARSH voice mode much more useful.
+- - [x] Also add IIR post stages. They will make the HARSH voice mode much more useful. ...XXX To be useful, these would need to be multi-stage. Not sure I want the complexity.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
 - - [ ] Standard instruments.
 - - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
