@@ -817,7 +817,7 @@ export class ImageEditor {
     if ((tilep < 0) || (tilep >= frame.tiles.length)) return;
     const np = tilep + d;
     if ((np < 0) || (np >= frame.tiles.length)) return;
-    const tile = frame.tiles[p];
+    const tile = frame.tiles[tilep];
     frame.tiles.splice(tilep, 1);
     frame.tiles.splice(np, 0, tile);
     this.imageAnimationService.saveAnimation(this.res.path, this.animation);
