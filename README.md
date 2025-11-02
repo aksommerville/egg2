@@ -99,6 +99,7 @@ Features we *do* support:
 - - [ ] Native and web do not sound the same. Once better tooling is in place, figure out why and tweak them closer.
 - - [ ] Music level is too high relative to sound effects. Cheat it down globally. Fudged a correction in both Zen Garden and Humm Fu.
 - [ ] Minor bugs and tweaks outstanding.
+- - [ ] DecalsheetEditor: After using one of the clicky macros, sidebar scrolls to the top again. Can we keep it where it was? So annoying.
 - - [ ] Permit command-line and query params to prepopulate the store, for keys specified via metadata.
 - - - I'm picturing printing QR codes that embed a saved game from one machine, that the user can reopen in her browser.
 - - - Could also be super helpful during development: `./mygame --startAtLevel=13`
