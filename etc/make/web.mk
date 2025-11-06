@@ -15,3 +15,10 @@ web-all:$(web_LIB_HEADLESS)
 web_OFILES_HEADLESS:=$(filter-out $(web_MIDDIR)/eggrt/eggrt_main.o,$(web_OFILES))
 $(web_LIB_HEADLESS):$(web_OFILES_HEADLESS);$(PRECMD) $(web_AR) rc $@ $^
 
+# "synth" is an opt unit but it's delivered separately, so we build it separately.
+web_SYNTH_WASM:=$(web_OUTDIR)/synth.wasm
+web-all:$(web_SYNTH_WASM)
+web_SYNTH_CFILES:=$(filter src/opt/synth/%.c,$(SRCFILES))
+web_SYNTH_OFILES:=$(patsubst src/%.c,$(web_MIDDIR)/%.o,$(web_SYNTH_CFILES))
+-include $(web_SYNTH_OFILES:.o=.d)
+$(web_SYNTH_WASM):$(web_SYNTH_OFILES);$(PRECMD) $(web_LD) -o$@ $^ $(web_LDPOST)

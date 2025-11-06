@@ -138,7 +138,7 @@ int build_fullrom(struct builder *builder,struct builder_file *file) {
   return 0;
 }
 
-/* Separate web bundle, zipping the HTML and ROM. (sync)
+/* Separate web bundle, zipping the HTML, ROM, and synthesizer. (sync)
  */
  
 int build_separate(struct builder *builder,struct builder_file *file) {

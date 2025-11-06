@@ -189,6 +189,8 @@ static int eggdev_populate_separate_html(struct sr_encoder *dst,const char *src,
  
 int eggdev_zip_from_egg(struct eggdev_convert_context *ctx) {
   struct zip_writer writer={0};
+  
+  // Include the ROM file (provided in ctx).
   struct zip_file file={
     .zip_version=20|(3<<8),
     .flags=0,
@@ -203,6 +205,8 @@ int eggdev_zip_from_egg(struct eggdev_convert_context *ctx) {
     zip_writer_cleanup(&writer);
     return -1;
   }
+  
+  // Season and include index.html.
   const char *tm=0;
   int tmc=eggdev_get_separate_html_template(&tm);
   if (tmc<0) {
@@ -225,6 +229,32 @@ int eggdev_zip_from_egg(struct eggdev_convert_context *ctx) {
     return -1;
   }
   sr_encoder_cleanup(&html);
+  
+  // Get synth.wasm from the SDK and include it verbatim. We assume the target is "web".
+  char synthpath[1024];
+  int synthpathc=snprintf(synthpath,sizeof(synthpath),"%s/out/web/synth.wasm",g.sdkpath);
+  if ((synthpathc<1)||(synthpathc>=sizeof(synthpath))) {
+    zip_writer_cleanup(&writer);
+    return -1;
+  }
+  void *synthsrc=0;
+  int synthsrcc=file_read(&synthsrc,synthpath);
+  if (synthsrcc<0) {
+    zip_writer_cleanup(&writer);
+    return eggdev_convert_error(ctx,"Failed to read synth.wasm from Egg SDK (%s)",synthpath);
+  }
+  file.udata=synthsrc;
+  file.usize=synthsrcc;
+  file.name="synth.wasm";
+  file.namec=10;
+  if (zip_writer_add(&writer,&file)<0) {
+    free(synthsrc);
+    zip_writer_cleanup(&writer);
+    return -1;
+  }
+  free(synthsrc);
+  
+  // Zip it.
   int err=zip_writer_finish(ctx->dst,&writer);
   zip_writer_cleanup(&writer);
   return err;

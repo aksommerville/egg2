@@ -196,6 +196,16 @@ static int builder_infer_target_outputs_web(struct builder *builder,struct build
   if (builder_file_add_req(romfile,datarom)<0) return -1;
   if (builder_file_add_req(romfile,wasmfile)<0) return -1;
   
+  // Aside the ROM, we also need the precompiled synthesizer. This lives in the SDK.
+  // eggdev_zip_from_egg() does the actual reading of it, and finds it on its own. We list here only to ensure the zip rebuilds when dirty.
+  pathc=snprintf(path,sizeof(path),"%s/out/%.*s/synth.wasm",g.sdkpath,target->namec,target->name);
+  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+  struct builder_file *synthfile=builder_add_file(builder,path,pathc);
+  if (!synthfile) return -1;
+  synthfile->target=target;
+  synthfile->hint=BUILDER_FILE_HINT_SYNTH_WASM;
+  synthfile->ready=1;
+  
   // Separate HTML in a Zip archive.
   pathc=snprintf(path,sizeof(path),"%.*s/out/%.*s-%.*s.zip",builder->rootc,builder->root,builder->projnamec,builder->projname,target->namec,target->name);
   if ((pathc<1)||(pathc>=sizeof(path))) return -1;
@@ -204,6 +214,7 @@ static int builder_infer_target_outputs_web(struct builder *builder,struct build
   separate->target=target;
   separate->hint=BUILDER_FILE_HINT_SEPARATE;
   if (builder_file_add_req(separate,romfile)<0) return -1;
+  if (builder_file_add_req(separate,synthfile)<0) return -1;
   if (builder_add_separate_html_source(builder,separate)<0) return -1;
   
   return 0;
