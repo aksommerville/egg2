@@ -179,6 +179,48 @@ static int eggdev_client_load_restoc() {
   return 0;
 }
 
+/* Load a string symbol. (EGGDEV_*)
+ * (src) is the remainder of the line, may contain space and comment.
+ */
+ 
+static int eggdev_client_load_string(const char *k,int kc,const char *src,int srcc) {
+  if ((kc>7)&&!memcmp(k,"EGGDEV_",7)) {
+    k+=7;
+    kc-=7;
+  }
+  if (kc<1) return -1;
+  int srcp=0;
+  while ((srcp<srcc)&&((unsigned char)src[srcp]<=0x20)) srcp++;
+  if ((srcp>=srcc)||(src[srcp]!='"')) return -1;
+  int len=sr_string_measure(src+srcp,srcc-srcp,0);
+  if (len<1) return -1;
+  char tmp[256];
+  int tmpc=sr_string_eval(tmp,sizeof(tmp),src+srcp,len);
+  if ((tmpc<0)||(tmpc>sizeof(tmp))) return -1;
+  if (g.client.stringc>=g.client.stringa) {
+    int na=g.client.stringa+16;
+    if (na>INT_MAX/sizeof(struct eggdev_config_string)) return -1;
+    void *nv=realloc(g.client.stringv,sizeof(struct eggdev_config_string)*na);
+    if (!nv) return -1;
+    g.client.stringv=nv;
+    g.client.stringa=na;
+  }
+  char *nk=malloc(kc+1);
+  if (!nk) return -1;
+  char *nv=malloc(tmpc+1);
+  if (!nv) { free(nk); return -1; }
+  memcpy(nk,k,kc);
+  nk[kc]=0;
+  memcpy(nv,tmp,tmpc);
+  nv[tmpc]=0;
+  struct eggdev_config_string *string=g.client.stringv+g.client.stringc++;
+  string->k=nk;
+  string->kc=kc;
+  string->v=nv;
+  string->vc=tmpc;
+  return 0;
+}
+
 /* Load symbols from shared_symbols.h, in memory.
  */
  
@@ -198,6 +240,12 @@ static int eggdev_client_load_symbols_from_text(const char *src,int srcc,const c
     token=line+linep;
     tokenc=0;
     while ((linep<linec)&&((unsigned char)line[linep++]>0x20)) tokenc++;
+    if ((tokenc>7)&&!memcmp(token,"EGGDEV_",7)) {
+      if (eggdev_client_load_string(token,tokenc,line+linep,linec-linep)<0) {
+        fprintf(stderr,"%s:%d:WARNING: Ignoring symbol '%.*s' due to unspecified error.\n",path,lineno,tokenc,token);
+      }
+      continue;
+    }
     int nstype;
     if ((tokenc>=3)&&!memcmp(token,"NS_",3)) { nstype=EGGDEV_NSTYPE_NS; token+=3; tokenc-=3; }
     else if ((tokenc>=4)&&!memcmp(token,"CMD_",4)) { nstype=EGGDEV_NSTYPE_CMD; token+=4; tokenc-=4; }

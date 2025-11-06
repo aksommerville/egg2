@@ -269,10 +269,58 @@ static int eggdev_cb_get_toc(struct http_xfer *req,struct http_xfer *rsp) {
 struct eggdev_allcontent {
   struct sr_encoder *dst;
   struct eggdev_http_paths paths;
+  char **ignorev;
+  int ignorec,ignorea;
 };
+
+static void eggdev_allcontent_cleanup(struct eggdev_allcontent *ctx) {
+  if (ctx->ignorev) {
+    while (ctx->ignorec-->0) free(ctx->ignorev[ctx->ignorec]);
+    free(ctx->ignorev);
+  }
+  eggdev_http_paths_cleanup(&ctx->paths);
+}
+
+static int eggdev_allcontent_acquire_ignore(struct eggdev_allcontent *ctx) {
+  const char *src;
+  int srcc=eggdev_client_get_string(&src,"ignoreData",10);
+  if (srcc<1) return 0;
+  int srcp=0;
+  while (srcp<srcc) {
+    const char *pat=src+srcp;
+    int patc=0;
+    while ((srcp<srcc)&&(src[srcp++]!=',')) patc++;
+    if (!patc) continue;
+    if (ctx->ignorec>=ctx->ignorea) {
+      int na=ctx->ignorea+8;
+      if (na>INT_MAX/sizeof(void*)) return -1;
+      void *nv=realloc(ctx->ignorev,sizeof(void*)*na);
+      if (!nv) return -1;
+      ctx->ignorev=nv;
+      ctx->ignorea=na;
+    }
+    char *nv=malloc(patc+1);
+    if (!nv) return -1;
+    memcpy(nv,pat,patc);
+    nv[patc]=0;
+    ctx->ignorev[ctx->ignorec++]=nv;
+  }
+  return 0;
+}
+
+static int eggdev_allcontent_should_ignore(struct eggdev_allcontent *ctx,const char *path) {
+  if (ctx->ignorec<1) return 0;
+  int pathc=0;
+  while (path[pathc]) pathc++;
+  char **pat=ctx->ignorev;
+  int i=ctx->ignorec;
+  for (;i-->0;pat++) if (sr_pattern_match(*pat,-1,path,pathc)) return 1;
+  return 0;
+}
 
 static int eggdev_allcontent_cb(const char *path,const char *base,char ftype,void *userdata) {
   struct eggdev_allcontent *ctx=userdata;
+  if (eggdev_allcontent_should_ignore(ctx,path)) return 0;
   if (!ftype) ftype=file_get_type(path);
   if (ftype=='d') return dir_read(path,eggdev_allcontent_cb,ctx);
   if (ftype=='f') {
@@ -308,15 +356,16 @@ static int eggdev_cb_get_allcontent(struct http_xfer *req,struct http_xfer *rsp)
   reqpath+=15;
   reqpathc-=15;
   if (eggdev_http_paths_resolve(&ctx.paths,reqpath,reqpathc,0)<0) {
-    eggdev_http_paths_cleanup(&ctx.paths);
+    eggdev_allcontent_cleanup(&ctx);
     return http_xfer_set_status(rsp,404,"Not found");
   }
+  eggdev_allcontent_acquire_ignore(&ctx);
   if (dir_read(ctx.paths.local,eggdev_allcontent_cb,&ctx)<0) {
     ctx.dst->c=dstc0;
-    eggdev_http_paths_cleanup(&ctx.paths);
+    eggdev_allcontent_cleanup(&ctx);
     return http_xfer_set_status(rsp,500,"Internal error");
   }
-  eggdev_http_paths_cleanup(&ctx.paths);
+    eggdev_allcontent_cleanup(&ctx);
   return http_xfer_set_status(rsp,200,"OK");
 }
 

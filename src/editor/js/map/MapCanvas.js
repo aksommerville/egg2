@@ -24,6 +24,10 @@ export class MapCanvas {
     
     this.margin = 200; // Margin on all sides, in framebuffer pixels.
     this.edgeGap = 10; // Within (margin), a gap to accentuate the real map's edge.
+    if (this.mapService.neighborStrategy === "none") { // Eliminate margin if no neighbor strategy in play.
+      this.margin = 0;
+      this.edgeGap = 0;
+    }
     this.fbw = 100; // refreshed at render
     this.fbh = 100;
     this.scrollx = 0; // refreshed at render

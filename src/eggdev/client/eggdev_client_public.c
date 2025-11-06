@@ -236,3 +236,23 @@ int eggdev_symbol_repr(char *dst,int dsta,int v,int nstype,const char *ns,int ns
   }
   return srcc;
 }
+
+/* Get string.
+ */
+
+int eggdev_client_get_string(void *dstpp,const char *k,int kc) {
+  if (!k) return 0;
+  if (kc<0) { kc=0; while (k[kc]) kc++; }
+  if (!kc) return 0;
+  int err=eggdev_client_require();
+  if (err<0) return err;
+  const struct eggdev_config_string *string=g.client.stringv;
+  int i=g.client.stringc;
+  for (;i-->0;string++) {
+    if (string->kc!=kc) continue;
+    if (memcmp(string->k,k,kc)) continue;
+    *(const void**)dstpp=string->v;
+    return string->vc;
+  }
+  return 0;
+}

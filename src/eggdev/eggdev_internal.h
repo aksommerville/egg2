@@ -63,6 +63,11 @@ extern struct g {
       int symc,syma;
     } *nsv;
     int nsc,nsa;
+    struct eggdev_config_string {
+      char *k,*v;
+      int kc,vc;
+    } *stringv;
+    int stringc,stringa;
   } client;
   
   struct http_context *http;
@@ -126,6 +131,7 @@ int eggdev_symbol_repr(char *dst,int dsta,int src,int nstype,const char *ns,int 
 #define EGGDEV_NSTYPE_NS 2
 #define EGGDEV_NSTYPE_RES 3 /* (ns) is type name */
 #define EGGDEV_NSTYPE_RESTYPE 4 /* (ns) unused */
+int eggdev_client_get_string(void *dstpp,const char *k,int kc); // "EGGDEV_" string symbols from shared_symbols.h; no prefix.
 
 // Load an HTML template and return it WEAK.
 int eggdev_get_separate_html_template(void *dstpp);
