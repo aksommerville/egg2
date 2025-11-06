@@ -181,7 +181,6 @@ static int builder_begin_step(struct builder *builder,struct builder_step *step)
     #define SYNC builder_log(builder,"  %s\n",step->file->path);
     case BUILDER_FILE_HINT_DATAROM: SYNC return build_datarom(builder,step->file);
     case BUILDER_FILE_HINT_FULLROM: SYNC return build_fullrom(builder,step->file);
-    case BUILDER_FILE_HINT_STANDALONE: SYNC return build_standalone(builder,step->file);
     case BUILDER_FILE_HINT_SEPARATE: SYNC return build_separate(builder,step->file);
     case BUILDER_FILE_HINT_MAC_PLIST: SYNC return build_mac_plist(builder,step->file);
     #undef SYNC

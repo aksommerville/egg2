@@ -322,17 +322,9 @@ eggdev_convert_fn eggdev_get_converter(int dstfmt,int srcfmt) {
     case EGGDEV_FMT_egg: switch (srcfmt) {
         case EGGDEV_FMT_exe: return eggdev_egg_from_exe;
         case EGGDEV_FMT_zip: return eggdev_egg_from_zip;
-        case EGGDEV_FMT_html: return eggdev_egg_from_html;
       } break;
     case EGGDEV_FMT_zip: switch (srcfmt) {
         case EGGDEV_FMT_egg: return eggdev_zip_from_egg;
-        case EGGDEV_FMT_html: return eggdev_zip_from_html;
-        case EGGDEV_FMT_exe: return eggdev_zip_from_exe;
-      } break;
-    case EGGDEV_FMT_html: switch (srcfmt) {
-        case EGGDEV_FMT_egg: return eggdev_html_from_egg;
-        case EGGDEV_FMT_zip: return eggdev_html_from_zip;
-        case EGGDEV_FMT_exe: return eggdev_html_from_exe;
       } break;
     case EGGDEV_FMT_wav: switch (srcfmt) {
         case EGGDEV_FMT_eau: return eggdev_wav_from_eau;

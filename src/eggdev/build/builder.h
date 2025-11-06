@@ -92,9 +92,8 @@ int builder_execute_plan(struct builder *builder);
  */
 int build_datarom(struct builder *builder,struct builder_file *file);
 int build_fullrom(struct builder *builder,struct builder_file *file);
-int build_standalone(struct builder *builder,struct builder_file *file);
-int build_separate(struct builder *builder,struct builder_file *file);
 int build_mac_plist(struct builder *builder,struct builder_file *file);
+int build_separate(struct builder *builder,struct builder_file *file);
 int builder_schedule_link(struct builder *builder,struct builder_step *step);
 int builder_schedule_compile(struct builder *builder,struct builder_step *step);
 int builder_schedule_datao(struct builder *builder,struct builder_step *step);

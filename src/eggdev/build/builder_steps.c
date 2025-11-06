@@ -138,36 +138,6 @@ int build_fullrom(struct builder *builder,struct builder_file *file) {
   return 0;
 }
 
-/* Standalone HTML, from full ROM. (sync)
- */
- 
-int build_standalone(struct builder *builder,struct builder_file *file) {
-  struct builder_file *rom=builder_file_req_with_hint(file,BUILDER_FILE_HINT_FULLROM);
-  if (!rom) return builder_error(builder,"%s: Expected ROM among prereqs.\n",file->path);
-  struct sr_encoder dst={0};
-  void *src=0;
-  int srcc=file_read(&src,rom->path);
-  if (srcc<0) return builder_error(builder,"%s: Failed to read file.\n",rom->path);
-  struct eggdev_convert_context ctx={
-    .dst=&dst,
-    .src=src,
-    .srcc=srcc,
-    .refname=rom->path,
-  };
-  int err=eggdev_html_from_egg(&ctx);
-  free(src);
-  if (err<0) {
-    if (err!=-2) builder_error(builder,"%s: Unspecified error wrapping in HTML.\n",rom->path);
-    sr_encoder_cleanup(&dst);
-    return -2;
-  }
-  err=file_write(file->path,dst.v,dst.c);
-  sr_encoder_cleanup(&dst);
-  if (err<0) return builder_error(builder,"%s: Failed to write file.\n",file->path);
-  file->ready=1;
-  return 0;
-}
-
 /* Separate web bundle, zipping the HTML and ROM. (sync)
  */
  

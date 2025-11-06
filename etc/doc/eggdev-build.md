@@ -16,7 +16,7 @@ Each of those must define a few fields:
 - `{{TARGET}}_EXESFX`: ".exe" for mswin, blank for others.
 - `{{TARGET}}_PACKAGING`: Tells eggdev the shape of the finished product. One of: `exe`, `web`, `macos`.
 - - `exe`: A self-contained executable linked against `EGG_SDK/out/TARGET/libeggrt.a`.
-- - `web`: Standalone HTML and Zipped Separate HTML.
+- - `web`: Zipped HTML and ROM.
 - - `macos`: Same as `exe`, but also some ancillary MacOS app bundle bits.
 
 ## Runtime Libraries

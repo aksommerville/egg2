@@ -15,7 +15,6 @@ struct builder_target;
 #define BUILDER_FILE_HINT_CODE1 5 /* Linked Wasm module. */
 #define BUILDER_FILE_HINT_OBJ 6
 #define BUILDER_FILE_HINT_FULLROM 7 /* ROM as a web prereq, containing code:1. */
-#define BUILDER_FILE_HINT_STANDALONE 8
 #define BUILDER_FILE_HINT_SEPARATE 9
 #define BUILDER_FILE_HINT_EXE 10
 #define BUILDER_FILE_HINT_DATAO 11 /* DATAROM wrapped in a native linkable object. */

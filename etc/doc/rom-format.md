@@ -70,10 +70,7 @@ Native builds contain an embedded ROM with no code resource, exported as `_egg_e
 
 "Separate" web builds, the preferred format, are a Zip file containing at the root "game.bin" (ROM) and "index.html" (boilerplate).
 index.html expects game.bin to be adjacent to it once deployed.
-This is preferred over Standalone because it avoids the need for base64 decoding at load time.
-
-"Standalone" web builds are a single HTML file with a tag `<egg-rom>` containing the entire ROM base64-encoded, and a giant chunk of boilerplate Javascript.
-These are convenient because you can run them in a browser over `file:` protocol, which is not possible with Separate builds.
+There used to be "Standalone" web builds, a single HTML file, but due to the synth's architecture that is no longer possible.
 
 ## Standard Types
 

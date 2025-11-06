@@ -14,14 +14,12 @@ $(eggdev_EXE):$(eggdev_OFILES);$(PRECMD) $(eggdev_LD) -o$@ $^ $(eggdev_LDPOST)
 
 # TODO We might want these templates to be target-specific. Maybe should build from 'web.mk' instead of here.
 # Will require some complex eggdev changes, because right now it's not target-specific looking the templates up.
+# There used to be "SEPARATE" and "STANDALONE", but with the AudioWorkletNode synth strategy, "SEPARATE" is now the only option.
 eggdev_SEPARATE_TEMPLATE:=out/separate.html
-eggdev_STANDALONE_TEMPLATE:=out/standalone.html
-eggdev-all:$(eggdev_SEPARATE_TEMPLATE) $(eggdev_STANDALONE_TEMPLATE)
+eggdev-all:$(eggdev_SEPARATE_TEMPLATE)
 eggdev_SEPARATE_ENTRY:=src/web/separate.html
-eggdev_STANDALONE_ENTRY:=src/web/standalone.html
 eggdev_HTML_INPUTS:=$(filter src/web/%,$(SRCFILES))
 $(eggdev_SEPARATE_TEMPLATE):$(eggdev_EXE) $(eggdev_HTML_INPUTS);$(PRECMD) $(eggdev_EXE) minify -o$@ $(eggdev_SEPARATE_ENTRY)
-$(eggdev_STANDALONE_TEMPLATE):$(eggdev_EXE) $(eggdev_HTML_INPUTS);$(PRECMD) $(eggdev_EXE) minify -o$@ $(eggdev_STANDALONE_ENTRY)
 
 # Eggdev does not include host I/O driver units, and that's a firm requirement.
 # But I want some dev tooling that does, in particular an audio loop player.

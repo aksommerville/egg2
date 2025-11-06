@@ -89,7 +89,7 @@ Note that the usual build flow does not need this. Usually `eggdev build` is all
 Usage: `eggdev unpack -oDIRECTORY ROM [--verbatim]`
 
 Extract a ROM file's contents into a new directory.
-`ROM` may also be an executable, a standalone HTML, or a Zip file containing `game.bin`.
+`ROM` may also be an executable or a Zip file containing `game.bin`.
 
 By default, we will try to convert known resource types to their "portable" form.
 Use `--verbatim` to suppress that and copy resources exactly as they are.

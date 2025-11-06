@@ -74,13 +74,7 @@ struct eggdev_convert_context {
 int eggdev_convert_noop(struct eggdev_convert_context *ctx); // Just copy (src) to (dst), no conversion.
 int eggdev_egg_from_exe(struct eggdev_convert_context *ctx); // ie extract ROM.
 int eggdev_egg_from_zip(struct eggdev_convert_context *ctx); // Zip must contain "game.bin" at its root.
-int eggdev_egg_from_html(struct eggdev_convert_context *ctx); // Standalone HTML only.
 int eggdev_zip_from_egg(struct eggdev_convert_context *ctx);
-int eggdev_zip_from_html(struct eggdev_convert_context *ctx); // From Standalone HTML. Uses SDK's Separate HTML template.
-int eggdev_zip_from_exe(struct eggdev_convert_context *ctx); // Fails if code:1 absent, which will usually be the case.
-int eggdev_html_from_egg(struct eggdev_convert_context *ctx);
-int eggdev_html_from_zip(struct eggdev_convert_context *ctx); // Uses SDK's Standalone HTML template.
-int eggdev_html_from_exe(struct eggdev_convert_context *ctx); // Fails if code:1 absent, which will usually be the case.
 int eggdev_png_from_png(struct eggdev_convert_context *ctx); // Same format, but some optimizations.
 int eggdev_wav_from_eau(struct eggdev_convert_context *ctx); // Stands a synthesizer and records it.
 int eggdev_wav_from_eaut(struct eggdev_convert_context *ctx);

@@ -84,7 +84,7 @@ static int eggdev_cb_get_webpath(struct http_xfer *req,struct http_xfer *rsp) {
       int packagingc=eggdev_config_get_sub(&packaging,token,tokenc,"PACKAGING",9);
       if ((packagingc==3)&&!memcmp(packaging,"web",3)) {
         struct sr_encoder *dst=http_xfer_get_body(rsp);
-        if (sr_encode_fmt(dst,"/out/%.*s-%.*s.html\n",pnamec,pname,tokenc,token)<0) return -1;
+        if (sr_encode_fmt(dst,"/out/%.*s-%.*s.zip\n",pnamec,pname,tokenc,token)<0) return -1;
         return http_xfer_set_status(rsp,200,"OK");
       }
     }

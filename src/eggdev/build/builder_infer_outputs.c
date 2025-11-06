@@ -140,20 +140,9 @@ static int builder_infer_outputs_c(struct builder *builder,struct builder_file *
   return 0;
 }
 
-/* Add the separate and standalone HTML templates as prereqs for the appropriate outputs.
+/* Add the separate HTML template as a prereq for the appropriate outputs.
  * This isn't strictly necessary, but it does force a rebuild when the templates change.
  */
- 
-static int builder_add_standalone_html_source(struct builder *builder,struct builder_file *output) {
-  char path[1024];
-  int pathc=snprintf(path,sizeof(path),"%s/out/standalone.html",g.sdkpath);
-  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
-  struct builder_file *file=builder_add_file(builder,path,pathc);
-  if (!file) return -1;
-  file->ready=1; // eggdev will not build anything under egg itself
-  if (builder_file_add_req(output,file)<0) return -1;
-  return 0;
-}
 
 static int builder_add_separate_html_source(struct builder *builder,struct builder_file *output) {
   char path[1024];
@@ -206,16 +195,6 @@ static int builder_infer_target_outputs_web(struct builder *builder,struct build
   romfile->hint=BUILDER_FILE_HINT_FULLROM;
   if (builder_file_add_req(romfile,datarom)<0) return -1;
   if (builder_file_add_req(romfile,wasmfile)<0) return -1;
-  
-  // Standalone HTML.
-  pathc=snprintf(path,sizeof(path),"%.*s/out/%.*s-%.*s.html",builder->rootc,builder->root,builder->projnamec,builder->projname,target->namec,target->name);
-  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
-  struct builder_file *standalone=builder_add_file(builder,path,pathc);
-  if (!standalone) return -1;
-  standalone->target=target;
-  standalone->hint=BUILDER_FILE_HINT_STANDALONE;
-  if (builder_file_add_req(standalone,romfile)<0) return -1;
-  if (builder_add_standalone_html_source(builder,standalone)<0) return -1;
   
   // Separate HTML in a Zip archive.
   pathc=snprintf(path,sizeof(path),"%.*s/out/%.*s-%.*s.zip",builder->rootc,builder->root,builder->projnamec,builder->projname,target->namec,target->name);

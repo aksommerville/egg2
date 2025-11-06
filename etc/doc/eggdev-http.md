@@ -36,8 +36,8 @@ Every special request managed by eggdev begins with `/api/`.
 
 ### GET /api/webpath
 
-Returns the path to the standalone HTML of this project, relative to project's root.
-Typically `/out/MYGAME-web.html`.
+Returns the path to the output web bundle of this project, relative to project's root.
+Typically `/out/MYGAME-web.zip`.
 Fails if no suitable target is configured.
 
 ### GET /api/projname

@@ -135,7 +135,6 @@ int eggdev_client_get_string(void *dstpp,const char *k,int kc); // "EGGDEV_" str
 
 // Load an HTML template and return it WEAK.
 int eggdev_get_separate_html_template(void *dstpp);
-int eggdev_get_standalone_html_template(void *dstpp);
 
 /* Helpers for regular file input and output.
  * Empty paths, "-", "<stdin>", and "<stdout>" automatically use stdin/stdout instead.

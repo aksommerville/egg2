@@ -81,8 +81,9 @@ Features we *do* support:
 - - - [ ] Permit multiple songs? I really think we should, along the lines of egg3.
 - - - [ ] Note On / Note Off / Note Once / Wheel, make Egg Platform API match synth's API. Also "songid".
 - - [ ] Web. Orchestrate load in Audio.js.
-- - [ ] Eliminate standalone builds.
+- - [x] Eliminate standalone builds.
 - - [ ] Build synth wasm.
+- - [ ] `GET /api/webpath` is changed to return the Zip instead. That probably breaks launching from editor.
 - [ ] Major changes.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
 - - [ ] Standard instruments.

@@ -89,39 +89,6 @@ int eggdev_egg_from_zip(struct eggdev_convert_context *ctx) {
   }
 }
 
-/* ROM from Standalone HTML.
- */
- 
-int eggdev_egg_from_html(struct eggdev_convert_context *ctx) {
-  /* No need to overengineer this with an HTML parser or anything.
-   * Just find <egg-rom> and </egg-rom>, and the text between them is the base64-encoded ROM.
-   */
-  const char *src=ctx->src;
-  int srcc=ctx->srcc;
-  int stopp=srcc-10;
-  int beginp=-1,endp=-1;
-  int srcp=0; for (;srcp<=stopp;srcp++) {
-    if (beginp<0) {
-      if (!memcmp(src+srcp,"<egg-rom>",9)) beginp=srcp+9;
-    } else {
-      if (!memcmp(src+srcp,"</egg-rom>",10)) endp=srcp;
-    }
-  }
-  if (beginp<0) return eggdev_convert_error(ctx,"<egg-rom> tag not found.");
-  if (endp<beginp) return eggdev_convert_error(ctx,"Unclosed <egg-rom> tag.");
-  // Our base64 decoder does tolerate whitespace anywhere, which will probably happen here.
-  for (;;) {
-    int err=sr_base64_decode((char*)ctx->dst->v+ctx->dst->c,ctx->dst->a-ctx->dst->c,src+beginp,endp-beginp);
-    if (err<0) return eggdev_convert_error(ctx,"Malformed base64 in <egg-rom> tag.");
-    if (ctx->dst->c<=ctx->dst->a-err) {
-      ctx->dst->c+=err;
-      break;
-    }
-    if (sr_encoder_require(ctx->dst,err)<0) return -1;
-  }
-  return 0;
-}
-
 /* Gather the things we need from a ROM file, for generating either of the HTMLs.
  */
  
@@ -263,79 +230,12 @@ int eggdev_zip_from_egg(struct eggdev_convert_context *ctx) {
   return err;
 }
 
-/* Standalone HTML from ROM.
- */
- 
-int eggdev_html_from_egg(struct eggdev_convert_context *ctx) {
-  /* The platform's CSS and JS have already been inlined to the template.
-   * We do three more things:
-   *  - Insert a favicon link.
-   *  - <egg-rom> gets the base64-encoded ROM.
-   *  - <title> gets the game's default title.
-   * The actual title the user will see gets set at runtime, but it's good to have a sensible static <title> tag too, for external tools to consume.
-   */
-  const char *tm=0;
-  int tmc=eggdev_get_standalone_html_template(&tm);
-  if (tmc<0) return eggdev_convert_error(ctx,"Failed to acquire Standalone HTML template.");
-  struct eggdev_html_rom_bits bits={0};
-  eggdev_html_rom_bits_extract(&bits,ctx->src,ctx->srcc);
-  // It's ridiculously inefficient, but to preserve my sanity, we're going to process the template one byte at a time:
-  const char *src=tm;
-  int srcc=tmc,srcp=0,got_title=0,got_rom=0;
-  while (srcp<srcc) {
-  
-    if ((srcp<=srcc-7)&&!memcmp(src+srcp,"<title>",7)) {
-      if (got_title) return eggdev_convert_error(ctx,"Standalone HTML template has multiple <title> tags.");
-      got_title=1;
-      srcp+=7;
-      for (;;) {
-        if (srcp>srcc-8) return eggdev_convert_error(ctx,"Unclosed <title> tag in Standalone HTML template.");
-        if (!memcmp(src+srcp,"</title>",8)) {
-          srcp+=8;
-          break;
-        }
-        srcp++;
-      }
-      if (bits.iconc) {
-        if (sr_encode_raw(ctx->dst,"<link rel=\"icon\" type=\"image/png\" href=\"data:;base64,",-1)<0) return -1;
-        if (sr_encode_base64(ctx->dst,bits.icon,bits.iconc)<0) return -1;
-        if (sr_encode_raw(ctx->dst,"\" />\n",-1)<0) return -1;
-      }
-      if (bits.titlec) {
-        if (sr_encode_fmt(ctx->dst,"<title>%.*s</title>\n",bits.titlec,bits.title)<0) return -1;
-      }
-      
-    } else if ((srcp<=srcc-19)&&!memcmp(src+srcp,"<egg-rom></egg-rom>",19)) {
-      if (got_rom) return eggdev_convert_error(ctx,"Standalone HTML template has multiple <egg-rom> tags.");
-      got_rom=1;
-      srcp+=19;
-      if (sr_encode_raw(ctx->dst,"<egg-rom>\n",-1)<0) return -1;
-      if (sr_encode_base64(ctx->dst,ctx->src,ctx->srcc)<0) return -1;
-      if (sr_encode_raw(ctx->dst,"\n</egg-rom>",-1)<0) return -1;
-      
-    } else {
-      if (sr_encode_u8(ctx->dst,src[srcp])<0) return -1;
-      srcp++;
-    }
-  }
-  if (!got_rom) return eggdev_convert_error(ctx,"No <egg-rom> tag in Standalone HTML.");
-  // Don't fail for missing <title>; it's optional.
-  return 0;
-}
-
 /* Fetch the HTML templates.
  */
  
 int eggdev_get_separate_html_template(void *dstpp) {
   char path[1024];
   int pathc=snprintf(path,sizeof(path),"%s/out/separate.html",g.sdkpath);
-  if ((pathc<1)||(pathc>=sizeof(path))) return -1;
-  return file_read(dstpp,path);
-}
-
-int eggdev_get_standalone_html_template(void *dstpp) {
-  char path[1024];
-  int pathc=snprintf(path,sizeof(path),"%s/out/standalone.html",g.sdkpath);
   if ((pathc<1)||(pathc>=sizeof(path))) return -1;
   return file_read(dstpp,path);
 }
