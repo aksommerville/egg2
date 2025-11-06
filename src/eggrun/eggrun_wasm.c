@@ -100,6 +100,7 @@ static void egg_wasm_play_song(wasm_exec_env_t ee,int rid,int force,int repeat) 
   egg_play_song(rid,force,repeat);
 }
 
+/*XXX
 static int egg_wasm_song_get_id(wasm_exec_env_t ee) {
   return egg_song_get_id();
 }
@@ -107,6 +108,7 @@ static int egg_wasm_song_get_id(wasm_exec_env_t ee) {
 static double egg_wasm_song_get_playhead(wasm_exec_env_t ee) {
   return egg_song_get_playhead();
 }
+/**/
 
 static void egg_wasm_song_set_playhead(wasm_exec_env_t ee,double s) {
   egg_song_set_playhead(s);
@@ -166,8 +168,9 @@ static NativeSymbol eggrun_wasm_exports[]={
   {"egg_input_get_one",egg_wasm_input_get_one,"(i)i"},
   {"egg_play_sound",egg_wasm_play_sound,"(iFF)"},
   {"egg_play_song",egg_wasm_play_song,"(iii)"},
-  {"egg_song_get_id",egg_wasm_song_get_id,"()i"},
-  {"egg_song_get_playhead",egg_wasm_song_get_playhead,"()F"},
+  //XXX
+  //{"egg_song_get_id",egg_wasm_song_get_id,"()i"},
+  //{"egg_song_get_playhead",egg_wasm_song_get_playhead,"()F"},
   {"egg_song_set_playhead",egg_wasm_song_set_playhead,"(F)"},
   {"egg_texture_del",egg_wasm_texture_del,"(i)"},
   {"egg_texture_new",egg_wasm_texture_new,"()i"},

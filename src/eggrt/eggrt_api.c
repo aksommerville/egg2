@@ -72,9 +72,9 @@ int egg_prefs_set(int k,int v) {
         v=v?1:0;
         if (v==eggrt.music_enable) return 0;
         if (eggrt.music_enable=v) {
-          synth_play_song(eggrt.synth,eggrt.songid,0,eggrt.songrepeat);
+          synth_play_song(1,eggrt.songid,eggrt.songrepeat,1.0f,0.0f);
         } else {
-          synth_play_song(eggrt.synth,0,0,0);
+          synth_play_song(1,0,0,0.0f,0.0f);
         }
       } return 0;
   
@@ -148,7 +148,7 @@ int egg_input_get_one(int playerid) {
 void egg_play_sound(int soundid,double trim,double pan) {
   if (!eggrt.sound_enable) return;
   if (hostio_audio_lock(eggrt.hostio)<0) return;
-  synth_play_sound(eggrt.synth,soundid,trim,pan);
+  synth_play_sound(soundid,trim,pan);
   hostio_audio_unlock(eggrt.hostio);
 }
 
@@ -157,40 +157,42 @@ void egg_play_song(int songid,int force,int repeat) {
   eggrt.songrepeat=repeat;
   if (!eggrt.music_enable) return;
   if (hostio_audio_lock(eggrt.hostio)<0) return;
-  synth_play_song(eggrt.synth,songid,force,repeat);
+  if (force) synth_play_song(1,0,0,0.0f,0.0f);
+  synth_play_song(1,songid,repeat,1.0f,0.0f);
   hostio_audio_unlock(eggrt.hostio);
 }
 
 int egg_play_note(int chid,int noteid,int velocity,int durms) {
   if (!eggrt.music_enable) return 0;
   if (hostio_audio_lock(eggrt.hostio)<0) return 0;
-  int holdid=synth_play_note(eggrt.synth,chid,noteid,velocity,durms);
+  synth_event_note_once(1,chid,noteid,velocity,durms);
   hostio_audio_unlock(eggrt.hostio);
-  return holdid;
+  return 1;//XXX holdid is not going to exist anymore
 }
 
 void egg_release_note(int holdid) {
   if (holdid<1) return;
   if (!eggrt.music_enable) return;
   if (hostio_audio_lock(eggrt.hostio)<0) return;
-  synth_release_note(eggrt.synth,holdid);
+  //synth_release_note(eggrt.synth,holdid);//TODO need to change API
   hostio_audio_unlock(eggrt.hostio);
 }
 
 void egg_adjust_wheel(int chid,int v) {
   if (!eggrt.music_enable) return;
   if (hostio_audio_lock(eggrt.hostio)<0) return;
-  synth_adjust_wheel(eggrt.synth,chid,v);
+  //synth_adjust_wheel(eggrt.synth,chid,v);
+  synth_set(1,chid,SYNTH_PROP_WHEEL,v/512.0f);
   hostio_audio_unlock(eggrt.hostio);
 }
 
-int egg_song_get_id() {
-  return synth_get_songid(eggrt.synth);
+int egg_song_get_id() {//XXX API can't support this anymore; won't be feasible for web
+  return (synth_get(1,0xff,SYNTH_PROP_EXISTENCE)<1.0f)?0:1; //...and this is not the right answer anyway
 }
 
-double egg_song_get_playhead() {
+double egg_song_get_playhead() {//XXX API can't support this anymore; won't be feasible for web
   if (hostio_audio_lock(eggrt.hostio)<0) return 0.0;
-  double p=synth_get_playhead(eggrt.synth);
+  double p=synth_get(1,0xff,SYNTH_PROP_PLAYHEAD);
   if (p<=0.0) {
     hostio_audio_unlock(eggrt.hostio);
     return 0.0;
@@ -202,7 +204,7 @@ double egg_song_get_playhead() {
 }
 
 void egg_song_set_playhead(double playhead) {
-  synth_set_playhead(eggrt.synth,playhead);
+  synth_set(1,0xff,SYNTH_PROP_PLAYHEAD,playhead);
 }
 
 /* Video.

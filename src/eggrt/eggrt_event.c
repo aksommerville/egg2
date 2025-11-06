@@ -31,8 +31,47 @@ void eggrt_cb_resize(struct hostio_video *driver,int w,int h) {
 /* Audio out.
  */
  
+static void eggrt_quantize_pcm(int16_t *dst,const float *l,const float *r,int framec,int dstchanc) {
+  #define QSAMPLE(src) (((src)<=-1.0f)?-32768:((src)>=1.0f)?32767:(int)((src)*32767.0f))
+  if (dstchanc==1) { // mono...
+    for (;framec-->0;l++,dst++) {
+      *dst=QSAMPLE(*l);
+    }
+  } else if ((dstchanc==2)&&r) { // regular stereo...
+    for (;framec-->0;l++,r++,dst+=2) {
+      dst[0]=QSAMPLE(*l);
+      dst[1]=QSAMPLE(*r);
+    }
+  } else { // generic...
+    int extrac=dstchanc-2;
+    for (;framec-->0;l++) {
+      *dst++=QSAMPLE(*l);
+      if (dstchanc>=2) {
+        if (r) *dst++=QSAMPLE(*r);
+        else *dst++=0;
+        int i=extrac; while (i-->0) *dst++=0;
+      }
+      if (r) r++;
+    }
+  }
+  #undef QSAMPLE
+}
+ 
 void eggrt_cb_pcm_out(int16_t *v,int c,struct hostio_audio *driver) {
-  synth_updatei(v,c,eggrt.synth);
+  int framec=c/driver->chanc;
+  float *bufl=synth_get_buffer(0),*bufr=0;
+  if (!bufl) {
+    memset(v,0,c);
+    return;
+  }
+  if (driver->chanc>=2) bufr=synth_get_buffer(1);
+  while (framec>0) {
+    int updc=(framec>eggrt.audio_buffer)?eggrt.audio_buffer:framec;
+    synth_update(updc);
+    eggrt_quantize_pcm(v,bufl,bufr,updc,driver->chanc);
+    v+=updc*driver->chanc;
+    framec-=updc;
+  }
 }
 
 /* Key from system keyboard.

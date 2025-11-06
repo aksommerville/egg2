@@ -7,11 +7,13 @@ Differences from [Egg v1](https://github.com/aksommerville/egg):
 - Custom build tool, similar to berry. Arbitrary targets selected at eggdev's build time, and web is not special.
 - Direct access to data conversion a la carte via eggdev.
 - Synth: Post pipes, LFOs, and stereo output.
+- Synth: Single implementation for both native and web. Web runs Wasm in an AudioWorkletNode.
 - ~More input options: Keyboard, mouse, touch. Maybe accelerometer?~ Decided against this, after getting partway in.
 - Single render call taking a struct of uniforms and a GPU-ready vertex buffer.
 - No image decoder at runtime (egg 1 used to do this; it's actually been removed already).
 - Rich built-in menu. Quit, input config, toggle music, toggle sound, language.
-- Web apps pack to a Zip file with boilerplate HTML and the binary ROM. Same as berry. Also continue to allow standalone HTML as an option.
+- Web apps pack to a Zip file with boilerplate HTML and the binary ROM. Same as berry.
+- Standalone HTML is no longer an option, due to synth.
 - eggdev --help reads from etc/doc/eggdev-cli.md directly.
 - Default instruments live somewhere in the SDK.
 
@@ -33,7 +35,6 @@ Some common game features that Egg *does not* support:
 Features we *do* support:
  - 2d sprite graphics.
  - Beepy music and sound.
- - Access to music's playhead (eg for rhythm games).
  - Local multiplayer. Most hosts can go up to at least 8.
  - Multiple languages. Easy for strings, but you're on your own for text written in images.
  - Universal input config. Individual games never need to worry about it.
@@ -72,16 +73,17 @@ Features we *do* support:
 
 ## TODO
 
+- [ ] Branch 20251106-synth3: Replace synthesizer with the AudioWorkletNode strategy proven out in egg3. (egg3 is not real; 2 is the go-forward version).
+- - [ ] Update MIDI notes in etc/doc/eau-format.md
+- - [ ] Are we going to have an EAU-Text format? v3 doesn't have one.
+- - [ ] API changes
+- - - [ ] `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` should be continuous trims, say 0..99.
+- - - [ ] Permit multiple songs? I really think we should, along the lines of egg3.
+- - - [ ] Note On / Note Off / Note Once / Wheel, make Egg Platform API match synth's API. Also "songid".
+- - [ ] Web. Orchestrate load in Audio.js.
+- - [ ] Eliminate standalone builds.
+- - [ ] Build synth wasm.
 - [ ] Major changes.
-- - [x] Confirm we can get decent whoosh, click, and snap sounds without subtractive voices. I'm not sure we can.
-- - - Humm Fu had pretty decent hihats, but I had trouble with snare. I think we do need subtractive noise.
-- - - [x] Use a precalculated noise buffer, say one second long, generated with a private PRNG. That way, native and web can produce exactly the same noise.
-- - - - They'll still sound different at different sample rates but I don't think we can avoid that.
-- - - [x] eggdev
-- - - [x] native
-- - - [x] editor
-- - - [x] web
-- - [x] Also add IIR post stages. They will make the HARSH voice mode much more useful. ...XXX To be useful, these would need to be multi-stage. Not sure I want the complexity.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
 - - [ ] Standard instruments.
 - - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
@@ -100,9 +102,6 @@ Features we *do* support:
 - - [ ] Music level is too high relative to sound effects. Cheat it down globally. Fudged a correction in both Zen Garden and Humm Fu.
 - [ ] Minor bugs and tweaks outstanding.
 - - [ ] DecalsheetEditor: After using one of the clicky macros, sidebar scrolls to the top again. Can we keep it where it was? So annoying.
-- - [x] MapEditor: Let project indicate that neighbors are never in play, and in that case don't apportion a margin for them. eg costume-conundrum, the margin is a bother.
-- - - This is temporarily effected in MapCanvas.constructor; find a more permanent disposition.
-- - - ...no need for any extra config; just drive it off MapService.neighborStrategy==="none".
 - - [ ] Permit command-line and query params to prepopulate the store, for keys specified via metadata.
 - - - I'm picturing printing QR codes that embed a saved game from one machine, that the user can reopen in her browser.
 - - - Could also be super helpful during development: `./mygame --startAtLevel=13`
@@ -115,23 +114,7 @@ Features we *do* support:
 - - [ ] editor: Creating new tilesheet or decalsheet, somehow prompt existing images.
 - - [ ] graf: Can flush due to full buffer in the middle of raw geometry, breaking sets. eg try a bunch of `EGG_RENDER_LINES`.
 - - - Confirm that all impacted cases are single calls into graf. If so, the fix will be easy, just start allocating multiple vertices at once internally.
-- - [x] editor: World map. Ugh, I needed this badly during Mysteries of the Crypt. :(
-- - [x] MapEditor: Producing 3-byte "position" commands, which can never be legal.
-- - [x] eggdev: Builds still do not appear to pull in their deps correctly; I'm needing to `make clean` when I shouldn't need to.
-- - - I think it's the files with relative paths that don't rebuild. eg `myscrypt/src/sprite/sprite.c` includes "../myscrypt.h" and doesn't rebuild as expected.
-- - - ...indeed the makefile that gcc generates for that does have ".." entries preserved. We need to resolve those during `eggdev build`.
 - - [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
-- - [x] editor: Rainbow pencil overwrites appointment-only neighbors, it shouldn't. ...actually you can't even place an appt-only with the rainbow, if neighbors exist. ouch
-- - [x] MapEditor: We can do better with the edit-poi modal...
-- - - [x] Drop-down for sprites.
-- - - [x] If `NS_sprtype_` exists and the selected sprite links to it, use its comment as the remainder of the command.
-- - - - This bit me in Mysteries of the Crypt. Would have been great to get a little hint about the arg format when placing a sprite.
-- - [x] MapEditor: Can we handle transparent tiles better? Maybe `NS_sys_bgcolor` or something?
-- - [x] TilesheetEditor: Weird when the image is mostly transparent. Use a different color for the margin.
-- - [x] editor: New map modal doesn't dismiss after creating map, in "position" regime. Also, got a wildly incorrect position.
-- - [x] editor: Maps get created with 3-param position. There are no 3-param command sizes. Make it 2 or 4.
-- - [x] editor: Delete resource, if selected we should reload with no selected resource.
-- - [x] editor: MissingResourcesService: For song, Report missing drums and unconfigured channels. ...DECLINE. They're MIDI at that point. Can validate in SongEditor instead.
 - - [ ] editor: SidebarUi scroll bar broken, doesn't appear
 - - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - - [ ] native: Record and playback session.
@@ -159,13 +142,13 @@ Features we *do* support:
 - - [ ] Sam-Sam
 - [ ] Enormous effort, but how do you feel about migrating or rewriting old non-Egg games? Could make provisioning new kiosks a lot smoother.
 - - [ ] Upsy-Downsy -- least difficult and most beneficial of these. We could then retire `pebble`
-- - [ ] Sitter 2009 (a full rewrite is warranted)
 - - [ ] Tag Team Adventure Quest
 - - [ ] Campaign Trail of the Mummy
 - - [ ] Plunder Squad
 - - [ ] Full Moon. Huge and complex.
 - - [ ] Too Heavy (JS; would be a full rewrite)
-- - [ ] Economny of Motion (JS; full rewrite)
+- - [ ] Economy of Motion (JS; full rewrite)
+- - [ ] Sitter 2009 (a full rewrite is warranted)
 - - Definitely not in scope: Chetyorska (MIDI-In)
 - [ ] "eggzotics": Sample games that build for something weird, and also Egg.
 - - Anything with a virtual runtime is definitely out. So no Pico-8, and nothing using Java, JS, Lua, etc.

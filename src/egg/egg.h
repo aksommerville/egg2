@@ -7,6 +7,16 @@
 
 #include <stdint.h>
 
+// I'm only exporting things I expect to link to the Egg Platform API.
+// Can freely add this to other functions when needed.
+#if USE_native
+  #define WASM_EXPORT(name)
+  #define WASM_IMPORT(name)
+#else
+  #define WASM_EXPORT(name) __attribute__((export_name(name)))
+  #define WASM_IMPORT(name) __attribute__((import_name(name)))
+#endif
+
 /* Client entry points.
  * These are not part of the Egg Platform API.
  * Rather, they are the functions each client -- you -- must implement, for Egg to call.
@@ -17,26 +27,26 @@
  * Usually this is unused. But if you defer saving games, good time to poke it.
  * This *does* normally get called if egg_client_init() reports an error.
  */
-void egg_client_quit(int status);
+WASM_EXPORT("egg_client_quit") void egg_client_quit(int status);
 
 /* First call the platform will make.
  * If you return <0, no update or render calls will be made, and the platform will shut down.
  */
-int egg_client_init();
+WASM_EXPORT("egg_client_init") int egg_client_init();
 
 /* Called repeatedly while running.
  * (elapsed) is the time in seconds since the last update, or a made-up number the first time.
  * It has already been conditioned by the platform, will always be close to 16.6 ms.
  * During each update, you should poll for input and then adjust your model state.
  */
-void egg_client_update(double elapsed);
+WASM_EXPORT("egg_client_update") void egg_client_update(double elapsed);
 
 /* Called repeatedly while running.
  * Normally there's one render after each update but that's not strictly guaranteed.
  * If running headless, render might happen intermittently or not at all.
  * Do not change your model state or make any assumptions about timing -- those are "update" concerns.
  */
-void egg_client_render();
+WASM_IMPORT("egg_client_render") void egg_client_render();
 
 /* Global odds and ends.
  ***********************************************************************************/
@@ -45,23 +55,23 @@ void egg_client_render();
  * This function usually does return; termination will happen at the end of the update cycle.
  * But platforms are allowed to terminate immediately without returning, if that makes more sense for them.
  */
-void egg_terminate(int status);
+WASM_IMPORT("egg_terminate") void egg_terminate(int status);
 
 /* Dump some text to the debug console.
  * Do not include a newline. We'll strip it if you do.
  * This text will probably not be seen by users, but it's not secret either.
  */
-void egg_log(const char *msg);
+WASM_IMPORT("egg_log") void egg_log(const char *msg);
 
 /* Current real time in seconds from some undefined epoch.
  */
-double egg_time_real();
+WASM_IMPORT("egg_time_real") double egg_time_real();
 
 /* Populate (dst) with the local time, represented as up to 7 integers:
  *   [year,month,day,hour,minute,second,millisecond]
  * Everything is formatted for display, in particular (month) is 1-based, the way humans like it.
  */
-void egg_time_local(int *dst,int dsta);
+WASM_IMPORT("egg_time_local") void egg_time_local(int *dst,int dsta);
 
 /* Helpers for language codes.
  * We pass languages around as 10-bit integers, which encode a 2-letter ISO 631 code.
@@ -82,8 +92,8 @@ void egg_time_local(int *dst,int dsta);
  * Do not change these unless the user has prompted you to.
  * When music is disabled, it will not pretend to play. egg_song_get_id and egg_song_get_playhead report zero while disabled.
  */
-int egg_prefs_get(int k);
-int egg_prefs_set(int k,int v);
+WASM_IMPORT("egg_prefs_get") int egg_prefs_get(int k);
+WASM_IMPORT("egg_prefs_set") int egg_prefs_set(int k,int v);
 #define EGG_PREF_LANG 1
 #define EGG_PREF_MUSIC 2
 #define EGG_PREF_SOUND 3
@@ -94,13 +104,13 @@ int egg_prefs_set(int k,int v);
 /* Copy the ROM to (dst) and return its length.
  * If it's longer than (dsta), copy what fits and return the full length.
  */
-int egg_rom_get(void *dst,int dsta);
+WASM_IMPORT("egg_rom_get") int egg_rom_get(void *dst,int dsta);
 
 /* Copy one resource from the ROM.
  * Usually it makes more sense for clients to get the entire ROM at once and slice it client-side.
  * Utility libraries might need this piecemeal helper instead.
  */
-int egg_rom_get_res(void *dst,int dsta,int tid,int rid);
+WASM_IMPORT("egg_rom_get_res") int egg_rom_get_res(void *dst,int dsta,int tid,int rid);
 
 /* Access to persistent key=value store.
  * Key and value are not terminated and length is always required.
@@ -109,9 +119,9 @@ int egg_rom_get_res(void *dst,int dsta,int tid,int rid);
  * Keys must be 1..255 of G0 (space allowed), and values 0..65535 of UTF-8.
  * You do not need to qualify your keys per game; the platform does that.
  */
-int egg_store_get(char *v,int va,const char *k,int kc);
-int egg_store_set(const char *k,int kc,const char *v,int vc);
-int egg_store_key_by_index(char *k,int ka,int p);
+WASM_IMPORT("egg_store_get") int egg_store_get(char *v,int va,const char *k,int kc);
+WASM_IMPORT("egg_store_set") int egg_store_set(const char *k,int kc,const char *v,int vc);
+WASM_IMPORT("egg_store_key_by_index") int egg_store_key_by_index(char *k,int ka,int p);
 
 /* Standard resource types.
  * See etc/doc/rom-format.md for details.
@@ -145,13 +155,13 @@ int egg_store_key_by_index(char *k,int ka,int p);
  * Your game will stop updating after this frame, and resume at some point in the future.
  * This configuration is only pertinent to mapped gamepads.
  */
-void egg_input_configure();
+WASM_IMPORT("egg_input_configure") void egg_input_configure();
 
 /* Devices are indexed by playerid, with playerid zero being an aggregate of all the other states.
  * Each state is 11 independent bits.
  */
-void egg_input_get_all(int *statev,int statea);
-int egg_input_get_one(int playerid);
+WASM_IMPORT("egg_input_get_all") void egg_input_get_all(int *statev,int statea);
+WASM_IMPORT("egg_input_get_one") int egg_input_get_one(int playerid);
 
 /* Egg's gamepad deliberately matches our shared 'inmgr' unit.
  */
@@ -178,13 +188,13 @@ int egg_input_get_one(int playerid);
 /* (trim) in 0..1.
  * (pan) -1..0..1 = left..center..right
  */
-void egg_play_sound(int soundid,double trim,double pan);
+WASM_IMPORT("egg_play_sound") void egg_play_sound(int soundid,double trim,double pan);
 
 /* Request a (songid) that doesn't exist to play silence, eg 0.
  * If you request what's already playing, default is to do nothing.
  * (force) nonzero to start it over in that case.
  */
-void egg_play_song(int songid,int force,int repeat);
+WASM_IMPORT("egg_play_song") void egg_play_song(int songid,int force,int repeat);
 
 /* Programmatic access to synthesizer.
  * These use the same channels as the song. You must arrange your songs so as to support this.
@@ -195,9 +205,9 @@ void egg_play_song(int songid,int force,int repeat);
  * Changing song releases all programmatic notes too.
  * Intended for rhythm games and maybe ocarina-like interactions.
  */
-int egg_play_note(int chid,int noteid,int velocity,int durms);
-void egg_release_note(int holdid);
-void egg_adjust_wheel(int chid,int v/*-512..511*/);
+WASM_IMPORT("egg_play_note") int egg_play_note(int chid,int noteid,int velocity,int durms);
+WASM_IMPORT("egg_release_note") void egg_release_note(int holdid);
+WASM_IMPORT("egg_adjust_wheel") void egg_adjust_wheel(int chid,int v/*-512..511*/);
 
 /* Current song ID is zero if the song didn't exist or finished playing, regardless of what ID was requested.
  * When a song repeats, its playhead repeats too.
@@ -206,9 +216,11 @@ void egg_adjust_wheel(int chid,int v/*-512..511*/);
  * The platform may impose a transition period between songs.
  * Anything you ask for during that period relates to the new song, even if it hasn't actually started yet.
  */
-int egg_song_get_id();
-double egg_song_get_playhead();
-void egg_song_set_playhead(double playhead);
+#if 0 /* XXX with the new AudioWorkletNode synthesizer, feedback is not possible. */
+WASM_IMPORT("egg_song_get_id") int egg_song_get_id();
+WASM_IMPORT("egg_song_get_playhead") double egg_song_get_playhead();
+#endif
+WASM_IMPORT("egg_song_set_playhead") void egg_song_set_playhead(double playhead);
 
 /* Video.
  ******************************************************************************************/
@@ -220,31 +232,31 @@ void egg_song_set_playhead(double playhead);
  * Texture ID 1 is created implicitly before init, and represents the framebuffer.
  * It can't be deleted or resized.
  */
-void egg_texture_del(int texid);
-int egg_texture_new();
-void egg_texture_get_size(int *w,int *h,int texid);
+WASM_IMPORT("egg_texture_del") void egg_texture_del(int texid);
+WASM_IMPORT("egg_texture_new") int egg_texture_new();
+WASM_IMPORT("egg_texture_get_size") void egg_texture_get_size(int *w,int *h,int texid);
 
 /* Replace a texture with an image resource and mark it read-only.
  * We do allow this against texture 1, tho the image would have to match its dimensions.
  */
-int egg_texture_load_image(int texid,int imageid);
+WASM_IMPORT("egg_texture_load_image") int egg_texture_load_image(int texid,int imageid);
 
 /* Replace a texture with an RGBA image.
  * Or if (src,srcc)=(0,0), initialize the texture with undefined content.
  * Marks the texture read-write.
  * This is permitted against texture 1, only if (w,h) match its current size.
  */
-int egg_texture_load_raw(int texid,int w,int h,int stride,const void *src,int srcc);
+WASM_IMPORT("egg_texture_load_raw") int egg_texture_load_raw(int texid,int w,int h,int stride,const void *src,int srcc);
 
 /* Copy RGBA image data out of an image.
  * (dsta) must be at least (w*h*4).
  * Fails if (dst) too small (does not return actual length, as you might expect).
  */
-int egg_texture_get_pixels(void *dst,int dsta,int texid);
+WASM_IMPORT("egg_texture_get_pixels") int egg_texture_get_pixels(void *dst,int dsta,int texid);
 
 /* Clear to transparent black.
  */
-void egg_texture_clear(int texid);
+WASM_IMPORT("egg_texture_clear") void egg_texture_clear(int texid);
 
 #define EGG_XFORM_XREV 1
 #define EGG_XFORM_YREV 2
@@ -296,6 +308,6 @@ struct egg_render_fancy {
  * (uniform->mode) determines the expected format of each vertex.
  * (vtxc) is in BYTES, not vertices, as a validation mechanism.
  */
-void egg_render(const struct egg_render_uniform *uniform,const void *vtxv,int vtxc);
+WASM_IMPORT("egg_render") void egg_render(const struct egg_render_uniform *uniform,const void *vtxv,int vtxc);
   
 #endif

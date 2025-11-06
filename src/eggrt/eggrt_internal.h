@@ -36,7 +36,6 @@ extern struct eggrt {
   int status;
   int client_init_called;
   struct hostio *hostio;
-  struct synth *synth;
   int songid,songrepeat;
   struct render *render;
   void *titlestorage,*iconstorage;

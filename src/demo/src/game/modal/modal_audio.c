@@ -196,6 +196,7 @@ static void _audio_input(struct modal *modal,int btnid,int value) {
  
 static void _audio_update(struct modal *modal,double elapsed,int input,int pvinput) {
   if ((MODAL->playhead_alert-=elapsed)<=0.0) MODAL->playhead_alert=0.0;
+  #if 0 /*TODO update demo for new audio api */
   int songid=egg_song_get_id();
   if (songid==MODAL->dispsongid) {
     if (songid) { // Something still playing; update the playhead display.
@@ -222,6 +223,7 @@ static void _audio_update(struct modal *modal,double elapsed,int input,int pvinp
     gui_term_writef(MODAL->term,15,9,"%d     ",songid);
     gui_term_write(MODAL->term,11,10,"          ",-1); // Blank the playhead output; we'll get it next frame.
   }
+  #endif
   
   // Adjust the wheel.
   switch (input&(EGG_BTN_L1|EGG_BTN_R1)) {

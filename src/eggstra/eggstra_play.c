@@ -3,12 +3,13 @@
 #include "opt/synth/synth.h"
 #include "opt/fs/fs.h"
 
+#define BUFFER_FRAMES 1024
+
 /* More context.
  */
  
 static struct play {
   struct hostio_audio *driver;
-  struct synth *synth;
   int repeat;
   const char *srcpath;
   void *src;
@@ -18,7 +19,7 @@ static struct play {
 
 static void play_quit() {
   hostio_audio_del(play.driver);
-  synth_del(play.synth);
+  synth_quit();
   if (play.src) free(play.src);
   memset(&play,0,sizeof(play));
 }
@@ -27,7 +28,8 @@ static void play_quit() {
  */
  
 static void play_cb_pcm_out(int16_t *v,int c,struct hostio_audio *driver) {
-  synth_updatei(v,c,play.synth);
+  //TODO synth_updatei(v,c,play.synth);
+  memset(v,0,c<<1);
 }
 
 /* Acquire input file.
@@ -89,17 +91,32 @@ static int play_init_driver() {
   return 0;
 }
 
+/* Install song.
+ */
+ 
+static int play_install_song(const void *src,int srcc) {
+  const int pfxlen=3;
+  if ((srcc<1)||(srcc>0x400000)) return -1;
+  uint8_t *rom=synth_get_rom(pfxlen+srcc);
+  if (!rom) return -1;
+  rom[0]=0x80|((srcc-1)>>16);
+  rom[1]=(srcc-1)>>8;
+  rom[2]=srcc-1;
+  memcpy(rom+pfxlen,src,srcc);
+  return 0;
+}
+
 /* Init synthesizer.
  */
  
 static int play_init_synth() {
-  if (!(play.synth=synth_new(play.driver->rate,play.driver->chanc))) {
+  if (synth_init(play.driver->rate,play.driver->chanc,BUFFER_FRAMES)<0) {
     fprintf(stderr,"%s: Failed to initialize synthesizer, rate=%d, chanc=%d.\n",eggstra.exename,play.driver->rate,play.driver->chanc);
     return -2;
   }
-  if (synth_install_song(play.synth,1,play.src,play.srcc)<0) return -1; // No validation; this should never fail.
-  synth_play_song(play.synth,1,0,play.repeat);
-  if (synth_get_songid(play.synth)!=1) {
+  if (play_install_song(play.src,play.srcc)<0) return -1; // No validation; this should never fail.
+  synth_play_song(1,1,play.repeat,1.0f,0.0f);
+  if (synth_get(1,0xff,SYNTH_PROP_EXISTENCE)<1.0f) {
     fprintf(stderr,"%s: Failed to play song. Is it well-formed EAU?\n",play.srcpath);
     return -2;
   }
@@ -130,8 +147,8 @@ int eggstra_main_play() {
   }
   while (!eggstra.sigc) {
     usleep(100000);
-    if (!synth_get_songid(play.synth)) break; // non-repeat playback finished.
-    float nph=synth_get_playhead(play.synth);
+    if (synth_get(1,0xff,SYNTH_PROP_EXISTENCE)<1.0f) break; // non-repeat playback finished.
+    float nph=synth_get(1,0xff,SYNTH_PROP_PLAYHEAD);
     if (nph<play.playhead) fprintf(stderr,"%s: Looped. Approximate duration %f s.\n",play.srcpath,play.playhead);
     play.playhead=nph;
   }

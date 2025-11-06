@@ -1,28 +1,62 @@
 #include "synth_internal.h"
 
+/* Rephrase all leg delays as frames, from milliseconds.
+ */
+ 
+static void synth_env_frames_from_ms(struct synth_env *env) {
+  struct synth_env_point *point=env->pointv;
+  int i=env->pointc;
+  for (;i-->0;point++) {
+    if ((point->tlo=synth_frames_from_ms(point->tlo))<1) point->tlo=1;
+    if ((point->thi=synth_frames_from_ms(point->thi))<1) point->thi=1;
+  }
+}
+
+/* Fallback configs.
+ */
+ 
+static void synth_env_fallback(struct synth_env *env,int fallback) {
+  __builtin_memset(env,0,sizeof(struct synth_env));
+  switch (fallback) {
+    case SYNTH_ENV_FALLBACK_ZERO: env->initlo=env->inithi=0.0f; break;
+    case SYNTH_ENV_FALLBACK_ONE: env->flags=SYNTH_ENV_INITIALS; env->initlo=env->inithi=1.0f; break;
+    case SYNTH_ENV_FALLBACK_HALF: env->flags=SYNTH_ENV_INITIALS; env->initlo=env->inithi=0.5f; break;
+    case SYNTH_ENV_FALLBACK_LEVEL: {
+        env->flags=SYNTH_ENV_VELOCITY|SYNTH_ENV_SUSTAIN;
+        env->susp=2;
+        env->pointc=4;
+        // Points in ms initially for reference. (tlo,thi,vlo,vhi)
+        env->pointv[0]=(struct synth_env_point){  30, 20,0.500f,1.000f };
+        env->pointv[1]=(struct synth_env_point){  20, 20,0.250f,0.400f };
+        env->pointv[2]=(struct synth_env_point){   0,  0,0.250f,0.400f }; // sustain
+        env->pointv[3]=(struct synth_env_point){ 150,300,0.000f,0.000f };
+        synth_env_frames_from_ms(env);
+      } break;
+  }
+}
+
 /* Decode config.
  */
  
-int synth_env_decode(struct synth_env *env,const void *src,int srcc,int rate) {
+int synth_env_decode(struct synth_env *env,const void *src,int srcc,int fallback) {
   const uint8_t *SRC=src;
-  int srcp=0;
+  if (!src||(srcc<1)||!SRC[0]) {
+    synth_env_fallback(env,fallback);
+    return (srcc>=1)?1:0;
+  }
+  env->flags=SRC[0];
+  if (env->flags&0xf0) return -1; // Reserved flags must be zero.
+  env->flags|=SYNTH_ENV_PRESENT; // Non-default envelopes get PRESENT whether they specified or not.
+  int srcp=1;
   
-  /* Starts with flags.
-   * Any unknown flag is an error; future flags are likely influence framing.
-   */
-  if (srcp>=srcc) return -1;
-  env->flags=SRC[srcp++];
-  if (env->flags&~(SYNTH_ENV_FLAG_INITIALS|SYNTH_ENV_FLAG_VELOCITY|SYNTH_ENV_FLAG_SUSTAIN)) return -1;
-  
-  /* Next, the initial values or zero.
-   */
-  if (env->flags&SYNTH_ENV_FLAG_INITIALS) {
+  // Initials?
+  if (env->flags&SYNTH_ENV_INITIALS) {
     if (srcp>srcc-2) return -1;
-    env->initlo=(SRC[srcp]<<8)|SRC[srcp+1];
+    env->initlo=((SRC[srcp]<<8)|SRC[srcp+1])/65535.0f;
     srcp+=2;
-    if (env->flags&SYNTH_ENV_FLAG_VELOCITY) {
+    if (env->flags&SYNTH_ENV_VELOCITY) {
       if (srcp>srcc-2) return -1;
-      env->inithi=(SRC[srcp]<<8)|SRC[srcp+1];
+      env->inithi=((SRC[srcp]<<8)|SRC[srcp+1])/65535.0f;
       srcp+=2;
     } else {
       env->inithi=env->initlo;
@@ -31,92 +65,49 @@ int synth_env_decode(struct synth_env *env,const void *src,int srcc,int rate) {
     env->initlo=env->inithi=0.0f;
   }
   
-  /* Then one byte containing both (susp) and (pointc) -- why we're intrinsically limited to 15 points.
-   */
+  // Sustain index and point count.
   if (srcp>=srcc) return -1;
-  uint8_t susp_ptc=SRC[srcp++];
-  env->susp=susp_ptc>>4;
-  env->pointc=susp_ptc&15;
-  int ptlen=(env->flags&SYNTH_ENV_FLAG_VELOCITY)?8:4;
-  if (srcp>srcc-ptlen*env->pointc) return -1;
+  if (env->flags&SYNTH_ENV_SUSTAIN) {
+    env->susp=SRC[srcp]>>4;
+  } else {
+    env->susp=-1;
+  }
+  env->pointc=SRC[srcp]&15;
+  srcp++;
+  int pointlen=(env->flags&SYNTH_ENV_VELOCITY)?8:4;
+  if (srcp>srcc-env->pointc*pointlen) return -1;
+  if (env->flags&SYNTH_ENV_SUSTAIN) {
+    if (env->susp>=env->pointc) return -1;
+    env->pointc++;
+    env->susp++;
+  }
   
-  /* Decode points initially without the sustain insertion, and with times in ms.
-   */
+  // Points.
   struct synth_env_point *point=env->pointv;
-  int i=env->pointc;
-  for (;i-->0;point++) {
-    point->tlo=(SRC[srcp]<<8)|SRC[srcp+1]; srcp+=2;
-    point->vlo=(SRC[srcp]<<8)|SRC[srcp+1]; srcp+=2;
-    if (env->flags&SYNTH_ENV_FLAG_VELOCITY) {
-      point->thi=(SRC[srcp]<<8)|SRC[srcp+1]; srcp+=2;
-      point->vhi=(SRC[srcp]<<8)|SRC[srcp+1]; srcp+=2;
+  int pointi=0;
+  for (;pointi<env->pointc;pointi++,point++) {
+    if (pointi==env->susp) {
+      point[0]=point[-1];
+      point->tlo=1;
+      point->thi=1;
     } else {
-      point->thi=point->tlo;
-      point->vhi=point->vlo;
+      point->tlo=(SRC[srcp]<<8)|SRC[srcp+1]; srcp+=2;
+      point->vlo=((SRC[srcp]<<8)|SRC[srcp+1])/65535.0f; srcp+=2;
+      if (env->flags&SYNTH_ENV_VELOCITY) {
+        point->thi=(SRC[srcp]<<8)|SRC[srcp+1]; srcp+=2;
+        point->vhi=((SRC[srcp]<<8)|SRC[srcp+1])/65535.0f; srcp+=2;
+      }
     }
   }
-  
-  /* Convert all times to hz, and clamp to 1.
-   */
-  float tscale=(float)rate/1000.0f;
-  for (point=env->pointv,i=env->pointc;i-->0;point++) {
-    if ((point->tlo=(int)(point->tlo*tscale))<1) point->tlo=1;
-    if ((point->thi=(int)(point->thi*tscale))<1) point->thi=1;
-  }
-  
-  /* If sustain is in play, insert a new point after (susp) with the same values as the prior, and bump (susp) by one.
-   * If the sustain flag is set, but (susp) out of range, that's an error.
-   */
-  if (env->flags&SYNTH_ENV_FLAG_SUSTAIN) {
-    if (env->susp>=env->pointc) return -1;
-    point=env->pointv+env->susp;
-    memmove(point+1,point,sizeof(struct synth_env_point)*(env->pointc-env->susp));
-    env->pointc++;
-    env->susp++; // (susp) refers to the second of the two identical points; the one we have free rein over its duration.
-    point++;
-    point->tlo=point->thi=1;
-  }
+  synth_env_frames_from_ms(env);
   
   return srcp;
 }
 
-/* Default configs.
+/* Adjust config.
  */
  
-void synth_env_default_level(struct synth_env *env,int rate) {
-  const uint8_t serial[]={
-    SYNTH_ENV_FLAG_VELOCITY|SYNTH_ENV_FLAG_SUSTAIN,
-    0x13,
-    0x00,0x20, 0x40,0x00, 0x00,0x10, 0xff,0xff,
-    0x00,0x30, 0x30,0x00, 0x00,0x30, 0x50,0x00,
-    0x00,0x80, 0x00,0x00, 0x01,0x00, 0x00,0x00,
-  };
-  synth_env_decode(env,serial,sizeof(serial),rate);
-  synth_env_scale(env,1.0f/65535.0f);
-  env->flags|=SYNTH_ENV_FLAG_DEFAULT; // Add after; decode will correctly fail on it in serial data.
-}
-
-void synth_env_default_range(struct synth_env *env,int rate) {
-  const uint8_t serial[]={ // Constant one.
-    SYNTH_ENV_FLAG_INITIALS,
-    0xff,0xff,
-    0x00,
-  };
-  synth_env_decode(env,serial,sizeof(serial),rate);
-  synth_env_scale(env,1.0f/65535.0f);
-  env->flags|=SYNTH_ENV_FLAG_DEFAULT; // Add after; decode will correctly fail on it in serial data.
-}
-
-void synth_env_default_pitch(struct synth_env *env,int rate) {
-  const uint8_t serial[]={0,0}; // Constant-zero, except this time it's signed cents.
-  synth_env_decode(env,serial,sizeof(serial),rate);
-  env->flags|=SYNTH_ENV_FLAG_DEFAULT; // Add after; decode will correctly fail on it in serial data.
-}
-
-/* Arithmetic on all config values.
- */
- 
-void synth_env_scale(struct synth_env *env,float mlt) {
+void synth_env_mlt(struct synth_env *env,float mlt) {
   env->initlo*=mlt;
   env->inithi*=mlt;
   struct synth_env_point *point=env->pointv;
@@ -127,7 +118,7 @@ void synth_env_scale(struct synth_env *env,float mlt) {
   }
 }
 
-void synth_env_bias(struct synth_env *env,float add) {
+void synth_env_add(struct synth_env *env,float add) {
   env->initlo+=add;
   env->inithi+=add;
   struct synth_env_point *point=env->pointv;
@@ -138,99 +129,88 @@ void synth_env_bias(struct synth_env *env,float add) {
   }
 }
 
-/* Initialize runner.
+/* Initialize runner from config.
  */
- 
-void synth_env_apply(struct synth_env *runner,const struct synth_env *config,float velocity,int durframes) {
 
-  // A few things copy verbatim.
+void synth_env_apply(struct synth_env *runner,const struct synth_env *config,float velocity,int durframes) {
   runner->flags=config->flags;
-  runner->susp=config->susp;
   runner->pointc=config->pointc;
+  runner->susp=config->susp;
   
-  // Copy initial and points with respect to (velocity) if applicable. Only "lo" on the runner's side.
-  struct synth_env_point *dst=runner->pointv;
-  const struct synth_env_point *src=config->pointv;
+  // Calculate the velocity-dependent things.
+  struct synth_env_point *rpt=runner->pointv;
+  const struct synth_env_point *cpt=config->pointv;
   int i=config->pointc;
-  if (!(config->flags&SYNTH_ENV_FLAG_VELOCITY)||(velocity<=0.0f)) {
+  if (!(config->flags&SYNTH_ENV_VELOCITY)||(velocity<=0.0f)) {
     runner->initlo=config->initlo;
-    for (;i-->0;dst++,src++) {
-      dst->tlo=src->tlo;
-      dst->vlo=src->vlo;
+    for (;i-->0;rpt++,cpt++) {
+      rpt->tlo=cpt->tlo;
+      rpt->vlo=cpt->vlo;
     }
   } else if (velocity>=1.0f) {
     runner->initlo=config->inithi;
-    for (;i-->0;dst++,src++) {
-      dst->tlo=src->thi;
-      dst->vlo=src->vhi;
+    for (;i-->0;rpt++,cpt++) {
+      rpt->tlo=cpt->thi;
+      rpt->vlo=cpt->vhi;
     }
   } else {
-    float hiw=velocity;
-    float low=1.0f-hiw;
-    runner->initlo=config->initlo*low+config->inithi*hiw;
-    for (;i-->0;dst++,src++) {
-      if ((dst->tlo=(int)((float)src->tlo*low+(float)src->thi*hiw))<1) dst->tlo=1;
-      dst->vlo=src->vlo*low+src->vhi*hiw;
+    float loweight=1.0f-velocity;
+    runner->initlo=config->initlo*loweight+config->inithi*velocity;
+    for (;i-->0;rpt++,cpt++) {
+      rpt->tlo=(int)((float)cpt->tlo*loweight+(float)cpt->thi*velocity);
+      rpt->vlo=cpt->vlo*loweight+cpt->vhi*velocity;
     }
   }
   
-  // If sustained, the sustain point's duration depends on (durframes).
-  if (config->flags&SYNTH_ENV_FLAG_SUSTAIN) {
-    for (i=0,dst=runner->pointv;i<runner->susp;i++,dst++) durframes-=dst->tlo;
-    if (durframes>0) dst->tlo=durframes;
-    else dst->tlo=1;
+  // Fill in sustain time.
+  if (runner->flags&SYNTH_ENV_SUSTAIN) {
+    for (rpt=runner->pointv,i=runner->susp;i-->0;rpt++) durframes-=rpt->tlo;
+    rpt=runner->pointv+runner->susp;
+    if (durframes>rpt->tlo) rpt->tlo=durframes;
   }
   
-  // If there are no points, set up runner with the initial value and call it finished.
-  if (!runner->pointc) {
+  // Start iteration.
+  runner->v=runner->initlo;
+  if (runner->pointc>0) {
+    runner->finished=0;
     runner->pointp=0;
-    runner->v=runner->initlo;
+    rpt=runner->pointv;
+    runner->c=rpt->tlo;
+    runner->dv=(rpt->vlo-runner->v)/runner->c;
+  } else {
+    runner->finished=1;
     runner->c=INT_MAX;
     runner->dv=0.0f;
-    runner->finished=1;
-    
-  // At least one point is present, so begin walking from initial to that.
-  } else {
-    runner->pointp=0;
-    runner->v=runner->initlo;
-    runner->c=runner->pointv[0].tlo;
-    runner->dv=(runner->pointv[0].vlo-runner->v)/(float)runner->c;
-    runner->finished=0;
   }
 }
 
-/* Release.
+/* Release runner.
  */
- 
+
 void synth_env_release(struct synth_env *env) {
-  if (!(env->flags&SYNTH_ENV_FLAG_SUSTAIN)) return;
-  if (env->pointp>env->susp) return;
-  if (env->pointp<env->susp) {
+  if (!(env->flags&SYNTH_ENV_SUSTAIN)) return;
+  if (env->pointp>env->susp) return; // Already done sustaining.
+  if (env->pointp<env->susp) { // Haven't reached sustain leg yet. Great, drop it to one frame.
     env->pointv[env->susp].tlo=1;
     return;
   }
+  // We're in the middle of the sustain leg. Drop the current ttl to one.
   env->c=1;
 }
 
-/* Advance to next point.
+/* Advance runner to next point.
  */
  
 void synth_env_advance(struct synth_env *env) {
   env->pointp++;
-  if (env->pointp>=env->pointc) {
-    env->pointp=env->pointc;
+  if (env->finished||(env->pointp>=env->pointc)) {
     env->finished=1;
+    env->pointp=env->pointc;
     env->dv=0.0f;
     env->c=INT_MAX;
-    if (env->pointc) {
-      env->v=env->pointv[env->pointc-1].vlo;
-    } else {
-      env->v=env->initlo;
-    }
   } else {
-    const struct synth_env_point *point=env->pointv+env->pointp;
-    env->v=point[-1].vlo;
-    env->c=point->tlo;
-    env->dv=(point->vlo-env->v)/(float)env->c;
+    struct synth_env_point *dst=env->pointv+env->pointp;
+    env->c=dst->tlo;
+    env->dv=(dst->vlo-env->v)/env->c;
   }
 }

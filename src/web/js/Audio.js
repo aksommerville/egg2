@@ -5,8 +5,8 @@
  */
  
 import { EGG_TID_song, EGG_TID_sound } from "./Rom.js";
-import { SongPlayer } from "./SongPlayer.js";
-import { eauNotevRequire } from "./songBits.js";
+
+//TODO This was kept from the old egg2 synth. Update for synth3. This will be the party that owns the AudioContext and AudioWorkletNode.
  
 export class Audio {
   constructor(rt) {
@@ -19,7 +19,7 @@ export class Audio {
     this.musicEnabled = true;
     this.soundEnabled = true;
     this.noise = null; // AudioBuffer
-    eauNotevRequire();
+    //eauNotevRequire();
   }
   
   pause() {
@@ -89,7 +89,7 @@ export class Audio {
     }
     if (serial) {
       if (!this.ctx) this.start();
-      this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid, this.noise);
+      //this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid, this.noise);
       this.song.play();
       if (playhead > 0) this.song.setPlayhead(playhead);
       this.update(); // Editor updates on a long period; ensure we get one initial priming update.
@@ -192,6 +192,7 @@ export class Audio {
     
     const serial = this.rt.rom.getRes(EGG_TID_sound, soundid);
     if (!serial) return;
+    /*TODO
     const durms = Math.min(5000, Math.max(1, SongPlayer.calculateDuration(serial)));
     const framec = Math.ceil((durms * this.ctx.sampleRate) / 1000);
     const ctx = new OfflineAudioContext(1, framec, this.ctx.sampleRate);
@@ -202,6 +203,7 @@ export class Audio {
       this.sounds[soundid] = buffer;
       this.playSoundBuffer(buffer, trim, pan);
     });
+    /**/
   }
   
   egg_play_song(songid, force, repeat) {
@@ -218,7 +220,7 @@ export class Audio {
       this.song = null;
     }
     if (!serial) return;
-    this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid, this.noise);
+    //this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid, this.noise);
     this.song.play();
   }
   

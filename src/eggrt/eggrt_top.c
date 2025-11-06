@@ -22,7 +22,7 @@ void eggrt_quit(int status) {
   hostio_del(eggrt.hostio);
   eggrt.hostio=0;
   
-  synth_del(eggrt.synth);
+  synth_quit();
   
   eggrt_rom_quit();
   
@@ -117,15 +117,10 @@ static int eggrt_populate_video_setup(struct hostio_video_setup *setup) {
  */
  
 static int eggrt_load_synth_resources() {
-  const struct rom_entry *res=eggrt.resv;
-  int i=eggrt.resc,err;
-  for (;i-->0;res++) {
-    if (res->tid==EGG_TID_song) {
-      if ((err=synth_install_song(eggrt.synth,res->rid,res->v,res->c))<0) return err;
-    } else if (res->tid==EGG_TID_sound) {
-      if ((err=synth_install_sound(eggrt.synth,res->rid,res->v,res->c))<0) return err;
-    }
-  }
+  //TODO We should slice (eggrt.rom) to just the song and sound resources; giving synth the whole thing is wasteful.
+  void *dst=synth_get_rom(eggrt.romc);
+  if (!dst) return -1;
+  memcpy(dst,eggrt.rom,eggrt.romc);
   return 0;
 }
 
@@ -165,7 +160,8 @@ static int eggrt_init_audio() {
     fprintf(stderr,"%s: Failed to initialize any audio driver.\n",eggrt.exename);
     return -2;
   }
-  if (!(eggrt.synth=synth_new(eggrt.hostio->audio->rate,eggrt.hostio->audio->chanc))) {
+  if (eggrt.audio_buffer<=0) eggrt.audio_buffer=1024;
+  if (synth_init(eggrt.hostio->audio->rate,eggrt.hostio->audio->chanc,eggrt.audio_buffer)<0) {
     fprintf(stderr,"%s: Failed to initialize synthesizer. rate=%d chanc=%d\n",eggrt.exename,eggrt.hostio->audio->rate,eggrt.hostio->audio->chanc);
     return -2;
   }

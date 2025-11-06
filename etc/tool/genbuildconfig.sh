@@ -59,7 +59,7 @@ EOF
   web_OPT_ENABLE="stdlib res graf font"
   web_AR=ar
   web_CC="clang -c -MMD -O3 --target=wasm32 -nostdlib -Werror -Wno-comment -Wno-parentheses -Isrc -Wno-incompatible-library-redeclaration -Wno-builtin-requires-header"
-  web_LD="wasm-ld --no-entry -z stack-size=4194304 --no-gc-sections --allow-undefined --export-table   --export=egg_client_init --export=egg_client_quit --export=egg_client_update --export=egg_client_render"
+  web_LD="wasm-ld --no-entry -z stack-size=4194304 --no-gc-sections --allow-undefined --export-table"
   web_LDPOST=
   web_PACKAGING=web
   # EXESFX,WAMR_SDK are not meaningful with "web" packaging, but we define them for the sake of uniformity.
@@ -81,7 +81,7 @@ EGG_TARGETS="$EGG_TARGETS $ADDL"
 #-----------------------------------------------------------------------------------------
 # Prepare config for each target.
 
-STDRTOPT="fs serial synth res graf font hostio render image real_stdlib"
+STDRTOPT="fs serial synth res graf font hostio render image real_stdlib native"
 
 for TARGET in $EGG_TARGETS ; do
   case "$TARGET" in
@@ -170,7 +170,7 @@ done
 #-----------------------------------------------------------------------------------------
 # Set eggdev up with hard-coded defaults.
 
-eggdev_OPT_ENABLE="serial fs synth zip http image res real_stdlib eau"
+eggdev_OPT_ENABLE="serial fs synth zip http image res real_stdlib eau native"
 if [ "$EGG_NATIVE_TARGET" = macos ] ; then
   eggdev_OPT_ENABLE="$eggdev_OPT_ENABLE ismac"
   eggdev_CC="gcc -c -MMD -O3 -Isrc -Werror -Wimplicit -Wno-parentheses -Wno-empty-body -Wno-comment -Wno-pointer-sign -Wno-deprecated-declarations"

@@ -1,195 +1,258 @@
+/* synth_channel.c
+ * Generic channel layer.
+ * We manage trim, pan, and post.
+ * We massage events for dispatch to the typed implementation.
+ * We have no concept of voices or notes; that belongs to the implementation.
+ */
+
 #include "synth_internal.h"
 
-int synth_channel_init_DRUM(struct synth_channel *channel,const uint8_t *modecfg,int modecfgc);
-int synth_channel_init_FM(struct synth_channel *channel,const uint8_t *modecfg,int modecfgc);
-int synth_channel_init_HARSH(struct synth_channel *channel,const uint8_t *modecfg,int modecfgc);
-int synth_channel_init_HARM(struct synth_channel *channel,const uint8_t *modecfg,int modecfgc);
-int synth_channel_init_SUB(struct synth_channel *channel,const uint8_t *modecfg,int modecfgc);
-void synth_channel_note_drum(struct synth_channel *channel,uint8_t noteid,float velocity);
-int synth_channel_note_tuned(struct synth_channel *channel,uint8_t noteid,float velocity,int durframes);
-void synth_channel_wheel_tuned(struct synth_channel *channel,int v);
-void synth_channel_release_tuned(struct synth_channel *channel);
-void synth_channel_release_one_tuned(struct synth_channel *channel,int holdid);
-int synth_channel_note_sub(struct synth_channel *channel,uint8_t noteid,float velocity,int durframes);
-void synth_channel_release_sub(struct synth_channel *channel);
-void synth_channel_release_one_sub(struct synth_channel *channel,int holdid);
+/* Type registry.
+ */
+ 
+const struct synth_channel_type *synth_channel_type_for_mode(uint8_t mode) {
+  switch (mode) {
+    case 0x01: return &synth_channel_type_trivial;
+    case 0x02: return &synth_channel_type_fm;
+    case 0x03: return &synth_channel_type_sub;
+    case 0x04: return &synth_channel_type_drum;
+  }
+  return 0;
+}
 
 /* Delete.
  */
  
 void synth_channel_del(struct synth_channel *channel) {
   if (!channel) return;
-  if (channel->del) channel->del(channel);
+  if (channel->type->del) channel->type->del(channel);
   synth_pipe_del(channel->post);
-  free(channel);
+  if (channel->bufl) synth_free(channel->bufl);
+  if (channel->bufr) synth_free(channel->bufr);
+  synth_free(channel);
 }
 
 /* New.
  */
-
-struct synth_channel *synth_channel_new(struct synth *synth,int chanc,int tempo,const uint8_t *src,int srcc) {
-  if (srcc<1) return 0;
-  struct synth_channel *channel=calloc(1,sizeof(struct synth_channel));
+ 
+struct synth_channel *synth_channel_new(
+  struct synth_song *owner,
+  uint8_t chid,uint8_t trim,uint8_t pan,uint8_t mode,
+  const uint8_t *modecfg,int modecfgc,
+  const uint8_t *post,int postc
+) {
+  if (!owner) return 0;
+  const struct synth_channel_type *type=synth_channel_type_for_mode(mode);
+  if (!type||!type->init) return 0;
+  struct synth_channel *channel=synth_calloc(1,type->objlen);
   if (!channel) return 0;
-  channel->synth=synth;
-  channel->rate=synth->rate;
-  channel->chanc=chanc;
-  channel->tempo=tempo;
-  
-  // Read the front matter.
-  channel->chid=src[0];
-  uint8_t trim=0x40,pan=0x80;
-  channel->mode=2;
-  int srcp=1;
-  if (srcp<srcc) {
-    trim=src[srcp++];
-    if (srcp<srcc) {
-      pan=src[srcp++];
-      if (srcp<srcc) {
-        channel->mode=src[srcp++];
-      }
-    }
-  }
-  if (!channel->mode) return channel; // Mode still noop, we can return and the caller should drop it.
-  if (!trim) { channel->mode=0; return channel; } // Trim zero, go noop and return. This would not be OK if trim is mutable, something I'm considering for the future.
-  channel->pan=(pan-0x80)/127.0f;
-  if (channel->chanc==1) channel->triml=channel->trimr=1.0f;
-  else synth_apply_pan(&channel->triml,&channel->trimr,1.0f,channel->pan);
-  channel->trim=trim/255.0f;
-  
-  // Split out modecfg and post.
-  const void *modecfg=0,*postserial=0;
-  int modecfgc=0,postserialc=0;
-  if (srcp<=srcc-2) {
-    modecfgc=(src[srcp]<<8)|src[srcp+1];
-    srcp+=2;
-    if (srcp>srcc-modecfgc) {
-      synth_channel_del(channel);
-      return 0;
-    }
-    modecfg=src+srcp;
-    srcp+=modecfgc;
-  }
-  if (srcp<=srcc-2) {
-    postserialc=(src[srcp]<<8)|src[srcp+1];
-    srcp+=2;
-    if (srcp>srcc-postserialc) {
-      synth_channel_del(channel);
-      return 0;
-    }
-    postserial=src+srcp;
-    srcp+=postserialc;
-  }
-  
-  // Mode-specific initialization.
-  int err=0;
-  switch (channel->mode) {
-    case 1: err=synth_channel_init_DRUM(channel,modecfg,modecfgc); break;
-    case 2: err=synth_channel_init_FM(channel,modecfg,modecfgc); break;
-    case 3: err=synth_channel_init_HARSH(channel,modecfg,modecfgc); break;
-    case 4: err=synth_channel_init_HARM(channel,modecfg,modecfgc); break;
-    case 5: err=synth_channel_init_SUB(channel,modecfg,modecfgc); break;
-    default: channel->mode=0; // Unknown modes are legal but noop.
-  }
-  if (err<0) {
+  channel->type=type;
+  channel->chid=chid; // Advisory only.
+  channel->mode=mode;
+  channel->song=owner;
+  synth_channel_set_trim(channel,(float)trim/255.0f);
+  synth_channel_set_pan(channel,(float)(pan-0x80)/127.0f);
+  if ((type->init(channel,modecfg,modecfgc)<0)||!channel->update_mono) {
     synth_channel_del(channel);
     return 0;
   }
-  if (!channel->update_mono) channel->mode=0; // Voice mode is required to set update_mono.
-  if (!channel->mode) return channel; // Mode-specific initializer may render us noop.
-  if (channel->chanc==1) channel->update_stereo=0; // update_stereo must only be set if we're going to use it.
-  
-  // Prepare post.
-  if (postserialc) {
-    if (!(channel->post=synth_pipe_new(channel->synth,channel->chanc,channel->tempo,postserial,postserialc))) {
+  if (postc) {
+    if (!(channel->post=synth_pipe_new(owner,post,postc))) {
       synth_channel_del(channel);
       return 0;
     }
   }
-  
+  if (!(channel->bufl=synth_malloc(sizeof(float)*synth.buffer_frames))) {
+    synth_channel_del(channel);
+    return 0;
+  }
+  if (owner->chanc>=2) {
+    if (!(channel->bufr=synth_malloc(sizeof(float)*synth.buffer_frames))) {
+      synth_channel_del(channel);
+      return 0;
+    }
+  }
   return channel;
 }
 
-/* Stereo from mono in place, with precalculated normal trims.
+/* Set trim, pan, and wheel, via public properties.
+ * Trim and pan apply the owning song's too.
+ * This wheel setter is also triggered by song events.
  */
  
-static void synth_channel_expand_stereo(float *v,int framec,struct synth_channel *channel) {
-  const float *src=v+framec;
-  float *dst=v+framec*2;
-  for (;framec-->0;) {
-    src--;
-    float sample=*src;
-    dst--; *dst=sample*channel->trimr;
-    dst--; *dst=sample*channel->triml;
-  }
+void synth_channel_set_trim(struct synth_channel *channel,float trim) {
+  if (trim>1.0f) trim=1.0f; // Ensure we can't exceed song's trim.
+  trim*=channel->song->trim;
+  if (trim<0.0f) trim=0.0f;
+  channel->trim=trim;
 }
 
-/* Update, outer.
+void synth_channel_set_pan(struct synth_channel *channel,float pan) {
+  pan+=channel->song->pan;
+  if (pan<=-1.0f) channel->pan=-1.0f;
+  else if (pan>=1.0f) channel->pan=1.0f;
+  else channel->pan=pan;
+}
+
+void synth_channel_set_wheel(struct synth_channel *channel,float v) {
+  if (v<=-1.0f) channel->wheelf=-1.0f;
+  else if (v>=1.0f) channel->wheelf=1.0f;
+  else channel->wheelf=v;
+  if (channel->type->wheel_changed) channel->type->wheel_changed(channel);
+}
+
+/* Release All.
  */
-
-void synth_channel_update(float *v,int framec,struct synth_channel *channel) {
-  
-  // If we're stereo and the voice mode produces stereo, do that. (update_stereo) is never set when our output is mono.
-  if (channel->update_stereo) {
-    memset(channel->tmp,0,sizeof(float)*framec*2);
-    channel->update_stereo(channel->tmp,framec,channel);
-    
-  // Otherwise, update voices mono and then expand to stereo if appropriate.
-  } else {
-    memset(channel->tmp,0,sizeof(float)*framec);
-    channel->update_mono(channel->tmp,framec,channel);
-    if (channel->chanc>1) {
-      synth_channel_expand_stereo(channel->tmp,framec,channel);
-    }
-  }
-  
-  // Run post in (tmp).
-  if (channel->post) {
-    synth_pipe_update(channel->tmp,framec,channel->post);
-  }
-  
-  // Trim and mix.
-  float *dst=v;
-  const float *src=channel->tmp;
-  int i=framec;
-  if (channel->chanc>1) {
-    for (;i-->0;dst+=channel->chanc,src+=2) {
-      dst[0]+=src[0]*channel->trim;
-      dst[1]+=src[1]*channel->trim;
-    }
-  } else {
-    for (;i-->0;dst++,src++) (*dst)+=(*src)*channel->trim;
-  }
-}
-
-/* Event dispatch.
- */
-
-int synth_channel_note(struct synth_channel *channel,uint8_t noteid,float velocity,int durframes) {
-  switch (channel->mode) {
-    case 1: synth_channel_note_drum(channel,noteid,velocity); return 0; // Drums are not sustainable.
-    case 2: case 3: case 4: return synth_channel_note_tuned(channel,noteid,velocity,durframes);
-    case 5: return synth_channel_note_sub(channel,noteid,velocity,durframes);
-  }
-  return 0;
-}
- 
-void synth_channel_release(struct synth_channel *channel,int holdid) {
-  switch (channel->mode) {
-    case 2: case 3: case 4: synth_channel_release_one_tuned(channel,holdid); break;
-    case 5: synth_channel_release_one_sub(channel,holdid); break;
-  }
-}
- 
-void synth_channel_wheel(struct synth_channel *channel,int v) {
-  switch (channel->mode) {
-    case 2: case 3: case 4: synth_channel_wheel_tuned(channel,v); break;
-  }
-}
  
 void synth_channel_release_all(struct synth_channel *channel) {
-  switch (channel->mode) {
-    case 2: case 3: case 4: synth_channel_release_tuned(channel); break;
-    case 5: synth_channel_release_sub(channel); break;
+  if (channel->type->release_all) channel->type->release_all(channel);
+}
+
+/* Note Off.
+ */
+ 
+void synth_channel_note_off(struct synth_channel *channel,uint8_t noteid,uint8_t velocity) {
+  if (channel->defunct) return;
+  // (velocity) is not used.
+  if (channel->type->note_off) {
+    channel->type->note_off(channel,noteid);
   }
+}
+
+/* Note On.
+ */
+ 
+void synth_channel_note_on(struct synth_channel *channel,uint8_t noteid,uint8_t velocity) {
+  if (channel->defunct) return;
+  float fvel;
+  if (velocity<=0x00) fvel=0.0f;
+  else if (velocity>=0x7f) fvel=1.0f;
+  else fvel=(float)velocity/127.0f;
+  if (channel->type->note_on) {
+    channel->type->note_on(channel,noteid,fvel);
+  } else if (channel->type->note_once) {
+    channel->type->note_once(channel,noteid,fvel,0);
+  }
+}
+
+/* Note Once.
+ */
+ 
+void synth_channel_note_once(struct synth_channel *channel,uint8_t noteid,uint8_t velocity,int durms) {
+  if (channel->defunct) return;
+  float fvel;
+  if (velocity<=0x00) fvel=0.0f;
+  else if (velocity>=0x7f) fvel=1.0f;
+  else fvel=(float)velocity/127.0f;
+  if (channel->type->note_once) {
+    int durframes=synth_frames_from_ms(durms);
+    channel->type->note_once(channel,noteid,fvel,durframes);
+  } else if (channel->type->note_on) {
+    channel->type->note_on(channel,noteid,fvel);
+    if (channel->type->note_off) {
+      channel->type->note_off(channel,noteid);
+    }
+  }
+}
+
+/* Begin fade-out.
+ */
+
+void synth_channel_fade_out(struct synth_channel *channel,int framec) {
+  if (channel->defunct) return;
+  if (channel->fadeout>0.0f) return; // Already fading out, let it ride.
+  if (framec<1) framec=1;
+  channel->fadeout=1.0f;
+  channel->fadeoutd=-1.0f/(float)framec;
+}
+
+/* Update.
+ */
+
+void synth_channel_update_stereo(float *dstl,float *dstr,struct synth_channel *channel,int framec) {
+  if (channel->defunct) return;
+
+  // Zero buffers.
+  if (!channel->bufr) return;
+  __builtin_memset(channel->bufl,0,sizeof(float)*framec);
+  __builtin_memset(channel->bufr,0,sizeof(float)*framec);
+  
+  // Generate the full-level signal, and if mono, expand to stereo. Do not apply trim yet.
+  if (channel->update_stereo) {
+    channel->update_stereo(channel->bufl,channel->bufr,channel,framec);
+  } else {
+    channel->update_mono(channel->bufl,channel,framec);
+    float *lp=channel->bufl,*rp=channel->bufr;
+    int i=framec;
+    if (channel->pan<0.0f) {
+      float trimr=1.0f-channel->pan;
+      for (;i-->0;lp++,rp++) *rp=(*lp)*trimr;
+    } else if (channel->pan>0.0f) {
+      float triml=1.0f+channel->pan;
+      for (;i-->0;lp++,rp++) {
+        *rp=*lp;
+        (*lp)*=triml;
+      }
+    } else {
+      for (;i-->0;lp++,rp++) *rp=*lp;
+    }
+  }
+  
+  // Run post.
+  if (channel->post) {
+    synth_pipe_update_stereo(channel->bufl,channel->bufr,channel->post,framec);
+  }
+  
+  // If fading out, apply that.
+  if (channel->fadeout>0.0f) {
+    float *vl=channel->bufl,*vr=channel->bufr;
+    int i=framec;
+    for (;i-->0;vl++,vr++) {
+      (*vl)*=channel->fadeout;
+      (*vr)*=channel->fadeout;
+      if ((channel->fadeout+=channel->fadeoutd)<=0.0f) {
+        channel->fadeout=0.0f;
+        channel->defunct=1;
+      }
+    }
+  }
+  
+  // Apply trim and add to output.
+  const float *srcl=channel->bufl,*srcr=channel->bufr;
+  int i=framec;
+  for (;i-->0;srcl++,srcr++,dstl++,dstr++) {
+    (*dstl)+=(*srcl)*channel->trim;
+    (*dstr)+=(*srcr)*channel->trim;
+  }
+}
+
+void synth_channel_update_mono(float *dst,struct synth_channel *channel,int framec) {
+  if (channel->defunct) return;
+
+  // Generate the initial signal.
+  __builtin_memset(channel->bufl,0,sizeof(float)*framec);
+  channel->update_mono(channel->bufl,channel,framec);
+  
+  // Run post.
+  if (channel->post) {
+    synth_pipe_update_mono(channel->bufl,channel->post,framec);
+  }
+  
+  // If fading out, apply that.
+  if (channel->fadeout>0.0f) {
+    float *vl=channel->bufl;
+    int i=framec;
+    for (;i-->0;vl++) {
+      (*vl)*=channel->fadeout;
+      if ((channel->fadeout+=channel->fadeoutd)<=0.0f) {
+        channel->fadeout=0.0f;
+        channel->defunct=1;
+      }
+    }
+  }
+  
+  // Apply trim and add to output.
+  const float *src=channel->bufl;
+  int i=framec;
+  for (;i-->0;dst++,src++) (*dst)+=(*src)*channel->trim;
 }

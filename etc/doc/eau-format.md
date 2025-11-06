@@ -6,8 +6,7 @@ EAU is similar to MIDI, with these notable exceptions:
 - Single track.
 - Channel configuration and events are stored separately.
 - Channels can't reconfigure during playback.
-- Notes contain their duration, there is no "Note Off" event.
-- A note can be held for no more than about 16 seconds.
+- Notes may contain their duration. (separate Note On and Note Off also exist).
 - Delay is a standalone event, not attached to other events.
 - Only Note, Wheel, and Delay events. No control change, pressure, sysex, etc.
 - Timing in milliseconds.
@@ -23,6 +22,8 @@ Pretty much anything allowed in one is allowed in the other, but:
 - Sounds will be printed and replayed after the first time, while songs are synthesized from scratch each time. You shouldn't need to care.
 
 ## From MIDI
+
+### TODO This section retained from v2 docs. Assess what is still relevant.
 
 Meta 0x77 contains one Channel Header, ie a "CHDR" chunk. Meta 0x20 MIDI Channel Prefix is ignored, since the CHDR contains its own channel ID field.
 If absent, our compiler will make up Channel Headers based on Program Change, SDK data, and other clues.
@@ -42,368 +43,224 @@ We explicitly allow channels 0..255 for this, not just 0..15.
 
 Opening a MIDI file in our editor and resaving it may destroy information.
 
-## Instrument Conventions
-
-During conversion, instruments are named by a Fully-Qualified Program Identifier or "fqpid".
-This is a 21-bit integer composed of the Bank Select and Program Change events in MIDI.
-Each group of 8 instruments should be related, continuing the GM convention.
-
-fqpid 0..127 are GM. Repeating its groups (look up specific instrument names if you need them, it's all standard):
-- 0x00..0x07: Piano
-- 0x08..0x0f: Chromatic
-- 0x10..0x17: Organ
-- 0x18..0x1f: Guitar
-- 0x20..0x27: Bass
-- 0x28..0x2f: Solo String
-- 0x30..0x37: String Ensemble
-- 0x38..0x3f: Brass
-- 0x40..0x47: Solo Reed
-- 0x48..0x4f: Solo Flute
-- 0x50..0x57: Synth Lead
-- 0x58..0x5f: Synth Pad
-- 0x60..0x67: Synth Effects
-- 0x68..0x6f: World
-- 0x70..0x77: Percussion
-- 0x78..0x7f: Sound Effects
-
-Egg extends that thru Bank One.
-Higher banks can do what they want, but in cases of missing instruments, our compiler will try the low 8 bits of fqpid as one option (ie mirroring GM and Bank One).
-- 0x80..0x87: Drum Kits
-- - 0x80: Default Inoffensive Kit (GM Notes)
-- - TODO
-- 0x88..0x8f: Specialty Drum Kits (GM Notes)
-- - 0x88: 8-Bit Kit
-- - 0x89: Noise Kit
-- - TODO
-- 0x90..0x97: Sound Effects 1 (Drums but not GM)
-- - 0x90: Happy Sounds
-- - 0x91: Sci-Fi Sounds
-- - 0x92: Natural Sounds
-- - TODO
-- 0x98..0x9f: Sound Effects 2 (Drums but not GM)
-- - TODO
-- 0xa0..0xa7: Tuned Drums 1 (Instruments, not drum kits)
-- - 0xa0: Natural Tom 1
-- - 0xa1: Natural Tom 2
-- - 0xa2: Synth Tom 1
-- - 0xa3: Synth Tom 2
-- - 0xa4: Chirp 1
-- - 0xa5: Chirp 2
-- - 0xa6: Tick 1
-- - 0xa7: Tick 2
-- 0xa8..0xaf: Tuned Drums 2 (Instruments, not drum kits)
-- - 0xa8: Clang 1
-- - 0xa9: Clang 2
-- - 0xaa: Thump 1
-- - 0xab: Thump 2
-- - TODO
-- 0xb0..0xb7: Simple Synth
-- - 0xb0: Sine Lead
-- - 0xb1: Square Lead
-- - 0xb2: Saw Lead
-- - 0xb3: Triangle Lead
-- - 0xb4: Sine Pad
-- - 0xb5: Square Pad
-- - 0xb6: Saw Pad
-- - 0xb7: Triangle Pad
-- 0xb8..0xbf: Lead Guitar
-- - 0xb8: Clean Delay Guitar
-- - 0xb9: Clean Wah Lead
-- - 0xba: Rock Lead
-- - 0xbb: Wah Lead
-- - 0xbc: Brain Melting Lead
-- - 0xbd: Panty Ripping Lead
-- - 0xbe: Stutter Lead
-- - 0xbf: Flat Lead Guitar
-- 0xc0..0xc7: Rhythm Guitar
-- - TODO
-- 0xc8..0xcf: Plucks
-- - TODO
-- 0xd0..0xd7: Noise
-- - TODO
-- 0xd8..0xdf: TODO
-- 0xe0..0xe7: TODO
-- 0xe8..0xef: TODO
-- 0xf0..0xf7: TODO
-- 0xf8..0xff: TODO
-
 ## EAU Binary
 
-File can be understood as chunks with 8-byte headers:
 ```
-  4 Chunk ID.
-  4 Length.
-```
-
-The first chunk must have ID "\0EAU", and this also serves as the file signature.
-
-Chunks defined here: "\0EAU" "CHDR" "EVTS" "TEXT"
-
-Unknown chunks, and excess trailing data in any chunk, should be ignored.
-Each chunk type may have its own rules for short data, but in general short chunks are allowed if they break at a field boundary.
-
-### Chunk "\0EAU"
-
-Required, once only, and must be the first chunk.
-
-```
-  2 Tempo ms/qnote, >0 =500.
-  2 Loop position, bytes into "EVTS" =0.
+4 Signature: "\0EAU"
+2 Tempo, ms/qnote.
+4 Channel Headers length.
+... Channel Headers, see below.
+4 Events length.
+... Events, see below.
+4 Text length.
+... Text, see below.
 ```
 
-### Chunk "CHDR"
+### Channel Headers
 
-Optional. Forbidden after "EVTS".
-Events for a channel with no header will be ignored.
-Decoder behavior re duplicate chid is undefined. Use the first or last or fail.
-An empty CHDR is technically legal but meaningless.
-CHDR for channels 16 and above are perfectly legal. We may use EAU and EAU-Text as instrument repositories.
-In MIDI files, this payload is repeated verbatim as Meta 0x77.
-
+Zero or more of:
 ```
-  1 Channel ID 0..255, but only 0..15 are addressable.
-  1 Trim 0..255 =0x40.
-  1 Pan 0..128..255 = left..center..right =128.
-  1 Mode =2.
-  2 Modecfg length.
-  ... Modecfg.
-  2 Post length.
-  ... Post.
+u8 chid
+u8 trim
+u8 pan 0..128..255 = left..center..right
+u8 mode
+u16 modecfg length
+... modecfg
+u16 post length
+... post
 ```
 
-### Chunk "EVTS"
+You must configure every channel that the events address.
 
-May only appear once, and only after "\0EAU" and all "CHDR".
-Single-appearance is a strict rule on technical grounds: the runtime wants to point directly into the ROM for this and read it live.
-It is legal to omit EVTS, in which case our runtime will insert a long delay. (4096 ms in both implementations, but let's not mandate that exact number).
+Channels are not required to be in order.
+Configuring the same channel twice is an error; decoder's behavior is undefined.
+chid >=16 are perfectly legal but not addressable by events. We may use EAU as an instrument repository, where chid is really pid.
 
-Zero or more events, distinguishable from high bits of the first byte:
-```
-  00tttttt                            : Delay (t) ms. Zero is noop.
-  01tttttt                            : Delay ((t+1)*64) ms
-  10ccccnn nnnnnvvv vvvvdddd dddddddd : Note (n) on channel (c), velocity (v), duration (d*4) ms.
-  11ccccww wwwwwwww                   : Wheel on channel (c), (w)=0..512..1023 = -1..0..1
-```
+In general, (modecfg) is allowed to be short, even empty.
+It's an error to cut it off mid-field, and the various modes may have additional constraints.
 
-### Chunk "TEXT"
+### Mode 0x00 NOOP
 
-Optional. Tooling is expected to strip TEXT chunks at the final build.
-May appear zero or one times, any more is an error.
+Channel is silent.
+Same behavior as unconfigured channels, they will be silent and all events ignored.
 
-Body is zero or more of:
-```
-  1 chid
-  1 noteid
-  1 length
-  ... text
-```
+### Mode 0x01 TRIVIAL
 
-Each entry names a channel (noteid==0) or one note of a channel, presumably drums.
-Technically, zero is a valid noteid, but in MIDI it's not, and mehhhhh just don't use it, ok?
-We're not imposing any rules about collisions, do whatever is easiest.
-
-### Channel mode 0: NOOP
-
-Any modecfg is legal, and the channel is always silent.
-
-### Channel mode 1: DRUM
-
-Modecfg is zero or more notes:
-```
-  1 Noteid 0..255, but only 0..127 are addressable.
-  1 Trim lo 0..255.
-  1 Trim hi 0..255.
-  1 Pan 0..128..255 = left..center..right.
-  2 Length.
-  ... EAU file.
-```
-
-### Channel mode 2: FM
-
-Modes (2,3,4) are the same thing except their oscillator.
-If we were implementing native only, they'd be one mode. But I'm trying to keep it simple to implement in WebAudio too.
-(eg you can't expand harmonics or perform FM on an arbitrary wave).
-These should share most of their internal plumbing, and might use the same editor UI.
+Square wave with no envelope.
+The hold level is velocity-sensitive, but timings are not.
 
 ```
-  u7.8 Rate, or u8.8|0x8000 Absolute rate qnotes = 0.
-  u8.8 Range = 0.
-  ... Level env. Complex default.
-  ... Range env. Default constant 0xffff.
-  ... Pitch env. Value is cents+0x8000. Default constant 0x8000 ie noop.
-  u16 Wheel range, cents = 200.
-  u8.8 LFO rate, qnotes = 0.
-  u0.8 LFO depth = 1.
-  u0.8 LFO phase = 0.
-```
-  
-### Channel mode 3: HARSH
-
-```
-  u8 Shape (0,1,2,3) = sine,square,saw,triangle = 0.
-  ... Level env. Complex default.
-  ... Pitch env. Value is cents+0x8000. Default constant 0x8000 ie noop.
-  u16 Wheel range, cents = 200.
+u16 wheel range, cents. =200
+u16 minimum level. =0x2000
+u16 maximum level. =0xffff
+u16 minimum hold time, ms. =100
+u16 release time, ms. =100
 ```
 
-### Channel mode 4: HARM
+### Mode 0x02 FM
+
+FM and wavetable voices.
+Pretty much all tuned instruments should use this.
+Simple wave-based voices are an edge case here, actual modulation is optional.
 
 ```
-  u8 Harmonics count. Zero is equivalent to one harmonic at full amplitude. No DC.
-  ... Harmonics, u0.16 each.
-  ... Level env. Complex default.
-  ... Pitch env. Value is cents+0x8000. Default constant 0x8000 ie noop.
-  u16 Wheel range, cents = 200.
+ENV levelenv. Complex default.
+u16 wheelrange, cents. =200
+WAVE wavea. =sine
+WAVE waveb. =wavea
+ENV mixenv. 0..1=a..b. =A only
+u8.8 modrate. If 0x8000 set, it's absolute in qnotes. Otherwise relative to note rate. =0
+u8.8 modrange. =1
+ENV rangeenv. =constant 1.
+ENV pitchenv (cents, bias to 0x8000). =constant 0.5
+WAVE modulator. =sine
+u8.8 rangelforate, qnotes. =0
+u0.8 rangelfodepth. =1
+WAVE rangelfowave. =sine
+u8.8 mixlforate, qnotes. =0
+u0.8 mixlfodepth. =1
+WAVE mixlfowave. =sine
 ```
 
-### Channel mode 5: SUB
+### Mode 0x03 SUB
+
+White noise thru a bandpass.
 
 ```
-  ... Level env. Complex default.
-  u16 Width low, Hz = 200.
-  u16 Width high, Hz = 200. NB Default is 200 regardless of low.
-  u8 Stage count = 1. Zero is legal, in which case Center and Width are ignored and we produce white noise.
-  u8.8 Gain = 1.
+ENV levelenv. Complex default.
+u16 widthlo, hz. =200
+u16 widthhi, hz. =widthlo
+u8 stagec. Zero is legal, to disable the bandpass. =1
+u8.8 gain. =1
 ```
 
-### Envelope
+### Mode 0x04 DRUM
 
+Each note is its own EAU file for a single sound.
+Note that modecfg is limited to 64 kB. It's possible to reach that limit in a drum channel.
+
+Modecfg is zero of more of:
 ```
-  1 Flags:
-      01 Initials
-      02 Velocity
-      04 Sustain
-      f8 Reserved, illegal.
-  (2) Initlo, if Initials.
-  (2) Inithi, if Initials and Velocity.
-  1 (susp<<4)|pointc
-  ... Points:
-       2 tlo
-       2 vlo
-       (2) thi if Velocity.
-       (2) vhi if Velocity.
+u8 noteid. >=0x80 are legal but not addressable. Might be used as a sound effects repository or something.
+u8 trimlo
+u8 trimhi
+u8 pan
+u16 len
+... eau
 ```
 
-The default envelope `[0,0]` must be understood as "unset, use default".
-To explicitly encode a constant-zero envelope, give it an oob susp, eg `[0,16]`.
-The initial point can't be sustained.
-We're intrinsically limited to 15 points, by design. At runtime, after maybe inserting a sustain point, it's 16.
+Not required to sort by (noteid).
+Duplicate (noteid) are forbidden; decoders' behavior is undefined in that case.
+
+### ENV
+
+A single zero byte is a legal encoded envelope, meaning to treat as if unset, use the default.
+Do not include the (susp,ptc) byte in that case.
+
+```
+u8 flags:
+     0x01 Initials
+     0x02 Velocity
+     0x04 Sustain
+     0x08 Present: Should always be set, otherwise a leading zero means default.
+     0xf0 Reserved, zero.
+(u16) initlo, if Initials.
+(u16) inithi, if Initials and Velocity.
+u8 (susp<<4)|ptc
+... Points, up to 15:
+      u16 tlo, ms
+      u16 vlo
+      (u16) thi, ms, if Velocity.
+      (u16) vhi, if Velocity.
+```
+
+### WAVE
+
+Sequence of commands that build up a single-period wave incrementally.
+All commands are identified by their leading byte, and unknown commands are an error.
+The wave's encoded length is self-describing, if you comprehend every command.
+A wave consisting only of EOF, ie a single zero, means default (typically sine).
+
+```
+0x00 EOF. Required.
+
+-- Commands that replace the wave. These only make sense in the first position. --
+0x01 SINE []
+0x02 SQUARE [u8 smooth]. Trivial square at 0, sigmoiding to a sine at 0xff.
+0x03 SAW [u8 smooth]. Trivial downward saw at 0, to triangle at 0xff.
+0x04 TRIANGLE [u8 smooth]. Trivial triangle at 0, trapezoiding to square at 0xff. NB: More "smooth" makes a rougher sound.
+0x05 NOISE []. White noise with forced signs. Like a dirty square wave. Random, but you'll get the same thing every time, even across hosts.
+
+-- Commands that expect a non-silent wave as input. These do not make sense in the first position. --
+0x06 ROTATE [u8 phase]. Shuffle samples such that (phase) is the new beginning.
+0x07 GAIN [u8.8 mlt]. Multiply, allowed to go out of range.
+0x08 CLIP [u8 limit]. Clamp to limit and -limit.
+0x09 NORM [u8 limit]. Multiply such that the peak becomes (limit).
+0x0a HARMONICS [u8 c, u16 ...coefv]. Mix the current wave against itself at various harmonics. First coefficient is for the natural rate.
+0x0b HARMFM [u8 (rate<<4)|range]. Perform FM with the modulator at some positive harmonic rate.
+0x0c MAVG [u8 windowlen]. Moving average, up to 255 samples.
+```
+
+With the (smooth) parameter, our editor can present initial shape as a continuum: SINE => SQUARE => TRIANGLE => SAW
 
 ### Post
 
 Zero or more stages:
 ```
-  1 Stageid.
-  1 Length.
-  ... Params.
+u8 type
+u8 len
+... payload
 ```
 
-- `0x00 NOOP`: All params legal, does nothing.
-- `0x01 DELAY`: u8.8 period qnotes=1.0, u0.8 dry=0.5, u0.8 wet=0.5, u0.8 store=0.5, u0.8 feedback=0.5, u8 sparkle(0..128..255)=0x80.
-- - Sparkle adjusts the rate slightly for the two stereo channels, noop for mono.
-- `0x02 WAVESHAPER`: u0.16... levels. Positive half only and no zero. ie a single 0xffff is noop. Edge case exception: Empty is noop.
-- `0x03 TREMOLO`: u8.8 period qnotes=1, u0.8 depth=1, u0.8 phase=0.
-
-## EAU Text
-
-Text format that roughly mirrors EAU, but allows extra commentary.
-We'll use this for the standard instrument set.
-Token-oriented text: `KEYWORD [PARAMS...] ;` or `KEYWORD { [STATEMENTS...] }`.
-`#` begins a line comment. Please do not put line comments inside a semicolon-delimited statement.
-Quoted strings are JSON but must not contain escaped quotes (use "\u0022" if you really need one).
-Fixed-point fields should be written as their integer equivalent, eg "0x0100" for 1.0 as u8.8.
-
-Global statements (order matters):
 ```
-tempo MS_PER_QNOTE ; # Must appear before any "chdr" or "events". Absent is ok too.
-chdr { ... }
-events { ... } # 0, 1, or 2. If 2, they must be adjacent.
+0x00 NOOP []
+0x01 GAIN [u8.8 mlt, u0.8 clip=1, u0.8 gate=0]. Trivial gain and clip.
+0x02 DELAY [u8.8 qnotes, u0.8 dry=0.5, u0.8 wet=0.5, u0.8 store=0.5, u0.8 feedback=0.5, u0.8 sparkle=0.5]. Sparkle is a stereo effect, noop at 0.5.
+0x03 TREMOLO [u8.8 qnotes, u0.8 depth=1, u0.8 phase=0, u0.8 sparkle=0.5]. Sparkle puts L and R out of phase, so the sound moves dizzyingly.
+0x04 DETUNE [u8.8 qnotes, u0.8 mix=0.5, u0.8 depth=0.5, u0.8 phase=0, u0.8 rightphase=0]. Detune by pingponging back and forth in time.
+0x05 WAVESHAPER [u0.16 ...coefv]. Positive coefficients only. A single 0xffff is noop.
+
+These IIR filter stages are defined but not yet implemented. I might remove them:
+0x06 LOPASS [u16 hz]
+0x07 HIPASS [u16 hz]
+0x08 BPASS [u16 mid, u16 width]
+0x09 NOTCH [u16 mid, u16 width]
 ```
 
-If there are two `events` blocks, the loop position falls between them. More than two is an error.
+TODO Reverb? Compression?
 
-Within `events {...}` (order matters):
-```
-delay MS ;
-note CHID NOTEID VELOCITY DURMS ;
-wheel CHID 0..512..1023 ;
-```
+### Events
 
-Within `chdr {...}` (any order):
-```
-name STRING ;
-chid 0..255 ;
-trim 0..255 ;
-pan 0..128..255 ;
-mode ( 0..255 | noop | drum | fm | harsh | harm | sub ) ;
-modecfg { ... }   # For modes (drum,fm,harsh,harm). See below.
-modecfg HEXDUMP ; # For all other modes, of which none exist yet.
-post { ... }
-```
+Our event stream looks a lot like a MIDI file's MTrk chunk.
+Key differences:
+ - Delay is its own event, not necessarily interleaved with other events.
+ - Delay are in milliseconds, no such thing as a tick.
+ - No Aftertouch, Control Change, Program Change, Meta, Sysex, or Realtime events. Just Note and Wheel.
+ - We add a "Note Once" event containing its hold length. Milliseconds from start to release, clamped to the attack and decay length.
+ - No Running Status.
 
-Within `post {...}` (order matters):
 ```
-STAGEID HEXDUMP ;
-delay PERIOD_U88 DRY WET STO FBK SPARKLE ; # 0..255
-waveshaper HEXDUMP ; # two bytes per unit
-tremolo PERIOD_U88 DEPTH PHASE ; # 0..255
+00tttttt                            : Short Delay, (t) ms.
+01tttttt                            : Long Delay, ((t+1)<<6) ms. Limit 4096.
+1000cccc xnnnnnnn xvvvvvvv          : Note Off
+1001cccc xnnnnnnn xvvvvvvv          : Note On. No velocity-zero trick like MIDI.
+1010cccc nnnnnnnv vvvvvvtt tttttttt : Note Once. (t<<4) ms. Limit about 16 s.
+1011xxxx                            : Reserved, illegal.
+1100xxxx                            : Reserved, illegal.
+1101xxxx                            : Reserved, illegal.
+1110cccc xaaaaaaa xbbbbbbb          : Wheel. (a|(b<<7)) as in MIDI.
+1111nnnn                            : Marker. (n==0) means Loop Point. Others reserved but legal.
 ```
 
-Within `modecfg {...}` for `mode drum` (any order):
-```
-drum {
-  name STRING ;
-  noteid 0..255 ;
-  trim 0..255 0..255 ;
-  pan 0..128..255 ;
-  serial { ...EAU_TEXT_FILE... }
-}
-```
+### Text
 
-Within `modecfg {...}` for `mode fm` (any order):
-```
-rate REL_U88 ;
-absrate QNOTES_U88 ;
-range U88 ;
-levelenv ENV ;
-rangeenv ENV ;
-pitchenv ENV ;
-wheelrange CENTS_U16 ;
-lforate QNOTES_U88 ;
-lfodepth 0..255 ;
-lfophase 0..255 ;
-```
+Songs may contain names of channels or drum notes.
+Tooling should drop this content when building for production, and the runtime should never use it.
 
-Within `modecfg {...}` for `mode harsh` (any order):
+Zero or more of:
 ```
-shape ( 0..255 | sine | square | saw | triangle ) ;
-levelenv ENV ;
-pitchenv ENV ;
-wheelrange CENTS_U16 ;
+u8 chid
+u8 noteid. 0xff for whole channel.
+u8 length
+... text
 ```
-
-Within `modecfg {...}` for `mode harm` (any order):
-```
-harmonics HEXDUMP ; # 2 bytes per
-levelenv ENV ;
-pitchenv ENV ;
-wheelrange CENTS_U16 ;
-```
-
-Within `modecfg {...}` for `mode sub` (any order):
-```
-levelenv ENV ;
-widthlo HZ ;
-widthhi HZ ; # NB Default is 200 regardless of 'widthlo'.
-stagec U8 ;
-gain U88 ;
-```
-
-ENV:
-```
-[=INITIAL[..HI]] [+MS[..HI] =VALUE[..HI][*] ...]
-```
-Times and values are 16-bit integers.
-Values must be prefixed with '=', and times with '+' (for the whole construction, not for the high part).
-One value may be suffixed `*` to mark the sustain point.
-Empty is legal but also pointless; you can skip the field instead.
