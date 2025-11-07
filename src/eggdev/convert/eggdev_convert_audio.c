@@ -149,7 +149,6 @@ int eggdev_wav_from_eau(struct eggdev_convert_context *ctx) {
   }
   if (rate>200000) rate=200000;
   if (chanc>2) chanc=2; // Please be reasonable! Synth won't produce more than 2.
-  int method=EAU_DURATION_METHOD_DEFAULT; // Let eau decide (it will pick ROUND_UP).
   const int buffer_frames=2048;
   int framec_panic=rate*60*60; // Abort after generating one hour of PCM; if a song really is that long we don't want anything to do with it.
   

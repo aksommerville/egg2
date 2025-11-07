@@ -29,11 +29,12 @@ demo-serve:$(eggdev_EXE) $(eggdev_SEPARATE_TEMPLATE);$(eggdev_EXE) serve \
 
 # demo-edit is just like the skeleton project, but builds eggdev first and points to "src/demo" instead of "."
 # "--htdocs=src/web" enables us to load the web runtime, necessary for audio.
-demo-edit:$(eggdev_EXE);$(eggdev_EXE) serve \
+demo-edit:$(eggdev_EXE) $(web_SYNTH_WASM);$(eggdev_EXE) serve \
   --writeable=src/demo/src/data \
   --project=src/demo \
   --htdocs=/data:src/demo/src/data \
   --htdocs=/out:src/demo/out \
   --htdocs=src/web \
   --htdocs=src/editor \
-  --htdocs=src/demo/src/editor
+  --htdocs=src/demo/src/editor \
+  --htdocs=/synth.wasm:EGG_SDK/out/web/synth.wasm

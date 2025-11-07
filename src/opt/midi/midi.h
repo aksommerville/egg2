@@ -3,7 +3,6 @@
  * Link: -lm
  * (If you replace sr_vlq_decode in midi_file.c, and midi_frequency_for_noteid in midi_constants.c, then there's no dependencies but libc).
  * Constants, stream reader, and file reader.
- * XXX No longer in use; replaced by "eau" unit.
  */
  
 #ifndef MIDI_H

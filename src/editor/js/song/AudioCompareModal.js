@@ -6,9 +6,10 @@
 import { Dom } from "../Dom.js";
 import { Data } from "../Data.js";
 import { Comm } from "../Comm.js";
-import { SongPlayer } from "../SongPlayer.js"; // src/web; not editor
-import { eauNotevRequire } from "../songBits.js"; // ''
-
+//TODO new synth
+//import { SongPlayer } from "../SongPlayer.js"; // src/web; not editor
+//import { eauNotevRequire } from "../songBits.js"; // ''
+ 
 export class AudioCompareModal {
   static getDependencies() {
     return [HTMLDialogElement, Dom, Data, Comm, Window, "nonce"];
@@ -33,7 +34,7 @@ export class AudioCompareModal {
     this.nativePrintTime = 0;
     this.webPrintTime = 0;
     
-    eauNotevRequire();
+    //eauNotevRequire();
     
     const row = this.dom.spawn(this.element, "DIV", ["songSelect"]);
     const typeSelect = this.dom.spawn(row, "SELECT", { name: "type", "on-change": e => this.onTypeChange() },
@@ -226,6 +227,7 @@ export class AudioCompareModal {
   }
   
   printWeb(serial) {
+    if (0) {//TODO
     /* No need for the outer Audio class. We'll make the OfflineAudioContext and SongPlayer instances ourselves.
      * This is roughly the same as what Audio.egg_play_sound() does.
      */
@@ -244,6 +246,7 @@ export class AudioCompareModal {
       this.webPrintTime = Date.now() - startTime;
       return buffer;
     });
+    }
   }
   
   /* Render PCM and overlay.

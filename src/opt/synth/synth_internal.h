@@ -4,9 +4,13 @@
 #include "synth.h"
 #include <limits.h>
 
-//TODO Egg headers.
-#define EGG_TID_song 5
-#define EGG_TID_sound 6
+/*
+#if USE_native
+  #define logint(n)
+#else
+  WASM_IMPORT("logint") void logint(int n);//XXX
+#endif
+*/
 
 struct synth_song;
 struct synth_channel;

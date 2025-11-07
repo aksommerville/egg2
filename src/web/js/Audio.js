@@ -1,86 +1,211 @@
 /* Audio.js
- * Synthesizer, and everything that entails.
- * We own the AudioContext, we implement the Egg Platform API, and we dispatch out to Songs.
- * The more interesting parts belong to Song and SongChannel.
+ * JS interface to Egg's synthesizer.
+ * The actual synth stuff lives in src/opt/synth, it's all written in C.
+ * This Audio class coordinates an AudioContext, AudioWorkletNode, and WebAssembly context to glue that together.
+ * We implement the audio portion of the Egg Platform API, and some extras for editor support.
  */
  
 import { EGG_TID_song, EGG_TID_sound } from "./Rom.js";
 
-//TODO This was kept from the old egg2 synth. Update for synth3. This will be the party that owns the AudioContext and AudioWorkletNode.
+/* Our AudioWorkletProcessor.
+ * This is plain text that we trickfully load as a worklet.
+ ********************************************************************************/
+ 
+const wsrc = 
+  "class EggAudio extends AudioWorkletProcessor {" +
+    "constructor() {" +
+      "super();" +
+      "console.log(`EggAudio.ctor`);" +
+      "this.memory = new WebAssembly.Memory({ initial: 100, maximum: 1000 });" + /* TODO Maximum memory size, can we get smarter about it? */
+      "this.buffers = [];" + /* Float32Array */
+      "this.bufferSize = 128;" + /* frames */
+      "this.port.onmessage = m => {" +
+        "console.log(`EggAudio message`, m);" +
+        "switch (m.data.cmd) {" +
+          "case 'init': this.init(m.data); break;" +
+          "case 'reinit': this.reinit(m.data); break;" +
+          "case 'playSong': this.playSong(m.data); break;" +
+          /*TODO playSong, playSound, etc */
+        "}" +
+      "};" +
+    "}" +
+    
+    "init(m) {" +
+      "console.log(`EggAudio.init`, m);" +
+      "if (this.instance) throw new Error(`EggAudio multiple instantiation.`);" +
+      "this.rate = m.r;" +
+      "this.chanc = m.c;" +
+      "WebAssembly.instantiate(m.wasm, {" +
+        "env: {" +
+          "memory: this.memory," +
+          "logint: n => console.log(n)," + /*XXX*/
+        "}," +
+      "}).then(rsp => {" +
+        "this.instance = rsp.instance;" +
+        "if (this.instance.exports.synth_init(this.rate, this.chanc, this.bufferSize) < 0) {" +
+          "throw new Error(`synth_init failed`);" +
+        "}" +
+        "this.transferRom(m.rom);" +
+        "this.acquireBuffers();" +
+        "console.log(`EggAudio.init ok`);" +
+      "}).catch(e => {" +
+        "console.error(e);" +
+      "});" +
+    "}" +
+    
+    "reinit(m) {" +
+      "console.log(`EggAudio.reinit`, m);" +
+      "if (!this.instance) throw new Error(`EggAudio not initialized`);" +
+      "this.transferRom(m.rom);" +
+    "}" +
+    
+    "transferRom(rom) {" +
+      "if (!rom) return;" +
+      "if (rom instanceof ArrayBuffer) rom = new Uint8Array(rom);" +
+      "console.log(`TODO EggAudio.transferRom`, rom);" +
+      "const dstp = this.instance.exports.synth_get_rom(rom.byteLength);" +
+      "console.log(`transferRom`, { dstp, rom, bl:rom.byteLength, memory: this.memory });" +
+      "const dst = new Uint8Array(this.memory.buffer, dstp, rom.byteLength);" +
+      "dst.set(rom);" +
+    "}" +
+  
+    "acquireBuffers() {" +
+      "for (let c=0; c<this.chanc; c++) {" +
+        "const p = this.instance.exports.synth_get_buffer(c);" +
+        "if (!p) throw new Error(`Buffer for channel ${c}/${this.chanc} was not provided.`);" +
+        "this.buffers[c] = new Float32Array(this.memory.buffer, p, this.bufferSize);" +
+      "}" +
+    "}" +
+    
+    "playSong(m) {" +
+      "if (!this.instance) return;" +
+      "console.log(`EggAudio.playSong songid=${m.songid} rid=${m.rid} repeat=${m.repeat} trim=${m.trim} pan=${m.pan}`);" +
+      "this.instance.exports.synth_play_song(m.songid, m.rid, m.repeat, m.trim, m.pan);" +
+    "}" +
+    
+    "process(i, o, p) {" +
+      "if (!this.instance) return true;" +
+      "const output = o[0];" +
+      "if (output[0].length !== this.bufferSize) throw new Error(`got ${output[0].length}-frame buffer from WebAudio, expected ${this.bufferSize}`);" +
+      "this.instance.exports.synth_update(this.bufferSize);" +
+      "for (let c=0; c<output.length; c++) {" +
+        "output[c].set(this.buffers[c]);" +
+      "}" +
+      "return true;" +
+    "}" +
+  "}" +
+  "registerProcessor('AWP', EggAudio);" +
+"";
+ 
+/* Audio: The main-thread audio interface.
+ *********************************************************************************/
  
 export class Audio {
   constructor(rt) {
     this.rt = rt; // Will be undefined when loaded in editor.
-    this.song = null; // SongPlayer, target for songid and playhead.
-    this.pvsong = null; // SongPlayer, winding down.
-    this.sounds = []; // Sparse AudioBuffer, indexed by soundid.
-    this.soundPlayers = []; // { node, endTime }
     this.ctx = null; // AudioContext
-    this.musicEnabled = true;
-    this.soundEnabled = true;
-    this.noise = null; // AudioBuffer
-    //eauNotevRequire();
+    console.log(`Audio.ctor`);
+    this.initStatus = 0; // <0=error, >0=ready
+    this.initPromise = this.init()
+      .then(() => { this.initStatus = 1; })
+      .catch(e => { console.error(e); this.initStatus = -1; });
+  }
+  
+  init() {
+    if (!window.AudioContext) return Promise.reject(`AudioContext not defined`);
+    const js = new Blob([wsrc], { type: "text/javascript" });
+    const url = URL.createObjectURL(js);
+    this.ctx = new AudioContext({ latencyHint: "interactive" });
+    if (!this.ctx.audioWorklet) return Promise.reject(`AudioWorklet not defined`);
+    let resolve, reject;
+    const promise = new Promise((res, rej) => {
+      resolve = res;
+      reject = rej;
+    }).then(() => {
+      this.node = new AudioWorkletNode(this.ctx, "AWP");
+      this.node.connect(this.ctx.destination);
+      return this.acquireWasm();
+    }).then(wasm => {
+      this.node.port.postMessage({ cmd: "init", rom: this.rt?.rom?.serial, wasm, r: this.ctx.sampleRate, c: this.ctx.destination.channelCount });
+    });
+    this.ctx.audioWorklet.addModule(url).then(() => {
+      URL.revokeObjectURL(url);
+      if (this.ctx.state === "suspended") {
+        window.addEventListener("click", () => {
+          this.ctx.resume().then(resolve);
+        }, { once: true });
+      } else {
+        resolve();
+      }
+    }).catch(e => {
+      URL.revokeObjectURL(url);
+      reject(e);
+    });
+    return promise;
+  }
+  
+  acquireWasm() {
+    return fetch("./synth.wasm").then(rsp => {
+      if (!rsp.ok) throw rsp;
+      return rsp.arrayBuffer();
+    });
   }
   
   pause() {
+    console.log(`Audio.pause`);
     if (!this.ctx) return;
     this.ctx.suspend();
   }
   
   resume() {
+    console.log(`Audio.resume`);
     if (!this.ctx) return;
     this.ctx.resume();
   }
   
   start() {
-    if (!this.ctx) {
-      this.ctx = new AudioContext({
-        latencyHint: "interactive",
-      });
-      this.requireNoise();
-    }
+    console.log(`Audio.start`);
+    if (this.initStatus < 0) return;
+    if (this.initStatus > 0) this.startNow();
+    else this.initPromise.then(() => this.startNow());
+  }
+  
+  startNow() {
     if (this.ctx.state === "suspended") {
       this.ctx.resume();
     }
   }
   
   stop() {
-    for (const sound of this.soundPlayers) {
-      sound.node?.stop();
-      sound.node.disconnect();
-    }
-    this.soundPlayers = [];
-    if (this.song) {
-      this.song.stop();
-      this.song = null;
-    }
-    if (this.pvsong) {
-      this.pvsong.stop();
-      this.pvsong = null;
-    }
+    console.log(`Audio.stop`);
+    //TODO Tell node to stop, if it exists.
     if (this.ctx) {
       this.ctx.suspend();
     }
   }
   
-  update() {
-    if (!this.ctx) return;
-    for (let i=this.soundPlayers.length; i-->0; ) {
-      const sp = this.soundPlayers[i];
-      if (this.ctx.currentTime > sp.endTime) {
-        sp.node.stop?.();
-        sp.node.disconnect();
-        this.soundPlayers.splice(i, 1);
-      }
-    }
-    if (this.song && !this.song.update()) this.song = null;
-    if (this.pvsong && !this.pvsong.update()) this.pvsong = null;
+  update() {//XXX no longer needed
   }
   
   /* For editor.
    * If (songid) nonzero and matches the current song, we'll start at the prior playhead.
    */
   playEauSong(serial, songid, repeat) {
+    if (serial instanceof ArrayBuffer) serial = new Uint8Array(serial);
+    if (serial && (serial.length > 0x3fffff)) return;
+    console.log(`Audio.playEauSong`, { serial, songid, repeat });
+    if (!this.node) return;
+    let rom = null;
+    if (serial) {
+      rom = new Uint8Array(serial.length + 3);
+      rom[0] = 0x80 | ((serial.length - 1) >> 16);
+      rom[1] = (serial.length - 1) >> 8;
+      rom[2] = (serial.length - 1);
+      new Uint8Array(rom.buffer, rom.byteOffset + 3, serial.length).set(serial);
+    }
+    this.node.port.postMessage({ cmd: "reinit", rom });
+    this.node.port.postMessage({ cmd: "playSong", songid: 1, rid: 1, repeat, trim: 1, pan: 0 });
+    /*TODO
     let playhead = 0;
     if (this.song) {
       if (songid && (songid === this.song.id)) playhead = this.song.getPlayhead();
@@ -94,9 +219,11 @@ export class Audio {
       if (playhead > 0) this.song.setPlayhead(playhead);
       this.update(); // Editor updates on a long period; ensure we get one initial priming update.
     }
+    */
   }
   
   playSoundBuffer(buffer, trim, pan) {
+    /*TODO
     if (!this.ctx) return;
     if (this.ctx.state === "suspended") return;
     if (trim <= 0) return;
@@ -117,26 +244,7 @@ export class Audio {
     this.soundPlayers.push({ node, endTime });
     if (tail !== node) this.soundPlayers.push({ node: tail, endTime });
     node.start();
-  }
-  
-  requireNoise() {
-    if (!this.noise) {
-      if (!this.ctx) throw new Error(`Requesting noise without an AudioContext`);
-      // Generate a noise buffer the same way the native implementation does.
-      this.noise = new AudioBuffer({
-        length: this.ctx.sampleRate,
-        sampleRate: this.ctx.sampleRate,
-      });
-      const v = this.noise.getChannelData(0);
-      let state = 0x12345678;
-      for (let i=0; i<v.length; i++) {
-        state ^= state << 13;
-        state ^= state >> 17;
-        state ^= state << 5;
-        v[i] = state / 2147483648.0 - 1.0;
-      }
-    }
-    return this.noise;
+    */
   }
   
   /* Egg Platform API.

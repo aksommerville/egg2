@@ -28,7 +28,7 @@ WASM_EXPORT("synth_init") int synth_init(int rate,int chanc,int buffer_frames);
  * You must immediately copy the rom there, and don't touch it again.
  * It's OK to copy the entire ROM, or you can trim it to start at (tid==EGG_TID_song,rid==1).
  * Do this right after synth_init.
- * Fails if ROM is already set, or if other operations have started.
+ * You should not normally do this while running but it's legal. Anything currently playing will be immediately dropped.
  */
 WASM_EXPORT("synth_get_rom") void *synth_get_rom(int len);
 

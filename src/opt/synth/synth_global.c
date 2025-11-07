@@ -100,16 +100,46 @@ int synth_init(int rate,int chanc,int buffer_frames) {
   return 0;
 }
 
+/* Drop everything immediately, in preparation for replacing the ROM.
+ * Keep rate tables, sine table, and buffers.
+ */
+ 
+static void synth_drop_everything() {
+  
+  while (synth.songc>0) {
+    synth.songc--;
+    synth_song_del(synth.songv[synth.songc]);
+  }
+  while (synth.pcmplayc>0) {
+    synth.pcmplayc--;
+    synth_pcmplay_cleanup(synth.pcmplayv+synth.pcmplayc);
+  }
+  while (synth.printerc>0) {
+    synth.printerc--;
+    synth_printer_del(synth.printerv[synth.printerc]);
+  }
+  while (synth.resc>0) {
+    synth.resc--;
+    synth_res_cleanup(synth.resv+synth.resc);
+  }
+  
+  if (synth.rom) synth_free(synth.rom);
+  synth.rom=0;
+  synth.romc=0;
+}
+
 /* Allocate ROM buffer.
  */
  
 void *synth_get_rom(int len) {
-  if (len<1) return 0;
+  if (len<0) return 0;
+  if (synth.framec_in_progress) return 0;
   if (!synth.rate) return 0;
-  if (synth.resc) return 0;
-  if (synth.rom) return 0;
-  if (!(synth.rom=synth_calloc(1,len))) return 0;
-  synth.romc=len;
+  synth_drop_everything();
+  if (len) {
+    if (!(synth.rom=synth_calloc(1,len))) return 0;
+    synth.romc=len;
+  }
   return synth.rom;
 }
 
