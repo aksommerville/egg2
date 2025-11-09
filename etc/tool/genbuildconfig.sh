@@ -170,7 +170,7 @@ done
 #-----------------------------------------------------------------------------------------
 # Set eggdev up with hard-coded defaults.
 
-eggdev_OPT_ENABLE="serial fs synth zip http image res real_stdlib eau native"
+eggdev_OPT_ENABLE="serial fs synth zip http image res real_stdlib eau midi native"
 if [ "$EGG_NATIVE_TARGET" = macos ] ; then
   eggdev_OPT_ENABLE="$eggdev_OPT_ENABLE ismac"
   eggdev_CC="gcc -c -MMD -O3 -Isrc -Werror -Wimplicit -Wno-parentheses -Wno-empty-body -Wno-comment -Wno-pointer-sign -Wno-deprecated-declarations"

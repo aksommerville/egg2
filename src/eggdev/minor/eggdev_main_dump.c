@@ -4,7 +4,7 @@
 /* Generic hex dump.
  */
  
-static void eggdev_dump_serial(const uint8_t *src,int srcc) {
+void eggdev_dump_serial(const uint8_t *src,int srcc) {
   const int rowlen=16;
   const int show_offset=1;
   const int show_ascii=1;

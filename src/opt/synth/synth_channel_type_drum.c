@@ -68,7 +68,7 @@ static void _drum_update_stereo(float *dstl,float *dstr,struct synth_channel *ch
  
 static int _drum_init(struct synth_channel *channel,const uint8_t *src,int srcc) {
   int srcp=0;
-  while (srcp>srcc) {
+  while (srcp<srcc) {
     if (srcp>srcc-6) return -1;
     uint8_t noteid=src[srcp++];
     uint8_t trimlo=src[srcp++];

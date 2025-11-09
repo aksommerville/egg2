@@ -52,11 +52,11 @@ int synth_env_decode(struct synth_env *env,const void *src,int srcc,int fallback
   // Initials?
   if (env->flags&SYNTH_ENV_INITIALS) {
     if (srcp>srcc-2) return -1;
-    env->initlo=((SRC[srcp]<<8)|SRC[srcp+1])/65535.0f;
+    env->initlo=((SRC[srcp]<<8)|SRC[srcp+1])/65536.0f;
     srcp+=2;
     if (env->flags&SYNTH_ENV_VELOCITY) {
       if (srcp>srcc-2) return -1;
-      env->inithi=((SRC[srcp]<<8)|SRC[srcp+1])/65535.0f;
+      env->inithi=((SRC[srcp]<<8)|SRC[srcp+1])/65536.0f;
       srcp+=2;
     } else {
       env->inithi=env->initlo;
@@ -92,10 +92,10 @@ int synth_env_decode(struct synth_env *env,const void *src,int srcc,int fallback
       point->thi=1;
     } else {
       point->tlo=(SRC[srcp]<<8)|SRC[srcp+1]; srcp+=2;
-      point->vlo=((SRC[srcp]<<8)|SRC[srcp+1])/65535.0f; srcp+=2;
+      point->vlo=((SRC[srcp]<<8)|SRC[srcp+1])/65536.0f; srcp+=2;
       if (env->flags&SYNTH_ENV_VELOCITY) {
         point->thi=(SRC[srcp]<<8)|SRC[srcp+1]; srcp+=2;
-        point->vhi=((SRC[srcp]<<8)|SRC[srcp+1])/65535.0f; srcp+=2;
+        point->vhi=((SRC[srcp]<<8)|SRC[srcp+1])/65536.0f; srcp+=2;
       }
     }
   }

@@ -189,7 +189,7 @@ static void synth_voice_fm_update_nolfo(float *dst,struct synth_voice_fm *voice,
     float mod=CHANNEL->modulator->v[voice->modp>>SYNTH_WAVE_SHIFT];
     float range=synth_env_update(voice->rangeenv);
     mod*=range;
-    int32_t dp=voice->cardp+(fdp*mod);
+    int32_t dp=(int32_t)(fdp+(fdp*mod));
     voice->carp+=dp;
     
     float mix=synth_env_update(voice->mixenv);

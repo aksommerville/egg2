@@ -148,4 +148,7 @@ int eggdev_lineno(const char *src,int srcc);
 int eggdev_relative_path(char *dst,int dsta,const char *ref,int refc,const char *sub,int subc);
 int eggdev_res_ids_from_path(int *tid,int *rid,const char *path);
 
+// The meat and potatoes of `eggdev dump`, also available programmatically.
+void eggdev_dump_serial(const uint8_t *src,int srcc);
+
 #endif

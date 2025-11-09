@@ -23,23 +23,27 @@ Pretty much anything allowed in one is allowed in the other, but:
 
 ## From MIDI
 
-### TODO This section retained from v2 docs. Assess what is still relevant.
+Meta 0x51 Set Tempo should appear once at time zero.
+Tempo changes are permitted, but we will declare only the initial tempo.
 
-Meta 0x77 contains one Channel Header, ie a "CHDR" chunk. Meta 0x20 MIDI Channel Prefix is ignored, since the CHDR contains its own channel ID field.
-If absent, our compiler will make up Channel Headers based on Program Change, SDK data, and other clues.
-If Meta 0x77 is present, we don't guess anything from the MIDI events.
+Meta 0x07 Cue Point with the payload "LOOP" to mark the loop point. This is permitted only zero or one times.
+Legal but redundant at time zero.
 
-Meta 0x78 contains one Text Chunk, ie "TEXT".
-Decoders should prefer 0x78 over standard events when they both appear, but I'm not imposing strict rules on precedence there.
-Text is always optional anyway.
+The Channel Header and Text chunks may be encoded as custom Meta events at time zero, with exactly the payload to emit:
+ - Meta 0x77 Channel Headers.
+ - Meta 0x78 Text.
+If one of those is present, compiler should not attempt to synthesize any content from other MIDI events.
 
-Meta 0x51 Set Tempo should appear once, at time zero.
-If it appears mid-song, we'll process timing correctly, but the song's declared tempo will be undefined.
+In the absence of Meta 0x77 Channel Headers, we generate headers based on:
+ - Bank Select.
+ - Program Change.
+ - Unconfigured channel 9 is presumed to be drums.
+ - Control 0x07 Volume MSB.
+ - Control 0x0a Pan MSB.
 
-Meta 0x07 Cue Point with the payload "LOOP" to mark the loop point.
-
-Meta 0x03 Track Name and 0x04 Instrument Name will be understood as channel names, if you use Meta 0x20 MIDI Channel Prefix.
-We explicitly allow channels 0..255 for this, not just 0..15.
+In the absence of Meta 0x78 Text, we generate text based on:
+ - Meta 0x03 Track Name.
+ - Meta 0x04 Instrument Name.
 
 Opening a MIDI file in our editor and resaving it may destroy information.
 

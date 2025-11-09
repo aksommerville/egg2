@@ -11,6 +11,13 @@
   WASM_IMPORT("logint") void logint(int n);//XXX
 #endif
 */
+//XXX
+#if USE_native
+  #include <stdio.h>
+#else
+  static void *stderr=0;
+  static inline void fprintf(void *file,const char *fmt,...) {}
+#endif
 
 struct synth_song;
 struct synth_channel;

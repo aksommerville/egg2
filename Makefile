@@ -32,4 +32,7 @@ serve:demo-serve
 include etc/make/test.mk
 # test.mk puts its outputs in regular "all", since "test-ANYTHING" is reserved for running tests with a filter.
 
+#XXX Testing new synthesizer
+synthsong-%:all;out/eggdev convert -omid/$*.wav src/demo/src/data/song/$*.mid && aplay mid/$*.wav
+
 endif

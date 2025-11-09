@@ -8,6 +8,8 @@
  
 import { Encoder } from "../Encoder.js";
 import { EauDecoder } from "./EauDecoder.js";
+
+//TODO Update for new EAU spec, 2025-11-09
  
 export class Song {
 
@@ -16,6 +18,7 @@ export class Song {
    
   constructor(src) {
     this._init();
+    return;
     if (!src) ;
     else if (src instanceof Song) this._copy(src);
     else if (src instanceof Uint8Array) this._decode(src);
