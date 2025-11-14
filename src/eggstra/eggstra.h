@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
+#include "opt/serial/serial.h"
+#include "opt/fs/fs.h"
 
 extern struct eggstra {
 

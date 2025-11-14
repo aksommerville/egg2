@@ -131,6 +131,9 @@ Features we *do* support:
 - - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
 - - [ ] macos: eggrun
 - - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
+- - [ ] eggstra play: Show CPU consumption.
+- - [ ] eggstra play: Read from stdin.
+- - [ ] eggstra play: Play WAV files.
 - [ ] Review all "TODO" in source, there's a ton of them.
 - With the above complete, we can start migrating games:
 - [ ] Rewrite or migrate eggsamples for v2.
