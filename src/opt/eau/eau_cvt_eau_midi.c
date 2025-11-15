@@ -18,6 +18,14 @@ struct eau_from_midi_channel {
   int notec;
   uint8_t notebits[16]; // Little-endian bits per noteid.
 };
+
+struct eau_from_midi_event {
+  int time;
+  uint8_t chid;
+  uint8_t opcode; // 0x80,0x90,0xa0,0xe0,0xfx
+  uint8_t a,b; // (noteid,velocity) for Note Off, Note On, Note Once. Verbatim params for Wheel.
+  int durms; // For Note Once. Also for Note On, set nonzero to indicate an explicit Note Off is provided.
+};
  
 struct eau_from_midi {
   struct sr_encoder *dst;
@@ -33,10 +41,20 @@ struct eau_from_midi {
   struct eau_from_midi_channel channelv[16];
   const void *chdr,*text; // WEAK; point into (src) for explicit chunks.
   int chdrc,textc;
+  struct eau_from_midi_name {
+    uint8_t chid,noteid;
+    const char *name; // WEAK; points into (src).
+    int namec;
+  } *namev;
+  int namec,namea;
+  struct eau_from_midi_event *eventv; // Used transiently while encoding events; stored in context mostly as a convenience.
+  int eventc,eventa;
 };
 
 static void eau_from_midi_cleanup(struct eau_from_midi *ctx) {
   midi_file_del(ctx->midi);
+  if (ctx->namev) free(ctx->namev);
+  if (ctx->eventv) free(ctx->eventv);
 }
 
 /* Logging.
@@ -65,13 +83,64 @@ static int eau_from_midi_error(struct eau_from_midi *ctx,const char *fmt,...) {
   return ctx->status;
 }
 
+/* Names list primitives.
+ */
+ 
+static int eau_from_midi_search_name(const struct eau_from_midi *ctx,int chid,int noteid) {
+  int lo=0,hi=ctx->namec;
+  while (lo<hi) {
+    int ck=(lo+hi)>>1;
+    const struct eau_from_midi_name *name=ctx->namev+ck;
+         if (chid<name->chid) hi=ck;
+    else if (chid>name->chid) lo=ck+1;
+    else if (noteid<name->noteid) hi=ck;
+    else if (noteid>name->noteid) lo=ck+1;
+    else return ck;
+  }
+  return -lo-1;
+}
+
+static struct eau_from_midi_name *eau_from_midi_insert_name(struct eau_from_midi *ctx,int p,int chid,int noteid) {
+  if ((p<0)||(p>ctx->namec)) return 0;
+  if (ctx->namec>=ctx->namea) {
+    int na=ctx->namea+32;
+    if (na>INT_MAX/sizeof(struct eau_from_midi_name)) return 0;
+    void *nv=realloc(ctx->namev,sizeof(struct eau_from_midi_name)*na);
+    if (!nv) return 0;
+    ctx->namev=nv;
+    ctx->namea=na;
+  }
+  struct eau_from_midi_name *name=ctx->namev+p;
+  memmove(name+1,name,sizeof(struct eau_from_midi_name)*(ctx->namec-p));
+  ctx->namec++;
+  name->chid=chid;
+  name->noteid=noteid;
+  name->name=0;
+  name->namec=0;
+  return name;
+}
+
 /* Names storage.
+ * (src) is borrowed; it must be held constant.
  */
  
 static int eau_from_midi_add_name(struct eau_from_midi *ctx,int chid,int noteid,const char *src,int srcc) {
   if (!src) return 0;
   if (srcc<1) return 0;
-  fprintf(stderr,"%s: %d,%d = '%.*s'\n",__func__,chid,noteid,srcc,src);//TODO
+  if ((chid<0)||(chid>0xff)||(noteid<0)||(noteid>0xff)) return 0;
+  if (srcc>0xff) srcc=0xff;
+  int p=eau_from_midi_search_name(ctx,chid,noteid);
+  if (p>=0) {
+    struct eau_from_midi_name *name=ctx->namev+p;
+    name->name=src;
+    name->namec=srcc;
+    return 0;
+  }
+  p=-p-1;
+  struct eau_from_midi_name *name=eau_from_midi_insert_name(ctx,p,chid,noteid);
+  if (!name) return -1;
+  name->name=src;
+  name->namec=srcc;
   return 0;
 }
 
@@ -147,7 +216,7 @@ static int eau_from_midi_generate_default_drums(struct eau_from_midi *ctx,int ch
   sr_encode_u8(ctx->dst,chid);
   sr_encode_u8(ctx->dst,channel->trim);
   sr_encode_u8(ctx->dst,channel->pan);
-  sr_encode_u8(ctx->dst,4); // DRUM;
+  sr_encode_u8(ctx->dst,4); // DRUM
   
   int modecfglenp=ctx->dst->c;
   if (sr_encode_intbe(ctx->dst,0,2)<0) return -1;
@@ -306,37 +375,56 @@ static int eau_from_midi_chdr(struct eau_from_midi *ctx) {
   return 0;
 }
 
+/* Append a blank event to our list.
+ */
+ 
+static struct eau_from_midi_event *eau_from_midi_add_event(struct eau_from_midi *ctx) {
+  if (ctx->eventc>=ctx->eventa) {
+    int na=ctx->eventa+256;
+    if (na>INT_MAX/sizeof(struct eau_from_midi_event)) return 0;
+    void *nv=realloc(ctx->eventv,sizeof(struct eau_from_midi_event)*na);
+    if (!nv) return 0;
+    ctx->eventv=nv;
+    ctx->eventa=na;
+  }
+  struct eau_from_midi_event *event=ctx->eventv+ctx->eventc++;
+  memset(event,0,sizeof(struct eau_from_midi_event));
+  return event;
+}
+
+/* Find a Note On for the described Note Off.
+ */
+ 
+static struct eau_from_midi_event *eau_from_midi_find_note_on(struct eau_from_midi *ctx,uint8_t chid,uint8_t noteid) {
+  struct eau_from_midi_event *event=ctx->eventv;
+  int i=ctx->eventc;
+  for (;i-->0;event++) {
+    if (event->opcode!=0x90) continue;
+    if (event->chid!=chid) continue;
+    if (event->a!=noteid) continue;
+    if (event->durms) continue;
+    return event;
+  }
+  return 0;
+}
+
 /* Stream events and translate into output.
  * Caller is responsible for the length field.
  */
  
 static int eau_from_midi_events(struct eau_from_midi *ctx) {
+
+  /* Build up (ctx->eventv) by streaming the entire MIDI file.
+   * Unnecessary events are dropped, and we turn On/Off pairs into Once wherever possible.
+   * If we finish with any Note On with (durms==0), it was not Offed.
+   */
   midi_file_reset(ctx->midi);
-  
-  int now=0; // elapsed ms per input
-  int wtime=0; // written delay, <=now.
-  #define FLUSH_DELAY { \
-    int delay=now-wtime; \
-    if (delay>0) { \
-      while (delay>=4096) { \
-        sr_encode_u8(ctx->dst,0x7f); \
-        delay-=4096; \
-      } \
-      if (delay>=64) { \
-        sr_encode_u8(ctx->dst,0x40|((delay>>6)-1)); \
-        delay&=0x3f; \
-      } \
-      if (delay>0) { \
-        sr_encode_u8(ctx->dst,delay); \
-      } \
-      wtime=now; \
-    } \
-  }
-  
+  ctx->eventc=0;
+  int now=0;
   for (;;) {
     struct midi_event event={0};
     int err=midi_file_next(&event,ctx->midi);
-    if (err<0) break; // Error or EOF.
+    if (err<0) break;
     if (err>0) {
       now+=err;
       if (midi_file_advance(ctx->midi,err)<0) return eau_from_midi_error(ctx,"Unknown error reading MIDI file.");
@@ -344,42 +432,118 @@ static int eau_from_midi_events(struct eau_from_midi *ctx) {
     }
     switch (event.opcode) {
     
-      case 0x80: { // Note Off
-          //TODO Track holds and produce Note Once events where possible. For now, using only explicit Note On / Note Off (which is legal but wasteful).
-          FLUSH_DELAY
-          sr_encode_u8(ctx->dst,0x80|event.chid);
-          sr_encode_u8(ctx->dst,event.a);
-          sr_encode_u8(ctx->dst,event.b);
+      case 0x80: { // Note Off. Search for the corresponding Note On, and maybe (usually) turn it into Once.
+          struct eau_from_midi_event *onevent=eau_from_midi_find_note_on(ctx,event.chid,event.a);
+          if (!onevent) break; // No Note On. Drop it.
+          int durms=now-onevent->time;
+          if (durms<=16368) { // Change to Note Once -- the usual case.
+            onevent->opcode=0xa0;
+            onevent->durms=durms;
+          } else { // >16s long hold. Emit as an On/Off pair. We already have the On.
+            onevent->durms=1; // Mark the On as permanent.
+            struct eau_from_midi_event *offevent=eau_from_midi_add_event(ctx);
+            if (!offevent) return -1;
+            offevent->time=now;
+            offevent->opcode=0x80;
+            offevent->chid=event.chid;
+            offevent->a=event.a;
+            offevent->b=event.b;
+          }
         } break;
         
-      case 0x90: { // Note On
-          //TODO Track holds and produce Note Once events where possible. For now, using only explicit Note On / Note Off (which is legal but wasteful).
-          FLUSH_DELAY
-          sr_encode_u8(ctx->dst,0x90|event.chid);
-          sr_encode_u8(ctx->dst,event.a);
-          sr_encode_u8(ctx->dst,event.b);
-        } break;
-        
-      case 0xe0: { // Wheel. EAU matches MIDI exactly.
-          FLUSH_DELAY
-          sr_encode_u8(ctx->dst,0xe0|event.chid);
-          sr_encode_u8(ctx->dst,event.a);
-          sr_encode_u8(ctx->dst,event.b);
+      case 0x90: case 0xe0: { // Note On, Wheel. Record as is.
+          struct eau_from_midi_event *dst=eau_from_midi_add_event(ctx);
+          if (!dst) return -1;
+          dst->time=now;
+          dst->opcode=event.opcode;
+          dst->chid=event.chid;
+          dst->a=event.a;
+          dst->b=event.b;
+          dst->durms=0;
         } break;
         
       case MIDI_OPCODE_META: switch (event.a) {
-          case 0x07: { // Meta 0x07 Cue Point
+          case 0x07: { // Cue Point
               if ((event.c==4)&&!memcmp(event.v,"LOOP",4)) {
-                FLUSH_DELAY
-                sr_encode_u8(ctx->dst,0xf0); // Marker:Loop
+                struct eau_from_midi_event *dst=eau_from_midi_add_event(ctx);
+                if (!dst) return -1;
+                dst->time=now;
+                dst->opcode=0xf0;
+                dst->chid=0xff;
               }
             } break;
         } break;
+        
+      // Other events are perfectly legal, and ignored.
     }
   }
   if (!midi_file_is_finished(ctx->midi)) return eau_from_midi_error(ctx,"Unknown error reading MIDI file.");
-  FLUSH_DELAY
-  #undef FLUSH_DELAY
+  
+  /* Encode, inserting delays and forcing unpaired Note On to duration zero.
+   */
+  struct eau_from_midi_event *event=ctx->eventv;
+  int i=ctx->eventc;
+  int wtime=0;
+  for (;i-->0;event++) {
+  
+    // Unpaired Note On.
+    if ((event->opcode==0x90)&&!event->durms) {
+      event->opcode=0xa0;
+    }
+    
+    // Delay.
+    int delay=event->time-wtime;
+    while (delay>4096) {
+      sr_encode_u8(ctx->dst,0x7f);
+      delay-=4096;
+    }
+    if (delay>0x3f) {
+      sr_encode_u8(ctx->dst,0x40|((delay>>6)-1));
+      delay&=0x3f;
+    }
+    if (delay>0) {
+      sr_encode_u8(ctx->dst,delay);
+    }
+    wtime=event->time;
+    
+    switch (event->opcode) {
+      case 0x80: case 0x90: case 0xe0: { // Note Off, Note On, Wheel: Verbatim, with 2 param bytes.
+          sr_encode_u8(ctx->dst,event->opcode|event->chid);
+          sr_encode_u8(ctx->dst,event->a);
+          sr_encode_u8(ctx->dst,event->b);
+        } break;
+      case 0xa0: { // Note Once.
+          int dur=event->durms>>4;
+          if (dur<0) dur=0;
+          else if (dur>0x3ff) dur=0x3ff;
+          sr_encode_u8(ctx->dst,event->opcode|event->chid);
+          sr_encode_u8(ctx->dst,(event->a<<1)|(event->b>>6));
+          sr_encode_u8(ctx->dst,(event->b<<2)|(dur>>8));
+          sr_encode_u8(ctx->dst,dur);
+        } break;
+      default: { // Must be 0xfx Marker. Verbatim.
+          sr_encode_u8(ctx->dst,event->opcode);
+        }
+    }
+  }
+  
+  /* If any delay remains unwritten, write it.
+   * Unlike MIDI, EAU has discrete Delay events, so it's no big deal here.
+   * (now) remains the total song time.
+   */
+  int delay=now-wtime;
+  while (delay>4096) {
+    sr_encode_u8(ctx->dst,0x7f);
+    delay-=4096;
+  }
+  if (delay>0x3f) {
+    sr_encode_u8(ctx->dst,0x40|((delay>>6)-1));
+    delay&=0x3f;
+  }
+  if (delay>0) {
+    sr_encode_u8(ctx->dst,delay);
+  }
+  
   return 0;
 }
 
@@ -388,7 +552,20 @@ static int eau_from_midi_events(struct eau_from_midi *ctx) {
  */
  
 static int eau_from_midi_text(struct eau_from_midi *ctx) {
-  fprintf(stderr,"TODO %s [%s:%d]\n",__func__,__FILE__,__LINE__);//TODO
+  
+  // If Meta 0x78 Egg Text exists, use it verbatim and nothing else.
+  if (ctx->text) return sr_encode_raw(ctx->dst,ctx->text,ctx->textc);
+  
+  // Synthesize from (namev).
+  const struct eau_from_midi_name *name=ctx->namev;
+  int i=ctx->namec;
+  for (;i-->0;name++) {
+    sr_encode_u8(ctx->dst,name->chid);
+    sr_encode_u8(ctx->dst,name->noteid);
+    sr_encode_u8(ctx->dst,name->namec);
+    sr_encode_raw(ctx->dst,name->name,name->namec);
+  }
+    
   return 0;
 }
 

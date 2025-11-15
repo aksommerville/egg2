@@ -219,7 +219,7 @@ static int synth_mem_master_grown(struct synth_mem *mem,int nc) {
     if ((a<1)||(b<1)) return 0;
     if (a>INT_MAX/b) return 0;
     int bytec=a*b;
-    int wordc=bytec>>2;
+    int wordc=(bytec+3)>>2;
     int p=synth_mem_allocate(&mem,wordc);
     if (p<0) return 0;
     void *v=synth_mem_pointer_from_index(&mem,p);

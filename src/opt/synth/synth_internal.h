@@ -4,13 +4,13 @@
 #include "synth.h"
 #include <limits.h>
 
-/*
+/**
 #if USE_native
   #define logint(n)
 #else
   WASM_IMPORT("logint") void logint(int n);//XXX
 #endif
-*/
+/**/
 //XXX
 #if USE_native
   #include <stdio.h>

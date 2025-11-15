@@ -74,7 +74,7 @@ Features we *do* support:
 ## TODO
 
 - [ ] Branch 20251106-synth3: Replace synthesizer with the AudioWorkletNode strategy proven out in egg3. (egg3 is not real; 2 is the go-forward version).
-- - [ ] Update MIDI notes in etc/doc/eau-format.md
+- - [x] Update MIDI notes in etc/doc/eau-format.md
 - - [ ] Are we going to have an EAU-Text format? v3 doesn't have one.
 - - [ ] API changes
 - - - [ ] `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` should be continuous trims, say 0..99.
@@ -86,6 +86,7 @@ Features we *do* support:
 - - [x] Eliminate standalone builds.
 - - [x] Build synth wasm.
 - - [ ] `GET /api/webpath` is changed to return the Zip instead. That probably breaks launching from editor. ...confirmed, broken
+- - [ ] `eau_cvt_eau_midi`: Look up in SDK instruments.
 - [ ] Major changes.
 - - [ ] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
