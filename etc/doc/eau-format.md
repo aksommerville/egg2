@@ -45,7 +45,11 @@ In the absence of Meta 0x78 Text, we generate text based on:
  - Meta 0x03 Track Name.
  - Meta 0x04 Instrument Name.
 
-Opening a MIDI file in our editor and resaving it may destroy information.
+Opening a MIDI file in our editor and resaving it will destroy information:
+ - Control change, program change, aftertouch, sysex, and most Meta events will be lost.
+ - Everything will collapse into one MTrk chunk.
+ - Timings quantize to 1 ms.
+ - Meta 0x77 Channel Headers will be created.
 
 ## EAU Binary
 
