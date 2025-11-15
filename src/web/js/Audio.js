@@ -60,13 +60,16 @@ const wsrc =
     "}" +
     
     "transferRom(rom) {" +
-      "if (!rom) return;" +
       "if (rom instanceof ArrayBuffer) rom = new Uint8Array(rom);" +
       "console.log(`TODO EggAudio.transferRom`, rom);" +
-      "const dstp = this.instance.exports.synth_get_rom(rom.byteLength);" +
-      "console.log(`transferRom`, { dstp, rom, bl:rom.byteLength, memory: this.memory });" +
-      "const dst = new Uint8Array(this.memory.buffer, dstp, rom.byteLength);" +
-      "dst.set(rom);" +
+      "if (rom) {" +
+        "const dstp = this.instance.exports.synth_get_rom(rom.byteLength);" +
+        "console.log(`transferRom`, { dstp, rom, bl:rom.byteLength, memory: this.memory });" +
+        "const dst = new Uint8Array(this.memory.buffer, dstp, rom.byteLength);" +
+        "dst.set(rom);" +
+      "} else {" +
+        "this.instance.exports.synth_get_rom(0);" +
+      "}" +
     "}" +
   
     "acquireBuffers() {" +

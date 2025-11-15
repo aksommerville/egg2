@@ -3,14 +3,13 @@
  * We only deal with EAU. Not MIDI or EAU-Text.
  * That's a controversial choice for sure, since MIDI and EAUT can contain data that EAU doesn't.
  * But it makes the editor much more tractable, and hey, it all has to end up EAU eventually.
+ * The main rationale is I don't want multiple implementations of MIDI<~>EAU conversion within the project.
  * Anyone using Song must arrange to call the server for conversion, if it might be some non-EAU format.
  */
  
 import { Encoder } from "../Encoder.js";
 import { EauDecoder } from "./EauDecoder.js";
 
-//TODO Update for new EAU spec, 2025-11-09
- 
 export class Song {
 
   /* Construction.
@@ -18,7 +17,6 @@ export class Song {
    
   constructor(src) {
     this._init();
-    return;
     if (!src) ;
     else if (src instanceof Song) this._copy(src);
     else if (src instanceof Uint8Array) this._decode(src);
@@ -27,7 +25,6 @@ export class Song {
   
   _init() {
     this.tempo = 500; // ms/qnote
-    // (loopp) is not recorded as a header field. Instead, if a loop point exists, we insert a fake event for it.
     this.channels = []; // SongChannel, packed, not necessarily sorted.
     this.channelsByChid = []; // WEAK SongChannel, sparse, index is chid.
     this.events = []; // SongEvent, sorted by time. Note that Delay is not an event in this model.
@@ -43,101 +40,178 @@ export class Song {
   }
   
   _decode(src) {
-    this.got0EAU = false;
-    this.gotEVTS = false;
-    this.loopp = 0;
-    for (let srcp=0; srcp<src.length; ) {
-      if (srcp > src.length - 8) throw new Error(`Unexpected EOF in EAU file around ${srcp}/${src.length}`);
-      const id = (src[srcp] << 24) | (src[srcp+1] << 16) | (src[srcp+2] << 8) | src[srcp+3];
-      const len = (src[srcp+4] << 24) | (src[srcp+5] << 16) | (src[srcp+6] << 8) | src[srcp+7];
-      srcp += 8;
-      if ((len < 0) || (srcp > src.length - len)) throw new Error(`Unexpected EOF in EAU file around ${srcp}/${src.length}`);
-      const chunk = new Uint8Array(src.buffer, src.byteOffset + srcp, len);
-      srcp += len;
-      switch (id) {
-        case 0x00454155: this._decode0EAU(chunk); break;
-        case 0x43484452: this._decodeCHDR(chunk); break;
-        case 0x45565453: this._decodeEVTS(chunk); break;
-        case 0x54455854: this._decodeTEXT(chunk); break;
-        default: console.warn(`Ignoring unexpected ${len}-byte chunk 0x${id.toString(16).padStart('0',8)} in EAU file. It will not be preserved at save.`);
-      }
-    }
-    delete this.loopp;
-    delete this.got0EAU;
-    delete this.gotEVTS;
     
-    // Create a default channel for any events that lack a channel.
+    // If the input is empty, call it ok. We're already in a sane default state.
+    if (!src?.length) return;
+    
+    // Split into the three main chunks, and capture (tempo), the only global header field.
+    if (src.length < 10) throw new Error(`Invalid length ${src.length} for EAU file.`);
+    if ((src[0] !== 0x00) || (src[1] !== 0x45) || (src[2] !== 0x41) || (src[3] !== 0x55)) {
+      throw new Error(`EAU signature mismatch`);
+    }
+    this.tempo = (src[4] << 8) | src[5];
+    const chdrlen = (src[6] << 24) | (src[7] << 16) | (src[8] << 8) | src[9];
+    let srcp = 10;
+    if ((chdrlen < 0) || (srcp > src.length - chdrlen)) throw new Error(`Unexpected EOF in EAU Channel Headers.`);
+    const chdr = new Uint8Array(src.buffer, src.byteOffset + srcp, chdrlen);
+    srcp += chdrlen;
+    if (srcp > src.length - 4) throw new Error(`EAU file missing Events block.`);
+    const evtlen = (src[srcp] << 24) | (src[srcp+1] << 16) | (src[srcp+2] << 8) | src[srcp+3];
+    srcp += 4;
+    if ((evtlen < 0) || (srcp > src.length - evtlen)) throw new Error(`Unexpected EOF in EAU Events.`);
+    const evt = new Uint8Array(src.buffer, src.byteOffset + srcp, evtlen);
+    srcp += evtlen;
+    let text = null; // Allow text to be missing.
+    if (srcp <= src.length - 4) {
+      const textlen = (src[srcp] << 24) | (src[srcp+1] << 16) | (src[srcp+2] << 8) | src[srcp+3];
+      srcp += 4;
+      if ((textlen < 0) || (srcp > src.length - textlen)) throw new Error(`Unexpected EOF in EAU Text.`);
+      text = new Uint8Array(src.buffer, src.byteOffset + srcp, textlen);
+      srcp += textlen;
+    }
+    
+    // Enter each of those blocks.
+    this._decodeChdr(chdr);
+    this._decodeEvents(evt);
+    this._decodeText(text);
+    
+    // Warn and create a default channel for any events that lack a channel.
+    // The MIDI-to-EAU conversion that should have preceded us should have taken care of this, but let's be sure.
     for (const event of this.events) {
       if (event.chid < 0) continue;
       if (this.channelsByChid[event.chid]) continue;
       const channel = new SongChannel(event.chid);
       this.channels.push(channel);
       this.channelsByChid[event.chid] = channel;
+      console.warn(`Channel ${event.chid} was not configured but contains at least one event. Created a default config for it.`, { channel });
     }
   }
   
-  _decode0EAU(src) {
-    if (this.got0EAU) throw new Error(`EAU file contains multiple file-header chunks.`);
-    this.got0EAU = true;
-    if (src.length >= 2) {
-      this.tempo = (src[0] << 8) | src[1];
-      if (src.length >= 4) {
-        this.loopp = (src[2] << 8) | src[3];
-      }
-    }
-  }
-  
-  _decodeCHDR(src) {
-    if (src.length < 1) return; // Empty CHDR is technically legal.
-    const channel = new SongChannel(src);
-    this.channels.push(channel);
-    if (this.channelsByChid[channel.chid]) {
-      console.warn(`Multiple headers for channel ${channel.chid}. Using the last as principal but keeping all.`);
-    }
-    this.channelsByChid[channel.chid] = channel;
-  }
-  
-  _decodeEVTS(src) {
-    if (!this.got0EAU) throw new Error(`"\\0EAU" chunk must appear before "EVTS"`);
-    if (this.gotEVTS) throw new Error(`Multiple EVTS chunks in EAU file.`);
-    this.gotEVTS = true;
-    let now = 0;
+  _decodeChdr(src) {
     for (let srcp=0; srcp<src.length; ) {
-      if (this.loopp && (srcp >= this.loopp)) {
-        this.loopp = 0;
-        this.events.push(new SongEvent(now, "loop"));
+      if (srcp > src.length - 6) throw new Error(`Short Channel Headers`);
+      const chid = src[srcp++];
+      const trim = src[srcp++];
+      const pan = src[srcp++];
+      const mode = src[srcp++];
+      const modecfglen = (src[srcp] << 8) | src[srcp+1];
+      srcp += 2;
+      if (srcp > src.length - modecfglen) throw new Error(`Short Channel Headers`);
+      const modecfg = new Uint8Array(src.buffer, src.byteOffset + srcp, modecfglen);
+      srcp += modecfglen;
+      if (srcp > src.length - 2) throw new Error(`Short Channel Headers`);
+      const postlen = (src[srcp] << 8) | src[srcp+1];
+      srcp += 2;
+      if (srcp > src.length - postlen) throw new Error(`Short Channel Headers`);
+      const post = new Uint8Array(src.buffer, src.byteOffset + srcp, postlen);
+      srcp += postlen;
+      const channel = new SongChannel({ chid, trim, pan, mode, modecfg, post });
+      
+      // In case of duplicates, log the decoded channel for troubleshooting, but keep the first.
+      // Behavior for this situation is explicitly undefined by our spec.
+      if (this.channelsByChid[chid]) {
+        console.warn(`EAU channel ${chid} configured more than once. Using the first one.`, channel);
+        continue;
       }
+      this.channels.push(channel);
+      this.channelsByChid[chid] = channel;
+    }
+  }
+  
+  _decodeEvents(src) {
+    let now = 0;
+    const holds = []; // SongEvent, all "note" with (durms==0).
+    for (let srcp=0; srcp<src.length; ) {
       const lead = src[srcp++];
-      switch (lead & 0xc0) {
-        case 0x00: now += lead; break;
-        case 0x40: now += ((lead & 0x3f) + 1) << 6; break;
-        case 0x80: {
-            if (srcp > src.length - 3) throw new Error(`Unexpected EOF in EAU note event.`);
+      
+      // High bit unset is Delay, one of two formats.
+      if (!(lead & 0x80)) {
+        if (lead & 0x40) now += ((lead & 0x3f) + 1) << 6;
+        else now += lead;
+        continue;
+      }
+      
+      // All other events are distinguished by the top four bits.
+      switch (lead & 0xf0) {
+      
+        case 0x80: { // Note Off
+            const chid = lead & 0x0f;
+            const noteid = src[srcp++];
+            const velocity = src[srcp++];
+            // The oldest matching Note On wins. Not sure what one is supposed to do when On/Off pairs are nested.
+            const holdp = holds.findIndex(h => ((h.chid === chid) && (h.noteid === noteid)));
+            if (holdp < 0) {
+              console.warn(`Dropping Note Off chid=${chid} noteid=${noteid} at time ${now}ms; Note On not found.`);
+              break;
+            }
+            const event = holds[holdp];
+            holds.splice(holdp, 1);
+            event.durms = now - event.time;
+          } break;
+          
+        case 0x90: { // Note On
+            const chid = lead & 0x0f;
+            const noteid = src[srcp++];
+            const velocity = src[srcp++];
+            const event = new SongEvent(now, "note");
+            event.chid = chid;
+            event.noteid = noteid;
+            event.velocity = velocity;
+            holds.push(event); // Expect Note Off.
+            this.events.push(event);
+          } break;
+          
+        case 0xa0: { // Note Once
+            const chid = lead & 0x0f;
             const a = src[srcp++];
             const b = src[srcp++];
             const c = src[srcp++];
+            const noteid = a >> 1;
+            const velocity = ((a & 1) << 6) | (b >> 2);
+            const durms = (((b & 3) << 8) | c) << 4;
             const event = new SongEvent(now, "note");
-            event.chid = (lead >> 2) & 15;
-            event.noteid = ((lead & 3) << 5) | (a >> 3);
-            event.velocity = ((a & 7) << 4) | (b >> 4);
-            event.durms = (((b & 15) << 8) | c) << 2;
+            event.chid = chid;
+            event.noteid = noteid;
+            event.velocity = velocity;
+            event.durms = durms;
             this.events.push(event);
           } break;
-        case 0xc0: {
-            if (srcp > src.length - 1) throw new Error(`Unexpected EOF in EAU wheel event.`);
+          
+        case 0xe0: { // Wheel
+            const chid = lead & 0x0f;
             const a = src[srcp++];
+            const b = src[srcp++];
+            const v = a | (b << 7);
             const event = new SongEvent(now, "wheel");
-            event.chid = (lead >> 2) & 15;
-            event.wheel = ((lead & 3) << 8) | a;
+            event.chid = chid;
+            event.wheel = v;
             this.events.push(event);
           } break;
+          
+        case 0xf0: { // Marker
+            const event = new SongEvent(now, "marker");
+            event.mark = lead & 0x0f;
+            this.events.push(event);
+          } break;
+          
+        default: { // Undefined event (0xb0,0xc0,0xd0). Error.
+            throw new Error(`Unexpected leading byte 0x${lead.toString(16)} in EAU Events at ${srcp-1}/${src.length}.`);
+          }
       }
     }
-    // Since we're not recording delay as events, append a dummy to capture the end time.
-    this.events.push(new SongEvent(now, "noop"));
+    // Issue a warning for missing Note Off.
+    if (holds.length) {
+      console.warn(`${holds.length} Note On events had no Note Off and will be interpretted as zero sustain.`);
+    }
+    // Insert a dummy event to capture any trailing delay.
+    const event = new SongEvent(now, "marker");
+    event.mark = -1;
+    this.events.push(event);
   }
   
-  _decodeTEXT(src) {
+  _decodeText(src) {
+    if (!src?.length) return;
+    const textDecoder = new TextDecoder("utf8");
     for (let srcp=0; srcp<src.length; ) {
       const chid = src[srcp++];
       const noteid = src[srcp++] || 0;
@@ -146,7 +220,7 @@ export class Song {
       let p = this.textSearch(chid, noteid);
       if (p < 0) {
         p = -p - 1;
-        const v = new TextDecoder("utf8").decode(new Uint8Array(src.buffer, src.byteOffset + srcp, len));
+        const v = textDecoder.decode(new Uint8Array(src.buffer, src.byteOffset + srcp, len));
         this.text.splice(p, 0, [chid, noteid, v]);
       }
       srcp += len;
@@ -188,7 +262,7 @@ export class Song {
   setName(chid, noteid, name) {
     let p = this.textSearch(chid, noteid);
     if (name) {
-      if (name.length > 0xff) name = name.substring(0, 256);
+      if (name.length > 0xff) name = name.substring(0, 255);
       if (p < 0) this.text.splice(-p - 1, 0, [chid, noteid, name]);
       else this.text[p][2] = name;
     } else {
@@ -215,34 +289,18 @@ export class Song {
   encode() {
     const encoder = new Encoder();
     
+    // Header.
     encoder.raw("\0EAU");
-    let looppp = 0;
-    encoder.pfxlen(4, () => {
-      encoder.u16be(this.tempo);
-      looppp = encoder.c;
-      encoder.u16be(0);
-    });
+    encoder.u16be(this.tempo);
     
-    if (this.text.length) {
-      encoder.raw("TEXT");
-      encoder.pfxlen(4, () => {
-        for (const [chid, noteid, name] of this.text) {
-          encoder.u8(chid);
-          encoder.u8(noteid);
-          encoder.u8(name.length);
-          encoder.raw(name);
-        }
-      });
-    }
-    
+    // Channel Headers.
     const skippedChids = new Set();
-    for (const channel of this.channels) {
-      if (channel.skipEncode) {
-        skippedChids.add(channel.chid);
-        continue;
-      }
-      encoder.raw("CHDR");
-      encoder.pfxlen(4, () => {
+    encoder.pfxlen(4, () => {
+      for (const channel of this.channels) {
+        if (channel.skipEncode) {
+          skippedChids.add(channel.chid);
+          continue;
+        }
         encoder.u8(channel.chid);
         encoder.u8(channel.trim);
         encoder.u8(channel.pan);
@@ -250,67 +308,137 @@ export class Song {
         if (channel.modecfg.length > 0xffff) throw new Error(`Channel ${channel.chid} modecfg length ${channel.modecfg.length} > 65535`);
         encoder.u16be(channel.modecfg.length);
         encoder.raw(channel.modecfg);
-        if (!channel.skipPost) {
+        if (channel.skipPost) {
+          encoder.u16be(0);
+        } else {
           if (channel.post.length > 0xffff) throw new Error(`Channel ${channel.chid} post length ${channel.post.length} > 65535`);
           encoder.u16be(channel.post.length);
           encoder.raw(channel.post);
         }
-      });
-    }
-    
-    encoder.raw("EVTS");
-    encoder.pfxlen(4, () => {
-      const chunkstart = encoder.c;
-      let now = 0;
-      for (const event of this.events) {
-      
-        if (skippedChids.has(event.chid)) continue;
-      
-        // Sync delay at each event. There's never a case where we need to aggregate them.
-        let delay = ~~(event.time - now);
-        while (delay >= 4096) {
-          encoder.u8(0x7f);
-          delay -= 4096;
-        }
-        if (delay >= 0x40) {
-          encoder.u8(0x40 | ((delay >> 6) - 1));
-          delay &= 0x3f;
-        }
-        if (delay > 0) {
-          encoder.u8(delay);
-        }
-        now = event.time;
-        
-        switch (event.type) {
-          case "loop": {
-              const loopp = encoder.c - chunkstart;
-              if ((loopp < 0) || (loopp > 0xffff)) throw new Error(`Invalid loop position ${loopp}`);
-              encoder.v[looppp] = loopp >> 8;
-              encoder.v[looppp + 1] = loopp;
-            } break;
-          case "note": {
-              // 10ccccnn nnnnnvvv vvvvdddd dddddddd : Note (n) on channel (c), velocity (v), duration (d*4) ms.
-              let dur = event.durms >> 2;
-              if (dur < 0) dur = 0;
-              else if (dur > 0xfff) dur = 0xfff;
-              encoder.u8(0x80 | (event.chid << 2) | (event.noteid >> 5));
-              encoder.u8((event.noteid << 3) | (event.velocity >> 4));
-              encoder.u8((event.velocity << 4) | (dur >> 8));
-              encoder.u8(dur);
-            } break;
-          case "wheel": {
-              // 11ccccww wwwwwwww : Wheel on channel (c), (w)=0..512..1023 = -1..0..1
-              let v = event.wheel;
-              if (v < 0) v = 0;
-              else if (v > 1023) v = 1023;
-              encoder.u8(0xc0 | (event.chid << 2) | (v >> 8));
-              encoder.u8(v);
-            } break;
-        }
       }
     });
     
+    // Events.
+    encoder.pfxlen(4, () => {
+      this._encodeEvents(encoder, skippedChids);
+    });
+    
+    // Text.
+    encoder.pfxlen(4, () => {
+      for (const [chid, noteid, name] of this.text) {
+        encoder.u8(chid);
+        encoder.u8(noteid);
+        encoder.u8(name.length);
+        encoder.raw(name);
+      }
+    });
+
     return encoder.finish();
+  }
+  
+  _encodeEvents(encoder, skippedChids) {
+    /* We're responsible for detecting "note" events with excessive (durms), and splitting those into On/Off pairs.
+     * Plenty of opportunity for subtle error here, so I'm going to err on the side of caution and compose a single-use event list first, which matches what we'll encode.
+     * Do not include Delay events tho; we'll manage that during the encode pass.
+     */
+    const events = []; // SongEvent or lookalike. (type) can also be "Note On" and "Note Off".
+    let longnotec = 0; // If nonzero, (events) is probably not sorted.
+    let endTime = this.events[this.events.length - 1]?.time || 0; // Our EOF marker is otherwise ignored.
+    for (let event of this.events) {
+      if (skippedChids.has(event.chid)) continue;
+      switch (event.type) {
+        case "note": {
+            if ((event.chid < 0) || (event.chid > 0xf)) break;
+            if (event.durms > 16368) {
+              events.push({
+                time: event.time,
+                type: "Note On",
+                chid: event.chid,
+                noteid: event.noteid,
+                velocity: event.velocity,
+              });
+              events.push({
+                time: event.time + event.durms,
+                type: "Note Off",
+                chid: event.chid,
+                noteid: event.noteid,
+                velocity: event.velocity,
+              });
+              longnotec++;
+            } else {
+              events.push(event);
+            }
+          } break;
+        case "wheel": {
+            if ((event.chid < 0) || (event.chid > 0xf)) break;
+            events.push(event);
+          } break;
+        case "marker": {
+            if ((event.mark < 0) || (event.mark > 0xf)) break;
+            events.push(event);
+          } break;
+      }
+    }
+    /* If there are any long notes, (events) is probably out of order, so re-sort it.
+     * We depend on Array.sort being stable. This is guaranteed as of ES2019, but might break in old browsers.
+     * Long notes can also change our end time, if a note sustains beyond the end and also longer than 16368 ms.
+     */
+    if (longnotec) {
+      events.sort((a, b) => a.time - b.time);
+      endTime = events[events.length - 1].time;
+    }
+    /* OK now we have the real set of encodable events.
+     * Iterate those, and insert delays JITly.
+     */
+    let wtime = 0; // Sum of emitted delays.
+    const FLUSH_DELAY = (toTime) => {
+      let delay = toTime - wtime;
+      if (delay <= 0) return;
+      while (delay >= 4096) {
+        encoder.u8(0x7f);
+        delay -= 4096;
+      }
+      if (delay >= 64) {
+        encoder.u8(0x40 | ((delay >> 6) - 1));
+        delay &= 0x3f;
+      }
+      if (delay > 0) {
+        encoder.u8(delay);
+      }
+      wtime = toTime;
+    };
+    for (const event of events) {
+      FLUSH_DELAY(event.time);
+      switch (event.type) {
+        case "Note Off": {
+            encoder.u8(0x80 | event.chid);
+            encoder.u8(event.noteid);
+            encoder.u8(event.velocity);
+          } break;
+        case "Note On": {
+            encoder.u8(0x90 | event.chid);
+            encoder.u8(event.noteid);
+            encoder.u8(event.velocity);
+          } break;
+        case "note": {
+            const dur = Math.max(0, Math.min(0x3ff, (event.durms + 8) >> 4)); // +8 to round
+            encoder.u8(0xa0 | event.chid);
+            encoder.u8((event.noteid << 1) | (event.velocity >> 6));
+            encoder.u8((event.velocity << 2) | (dur >> 8));
+            encoder.u8(dur & 0xff);
+          } break;
+        case "wheel": {
+            encoder.u8(0xe0 | event.chid);
+            encoder.u8(event.wheel & 0x7f);
+            encoder.u8(event.wheel >> 7);
+          } break;
+        case "marker": {
+            encoder.u8(0xf0 | event.mark);
+          } break;
+      }
+    }
+    // A final delay, if we're below (endTime), which is very likely.
+    FLUSH_DELAY(endTime);
   }
   
   encodeWithChidFilters(mute, solo, noPost) {
@@ -435,7 +563,7 @@ export class SongChannel {
     if (typeof(src) === "number") this.chid = src;
     else if (!src) ;
     else if (src instanceof SongChannel) this._copy(src);
-    else if (src instanceof Uint8Array) this._decode(src);
+    else if (src.hasOwnProperty("chid")) this._copy(src); // SongChannel lookalike, for the initial decode.
     else throw new Error(`Unexpected input to SongChannel`);
   }
   
@@ -449,6 +577,7 @@ export class SongChannel {
     this.stash = []; // Sparse Uint8Array indexed by (mode). Prior configs we can return to when user toggles mode.
   }
   
+  // (src) may be a SongChannel or a lookalike with all 6 fields.
   _copy(src) {
     this.chid = src.chid;
     this.trim = src.trim;
@@ -456,31 +585,6 @@ export class SongChannel {
     this.mode = src.mode;
     this.modecfg = new Uint8Array(src.modecfg);
     this.post = new Uint8Array(src.post);
-  }
-  
-  _decode(src) {
-    this.chid = (src.length >= 1) ? src[0] : 0;
-    this.trim = (src.length >= 2) ? src[1] : 0x40;
-    this.pan = (src.length >= 3) ? src[2] : 0x80;
-    this.mode = (src.length >= 4) ? src[3] : 2;
-    let srcp = 4;
-    if (srcp <= src.length - 2) {
-      const modecfglen = (src[srcp] << 8) | src[srcp+1];
-      srcp += 2;
-      if (srcp > src.length - modecfglen) throw new Error(`Unexpected EOF in CHDR ${this.chid}`);
-      this.modecfg = new Uint8Array(src.buffer, src.byteOffset + srcp, modecfglen);
-      srcp += modecfglen;
-    }
-    if (srcp <= src.length - 2) {
-      const postlen = (src[srcp] << 8) | src[srcp+1];
-      srcp += 2;
-      if (srcp > src.length - postlen) throw new Error(`Unexpected EOF in CHDR ${this.chid}`);
-      this.post = new Uint8Array(src.buffer, src.byteOffset + srcp, postlen);
-      srcp += postlen;
-    }
-    if (srcp < src.length) {
-      console.warn(`Dropping ${src.length - srcp} extra bytes at end of CHDR for channel ${this.chid}`);
-    }
   }
   
   /* Rewrite this channel in place from some other channel.
@@ -560,12 +664,13 @@ export class SongEvent {
   // New event with all the fields, on the assumption that user is going to change type.
   static newFullyPopulated() {
     const event = new SongEvent();
-    event.type = "note";
+    event.type = "mark";
     event.noteid = 0x40;
     event.velocity = 0x40;
     event.chid = 0;
     event.durms = 0;
     event.wheel = 0x100;
+    event.mark = -1;
     return event;
   }
   
@@ -574,15 +679,22 @@ export class SongEvent {
     this.id = SongEvent.nextId++; // Unique across the entire session.
     if (typeof(time) === "number") this.time = time;
     else this.time = 0; // ms
-    this.type = type || "noop"; // "noop","note","wheel","loop"
+    this.type = type || "marker"; // "note","wheel","marker"
     this.chid = -1;
-    /* If (type==="note"):
-     *   this.noteid = 0..127
-     *   this.velocity = 0..127
-     *   this.durms = 0..16380
-     * If (type==="wheel"):
-     *   this.wheel = 0..512..1023
-     */
+    switch (this.type) {
+      case "note": {
+          this.noteid = 0x40; // 0..127
+          this.velocity = 0x40; // 0..127
+          this.durms = 0; // >=0. No upper bound -- that's the encoder's problem.
+        } break;
+      case "wheel": {
+          this.wheel = 0x2000; // 0..0x2000..0x3fff
+        } break;
+      case "marker": {
+          this.mark = -1; // 0..15, or <0 for temporary editor-only markers like EOF.
+        } break;
+      default: throw new Error(`Unknown song event type ${JSON.stringify(type)}`);
+    }
   }
   
   _copy(src) {
@@ -596,6 +708,9 @@ export class SongEvent {
         } break;
       case "wheel": {
           this.wheel = src.wheel;
+        } break;
+      case "marker": {
+          this.mark = src.mark;
         } break;
     }
   }

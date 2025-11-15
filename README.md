@@ -81,11 +81,11 @@ Features we *do* support:
 - - - [ ] Permit multiple songs? I really think we should, along the lines of egg3.
 - - - [ ] Note On / Note Off / Note Once / Wheel, make Egg Platform API match synth's API. Also "songid".
 - - [ ] Web. Orchestrate load in Audio.js.
-- - [ ] Editor: Song model
+- - [x] Editor: Song model
 - - [ ] Editor: UI
 - - [x] Eliminate standalone builds.
 - - [x] Build synth wasm.
-- - [ ] `GET /api/webpath` is changed to return the Zip instead. That probably breaks launching from editor.
+- - [ ] `GET /api/webpath` is changed to return the Zip instead. That probably breaks launching from editor. ...confirmed, broken
 - [ ] Major changes.
 - - [ ] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?

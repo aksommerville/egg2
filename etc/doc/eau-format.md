@@ -241,7 +241,8 @@ Key differences:
  - Delay are in milliseconds, no such thing as a tick.
  - No Aftertouch, Control Change, Program Change, Meta, Sysex, or Realtime events. Just Note and Wheel.
  - We add a "Note Once" event containing its hold length. Milliseconds from start to release, clamped to the attack and decay length.
- - No Running Status.
+ - No Running Status, and hence no need for the velocity-zero trick.
+ - Note Off velocity is recorded but is always ignored. Tooling is free to turn an On/Off pair into Note Once (which drops the Off velocity).
 
 ```
 00tttttt                            : Short Delay, (t) ms.
