@@ -75,7 +75,7 @@ export class SongService {
       else if (!song) ;
       else throw new Error(`Unexpected input to playSong()`);
       this.audio.playEauSong(serial, rid, duration >= 5);
-      this.songDuration = duration;
+      this.songDuration = duration;//XXX Audio.js handles this now
       this.playing = !!serial;
     } catch (e) {
       this.songDuration = 0;
@@ -85,16 +85,22 @@ export class SongService {
   
   getNormalizedPlayhead() {
     if (!this.playing) return 0;
+    return this.audio.getNormalizedPlayhead();
+    /*XXX
     if (this.songDuration <= 0) return 0;
     const phs = this.audio.egg_song_get_playhead();
     return Math.max(0, Math.min(1, phs / this.songDuration));
+    */
   }
   
   setNormalizedPlayhead(p) {
     if (!this.playing) return;
+    this.audio.setNormalizedPlayhead(p);
+    /*XXX
     if (this.songDuration <= 0) return;
     if ((p < 0) || (p > 1)) return;
     this.audio.egg_song_set_playhead(p * this.songDuration);
+    */
   }
   
   /* Returns a Promise resolving to a Song instance.

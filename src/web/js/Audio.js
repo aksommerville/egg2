@@ -15,7 +15,6 @@ const wsrc =
   "class EggAudio extends AudioWorkletProcessor {" +
     "constructor(args) {" +
       "super(args);" +
-      "console.log(`EggAudio.ctor`, { args });" +
       "this.memory = new WebAssembly.Memory({ initial: 100, maximum: 1000 });" + /* TODO Maximum memory size, can we get smarter about it? */
       "this.buffers = [];" + /* Float32Array */
       "this.bufferSize = 128;" + /* frames */
@@ -25,13 +24,13 @@ const wsrc =
           "case 'init': this.init(m.data); break;" +
           "case 'reinit': this.reinit(m.data); break;" +
           "case 'playSong': this.playSong(m.data); break;" +
+          "case 'setPlayhead': this.setPlayhead(m.data); break;" +
           /*TODO playSong, playSound, etc */
         "}" +
       "};" +
     "}" +
     
     "init(m) {" +
-      "console.log(`EggAudio.init`, m);" +
       "if (this.instance) throw new Error(`EggAudio multiple instantiation.`);" +
       "this.rate = m.r;" +
       "this.chanc = m.c;" +
@@ -42,30 +41,25 @@ const wsrc =
         "}," +
       "}).then(rsp => {" +
         "this.instance = rsp.instance;" +
-        "console.log(`calling synth_init(${this.rate},${this.chanc},${this.bufferSize})`);" +
         "if (this.instance.exports.synth_init(this.rate, this.chanc, this.bufferSize) < 0) {" +
           "throw new Error(`synth_init failed`);" +
         "}" +
         "this.transferRom(m.rom);" +
         "this.acquireBuffers();" +
-        "console.log(`EggAudio.init ok`);" +
       "}).catch(e => {" +
         "console.error(e);" +
       "});" +
     "}" +
     
     "reinit(m) {" +
-      "console.log(`EggAudio.reinit`, m);" +
       "if (!this.instance) throw new Error(`EggAudio not initialized`);" +
       "this.transferRom(m.rom);" +
     "}" +
     
     "transferRom(rom) {" +
       "if (rom instanceof ArrayBuffer) rom = new Uint8Array(rom);" +
-      "console.log(`TODO EggAudio.transferRom`, rom);" +
       "if (rom) {" +
         "const dstp = this.instance.exports.synth_get_rom(rom.byteLength);" +
-        "console.log(`transferRom`, { dstp, rom, bl:rom.byteLength, memory: this.memory });" +
         "const dst = new Uint8Array(this.memory.buffer, dstp, rom.byteLength);" +
         "dst.set(rom);" +
       "} else {" +
@@ -83,8 +77,12 @@ const wsrc =
     
     "playSong(m) {" +
       "if (!this.instance) return;" +
-      "console.log(`EggAudio.playSong songid=${m.songid} rid=${m.rid} repeat=${m.repeat} trim=${m.trim} pan=${m.pan}`);" +
       "this.instance.exports.synth_play_song(m.songid, m.rid, m.repeat, m.trim, m.pan);" +
+    "}" +
+    
+    "setPlayhead(m) {" +
+      "if (!this.instance) return;" +
+      "this.instance.exports.synth_set(m.songid, 0xff, 3, m.ph);" + /* 3=SYNTH_PROP_PLAYHEAD */
     "}" +
     
     "process(i, o, p) {" +
@@ -109,6 +107,9 @@ export class Audio {
     this.rt = rt; // Will be undefined when loaded in editor.
     this.ctx = null; // AudioContext
     this.initStatus = 0; // <0=error, >0=ready
+    this.songStartTime = 0; // AudioContext.currentTime when song starts, approximate at best.
+    this.songPlaying = false; // May need to abstract these song things to run multiple. Getting it working for one first.
+    this.songDuration = 0;
     this.initPromise = this.init()
       .then(() => { this.initStatus = 1; })
       .catch(e => { console.error(e); this.initStatus = -1; });
@@ -159,19 +160,16 @@ export class Audio {
   }
   
   pause() {
-    console.log(`Audio.pause`);
     if (!this.ctx) return;
     this.ctx.suspend();
   }
   
   resume() {
-    console.log(`Audio.resume`);
     if (!this.ctx) return;
     this.ctx.resume();
   }
   
   start() {
-    console.log(`Audio.start`);
     if (this.initStatus < 0) return;
     if (this.initStatus > 0) this.startNow();
     else this.initPromise.then(() => this.startNow());
@@ -184,7 +182,6 @@ export class Audio {
   }
   
   stop() {
-    console.log(`Audio.stop`);
     //TODO Tell node to stop, if it exists.
     if (this.ctx) {
       this.ctx.suspend();
@@ -200,7 +197,6 @@ export class Audio {
   playEauSong(serial, songid, repeat) {
     if (serial instanceof ArrayBuffer) serial = new Uint8Array(serial);
     if (serial && (serial.length > 0x3fffff)) return;
-    console.log(`Audio.playEauSong`, { serial, songid, repeat });
     if (!this.node) return;
     let rom = null;
     if (serial) {
@@ -209,9 +205,15 @@ export class Audio {
       rom[1] = (serial.length - 1) >> 8;
       rom[2] = (serial.length - 1);
       new Uint8Array(rom.buffer, rom.byteOffset + 3, serial.length).set(serial);
+      this.songPlaying = true;
+      this.songDuration = this.calculateSongDuration(serial);
+    } else {
+      this.songPlaying = false;
+      this.songDuration = 0;
     }
     this.node.port.postMessage({ cmd: "reinit", rom });
     this.node.port.postMessage({ cmd: "playSong", songid: 1, rid: 1, repeat, trim: 1, pan: 0 });
+    this.songStartTime = this.ctx.currentTime;
     /*TODO
     let playhead = 0;
     if (this.song) {
@@ -227,6 +229,41 @@ export class Audio {
       this.update(); // Editor updates on a long period; ensure we get one initial priming update.
     }
     */
+  }
+  
+  /* (serial) is a Uint8Array containing an EAU file.
+   * Returns sum of delays in seconds, but never zero.
+   */
+  calculateSongDuration(serial) {
+    let total = 0;
+    if (serial.length >= 10) {
+      const chdrlen = (serial[6] << 24) | (serial[7] << 16) | (serial[8] << 8) | serial[9];
+      let srcp = 10;
+      if ((chdrlen >= 0) && (srcp <= serial.length - chdrlen - 4)) {
+        srcp += chdrlen;
+        const evtlen = (serial[srcp] << 24) | (serial[srcp+1] << 16) | (serial[srcp+2] << 8) | serial[srcp+3];
+        srcp += 4;
+        if ((evtlen >= 0) && (srcp <= serial.length - evtlen)) {
+          const stopp = srcp + evtlen;
+          while (srcp < stopp) {
+            const lead = serial[srcp++];
+            if (!(lead & 0x80)) {
+              if (lead & 0x40) total += ((lead & 0x3f) + 1) << 6;
+              else total += lead;
+            } else switch (lead & 0xf0) {
+              case 0x80: srcp += 2; break;
+              case 0x90: srcp += 2; break;
+              case 0xa0: srcp += 3; break;
+              case 0xe0: srcp += 2; break;
+              case 0xf0: break;
+              default: srcp = stopp; // misencoded, stop reading
+            }
+          }
+        }
+      }
+    }
+    if (total < 1) total = 1;
+    return total / 1000;
   }
   
   playSoundBuffer(buffer, trim, pan) {
@@ -321,7 +358,7 @@ export class Audio {
     /**/
   }
   
-  egg_play_song(songid, force, repeat) {
+  egg_play_song(songid, force, repeat) {//TODO
     if (!this.ctx) return;
     if (!this.musicEnabled) return;
     if (!force && (songid === this.song?.id)) return;
@@ -359,12 +396,32 @@ export class Audio {
   }
   
   egg_song_get_playhead() {
-    if (this.song) return this.song.getPlayhead();
+    //if (this.song) return this.song.getPlayhead();
+    if (this.ctx && this.songPlaying) {
+      return (this.ctx.currentTime - this.songStartTime) % this.songDuration;
+    }
+    return 0.0;
+  }
+  
+  getNormalizedPlayhead() {
+    if (this.ctx && this.songPlaying) {
+      return ((this.ctx.currentTime - this.songStartTime) % this.songDuration) / this.songDuration;
+    }
     return 0.0;
   }
   
   egg_song_set_playhead(ph) {
-    if (this.song) this.song.setPlayhead(ph);
+    //if (this.song) this.song.setPlayhead(ph);
+    this.node.port.postMessage({ cmd: "setPlayhead", songid: 1, ph });
+    this.songStartTime = this.ctx.currentTime - ph;
+  }
+  
+  setNormalizedPlayhead(p) {
+    if (this.ctx && this.songPlaying) {
+      const ph = p * this.songDuration;
+      this.node.port.postMessage({ cmd: "setPlayhead", songid: 1, ph });
+      this.songStartTime = this.ctx.currentTime - ph;
+    }
   }
 }
 

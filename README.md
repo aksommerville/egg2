@@ -81,7 +81,7 @@ Features we *do* support:
 - - - [ ] Permit multiple songs? I really think we should, along the lines of egg3.
 - - - [ ] Note On / Note Off / Note Once / Wheel, make Egg Platform API match synth's API. Also "songid".
 - - [ ] Web. Orchestrate load in Audio.js.
-- - [ ] Web: Estimate playhead. Do in Audio.js, not editor, so we can expose it via Platform API.
+- - [x] Web: Estimate playhead. Do in Audio.js, not editor, so we can expose it via Platform API.
 - - [x] Editor: Song model
 - - [ ] Editor: UI
 - - [x] Eliminate standalone builds.
