@@ -79,11 +79,10 @@ export class SongChannelsUi {
     
     const modeSelect = this.dom.spawn(voicing, "SELECT", { name: "mode", "on-change": e => this.onModeChange(e, channel) });
     this.dom.spawn(modeSelect, "OPTION", { value: 0 }, "0: NOOP");
-    this.dom.spawn(modeSelect, "OPTION", { value: 1 }, "1: DRUM");
+    this.dom.spawn(modeSelect, "OPTION", { value: 1 }, "1: TRIVIAL");
     this.dom.spawn(modeSelect, "OPTION", { value: 2 }, "2: FM");
-    this.dom.spawn(modeSelect, "OPTION", { value: 3 }, "3: HARSH");
-    this.dom.spawn(modeSelect, "OPTION", { value: 4 }, "4: HARM");
-    this.dom.spawn(modeSelect, "OPTION", { value: 5 }, "5: SUB");
+    this.dom.spawn(modeSelect, "OPTION", { value: 3 }, "3: SUB");
+    this.dom.spawn(modeSelect, "OPTION", { value: 4 }, "4: DRUM");
     for (let i=6; i<256; i++) this.dom.spawn(modeSelect, "OPTION", { value: i }, i);
     modeSelect.value = channel.mode;
     

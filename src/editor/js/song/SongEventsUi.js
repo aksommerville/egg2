@@ -87,7 +87,7 @@ export class SongEventsUi {
   }
   
   reprWheel(wheel) {
-    return ((wheel - 512) / 513).toFixed(3); // -0.999 .. 0.999 or so.
+    return ((wheel - 8192) / 8192).toFixed(3); // -0.999 .. 0.999 or so.
   }
   
   /* Events.

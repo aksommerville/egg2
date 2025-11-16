@@ -185,10 +185,10 @@ void synth_channel_update_stereo(float *dstl,float *dstr,struct synth_channel *c
     float *lp=channel->bufl,*rp=channel->bufr;
     int i=framec;
     if (channel->pan<0.0f) {
-      float trimr=1.0f-channel->pan;
+      float trimr=1.0f+channel->pan;
       for (;i-->0;lp++,rp++) *rp=(*lp)*trimr;
     } else if (channel->pan>0.0f) {
-      float triml=1.0f+channel->pan;
+      float triml=1.0f-channel->pan;
       for (;i-->0;lp++,rp++) {
         *rp=*lp;
         (*lp)*=triml;

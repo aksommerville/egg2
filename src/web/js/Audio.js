@@ -13,9 +13,9 @@ import { EGG_TID_song, EGG_TID_sound } from "./Rom.js";
  
 const wsrc = 
   "class EggAudio extends AudioWorkletProcessor {" +
-    "constructor() {" +
-      "super();" +
-      "console.log(`EggAudio.ctor`);" +
+    "constructor(args) {" +
+      "super(args);" +
+      "console.log(`EggAudio.ctor`, { args });" +
       "this.memory = new WebAssembly.Memory({ initial: 100, maximum: 1000 });" + /* TODO Maximum memory size, can we get smarter about it? */
       "this.buffers = [];" + /* Float32Array */
       "this.bufferSize = 128;" + /* frames */
@@ -42,6 +42,7 @@ const wsrc =
         "}," +
       "}).then(rsp => {" +
         "this.instance = rsp.instance;" +
+        "console.log(`calling synth_init(${this.rate},${this.chanc},${this.bufferSize})`);" +
         "if (this.instance.exports.synth_init(this.rate, this.chanc, this.bufferSize) < 0) {" +
           "throw new Error(`synth_init failed`);" +
         "}" +
@@ -107,7 +108,6 @@ export class Audio {
   constructor(rt) {
     this.rt = rt; // Will be undefined when loaded in editor.
     this.ctx = null; // AudioContext
-    console.log(`Audio.ctor`);
     this.initStatus = 0; // <0=error, >0=ready
     this.initPromise = this.init()
       .then(() => { this.initStatus = 1; })
@@ -125,7 +125,11 @@ export class Audio {
       resolve = res;
       reject = rej;
     }).then(() => {
-      this.node = new AudioWorkletNode(this.ctx, "AWP");
+      this.node = new AudioWorkletNode(this.ctx, "AWP", {
+        numberOfInputs: 0,
+        numberOfOutputs: 1,
+        outputChannelCount: [this.ctx.destination.channelCount],
+      });
       this.node.connect(this.ctx.destination);
       return this.acquireWasm();
     }).then(wasm => {

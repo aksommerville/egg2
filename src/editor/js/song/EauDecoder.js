@@ -541,21 +541,48 @@ export function mergeModecfg(newMode, stashConfig, oldMode, oldConfig) {
  *   stageid: u8
  *   extra: Uint8Array
  * }
- * 1=DELAY: {
- *   period: float, qnotes
+ * 1=GAIN: {
+ *   gain: float (u8.8)
+ *   clip: u8
+ *   gate: u8
+ * }
+ * 2=DELAY: {
+ *   period: float, qnotes (u8.8)
  *   dry: u8
  *   wet: u8
  *   store: u8
  *   feedback: u8
  *   sparkle: u8 (0..128..255)
  * }
- * 2=WAVESHAPER: {
- *   // u16 levels in (extra)
- * }
  * 3=TREMOLO: {
- *   period: float, qnotes
+ *   period: float, qnotes (u8.8)
  *   depth: u8
  *   phase: u8
+ *   sparkle: u8 (0..128..255)
+ * }
+ * 4=DETUNE: {
+ *   period: float, qnotes (u8.8)
+ *   mix: u8
+ *   depth: u8
+ *   phase: u8
+ *   rightphase: u8
+ * }
+ * 5=WAVESHAPER: {
+ *   // u16 levels in (extra)
+ * }
+ * 6=LOPASS: { NOT IMPLEMENTED
+ *   mid: u16
+ * }
+ * 7=HIPASS: { NOT IMPLEMENTED
+ *   mid: u16
+ * }
+ * 8=BPASS: { NOT IMPLEMENTED
+ *   mid: u16
+ *   width: u16
+ * }
+ * 9=NOTCH: { NOT IMPLEMENTED
+ *   mid: u16
+ *   width: u16
  * }
  */
 export function decodePostStage(decoder) {
@@ -564,7 +591,12 @@ export function decodePostStage(decoder) {
   const serial = decoder.u8len();
   decoder = new EauDecoder(serial);
   switch (stage.stageid) {
-    case 1: { // DELAY
+    case 1: { // GAIN
+        stage.gain = decoder.u8_8(1);
+        stage.clip = decoder.u8(0xff);
+        stage.gate = decoder.u8(0);
+      } break;
+    case 2: { // DELAY
         stage.period = decoder.u8_8(1);
         stage.dry = decoder.u8(0x80);
         stage.wet = decoder.u8(0x80);
@@ -572,12 +604,35 @@ export function decodePostStage(decoder) {
         stage.feedback = decoder.u8(0x80);
         stage.sparkle = decoder.u8(0x80);
       } break;
-    case 2: { // WAVESHAPER
-      } break;
     case 3: { // TREMOLO
         stage.period = decoder.u8_8(1);
         stage.depth = decoder.u8(0xff);
         stage.phase = decoder.u8(0);
+        stage.sparkle = decoder.u8(0x80);
+      } break;
+    case 4: { // DETUNE
+        stage.period = decoder.u8_8(1);
+        stage.mix = decoder.u8(0x80);
+        stage.depth = decoder.u8(0x80);
+        stage.phase = decoder.u8(0);
+        stage.rightphase = decoder.u8(0);
+      } break;
+    case 5: { // WAVESHAPER
+        // u16[]; caller should read out of (extra)
+      } break;
+    case 6: { // LOPASS
+        stage.mid = decoder.u16(0);
+      } break;
+    case 7: { // HIPASS
+        stage.mid = decoder.u16(0);
+      } break;
+    case 8: { // BPASS
+        stage.mid = decoder.u16(0);
+        stage.width = decoder.u16(200);
+      } break;
+    case 9: { // NOTCH
+        stage.mid = decoder.u16(0);
+        stage.width = decoder.u16(200);
       } break;
   }
   stage.extra = decoder.remainder();
@@ -591,7 +646,19 @@ export function encodePostStage(encoder, stage) {
   encoder.pfxlen(1, () => {
     switch (stage.stageid) {
     
-      case 1: { // DELAY
+      case 1: { // GAIN
+          const fldc = 
+            stage.extra.length ? 3 :
+            (stage.gate !== 0x00) ? 3 :
+            (stage.clip !== 0xff) ? 2 :
+            (stage.gain !== 1.0) ? 1 :
+            0;
+          if (fldc < 1) break; encoder.u8_8(stage.gain);
+          if (fldc < 2) break; encoder.u8(stage.clip);
+          if (fldc < 3) break; encoder.u8(stage.gate);
+        } break;
+    
+      case 2: { // DELAY
           const fldc =
             stage.extra.length ? 6 :
             (stage.sparkle !== 0x80) ? 6 :
@@ -609,20 +676,47 @@ export function encodePostStage(encoder, stage) {
           if (fldc < 6) break; encoder.u8(stage.sparkle);
         } break;
         
-      case 2: { // WAVESHAPER
-          // All content in (extra)
-        } break;
-        
       case 3: { // TREMOLO
-          const fldc =
-            stage.extra.length ? 3 :
+          const fldc = 
+            stage.extra.length ? 4 :
+            (stage.sparkle !== 0x80) ? 4 :
             (stage.phase !== 0x00) ? 3 :
             (stage.depth !== 0xff) ? 2 :
-            (stage.period !== 1) ? 1 :
+            (stage.period !== 1.0) ? 1 :
             0;
           if (fldc < 1) break; encoder.u8_8(stage.period);
           if (fldc < 2) break; encoder.u8(stage.depth);
           if (fldc < 3) break; encoder.u8(stage.phase);
+          if (fldc < 4) break; encoder.u8(stage.sparkle);
+        } break;
+        
+      case 4: { // DETUNE
+          const fldc =
+            stage.extra.length ? 5 :
+            (stage.rightphase !== 0x00) ? 5 :
+            (stage.phase !== 0x00) ? 4 :
+            (stage.depth !== 0x80) ? 3 :
+            (stage.mix !== 0x80) ? 2 :
+            (stage.period !== 1.0) ? 1 :
+            0;
+          if (fldc < 1) break; encoder.u8_8(stage.period);
+          if (fldc < 2) break; encoder.u8(stage.mix);
+          if (fldc < 3) break; encoder.u8(stage.depth);
+          if (fldc < 4) break; encoder.u8(stage.phase);
+          if (fldc < 5) break; encoder.u8(stage.rightphase);
+        } break;
+        
+      case 5: { // WAVESHAPER
+          // All content in (extra)
+        } break;
+        
+      case 6: case 7: { // LOPASS,HIPASS
+          encoder.u16be(stage.mid);
+        } break;
+        
+      case 8: case 9: { // BPASS,NOTCH
+          encoder.u16be(stage.mid);
+          encoder.u16be(stage.width);
         } break;
         
     }

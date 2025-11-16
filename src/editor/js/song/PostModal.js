@@ -63,10 +63,16 @@ export class PostModal {
     
     const stageidSelect = this.dom.spawn(row, "SELECT", { name: "stageid", "on-input": e => this.onStageIdChange(stage.id, +e.target.value) });
     this.dom.spawn(stageidSelect, "OPTION", { value: 0 }, "NOOP");
-    this.dom.spawn(stageidSelect, "OPTION", { value: 1 }, "DELAY");
-    this.dom.spawn(stageidSelect, "OPTION", { value: 2 }, "WAVESHAPER");
+    this.dom.spawn(stageidSelect, "OPTION", { value: 1 }, "GAIN");
+    this.dom.spawn(stageidSelect, "OPTION", { value: 2 }, "DELAY");
     this.dom.spawn(stageidSelect, "OPTION", { value: 3 }, "TREMOLO");
-    for (let i=4; i<256; i++) {
+    this.dom.spawn(stageidSelect, "OPTION", { value: 4 }, "DETUNE");
+    this.dom.spawn(stageidSelect, "OPTION", { value: 5 }, "WAVESHAPER");
+    this.dom.spawn(stageidSelect, "OPTION", { value: 6 }, "LOPASS (X)");
+    this.dom.spawn(stageidSelect, "OPTION", { value: 7 }, "HIPASS (X)");
+    this.dom.spawn(stageidSelect, "OPTION", { value: 8 }, "BPASS (X)");
+    this.dom.spawn(stageidSelect, "OPTION", { value: 9 }, "NOTCH (X)");
+    for (let i=10; i<256; i++) {
       this.dom.spawn(stageidSelect, "OPTION", { value: i }, i);
     }
     stageidSelect.value = stage.stageid;
@@ -82,10 +88,70 @@ export class PostModal {
       return;
     }
     element.innerHTML = "";
+    switch (stage.stageid) {
+      case 0x00: break; // NOOP
+      case 0x01: this.populateStageRowGain(element, stage); break; // GAIN
+      case 0x02: this.populateStageDelay(element, stage); break; // DELAY
+      case 0x03: case 0x04: this.populateStagePeriodic(element, stage); break; // TREMOLO,DETUNE
+      case 0x05: this.populateStageRowWaveshaper(element, stage); break; // WAVESHAPER
+      case 0x06: case 0x07: case 0x08: case 0x09: this.populateStageRowFilter(element, stage); break; // LOPASS,HIPASS,BPASS,NOTCH
+      default: this.populateStageRowGeneric(element, stage); break;
+    }
+  }
+  
+  stageRowFieldNumber(element, id, name, value, params) {
+    if (!params) params = {};
+    return this.dom.spawn(element, "INPUT", { type: "number", name, title: name, value, "on-input": e => this.onPayloadNumberInput(id, name, e.target.value) });
+  }
+  
+  populateStageRowGain(element, stage) {
+    this.stageRowFieldNumber(element, stage.id, "gain", stage.gain, { min: 0, max: 256, step: 1/256 });
+    this.stageRowFieldNumber(element, stage.id, "clip", stage.clip, { min: 0, max: 255 });
+    this.stageRowFieldNumber(element, stage.id, "gate", stage.gate, { min: 0, max: 255 });
+  }
+  
+  populateStageRowWaveshaper(element, stage) {
+    //TODO Would be cool to show a visual waveshaper config, drag bars up and down or something.
+    // Or maybe "gain" and "curve" sliders, and you can watch the bars move.
+    this.dom.spawn(element, "INPUT", { type: "text", name: "extra", title: "u16 coeffients", value: this.hexdump(stage.extra), "on-input": e => this.onPayloadHexInput(stage.id, "extra", e.target.value) });
+  }
+  
+  populateStageDelay(element, stage) {
+    this.stageRowFieldNumber(element, stage.id, "period", stage.period, { min: 0, max: 256, step: 1/256 });
+    this.stageRowFieldNumber(element, stage.id, "dry", stage.dry, { min: 0, max: 255 });
+    this.stageRowFieldNumber(element, stage.id, "wet", stage.wet, { min: 0, max: 255 });
+    this.stageRowFieldNumber(element, stage.id, "store", stage.store, { min: 0, max: 255 });
+    this.stageRowFieldNumber(element, stage.id, "feedback", stage.feedback, { min: 0, max: 255 });
+    this.stageRowFieldNumber(element, stage.id, "sparkle", stage.sparkle, { min: 0, max: 255 });
+  }
+  
+  // TREMOLO,DETUNE. Not that they're the same thing, just they have very similar parameters.
+  populateStagePeriodic(element, stage) {
+    this.stageRowFieldNumber(element, stage.id, "period", stage.period, { min: 0, max: 256, step: 1/256 });
+    if (stage.hasOwnProperty("mix")) this.stageRowFieldNumber(element, stage.id, "mix", stage.mix, { min: 0, max: 255 });
+    this.stageRowFieldNumber(element, stage.id, "depth", stage.depth, { min: 0, max: 255 });
+    this.stageRowFieldNumber(element, stage.id, "phase", stage.phase, { min: 0, max: 255 });
+    if (stage.hasOwnProperty("sparkle")) this.stageRowFieldNumber(element, stage.id, "sparkle", stage.sparkle, { min: 0, max: 255 });
+    if (stage.hasOwnProperty("rightphase")) this.stageRowFieldNumber(element, stage.id, "rightphase", stage.rightphase, { min: 0, max: 255 });
+  }
+  
+  // LOPASS,HIPASS,BPASS,NOTCH
+  populateStageRowFilter(element, stage) {
+    this.stageRowFieldNumber(element, stage.id, "mid", stage.mid, { min: 0, max: 0xffff });
+    if (stage.hasOwnProperty("width")) this.stageRowFieldNumber(element, stage.id, "width", stage.width, { min: 0, max: 0xffff });
+  }
+  
+  /* Plain number inputs, or a hexdump for (extra).
+   * Suitable for all stages, if we keep the key list up to date.
+   * Ideal for none.
+   */
+  populateStageRowGeneric(element, stage) {
     const discardKeys = ["id", "stageid"];
     const keysOrder = [
-      "period", "depth", "phase",
+      "period", "mix", "depth", "phase", "rightphase",
       "dry", "wet", "store", "feedback", "sparkle",
+      "gain", "clip", "gate",
+      "mid", "width",
       "extra",
     ];
     const keys = Object.keys(stage).filter(k => !discardKeys.includes(k));
@@ -93,7 +159,7 @@ export class PostModal {
       return keysOrder.indexOf(a) - keysOrder.indexOf(b);
     });
     for (let p=0; (p<keys.length) && !keysOrder.includes(keys[p]); p++) {
-      console.error(`Please add key ${JSON.stringify(keys[p])} to keysOrder in PostModal.populateStageRow`);
+      console.error(`Please add key ${JSON.stringify(keys[p])} to keysOrder in PostModal.populateStageRow (stageid ${stage.stageid})`);
     }
     for (const k of keys) {
       // [title] produces a tooltip

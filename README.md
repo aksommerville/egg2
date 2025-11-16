@@ -81,12 +81,14 @@ Features we *do* support:
 - - - [ ] Permit multiple songs? I really think we should, along the lines of egg3.
 - - - [ ] Note On / Note Off / Note Once / Wheel, make Egg Platform API match synth's API. Also "songid".
 - - [ ] Web. Orchestrate load in Audio.js.
+- - [ ] Web: Estimate playhead. Do in Audio.js, not editor, so we can expose it via Platform API.
 - - [x] Editor: Song model
 - - [ ] Editor: UI
 - - [x] Eliminate standalone builds.
 - - [x] Build synth wasm.
 - - [ ] `GET /api/webpath` is changed to return the Zip instead. That probably breaks launching from editor. ...confirmed, broken
 - - [ ] `eau_cvt_eau_midi`: Look up in SDK instruments.
+- - [x] Is web playing mono only? ...YES. 9-sand_farming has a post, makes it obvious.
 - [ ] Major changes.
 - - [ ] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?

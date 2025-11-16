@@ -83,9 +83,9 @@ export class EventModal {
       )
     );
     this.dom.spawn(table, "TR",
-      this.dom.spawn(null, "TD", ["k"], "Wheel 0..1023"),
+      this.dom.spawn(null, "TD", ["k"], "Wheel 0..8192..16383"),
       this.dom.spawn(null, "TD",
-        this.dom.spawn(null, "INPUT", { name: "wheel", type: "number", min: 0, max: 1023, value: this.event.wheel || 0 })
+        this.dom.spawn(null, "INPUT", { name: "wheel", type: "number", min: 0, max: 16383, value: this.event.wheel ?? 8192 })
       )
     );
     this.enableAndDisableFields();
