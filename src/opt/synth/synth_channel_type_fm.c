@@ -291,31 +291,21 @@ static int synth_channel_fm_decode(struct synth_channel *channel,const uint8_t *
       srcp+=err; \
     } \
   }
-  fprintf(stderr,"%s:%d @%d/%d : %02x %02x %02x %02x %02x\n",__FILE__,__LINE__,srcp,srcc,src[srcp],src[srcp+1],src[srcp+2],src[srcp+3],src[srcp+4]);
   if ((err=synth_env_decode(&CHANNEL->levelenv,src+srcp,srcc-srcp,SYNTH_ENV_FALLBACK_LEVEL))<0) return -1; srcp+=err;
   if (srcp<=srcc-2) { CHANNEL->wheelrange=(src[srcp]<<8)|src[srcp+1]; srcp+=2; } else CHANNEL->wheelrange=200;
-  fprintf(stderr,"%s:%d @%d/%d : %02x %02x %02x %02x %02x\n",__FILE__,__LINE__,srcp,srcc,src[srcp],src[srcp+1],src[srcp+2],src[srcp+3],src[srcp+4]);
   RDWAVE(wavea)
-  fprintf(stderr,"%s:%d @%d/%d : %02x %02x %02x %02x %02x\n",__FILE__,__LINE__,srcp,srcc,src[srcp],src[srcp+1],src[srcp+2],src[srcp+3],src[srcp+4]);
   RDWAVE(waveb)
-  fprintf(stderr,"%s:%d @%d/%d : %02x %02x %02x %02x %02x\n",__FILE__,__LINE__,srcp,srcc,src[srcp],src[srcp+1],src[srcp+2],src[srcp+3],src[srcp+4]);
   if ((err=synth_env_decode(&CHANNEL->mixenv,src+srcp,srcc-srcp,SYNTH_ENV_FALLBACK_ZERO))<0) return -1; srcp+=err;
-  fprintf(stderr,"%s:%d @%d/%d : %02x %02x %02x %02x %02x\n",__FILE__,__LINE__,srcp,srcc,src[srcp],src[srcp+1],src[srcp+2],src[srcp+3],src[srcp+4]);
   if (srcp<=srcc-2) {
     int pre=(src[srcp]<<8)|src[srcp+1];
     srcp+=2;
     if (pre&0x8000) CHANNEL->modabs=1; else CHANNEL->modabs=0;
     CHANNEL->modrate=(float)(pre&0x7fff)/256.0f;
   }
-  fprintf(stderr,"%s:%d @%d/%d : %02x %02x %02x %02x %02x\n",__FILE__,__LINE__,srcp,srcc,src[srcp],src[srcp+1],src[srcp+2],src[srcp+3],src[srcp+4]);
   if (srcp<=srcc-2) { CHANNEL->modrange=((src[srcp]<<8)|src[srcp+1])/256.0f; srcp+=2; }
-  fprintf(stderr,"%s:%d @%d/%d : %02x %02x %02x %02x %02x\n",__FILE__,__LINE__,srcp,srcc,src[srcp],src[srcp+1],src[srcp+2],src[srcp+3],src[srcp+4]);
   if ((err=synth_env_decode(&CHANNEL->rangeenv,src+srcp,srcc-srcp,SYNTH_ENV_FALLBACK_ONE))<0) return -1; srcp+=err;
-  fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);
   if ((err=synth_env_decode(&CHANNEL->pitchenv,src+srcp,srcc-srcp,SYNTH_ENV_FALLBACK_HALF))<0) return -1; srcp+=err;
-  fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);
   RDWAVE(modulator)
-  fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);
   if (srcp<=srcc-2) { CHANNEL->rangelforate=((src[srcp]<<8)|src[srcp+1])/256.0f; srcp+=2; }
   if (srcp<srcc) CHANNEL->rangelfodepth=src[srcp++]/255.0f;
   RDWAVE(rangelfowave)
@@ -323,7 +313,6 @@ static int synth_channel_fm_decode(struct synth_channel *channel,const uint8_t *
   if (srcp<srcc) CHANNEL->mixlfodepth=src[srcp++]/255.0f;
   RDWAVE(mixlfowave)
   #undef RDWAVE
-  fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);
   return 0;
 }
 

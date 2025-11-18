@@ -23,6 +23,9 @@ body {
   display: flex;
   flex-direction: column;
 }
+.spacer {
+  flex: 1;
+}
 
 dialog {
   border-radius: 5px;
@@ -858,6 +861,13 @@ input.toggle:checked + label.toggle.light {
 }
 .ModecfgModalFm input[type='number'] {
   width: 80px;
+}
+
+.ModecfgModalDrum .scroller {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  height: 60vh;
+  min-width: 50vw;
 }
 
 .WaveUi {

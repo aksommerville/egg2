@@ -24,7 +24,6 @@ export class SongService {
     
     this.song = null; // Set by SongEditor when it's alive.
     this.rid = 0;
-    this.songDuration = 0; // s
     this.visChid = null; // null or chid, visibility filter.
     this.playing = false;
     this.muteChids = []; // Per-channel switches, set by SongChannelsUi and influencing playSong().
@@ -46,7 +45,6 @@ export class SongService {
   reset(song, rid) {
     this.audio.playEauSong(null, 0, false);
     this.playing = false;
-    this.songDuration = 0;
     this.song = song;
     this.rid = rid;
     this.visChid = null;
@@ -61,7 +59,6 @@ export class SongService {
   unload() {
     this.audio.playEauSong(null, 0, false);
     this.playing = false;
-    this.songDuration = 0;
   }
   
   playSong(song, rid) {
@@ -75,10 +72,8 @@ export class SongService {
       else if (!song) ;
       else throw new Error(`Unexpected input to playSong()`);
       this.audio.playEauSong(serial, rid, duration >= 5);
-      this.songDuration = duration;//XXX Audio.js handles this now
       this.playing = !!serial;
     } catch (e) {
-      this.songDuration = 0;
       this.dom.modalError(e);
     }
   }
@@ -86,21 +81,11 @@ export class SongService {
   getNormalizedPlayhead() {
     if (!this.playing) return 0;
     return this.audio.getNormalizedPlayhead();
-    /*XXX
-    if (this.songDuration <= 0) return 0;
-    const phs = this.audio.egg_song_get_playhead();
-    return Math.max(0, Math.min(1, phs / this.songDuration));
-    */
   }
   
   setNormalizedPlayhead(p) {
     if (!this.playing) return;
     this.audio.setNormalizedPlayhead(p);
-    /*XXX
-    if (this.songDuration <= 0) return;
-    if ((p < 0) || (p > 1)) return;
-    this.audio.egg_song_set_playhead(p * this.songDuration);
-    */
   }
   
   /* Returns a Promise resolving to a Song instance.

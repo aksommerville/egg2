@@ -385,7 +385,8 @@ export class Song {
      */
     if (longnotec) {
       events.sort((a, b) => a.time - b.time);
-      endTime = events[events.length - 1].time;
+      const nendtime = events[events.length - 1].time;
+      if (nendtime > endTime) endTime = nendtime;
     }
     /* OK now we have the real set of encodable events.
      * Iterate those, and insert delays JITly.
@@ -607,19 +608,18 @@ export class SongChannel {
       /* Doing for DRUM would mean decoding every drum and returning the longest.
        * That's a ton of work and I just don't think it's worth it -- Drums are a song thing, and auto-end-time is a sound thing.
        */
+      case 1: { // TRIVIAL. No envelope and no velocity.
+          decoder.u16(0); // wheelrange
+          decoder.u16(0); // minlevel
+          decoder.u16(0); // maxlevel
+          const minhold = decoder.u16(0);
+          const rlstime = decoder.u16(0);
+          return [minhold, minhold, rlstime, rlstime];
+        }
       case 2: { // FM
-          decoder.u16(0); // rate
-          decoder.u8_8(0); // range
           env = decoder.env("level");
         } break;
-      case 3: { // HARSH
-          decoder.u8(0); // shape
-          env = decoder.env("level");
-        } break;
-      case 4: { // HARM
-          let harmc = decoder.u8(0);
-          if (decoder.srcp > decoder.src.length - harmc * 2) break;
-          while (harmc-- > 0) decoder.u16(0);
+      case 3: { // SUB
           env = decoder.env("level");
         } break;
     }
@@ -664,7 +664,7 @@ export class SongEvent {
   // New event with all the fields, on the assumption that user is going to change type.
   static newFullyPopulated() {
     const event = new SongEvent();
-    event.type = "mark";
+    event.type = "marker";
     event.noteid = 0x40;
     event.velocity = 0x40;
     event.chid = 0;

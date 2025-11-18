@@ -508,7 +508,7 @@ export function decodeDrumModecfg(src) {
 }
 export function encodeDrumModecfg(dst, src) {
   if (src.drums) src = src.drums; // Accept either the full model or just the drums array.
-  for (const drum of src.drums) {
+  for (const drum of src) {
     dst.u8(drum.noteid);
     dst.u8(drum.trimlo);
     dst.u8(drum.trimhi);

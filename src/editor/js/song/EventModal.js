@@ -53,10 +53,9 @@ export class EventModal {
         typeMenu = this.dom.spawn(null, "SELECT", { name: "type", "on-change": e => this.enableAndDisableFields() })
       )
     );
-    this.dom.spawn(typeMenu, "OPTION", { value: "noop" }, "noop");
+    this.dom.spawn(typeMenu, "OPTION", { value: "marker" }, "marker");
     this.dom.spawn(typeMenu, "OPTION", { value: "note" }, "note");
     this.dom.spawn(typeMenu, "OPTION", { value: "wheel" }, "wheel");
-    this.dom.spawn(typeMenu, "OPTION", { value: "loop" }, "loop");
     typeMenu.value = this.event.type;
     this.dom.spawn(table, "TR",
       this.dom.spawn(null, "TD", ["k"], "Channel"),

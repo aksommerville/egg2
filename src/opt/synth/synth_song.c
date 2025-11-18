@@ -279,7 +279,7 @@ void synth_song_stop(struct synth_song *song) {
 int synth_song_get_duration_frames(struct synth_song *song) {
   if (!song->durframes) {
     int p=0,ms=0;
-    for (;p<song->evtc;p++) {
+    for (;p<song->evtc;) {
       uint8_t lead=song->evtv[p++];
       if (!(lead&0x80)) {
         if (lead&0x40) ms+=((lead&0x3f)+1)<<6;

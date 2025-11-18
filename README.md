@@ -83,7 +83,7 @@ Features we *do* support:
 - - [ ] Web. Orchestrate load in Audio.js.
 - - [x] Web: Estimate playhead. Do in Audio.js, not editor, so we can expose it via Platform API.
 - - [x] Editor: Song model
-- - [ ] Editor: UI
+- - [x] Editor: UI
 - - [x] Eliminate standalone builds.
 - - [x] Build synth wasm.
 - - [ ] `GET /api/webpath` is changed to return the Zip instead. That probably breaks launching from editor. ...confirmed, broken
