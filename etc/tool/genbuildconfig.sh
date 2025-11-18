@@ -59,7 +59,7 @@ EOF
   web_OPT_ENABLE="stdlib res graf font"
   web_AR=ar
   web_CC="clang -c -MMD -O3 --target=wasm32 -nostdlib -Werror -Wno-comment -Wno-parentheses -Isrc -Wno-incompatible-library-redeclaration -Wno-builtin-requires-header"
-  web_LD="wasm-ld --no-entry -z stack-size=4194304 --no-gc-sections --allow-undefined --export-table"
+  web_LD="wasm-ld --no-entry"
   web_LDPOST=
   web_PACKAGING=web
   # EXESFX,WAMR_SDK are not meaningful with "web" packaging, but we define them for the sake of uniformity.

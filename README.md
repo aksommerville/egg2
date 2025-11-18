@@ -80,7 +80,7 @@ Features we *do* support:
 - - - [ ] `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` should be continuous trims, say 0..99.
 - - - [ ] Permit multiple songs? I really think we should, along the lines of egg3.
 - - - [ ] Note On / Note Off / Note Once / Wheel, make Egg Platform API match synth's API. Also "songid".
-- - [ ] Web. Orchestrate load in Audio.js.
+- - [x] Web. Orchestrate load in Audio.js.
 - - [x] Web: Estimate playhead. Do in Audio.js, not editor, so we can expose it via Platform API.
 - - [x] Editor: Song model
 - - [x] Editor: UI

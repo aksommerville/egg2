@@ -23,6 +23,7 @@ const wsrc =
           "case 'init': this.init(m.data); break;" +
           "case 'reinit': this.reinit(m.data); break;" +
           "case 'playSong': this.playSong(m.data); break;" +
+          "case 'playSound': this.playSound(m.data); break;" +
           "case 'setPlayhead': this.setPlayhead(m.data); break;" +
           "case 'printWave': this.printWave(m.data); break;" +
           /*TODO playSong, playSound, etc */
@@ -78,6 +79,11 @@ const wsrc =
     "playSong(m) {" +
       "if (!this.instance) return;" +
       "this.instance.exports.synth_play_song(m.songid, m.rid, m.repeat, m.trim, m.pan);" +
+    "}" +
+    
+    "playSound(m) {" +
+      "if (!this.instance) return;" +
+      "this.instance.exports.synth_play_sound(m.rid, m.trim, m.pan);" +
     "}" +
     
     "setPlayhead(m) {" +
@@ -365,8 +371,10 @@ export class Audio {
    
   egg_play_sound(soundid, trim, pan) {
     if (!this.ctx) return;
-    if (!this.soundEnabled) return;
+    this.node.port.postMessage({ cmd: "playSound", rid: soundid, trim, pan });
     
+    //if (!this.soundEnabled) return;
+    /*
     const buffer = this.sounds[soundid];
     if (buffer) {
       if (buffer === "pending") return; // Drop it; the printer will also play it, once ready.
@@ -376,6 +384,7 @@ export class Audio {
     
     const serial = this.rt.rom.getRes(EGG_TID_sound, soundid);
     if (!serial) return;
+    */
     /*TODO
     const durms = Math.min(5000, Math.max(1, SongPlayer.calculateDuration(serial)));
     const framec = Math.ceil((durms * this.ctx.sampleRate) / 1000);
@@ -392,9 +401,12 @@ export class Audio {
   
   egg_play_song(songid, force, repeat) {//TODO
     if (!this.ctx) return;
-    if (!this.musicEnabled) return;
+    //if (!this.musicEnabled) return;
     if (!force && (songid === this.song?.id)) return;
     this.songParams = [songid, force, repeat, 0]; // To restore when prefs change.
+    this.node.port.postMessage({ cmd: "playSong", songid: 1, rid: songid, repeat, trim: 1, pan: 0 });
+    this.songStartTime = this.ctx.currentTime;
+    /*XXX
     const serial = this.rt.rom.getRes(EGG_TID_song, songid);
     if (!serial) songid = 0;
     if (this.song) {
@@ -406,6 +418,7 @@ export class Audio {
     if (!serial) return;
     //this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid, this.noise);
     this.song.play();
+    */
   }
   
   egg_play_note(chid, noteid, velocity, durms) {

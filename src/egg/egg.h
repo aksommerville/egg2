@@ -46,7 +46,7 @@ WASM_EXPORT("egg_client_update") void egg_client_update(double elapsed);
  * If running headless, render might happen intermittently or not at all.
  * Do not change your model state or make any assumptions about timing -- those are "update" concerns.
  */
-WASM_IMPORT("egg_client_render") void egg_client_render();
+WASM_EXPORT("egg_client_render") void egg_client_render();
 
 /* Global odds and ends.
  ***********************************************************************************/
