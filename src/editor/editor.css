@@ -17,6 +17,7 @@ body {
 .row {
   display: flex;
   flex-direction: row;
+  align-items: start;
 }
 .col {
   display: flex;
@@ -800,50 +801,70 @@ input.toggle:checked + label.toggle.light {
 .chid-14 { background-color: #202 !important }
 .chid-15 { background-color: #012 !important }
 
-.ModecfgModal {
+.ModecfgModalRaw {
   display: flex;
   flex-direction: column;
   min-width: 500px;
+  min-height: 300px;
 }
-
-.ModecfgModal > .bottom {
-  display: flex;
-  flex-direction: row;
-  border-top: 1px solid #444;
-}
-
-.ModecfgModal .spacer {
+.ModecfgModalRaw textarea {
   flex: 1;
 }
 
-.ModecfgModal .drum {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
+.ModecfgModalTrivial {
 }
-.ModecfgModal .drum .size {
-  font-family: monospace;
-  min-width: 40px;
-  text-align: center;
+.ModecfgModalTrivial h2 {
+  margin: 0;
+  padding: 0;
 }
-.ModecfgModal .drum .name {
-  min-width: 150px;
-}
-
-.ModecfgModal td.v {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-.ModecfgModal textarea {
+.ModecfgModalTrivial > table {
   width: 100%;
 }
+.ModecfgModalTrivial input[type="range"] {
+  width: 100%;
+}
+.ModecfgModalTrivial .k {
+  width: 80px;
+  text-align: right;
+}
+.ModecfgModalTrivial .unit {
+  width: 80px;
+}
 
-.ModecfgModal .bigrow {
+.ModecfgModalSub h2 {
+  margin: 0;
+  padding: 0;
+}
+.ModecfgModalSub .k {
+  text-align: right;
+}
+.ModecfgModalSub input[type="number"] {
+  width: 120px;
+}
+
+.ModecfgModalFm > form {
   display: flex;
   flex-direction: row;
-  gap: 10px;
+  align-items: stretch;
+}
+.ModecfgModalFm > form > * {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.ModecfgModalFm td.k {
+  width: 80px;
+}
+.ModecfgModalFm input[type='number'] {
+  width: 80px;
+}
+
+.WaveUi {
+  min-width: 256px;
+  min-height: 192px;
+  border: 1px solid #000;
+  background-color: #aaa;
 }
 
 .HarmonicsUi {

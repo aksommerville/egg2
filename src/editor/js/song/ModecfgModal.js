@@ -3,6 +3,8 @@
  * We handle all modes.
  */
  
+//XXX 2025-11-16: With the new synth regime, take the opportunity to split this per mode. No sense packing all modes together.
+ 
 import { Dom } from "../Dom.js";
 import { EauDecoder, encodeEnv, decodeModecfg, encodeModecfg } from "./EauDecoder.js";
 import { Encoder } from "../Encoder.js";

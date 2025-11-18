@@ -5,11 +5,15 @@
  
 import { Dom } from "../Dom.js";
 import { SongService } from "./SongService.js";
-import { ModecfgModal } from "./ModecfgModal.js";
 import { PostModal } from "./PostModal.js";
 import { SharedSymbols } from "../SharedSymbols.js";
 import { InstrumentsModal } from "./InstrumentsModal.js";
 import { decodeDrumModecfg, mergeModecfg } from "./EauDecoder.js";
+import { ModecfgModalRaw } from "./ModecfgModalRaw.js";
+import { ModecfgModalTrivial } from "./ModecfgModalTrivial.js";
+import { ModecfgModalFm } from "./ModecfgModalFm.js";
+import { ModecfgModalSub } from "./ModecfgModalSub.js";
+import { ModecfgModalDrum } from "./ModecfgModalDrum.js";
 
 export class SongChannelsUi {
   static getDependencies() {
@@ -118,7 +122,7 @@ export class SongChannelsUi {
       channel.overwrite(rsp);
       this.songService.song.removeNoteNames(channel.chid);
       this.songService.song.setName(channel.chid, 0, name);
-      if (rsp.mode === 1) this.applyNewDrumNames(channel, rsp.chid);
+      if (rsp.mode === 4) this.applyNewDrumNames(channel, rsp.chid);
       this.songService.broadcast("dirty");
       this.songService.broadcast("channelSetChanged");
     }).catch(e => this.dom.modalErrror(e));
@@ -182,14 +186,26 @@ export class SongChannelsUi {
   }
   
   onEditModecfg(event, channel) {
-    const modal = this.dom.spawnModal(ModecfgModal, [this.songService]);
-    modal.setup(event.ctrlKey ? 0 : channel.mode, channel.modecfg, channel.chid); // mode zero forces raw presentation
+    const modal = this.dom.spawnModal(this.getModecfgModalClass(event, channel), [this.songService]);
+    modal.setup(channel.mode, channel.modecfg, channel.chid);
     modal.result.then(rsp => {
       if (!rsp) return;
       channel.modecfg = rsp;
       this.populateCard(this.element.querySelector(`.channel.chid-${channel.chid}`), channel);
       this.songService.broadcast("dirty");
     });
+  }
+  
+  getModecfgModalClass(event, channel) {
+    if (event.ctrlKey) return ModecfgModalRaw;
+    switch (channel.mode) {
+      case 0: return ModecfgModalRaw; // NOOP
+      case 1: return ModecfgModalTrivial;
+      case 2: return ModecfgModalFm;
+      case 3: return ModecfgModalSub;
+      case 4: return ModecfgModalDrum;
+    }
+    return ModecfgModalRaw;
   }
   
   onEditPost(event, channel) {

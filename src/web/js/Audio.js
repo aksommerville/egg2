@@ -19,7 +19,6 @@ const wsrc =
       "this.buffers = [];" + /* Float32Array */
       "this.bufferSize = 128;" + /* frames */
       "this.port.onmessage = m => {" +
-        "console.log(`EggAudio message`, m);" +
         "switch (m.data.cmd) {" +
           "case 'init': this.init(m.data); break;" +
           "case 'reinit': this.reinit(m.data); break;" +

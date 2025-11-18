@@ -63,7 +63,63 @@ export class EauDecoder {
     return body;
   }
   
-  /* (usage) is one of: "level" "range" "pitch"
+  /* Wave model is an array of: {
+   *   opcode: u8
+   *   param: Uint8Array
+   * }
+   * (opcode) must be known to decode, we'll throw an exception for unknown ones.
+   * Once decoded, you can reencode without knowing what they mean.
+   * Editor will be responsible for keeping opcodes and param lengths valid.
+   */
+  wave(fallback) {
+  
+    // Two fallback scenarios.
+    if (this.srcp >= this.src.length) return this.fallbackWave(fallback);
+    if (!this.src[this.srcp]) {
+      this.srcp++;
+      return this.fallbackWave(fallback);
+    }
+  
+    const dst = [];
+    for (;;) {
+      if (this.srcp >= this.src.length) throw new Error(`Unterminated wave.`);
+      const opcode = this.src[this.srcp++];
+      if (!opcode) break; // EOF
+      let paramlen = this.src.length;
+      switch (opcode) {
+        case 0x01: paramlen = 0; break; // SINE
+        case 0x02: paramlen = 1; break; // SQUARE
+        case 0x03: paramlen = 1; break; // SAW
+        case 0x04: paramlen = 1; break; // TRIANGLE
+        case 0x05: paramlen = 0; break; // NOISE
+        case 0x06: paramlen = 1; break; // ROTATE
+        case 0x07: paramlen = 2; break; // GAIN
+        case 0x08: paramlen = 1; break; // CLIP
+        case 0x09: paramlen = 1; break; // NORM
+        case 0x0a: paramlen = 1 + (this.src[this.srcp] || 0) * 2; break; // HARMONICS
+        case 0x0b: paramlen = 1; break; // HARMFM
+        case 0x0c: paramlen = 1; break; // MAVG
+      }
+      if (this.srcp > this.src.length - paramlen) throw new Error(`Overrun in encoded wave.`);
+      const param = new Uint8Array(this.src.buffer, this.src.byteOffset + this.srcp, paramlen);
+      this.srcp += paramlen;
+      dst.push({ opcode, param });
+    }
+    return dst;
+  }
+  
+  fallbackWave(src) {
+    if (!src) return [{
+      opcode: 0x01, // SINE
+      param: new Uint8Array(0),
+    }];
+    return src.map(op => ({
+      opcode: op.opcode,
+      param: new Uint8Array(op.param),
+    }));
+  }
+  
+  /* (usage) is one of: "level" "range" "pitch" "mix"
    * Returns a live env model:
    * {
    *   usage
@@ -75,15 +131,14 @@ export class EauDecoder {
    *   hi?: same as lo
    *   isDefault: boolean ; if false we encode explicitly even if it happens to match the default.
    * }
-   * If we're at EOF, or we have the special value [0,0], we return a per-usage default instead.
+   * If we're at EOF, or we have the special value [0], we return a per-usage default instead.
    */
   env(usage) {
-    if (this.srcp > this.src.length - 2) {
-      this.srcp = this.src.length;
+    if (this.srcp >= this.src.length) {
       return this.defaultEnv(usage);
     }
-    if (!this.src[this.srcp] && !this.src[this.srcp + 1]) {
-      this.srcp += 2;
+    if (!this.src[this.srcp]) {
+      this.srcp += 1;
       return this.defaultEnv(usage);
     }
     const env = {
@@ -93,6 +148,7 @@ export class EauDecoder {
       isDefault: false,
     };
     const flags = this.src[this.srcp++];
+    if (flags & 0xf0) throw new Error(`Unexpected env flags 0x${flags.toString(16)}`);
     
     if (flags & 0x02) { // Velocity
       env.hi = [];
@@ -148,19 +204,20 @@ export class EauDecoder {
   defaultEnv(usage) {
     switch (usage) {
       case "level": return {
+          // Try to match src/opt/synth/synth_env.c:synth_env_fallback(). Mind that our (t) are absolute.
           usage: "level",
           susp: 2,
           lo: [
-            { t: 0x0000, v: 0x0000 },
-            { t: 0x0020, v: 0x4000 },
-            { t: 0x0050, v: 0x3000 },
-            { t: 0x00d0, v: 0x0000 },
+            { t:   0, v: 0x0000 },
+            { t:  30, v: 0x8000 },
+            { t:  50, v: 0x4000 },
+            { t: 200, v: 0x0000 },
           ],
           hi: [
-            { t: 0x0000, v: 0x0000 },
-            { t: 0x0010, v: 0xffff },
-            { t: 0x0040, v: 0x5000 },
-            { t: 0x0140, v: 0x0000 },
+            { t:   0, v: 0x0000 },
+            { t:  20, v: 0xffff },
+            { t:  40, v: 0x6666 },
+            { t: 340, v: 0x0000 },
           ],
           isDefault: true,
         };
@@ -176,6 +233,12 @@ export class EauDecoder {
           lo: [{ t: 0, v: 0x8000 }],
           isDefault: true,
         };
+      case "mix": return {
+          usage: "mix",
+          susp: 0,
+          lo: [{ t: 0, v: 0x0000 }],
+          isDefault: true,
+        };
     }
     return {
       usage,
@@ -189,11 +252,11 @@ export class EauDecoder {
 export function encodeEnv(encoder, usage, env) {
 
   if (env.isDefault) {
-    encoder.u16be(0);
+    encoder.u8(0);
     return;
   }
 
-  let flags = 0;
+  let flags = 0x08; // "Present" always.
   // 0x02 Velocity if (hi) exists and is different from (lo) anywhere.
   if (env.hi) {
     for (let i=env.hi.length; i-->0; ) {
@@ -221,9 +284,8 @@ export function encodeEnv(encoder, usage, env) {
     }
   }
   
-  // Sustain point and point count. Fudge sustain point if it would otherwise produce 0,0.
+  // Sustain point and point count.
   let susp = env.susp - 1;
-  if (!flags && (env.lo.length <= 1) && !susp) susp = 15;
   encoder.u8((susp << 4) | (env.lo.length - 1));
   
   // Points. Skip the first.
@@ -241,6 +303,188 @@ export function encodeEnv(encoder, usage, env) {
   }
 }
 
+export function nonDefaultWave(wave) {
+  if (!wave.length) return false;
+  if ((wave.length === 1) && (wave[0].opcode === 0x01)) return false;
+  return true;
+}
+
+export function wavesEquivalent(a, b) {
+  if (a.length !== b.length) return false;
+  for (let i=a.length; i-->0; ) {
+    const aop = a[i], bop = b[i];
+    if (aop.opcode !== bop.opcode) return false;
+    if (aop.param.length !== bop.param.length) return false;
+    for (let ii=aop.param.length; ii-->0; ) {
+      if (aop.param[ii] !== bop.param[ii]) return false;
+    }
+  }
+  return true;
+}
+
+export function encodeWave(dst, wave, defaultIfEquivalent) {
+  if (defaultIfEquivalent) {
+    if (wavesEquivalent(wave, defaultIfEquivalent)) {
+      dst.u8(0);
+      return;
+    }
+  } else {
+    if (!nonDefaultWave(wave)) {
+      dst.u8(0);
+      return;
+    }
+  }
+  for (const { opcode, param } of wave) {
+    dst.u8(opcode);
+    dst.raw(param);
+  }
+}
+
+/* {
+ *   wheelrange: u16
+ *   minlevel: u16
+ *   maxlevel: u16
+ *   minhold: u16
+ *   rlstime: u16
+ * }
+ */
+export function decodeTrivialModecfg(dst, src) {
+  dst.wheelrange = src.u16(200);
+  dst.minlevel = src.u16(0x2000);
+  dst.maxlevel = src.u16(0xffff);
+  dst.minhold = src.u16(100);
+  dst.rlstime = src.u16(100);
+}
+export function encodeTrivialModecfg(dst, src) {
+  const fldc =
+    (src.rlstime !== 100) ? 5 :
+    (src.minhold !== 100) ? 4 :
+    (src.maxlevel !== 0xffff) ? 3 :
+    (src.minlevel !== 0x2000) ? 2 :
+    (src.wheelrange !== 200) ? 1 :
+    0;
+  if (fldc < 1) return; dst.u16be(src.wheelrange);
+  if (fldc < 2) return; dst.u16be(src.minlevel);
+  if (fldc < 3) return; dst.u16be(src.maxlevel);
+  if (fldc < 4) return; dst.u16be(src.minhold);
+  if (fldc < 5) return; dst.u16be(src.rlstime);
+}
+
+/* {
+ *   levelenv: env
+ *   wheelrange: u16
+ *   wavea: wave
+ *   waveb: wave
+ *   mixenv: env
+ *   modrate: u16 (NB not float)
+ *   modrange: u16 (NB not float)
+ *   rangeenv: env
+ *   pitchenv: env
+ *   modulator: wave
+ *   rangelforate: u8.8
+ *   rangelfodepth: u8
+ *   rangelfowave: wave
+ *   mixlforate: u8.8
+ *   mixlfodepth: u8
+ *   mixlfowave: wave
+ * }
+ */
+export function decodeFmModecfg(dst, src) {
+  dst.levelenv = src.env("level");
+  dst.wheelrange = src.u16(200);
+  dst.wavea = src.wave();
+  dst.waveb = src.wave(dst.wavea);
+  dst.mixenv = src.env("mix");
+  dst.modrate = src.u16(0);
+  dst.modrange = src.u16(0x0100);
+  dst.rangeenv = src.env("range");
+  dst.pitchenv = src.env("pitch");
+  dst.modulator = src.wave();
+  dst.rangelforate = src.u8_8(0);
+  dst.rangelfodepth = src.u8(0xff);
+  dst.rangelfowave = src.wave();
+  dst.mixlforate = src.u8_8(0);
+  dst.mixlfodepth = src.u8(0xff);
+  dst.mixlfowave = src.wave();
+}
+export function encodeFmModecfg(dst, src) {
+  const fldc =
+    (src.mixlforate && nonDefaultWave(src.mixlfowave)) ? 16 :
+    (src.mixlforate && (src.mixlfodepth !== 0xff)) ? 15 :
+    src.mixlforate ? 14 :
+    (src.rangelforate && nonDefaultWave(src.rangelfowave)) ? 13 :
+    (src.rangelforate && (src.rangelfodepth !== 0xff)) ? 12 :
+    src.rangelforate ? 11 :
+    nonDefaultWave(src.modulator) ? 10 :
+    (!src.pitchenv.isDefault) ? 9 :
+    (!src.rangeenv.isDefault) ? 8 :
+    (src.modrange !== 0x0100) ? 7 :
+    src.modrate ? 6 :
+    (!src.mixenv.isDefault) ? 5 :
+    (!wavesEquivalent(src.wavea, src.waveb)) ? 4 :
+    nonDefaultWave(src.wavea) ? 3 :
+    (src.wheelrange !== 200) ? 2 :
+    (!src.levelenv.isDefault) ? 1 :
+    0;
+  if (fldc < 1) return; encodeEnv(dst, "level", src.levelenv);
+  if (fldc < 2) return; dst.u16be(src.wheelrange);
+  if (fldc < 3) return; encodeWave(dst, src.wavea);
+  if (fldc < 4) return; encodeWave(dst, src.waveb, src.wavea);
+  if (fldc < 5) return; encodeEnv(dst, "mix", src.mixenv);
+  if (fldc < 6) return; dst.u16be(src.modrate);
+  if (fldc < 7) return; dst.u16be(src.modrange);
+  if (fldc < 8) return; encodeEnv(dst, "range", src.rangeenv);
+  if (fldc < 9) return; encodeEnv(dst, "pitch", src.pitchenv);
+  if (fldc < 10) return; encodeWave(dst, src.modulator);
+  if (fldc < 11) return; dst.u8_8(src.rangelforate);
+  if (fldc < 12) return; dst.u8(src.rangelfodepth);
+  if (fldc < 13) return; encodeWave(dst, src.rangelfowave);
+  if (fldc < 14) return; dst.u8_8(src.mixlforate);
+  if (fldc < 15) return; dst.u8(src.mixlfodepth);
+  if (fldc < 16) return; encodeWave(dsdt, src.mixlfowave);
+}
+
+/* {
+ *   levelenv: env
+ *   widthlo: u16
+ *   widthhi: u16
+ *   stagec: u8
+ *   gain: u8.8
+ * }
+ */
+export function decodeSubModecfg(dst, src) {
+  dst.levelenv = src.env("level");
+  dst.widthlo = src.u16(200);
+  dst.widthhi = src.u16(dst.widthlo);
+  dst.stagec = src.u8(1);
+  dst.gain = src.u8_8(1.0);
+}
+export function encodeSubModecfg(dst, src) {
+  const fldc =
+    (src.gain !== 1.0) ? 5 :
+    (src.stagec !== 1) ? 4 :
+    (src.widthhi !== src.widthlo) ? 3 :
+    (src.widthlo !== 200) ? 2 :
+    (!src.levelenv.isDefault) ? 1 :
+    0;
+  if (fldc < 1) return; encodeEnv(dst, "level", src.levelenv);
+  if (fldc < 2) return; dst.u16be(src.widthlo);
+  if (fldc < 3) return; dst.u16be(src.widthhi);
+  if (fldc < 4) return; dst.u8(src.stagec);
+  if (fldc < 5) return; dst.u8_8(src.gain);
+}
+
+/* Decode a DRUM modecfg, just the notes array.
+ * We're a little unlike the other modes in that we take Uint8Array and return the array of notes.
+ * Most modecfg decoders take an EauDecoder and a fresh model to assign to.
+ * {
+ *   noteid: u8
+ *   trimlo: u8
+ *   trimhi: u8
+ *   pan: u8
+ *   serial: Uint8Array
+ * }[]
+ */
 export function decodeDrumModecfg(src) {
   const dst = []; // {noteid,trimlo,trimhi,pan,serial}
   for (let srcp=0; srcp<src.length; ) {
@@ -259,119 +503,36 @@ export function decodeDrumModecfg(src) {
   }
   return dst;
 }
+export function encodeDrumModecfg(dst, src) {
+  if (src.drums) src = src.drums; // Accept either the full model or just the drums array.
+  for (const drum of src.drums) {
+    dst.u8(drum.noteid);
+    dst.u8(drum.trimlo);
+    dst.u8(drum.trimhi);
+    dst.u8(drum.pan);
+    dst.u16be(drum.serial.length);
+    dst.raw(drum.serial);
+  }
+}
 
-/* Given (mode) 0..4 and (modecfg) Uint8Array, return a live model object.
- * Creates all top-level fields whether or not they exist in the serial.
- * All models:
- *   {
- *     mode: per input
- *     extra: Uint8Array
- *   }
- * 1=DRUM: {
- *   drums: {
- *     noteid: u8
- *     trimlo: u8
- *     trimhi: u8
- *     pan: u8
- *     serial: Uint8Array
- *   }[]
+/* Generic modecfg decode.
+ * All returned models contain:
+ * {
+ *   mode: u8
+ *   extra: Uint8Array
  * }
- * 2=FM: {
- *   rate: float, relative or qnotes(absrate)
- *   absrate: boolean
- *   range: float
- *   levelenv: env
- *   rangeenv: env
- *   pitchenv: env
- *   wheelrange: u16
- *   lforate: float
- *   lfodepth: float
- *   lfophase: float
- * }
- * 3=HARSH: {
- *   shape: u8
- *   levelenv: env
- *   pitchenv: env
- *   wheelrange: u16
- * }
- * 4=HARM: {
- *   harmonics: u16[]
- *   levelenv: env
- *   pitchenv: env
- *   wheelrange: u16
- * }
- * 5=SUB: {
- *   levelenv: env
- *   widthlo: u16
- *   widthhi: u16
- *   stagec: u8
- *   gain: float
- * }
+ * And typically a bunch of other fields, see above.
+ * By convention, every field for the given mode will be created, even if it was absent from the input.
  */
 export function decodeModecfg(mode, modecfg) {
   const model = { mode };
-  if (!modecfg) modecfg = new Uint8Array(0);
-  const decoder = new EauDecoder(modecfg);
+  const decoder = new EauDecoder(modecfg || new Uint8Array(0));
   switch (mode) {
-  
-    case 1: { // DRUM
-        model.drums = [];
-        while (!decoder.finished()) {
-          const drum = {};
-          drum.noteid = decoder.u8(0);
-          drum.trimlo = decoder.u8(255);
-          drum.trimhi = decoder.u8(255);
-          drum.pan = decoder.u8(128);
-          if (!(drum.serial = decoder.u16len(null))) break;
-          model.drums.push(drum);
-        }
-      } break;
-      
-    case 2: { // FM
-        const rate = decoder.u16(0);
-        if (rate & 0x8000) {
-          model.rate = (rate & 0x7fff) / 256;
-          model.absrate = true;
-        } else {
-          model.rate = rate / 256;
-          model.absrate = false;
-        }
-        model.range = decoder.u8_8(0);
-        model.levelenv = decoder.env("level");
-        model.rangeenv = decoder.env("range");
-        model.pitchenv = decoder.env("pitch");
-        model.wheelrange = decoder.u16(200);
-        model.lforate = decoder.u8_8(0);
-        model.lfodepth = decoder.u0_8(1);
-        model.lfophase = decoder.u0_8(0);
-      } break;
-      
-    case 3: { // HARSH
-        model.shape = decoder.u8(0);
-        model.levelenv = decoder.env("level");
-        model.pitchenv = decoder.env("pitch");
-        model.wheelrange = decoder.u16(200);
-      } break;
-      
-    case 4: { // HARM
-        model.harmonics = [];
-        let harmc = decoder.u8(0);
-        if (decoder.srcp <= decoder.src.length - harmc * 2) {
-          while (harmc-- > 0) model.harmonics.push(decoder.u16(0));
-        }
-        model.levelenv = decoder.env("level");
-        model.pitchenv = decoder.env("pitch");
-        model.wheelrange = decoder.u16(200);
-      } break;
-      
-    case 5: { // SUB
-        model.levelenv = decoder.env("level");
-        model.widthlo = decoder.u16(200);
-        model.widthhi = decoder.u16(200);
-        model.stagec = decoder.u8(1);
-        model.gain = decoder.u8_8(1);
-      } break;
-      
+    case 0: break; // NOOP
+    case 1: decodeTrivialModecfg(model, decoder); break;
+    case 2: decodeFmModecfg(model, decoder); break;
+    case 3: decodeSubModecfg(model, decoder); break;
+    case 4: model.drums = decodeDrumModecfg(modecfg); model.extra = new Uint8Array(0); return model;
   }
   model.extra = decoder.remainder();
   return model;
@@ -380,111 +541,12 @@ export function decodeModecfg(mode, modecfg) {
 export function encodeModecfg(model) {
   const encoder = new Encoder();
   switch (model.mode) {
-    case 0: return model.extra;
-    case 1: {
-        for (const drum of model.drums) {
-          encoder.u8(drum.noteid);
-          encoder.u8(drum.trimlo);
-          encoder.u8(drum.trimhi);
-          encoder.u8(drum.pan);
-          encoder.pfxlen(2, () => encoder.raw(drum.serial));
-        }
-      } break;
-    case 2: {
-        let reqc = 0;
-        if (model.extra.length) reqc = 10;
-        else if (model.lfophase && model.lfodepth && model.lforate) reqc = 9;
-        else if (model.lfodepth !== 1 && model.lforate) reqc = 8;
-        else if (model.lforate) reqc = 7;
-        else if (model.wheelrange !== 200) reqc = 6;
-        else if (!model.pitchenv.isDefault) reqc = 5;
-        else if (!model.rangeenv.isDefault) reqc = 4;
-        else if (!model.levelenv.isDefault) reqc = 3;
-        else if (model.range) reqc = 2;
-        else if (model.rate) reqc = 1;
-        if (reqc <= 0) break;
-        let rate = Math.max(0, Math.min(0xffff, ~~(model.rate * 256)));
-        if (model.absrate) rate |= 0x8000; else rate &= 0x7fff;
-        encoder.u16be(rate);
-        if (reqc <= 1) break;
-        encoder.u16be(model.range * 256);
-        if (reqc <= 2) break;
-        encodeEnv(encoder, "level", model.levelenv);
-        if (reqc <= 3) break;
-        encodeEnv(encoder, "range", model.rangeenv);
-        if (reqc <= 4) break;
-        encodeEnv(encoder, "pitch", model.pitchenv);
-        if (reqc <= 5) break;
-        encoder.u16be(model.wheelrange);
-        if (reqc <= 6) break;
-        encoder.u16be(model.lforate * 256);
-        if (reqc <= 7) break;
-        encoder.u8(Math.max(0, Math.min(0xff, ~~(model.lfodepth * 256))));
-        if (reqc <= 8) break;
-        encoder.u8(Math.max(0, Math.min(0xff, ~~(model.lfophase * 256))));
-        if (reqc <= 9) break;
-        encoder.raw(model.extra);
-      } break;
-    case 3: {
-        let reqc = 0;
-        if (model.extra.length) reqc = 5;
-        else if (model.wheelrange !== 200) reqc = 4;
-        else if (!model.pitchenv.isDefault) reqc = 3;
-        else if (!model.levelenv.isDefault) reqc = 2;
-        else if (model.shape) reqc = 1;
-        if (reqc <= 0) break;
-        encoder.u8(model.shape);
-        if (reqc <= 1) break;
-        encodeEnv(encoder, "level", model.levelenv);
-        if (reqc <= 2) break;
-        encodeEnv(encoder, "pitch", model.pitchenv);
-        if (reqc <= 3) break;
-        encoder.u16be(model.wheelrange);
-        if (reqc <= 4) break;
-        encoder.raw(model.extra);
-      } break;
-    case 4: {
-        let reqc = 0;
-        if (model.extra.length) reqc = 5;
-        else if (model.wheelrange !== 200) reqc = 4;
-        else if (!model.pitchenv.isDefault) reqc = 3;
-        else if (!model.levelenv.isDefault) reqc = 2;
-        else if ((model.harmonics.length > 1) || ((model.harmonics.length === 1) && (model.harmonics[0] !== 0xffff))) reqc = 1;
-        if (reqc <= 0) break;
-        encoder.u8(model.harmonics.length);
-        for (const harm of model.harmonics) {
-          encoder.u16be(harm);
-        }
-        if (reqc <= 1) break;
-        encodeEnv(encoder, "level", model.levelenv);
-        if (reqc <= 2) break;
-        encodeEnv(encoder, "pitch", model.pitchenv);
-        if (reqc <= 3) break;
-        encoder.u16be(model.wheelrange);
-        if (reqc <= 4) break;
-        encoder.raw(model.extra);
-      } break;
-    case 5: {
-        let reqc = 0;
-        if (model.extra.length) reqc = 6;
-        else if (model.gain !== 1) reqc = 5;
-        else if (model.stagec !== 1) reqc = 4;
-        else if (model.widthhi !== 200) reqc = 3;
-        else if (model.widthlo !== 200) reqc = 2;
-        else if (!model.levelenv.isDefault) reqc = 1;
-        if (reqc <= 0) break;
-        encodeEnv(encoder, "level", model.levelenv);
-        if (reqc <= 1) break;
-        encoder.u16be(model.widthlo);
-        if (reqc <= 2) break;
-        encoder.u16be(model.widthhi);
-        if (reqc <= 3) break;
-        encoder.u8(model.stagec);
-        if (reqc <= 4) break;
-        encoder.u16be(model.gain * 256);
-        if (reqc <= 5) break;
-        encoder.raw(model.extra);
-      } break;
+    case 0: break; // NOOP
+    case 1: encodeTrivialModecfg(encoder, model); break;
+    case 2: encodeFmModecfg(encoder, model); break;
+    case 3: encodeSubModecfg(encoder, model); break;
+    case 4: encodeDrumModecfg(encoder, model); break;
+    default: encoder.raw(model.extra); break; // Encode (extra) only for unknown (mode).
   }
   return encoder.finish();
 }
@@ -509,29 +571,25 @@ export function mergeModecfg(newMode, stashConfig, oldMode, oldConfig) {
     return new Uint8Array(0);
   }
   
-  // To or from 0 (NOOP) or 1 (DRUM), there's nothing we can do.
-  if ((newMode === 0) || (newMode === 1) || (oldMode === 0) || (oldMode === 1)) {
+  // To or from 0 (NOOP) or 4 (DRUM), there's nothing we can do.
+  if ((newMode === 0) || (newMode === 4) || (oldMode === 0) || (oldMode === 4)) {
     if (stashConfig) return new Uint8Array(stashConfig);
     return new Uint8Array(0);
   }
   
-  /* The common voiced modes (2=FM, 3=HARSH, 4=HARM) have three fields in common:
-   *   levelenv, pitchenv, wheelrange
-   * Do a full decode of each, reassign in the models, and reencode.
-   * Mode 5 SUB has (levelenv) but not the other two. It's OK to let (pitchenv,wheelrange) be undefined.
+  /* Any other case, decode stashConfig and oldConfig.
+   * Any field that exists in both, copy from oldConfig to stashConfig.
+   * Then reencode stashConfig and that's our answer.
    */
-  if ((newMode >= 2) && (newMode <= 5) && (oldMode >= 2) && (oldMode <= 5)) {
-    const oldModel = decodeModecfg(oldMode, oldConfig);
-    const stashModel = decodeModecfg(newMode, stashConfig);
-    stashModel.levelenv = oldModel.levelenv;
-    stashModel.pitchenv = oldModel.pitchenv;
-    stashModel.wheelrange = oldModel.wheelrange;
-    return encodeModecfg(stashModel);
+  const oldModel = decodeModecfg(oldMode, oldConfig);
+  const stashModel = decodeModecfg(newMode, stashConfig);
+  for (const k of Object.keys(stashModel)) {
+    if (oldModel.hasOwnProperty(k)) {
+      stashModel[k] = oldModel[k];
+    }
   }
-  
-  // And finally, stash or empty.
-  if (stashConfig) return new Uint8Array(stashConfig);
-  return new Uint8Array(0);
+  stashModel.mode = newMode; // The loop above might overwrite it.
+  return encodeModecfg(stashModel);
 }
 
 /* Decode one post stage, starting from (stageid).
