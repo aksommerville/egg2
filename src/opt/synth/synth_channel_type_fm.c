@@ -307,10 +307,10 @@ static int synth_channel_fm_decode(struct synth_channel *channel,const uint8_t *
   if ((err=synth_env_decode(&CHANNEL->pitchenv,src+srcp,srcc-srcp,SYNTH_ENV_FALLBACK_HALF))<0) return -1; srcp+=err;
   RDWAVE(modulator)
   if (srcp<=srcc-2) { CHANNEL->rangelforate=((src[srcp]<<8)|src[srcp+1])/256.0f; srcp+=2; }
-  if (srcp<srcc) CHANNEL->rangelfodepth=src[srcp++]/255.0f;
+  if (srcp<srcc) CHANNEL->rangelfodepth=src[srcp++]/255.0f; else CHANNEL->rangelfodepth=1.0f;
   RDWAVE(rangelfowave)
   if (srcp<=srcc-2) { CHANNEL->mixlforate=((src[srcp]<<8)|src[srcp+1])/256.0f; srcp+=2; }
-  if (srcp<srcc) CHANNEL->mixlfodepth=src[srcp++]/255.0f;
+  if (srcp<srcc) CHANNEL->mixlfodepth=src[srcp++]/255.0f; else CHANNEL->mixlfodepth=1.0f;
   RDWAVE(mixlfowave)
   #undef RDWAVE
   return 0;
