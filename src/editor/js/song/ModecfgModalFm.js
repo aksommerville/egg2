@@ -42,7 +42,6 @@ export class ModecfgModalFm {
    
   buildUi() {
     this.element.innerHTML = "";
-    console.log(`ModecfgModalFm.buildUi`, { model: this.model });
     const form = this.dom.spawn(this.element, "FORM", { "on-submit": e => { e.preventDefault(); e.stopPropagation(); }});
     
     // Left half of the form is our four envelopes, with time scales synced.
@@ -65,26 +64,26 @@ export class ModecfgModalFm {
     // Everything else goes on the right.
     const rightSide = this.dom.spawn(form, "DIV", ["rightSide"]);
     const wavesRow = this.dom.spawn(rightSide, "DIV", ["row"]);
-    this.dom.spawnController(wavesRow, WaveUi).setup(this.model.wavea, v => this.onWaveChange("wavea", v));
-    this.dom.spawnController(wavesRow, WaveUi).setup(this.model.waveb, v => this.onWaveChange("waveb", v));
+    this.dom.spawnController(wavesRow, WaveUi).setup(this.model.wavea, "wavea", v => this.onWaveChange("wavea", v));
+    this.dom.spawnController(wavesRow, WaveUi).setup(this.model.waveb, "waveb", v => this.onWaveChange("waveb", v));
     
     const modRow = this.dom.spawn(rightSide, "DIV", ["row"]);
     const modTable = this.dom.spawn(modRow, "TABLE", ["modTable"]);
     this.spawnRow(modTable, "modrate", 0, 65535, 1);//TODO this needs to account for abs vs rel
     this.spawnRow(modTable, "modrange", 0, 65535, 1);
-    this.dom.spawnController(modRow, WaveUi).setup(this.model.modulator, v => this.onWaveChange("modulator", v));
+    this.dom.spawnController(modRow, WaveUi).setup(this.model.modulator, "modulator", v => this.onWaveChange("modulator", v));
     
     const rangeRow = this.dom.spawn(rightSide, "DIV", ["row"]);
     const rangeTable = this.dom.spawn(rangeRow, "TABLE", ["rangeTable"]);
     this.spawnRow(rangeTable, "rangelforate", 0, 256, 1/256);
     this.spawnRow(rangeTable, "rangelfodepth", 0, 255, 1);
-    this.dom.spawnController(rangeRow, WaveUi).setup(this.model.rangelfowave, v => this.onWaveChange("rangelfowave", v));
+    this.dom.spawnController(rangeRow, WaveUi).setup(this.model.rangelfowave, "rangelfo", v => this.onWaveChange("rangelfowave", v));
     
     const mixRow = this.dom.spawn(rightSide, "DIV", ["row"]);
     const mixTable = this.dom.spawn(mixRow, "TABLE", ["mixTable"]);
     this.spawnRow(mixTable, "mixlforate", 0, 256, 1/256);
     this.spawnRow(mixTable, "mixlfodepth", 0, 255, 1);
-    this.dom.spawnController(mixRow, WaveUi).setup(this.model.mixlfowave, v => this.onWaveChange("mixlfowave", v));
+    this.dom.spawnController(mixRow, WaveUi).setup(this.model.mixlfowave, "mixlfo", v => this.onWaveChange("mixlfowave", v));
     
     const miscTable = this.dom.spawn(rightSide, "TABLE", ["miscTable"]);
     this.spawnRow(miscTable, "wheelrange", 0, 65535, 1);
@@ -117,7 +116,6 @@ export class ModecfgModalFm {
     for (const name of ["modrate", "modrange", "wheelrange", "rangelforate", "rangelfodepth", "mixlforate", "mixlfodepth"]) {
       model[name] = +this.element.querySelector(`input[name='${name}']`)?.value || 0;
     }
-    console.log(`ModecfgModalFm delivering model`, model);
     this.resolve(encodeModecfg(model));
     this.element.remove();
   }

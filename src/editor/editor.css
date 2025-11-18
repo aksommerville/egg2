@@ -861,10 +861,22 @@ input.toggle:checked + label.toggle.light {
 }
 
 .WaveUi {
-  min-width: 256px;
-  min-height: 192px;
-  border: 1px solid #000;
-  background-color: #aaa;
+  margin: 4px;
+}
+
+.WaveModal {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.WaveModal .scroller {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+.WaveModal .message {
+  min-height: 6em;
+  width: 250px;
 }
 
 .HarmonicsUi {

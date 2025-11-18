@@ -24,6 +24,7 @@ const wsrc =
           "case 'reinit': this.reinit(m.data); break;" +
           "case 'playSong': this.playSong(m.data); break;" +
           "case 'setPlayhead': this.setPlayhead(m.data); break;" +
+          "case 'printWave': this.printWave(m.data); break;" +
           /*TODO playSong, playSound, etc */
         "}" +
       "};" +
@@ -51,7 +52,7 @@ const wsrc =
     "}" +
     
     "reinit(m) {" +
-      "if (!this.instance) throw new Error(`EggAudio not initialized`);" +
+      "if (!this.instance) return;" +
       "this.transferRom(m.rom);" +
     "}" +
     
@@ -84,6 +85,14 @@ const wsrc =
       "this.instance.exports.synth_set(m.songid, 0xff, 3, m.ph);" + /* 3=SYNTH_PROP_PLAYHEAD */
     "}" +
     
+    "printWave(m) {" +
+      "const serialp = this.instance.exports.synth_wave_prepare(m.serial.length);" +
+      "new Uint8Array(this.memory.buffer, serialp, m.serial.length).set(m.serial);" +
+      "const pcmp = this.instance.exports.synth_wave_preview();" +
+      "const pcm = new Float32Array(this.memory.buffer, pcmp, 1024);" +
+      "this.port.postMessage({ cmd: 'wavePreview', pcm, cookie: m.cookie });" +
+    "}" +
+    
     "process(i, o, p) {" +
       "if (!this.instance) return true;" +
       "const output = o[0];" +
@@ -109,6 +118,8 @@ export class Audio {
     this.songStartTime = 0; // AudioContext.currentTime when song starts, approximate at best.
     this.songPlaying = false; // May need to abstract these song things to run multiple. Getting it working for one first.
     this.songDuration = 0;
+    this.pendingWavePrints = []; // {cookie,promise,resolve,reject}
+    this.nextWaveCookie = 1;
     this.initPromise = this.init()
       .then(() => { this.initStatus = 1; })
       .catch(e => { console.error(e); this.initStatus = -1; });
@@ -131,6 +142,7 @@ export class Audio {
         outputChannelCount: [this.ctx.destination.channelCount],
       });
       this.node.connect(this.ctx.destination);
+      this.node.port.onmessage = e => this.onWorkerMessage(e.data);
       return this.acquireWasm();
     }).then(wasm => {
       this.node.port.postMessage({ cmd: "init", rom: this.rt?.rom?.serial, wasm, r: this.ctx.sampleRate, c: this.ctx.destination.channelCount });
@@ -288,6 +300,27 @@ export class Audio {
     if (tail !== node) this.soundPlayers.push({ node: tail, endTime });
     node.start();
     */
+  }
+  
+  printWave(serial) {
+    const cookie = this.nextWaveCookie++;
+    let resolve, reject;
+    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+    this.pendingWavePrints.push({ cookie, promise, resolve, reject });
+    this.node.port.postMessage({ cmd: "printWave", serial, cookie });
+    return promise;
+  }
+  
+  onWorkerMessage(data) {
+    switch (data.cmd) {
+      case "wavePreview": {
+          const p = this.pendingWavePrints.findIndex(w => w.cookie === data.cookie);
+          if (p < 0) break;
+          const pend = this.pendingWavePrints[p];
+          this.pendingWavePrints.splice(p, 1);
+          pend.resolve(data.pcm);
+        } break;
+    }
   }
   
   /* Egg Platform API.

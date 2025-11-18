@@ -338,6 +338,9 @@ export function encodeWave(dst, wave, defaultIfEquivalent) {
     dst.u8(opcode);
     dst.raw(param);
   }
+  if (!wave.length || (wave[wave.length - 1].opcode !== 0x00)) { // We let models omit the trailing EOF.
+    dst.u8(0);
+  }
 }
 
 /* {

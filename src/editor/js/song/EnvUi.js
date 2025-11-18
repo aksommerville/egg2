@@ -169,6 +169,15 @@ export class EnvUi {
     ctx.strokeStyle = "#333";
     ctx.stroke();
     
+    // Our name, in the upper right corner.
+    if (this.usage) {
+      const name = this.usage.endsWith("env") ? this.usage.substring(0, this.usage.length - 3) : this.usage;
+      ctx.fillStyle = "#ddd";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "top";
+      ctx.fillText(name, bounds.width - 4, 4);
+    }
+    
     // Lines and handles.
     this.renderLine(canvas, ctx, this.env.lo, "#c60");
     if (hienable) this.renderLine(canvas, ctx, this.env.hi, "#ff0");

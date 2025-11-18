@@ -95,4 +95,11 @@ WASM_EXPORT("synth_event_note_off") void synth_event_note_off(int songid,uint8_t
 WASM_EXPORT("synth_event_note_on") void synth_event_note_on(int songid,uint8_t chid,uint8_t noteid,uint8_t velocity);
 WASM_EXPORT("synth_event_note_once") void synth_event_note_once(int songid,uint8_t chid,uint8_t noteid,uint8_t velocity,int durms);
 
+/* A weird dance to expose the wave compiler, needed for Egg Editor but not for the runtime.
+ * Call synth_wave_prepare() with the serial length, then write your serial there.
+ * Then call synth_wave_preview() and it will return a pointer 1024 floats, which will be overwritten by the next preview.
+ */
+WASM_EXPORT("synth_wave_prepare") void *synth_wave_prepare(int serialc);
+WASM_EXPORT("synth_wave_preview") float *synth_wave_preview();
+
 #endif

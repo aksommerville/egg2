@@ -389,6 +389,32 @@ int synth_wave_decode(struct synth_wave *wave,const void *src,int srcc) {
   return srcp;
 }
 
+/* Decode wave, weird Wasm-friendly accessors.
+ */
+
+void *synth_wave_prepare(int serialc) {
+  if (serialc<1) return 0;
+  if (serialc>synth.wp_seriala) {
+    void *nv=synth_realloc(synth.wp_serial,serialc);
+    if (!nv) return 0;
+    synth.wp_serial=nv;
+    synth.wp_seriala=serialc;
+  }
+  synth.wp_serialc=serialc;
+  return synth.wp_serial;
+}
+  
+float *synth_wave_preview() {
+  if (synth.wp_serialc<1) return 0;
+  if (!synth.wp_pcm) {
+    if (!(synth.wp_pcm=synth_malloc(sizeof(float)*SYNTH_WAVE_SIZE_SAMPLES))) return 0;
+  }
+  struct synth_wave tmp={0};
+  if (synth_wave_decode(&tmp,synth.wp_serial,synth.wp_serialc)<0) return 0;
+  __builtin_memcpy(synth.wp_pcm,tmp.v,sizeof(float)*SYNTH_WAVE_SIZE_SAMPLES);
+  return synth.wp_pcm;
+}
+
 /* PCM dump.
  */
  

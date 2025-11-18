@@ -432,6 +432,11 @@ extern struct synth {
   float invcents_octave[12];
   float invcents_halfstep[100];
   
+  // Wave preview.
+  void *wp_serial;
+  int wp_serialc,wp_seriala;
+  float *wp_pcm;
+  
 } synth;
 
 int synth_frames_from_ms(int ms);

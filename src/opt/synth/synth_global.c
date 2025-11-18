@@ -32,6 +32,8 @@ void synth_quit() {
     while (synth.resc-->0) synth_res_cleanup(synth.resv+synth.resc);
     synth_free(synth.resv);
   }
+  if (synth.wp_serial) synth_free(synth.wp_serial);
+  if (synth.wp_pcm) synth_free(synth.wp_pcm);
   __builtin_memset(&synth,0,sizeof(struct synth));
 }
 

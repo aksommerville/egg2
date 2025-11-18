@@ -145,11 +145,11 @@ export class Dom {
     switch (clazz) {
       case HTMLUListElement: return "UL";
       case HTMLOListElement: return "OL";
-      case HTMLListItemElement: return "LI";
       case HTMLAnchorElement: return "A";
       case HTMLDataListElement: "DATA-LIST"; // oddly, my browser uses HTMLElement for these. But the class does exist.
       case HTMLImageElement: return "IMG";
       case HTMLParagraphElement: return "P";
+      case HTMLCanvasElement: return "CANVAS";
     }
     const match = clazz.name.match(/^HTML(.*)Element$/);
     if (match) return match[1].toUpperCase();
