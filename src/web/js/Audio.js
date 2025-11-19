@@ -26,7 +26,11 @@ const wsrc =
           "case 'playSound': this.playSound(m.data); break;" +
           "case 'setPlayhead': this.setPlayhead(m.data); break;" +
           "case 'printWave': this.printWave(m.data); break;" +
-          /*TODO playSong, playSound, etc */
+          "case 'set': this.setProp(m.data); break;" +
+          "case 'noteOn': this.noteOn(m.data); break;" +
+          "case 'noteOff': this.noteOff(m.data); break;" +
+          "case 'noteOnce': this.noteOnce(m.data); break;" +
+          "case 'wheel': this.wheel(m.data); break;" +
         "}" +
       "};" +
     "}" +
@@ -86,6 +90,31 @@ const wsrc =
       "this.instance.exports.synth_play_sound(m.rid, m.trim, m.pan);" +
     "}" +
     
+    "setProp(m) {" +
+      "if (!this.instance) return;" +
+      "this.instance.exports.synth_set(m.songid, m.chid, m.prop, m.v);" +
+    "}" +
+    
+    "noteOn(m) {" +
+      "if (!this.instance) return;" +
+      "this.instance.exports.synth_event_note_on(m.songid, m.chid, m.noteid, m.velocity);" +
+    "}" +
+    
+    "noteOff(m) {" +
+      "if (!this.instance) return;" +
+      "this.instance.exports.synth_event_note_off(m.songid, m.chid, m.noteid);" +
+    "}" +
+    
+    "noteOnce(m) {" +
+      "if (!this.instance) return;" +
+      "this.instance.exports.synth_event_note_once(m.songid, m.chid, m.noteid, m.velocity, m.durms);" +
+    "}" +
+    
+    "wheel(m) {" +
+      "if (!this.instance) return;" +
+      "this.instance.exports.synth_set(m.songid, m.chid, 6, m.v / 8192);" + // PROP 6 = WHEEL
+    "}" +
+    
     "setPlayhead(m) {" +
       "if (!this.instance) return;" +
       "this.instance.exports.synth_set(m.songid, 0xff, 3, m.ph);" + /* 3=SYNTH_PROP_PLAYHEAD */
@@ -120,6 +149,7 @@ export class Audio {
   constructor(rt) {
     this.rt = rt; // Will be undefined when loaded in editor.
     this.ctx = null; // AudioContext
+    this.ready = false; // True after all the things are instantiated and we've sent the "init" message.
     this.initStatus = 0; // <0=error, >0=ready
     this.songStartTime = 0; // AudioContext.currentTime when song starts, approximate at best.
     this.songPlaying = false; // May need to abstract these song things to run multiple. Getting it working for one first.
@@ -132,6 +162,7 @@ export class Audio {
   }
   
   init() {
+    this.ready = false;
     if (!window.AudioContext) return Promise.reject(`AudioContext not defined`);
     const js = new Blob([wsrc], { type: "text/javascript" });
     const url = URL.createObjectURL(js);
@@ -151,7 +182,9 @@ export class Audio {
       this.node.port.onmessage = e => this.onWorkerMessage(e.data);
       return this.acquireWasm();
     }).then(wasm => {
+      //TODO Don't send the entire ROM, slice out the song and sound parts.
       this.node.port.postMessage({ cmd: "init", rom: this.rt?.rom?.serial, wasm, r: this.ctx.sampleRate, c: this.ctx.destination.channelCount });
+      this.ready = true;
     });
     this.ctx.audioWorklet.addModule(url).then(() => {
       URL.revokeObjectURL(url);
@@ -196,6 +229,7 @@ export class Audio {
     if (this.ctx.state === "suspended") {
       this.ctx.resume();
     }
+    this.ready = true;
   }
   
   stop() {
@@ -203,6 +237,7 @@ export class Audio {
     if (this.ctx) {
       this.ctx.suspend();
     }
+    this.ready = false;
   }
   
   update() {//XXX no longer needed
@@ -214,7 +249,7 @@ export class Audio {
   playEauSong(serial, songid, repeat) {
     if (serial instanceof ArrayBuffer) serial = new Uint8Array(serial);
     if (serial && (serial.length > 0x3fffff)) return;
-    if (!this.node) return;
+    if (!this.ready) return;
     let rom = null;
     if (serial) {
       rom = new Uint8Array(serial.length + 3);
@@ -289,10 +324,25 @@ export class Audio {
     }
   }
   
+  getNormalizedPlayhead() {
+    if (this.ctx && this.songPlaying) {
+      return ((this.ctx.currentTime - this.songStartTime) % this.songDuration) / this.songDuration;
+    }
+    return 0.0;
+  }
+  
+  setNormalizedPlayhead(p) {
+    if (this.ctx && this.songPlaying) {
+      const ph = p * this.songDuration;
+      this.node.port.postMessage({ cmd: "setPlayhead", songid: 1, ph });
+      this.songStartTime = this.ctx.currentTime - ph;
+    }
+  }
+  
   /* Egg Platform API.
    ********************************************************************************/
    
-  enableMusic(enable) {
+  enableMusic(enable) {//TODO redefining api as a trim rather than switch
     if (enable) {
       if (this.musicEnabled) return;
       this.musicEnabled = true;
@@ -314,7 +364,7 @@ export class Audio {
     }
   }
   
-  enableSound(enable) {
+  enableSound(enable) {//TODO
     if (enable) {
       if (this.soundEnabled) return;
       this.soundEnabled = true;
@@ -328,7 +378,53 @@ export class Audio {
       this.soundPlayers = [];
     }
   }
-   
+  
+  egg_play_sound(rid, trim, pan) {
+    if (!this.ready) return;
+    this.node.port.postMessage({ cmd: "playSound", rid, trim, pan });
+  }
+  
+  egg_play_song(songid, rid, repeat, trim, pan) {
+    if (!this.ready) return; //TODO Should we stash the request to retry after becoming ready?
+    this.songParams = [songid, 0/*force*/, repeat, 0]; // To restore when prefs change.XXX
+    this.node.port.postMessage({ cmd: "playSong", songid, rid, repeat, trim, pan });
+    this.songStartTime = this.ctx.currentTime;//TODO track time per songid
+  }
+  
+  egg_song_set(songid, chid, prop, v) {
+    if (!this.ready) return;
+    this.node.port.postMessage({ cmd: "set", songid, chid, prop, v });
+    //TODO if prop==3 (PLAYHEAD) update our bookkeeping
+  }
+  
+  egg_song_event_note_on(songid, chid, noteid, velocity) {
+    if (!this.ready) return;
+    this.node.port.postMessage({ cmd: "noteOn", songid, chid, noteid, velocity });
+  }
+  
+  egg_song_event_note_off(songid, chid, noteid) {
+    if (!this.ready) return;
+    this.node.port.postMessage({ cmd: "noteOff", songid, chid, noteid });
+  }
+  
+  egg_song_event_note_once(songid, chid, noteid, velocity, durms) {
+    if (!this.ready) return;
+    this.node.port.postMessage({ cmd: "noteOnce", songid, chid, noteid, velocity, durms });
+  }
+  
+  egg_song_event_wheel(songid, chid, v) {
+    if (!this.ready) return;
+    this.node.port.postMessage({ cmd: "wheel", songid, chid, v });
+  }
+  
+  egg_song_get_playhead(s) {
+    if (this.ctx && this.songPlaying) {//TODO track time per songid
+      return (this.ctx.currentTime - this.songStartTime) % this.songDuration;
+    }
+    return 0.0;
+  }
+  
+  /*XXX old synth
   egg_play_sound(soundid, trim, pan) {
     if (!this.ctx) return;
     this.node.port.postMessage({ cmd: "playSound", rid: soundid, trim, pan });
@@ -368,25 +464,11 @@ export class Audio {
     return 0.0;
   }
   
-  getNormalizedPlayhead() {
-    if (this.ctx && this.songPlaying) {
-      return ((this.ctx.currentTime - this.songStartTime) % this.songDuration) / this.songDuration;
-    }
-    return 0.0;
-  }
-  
   egg_song_set_playhead(ph) {
     this.node.port.postMessage({ cmd: "setPlayhead", songid: 1, ph });
     this.songStartTime = this.ctx.currentTime - ph;
   }
-  
-  setNormalizedPlayhead(p) {
-    if (this.ctx && this.songPlaying) {
-      const ph = p * this.songDuration;
-      this.node.port.postMessage({ cmd: "setPlayhead", songid: 1, ph });
-      this.songStartTime = this.ctx.currentTime - ph;
-    }
-  }
+  */
 }
 
 Audio.singleton = true; // Not required by Egg Runtime, but necessary for the editor.

@@ -75,14 +75,14 @@ Features we *do* support:
 
 - [ ] Branch 20251106-synth3: Replace synthesizer with the AudioWorkletNode strategy proven out in egg3. (egg3 is not real; 2 is the go-forward version).
 - - [x] Update MIDI notes in etc/doc/eau-format.md
-- - [ ] Are we going to have an EAU-Text format? v3 doesn't have one.
-- - [ ] API changes
-- - - [ ] `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` should be continuous trims, say 0..99.
+- - [x] Are we going to have an EAU-Text format? v3 doesn't have one. ...I think we don't need, at least it's not worth the enormous effort right now.
+- - [x] API changes
+- - - [x] `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` should be continuous trims, say 0..99. ...punt
 - - - [x] Permit multiple songs? I really think we should, along the lines of egg3.
 - - - [x] Note On / Note Off / Note Once / Wheel, make Egg Platform API match synth's API. Also "songid".
 - - - [x] Update eggrt.
 - - - [x] Update eggrun.
-- - - [ ] Update web.
+- - - [x] Update web.
 - - - [x] Update demo.
 - - [x] Web. Orchestrate load in Audio.js.
 - - [x] Web: Estimate playhead. Do in Audio.js, not editor, so we can expose it via Platform API.
@@ -91,13 +91,14 @@ Features we *do* support:
 - - [x] Eliminate standalone builds.
 - - [x] Build synth wasm.
 - - [x] `GET /api/webpath` is changed to return the Zip instead. That probably breaks launching from editor. ...confirmed, broken
-- - [ ] `eau_cvt_eau_midi`: Look up in SDK instruments.
+- - [x] `eau_cvt_eau_midi`: Look up in SDK instruments. ...punt
 - - [x] Is web playing mono only? ...YES. 9-sand_farming has a post, makes it obvious.
 - - [x] Eliminate the global modal for comparing synthesizers. They're now the same thing.
 - - [ ] Update one client project before finalizing. Zen Garden?
 - [ ] Major changes.
 - - [ ] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
+- - [ ] Edit SDK instruments. Maybe a global option in the Editor's actions menu?
 - - [ ] Standard instruments.
 - - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
 - - - [ ] Native menu.
@@ -106,14 +107,12 @@ Features we *do* support:
 - - - [ ] Web input config.
 - - [ ] Web: Touch input, on-screen gamepad.
 - [ ] Audio
+- - [ ] Web synth: Play thru song 8, then start song 9 in demo. 9 doesn't start. Will start on second try. Are we running out of memory? (both big songs)
+- - [ ] Redefine `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` as trims in 0..99.
+- - [ ] Web Audio.js: Slice out audio parts of ROM, don't send the whole thing.
+- - [ ] Look up SDK instruments during song compile.
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
-- - [ ] Web synth: tuned voices use the oscillator's `detune` for both wheel and pitchenv. I expect they will conflict.
-- - - Probably related to that, FM voices really can't bend at all, the modulator goes out of sync.
-- - [ ] Check default envelopes. I think I'm hearing some clicking when unconfigured.
-- - [ ] In Humm Fu, there's a pop as you enter gameover. Due to terminating song with Delay posts?
 - [ ] Audio review, when close to ready.
-- - [ ] Native and web do not sound the same. Once better tooling is in place, figure out why and tweak them closer.
-- - [ ] Music level is too high relative to sound effects. Cheat it down globally. Fudged a correction in both Zen Garden and Humm Fu.
 - [ ] Minor bugs and tweaks outstanding.
 - - [ ] Remove `eggdev_convert_context`. Make a similar thing in "serial", so we can share it around. Then share it around.
 - - [ ] DecalsheetEditor: After using one of the clicky macros, sidebar scrolls to the top again. Can we keep it where it was? So annoying.
@@ -168,7 +167,7 @@ Features we *do* support:
 - - [ ] Too Heavy (JS; would be a full rewrite)
 - - [ ] Economy of Motion (JS; full rewrite)
 - - [ ] Sitter 2009 (a full rewrite is warranted)
-- - Definitely not in scope: Chetyorska (MIDI-In)
+- - Definitely not in scope: Chetyorska (MIDI-In), Pico Sitter (who cares)
 - [ ] "eggzotics": Sample games that build for something weird, and also Egg.
 - - Anything with a virtual runtime is definitely out. So no Pico-8, and nothing using Java, JS, Lua, etc.
 - - [ ] Shovel. That's my other games framework, specifically to build web apps under 13 kB. I bet we can arrange a way to build for both Egg and Shovel, with Shovel's constraints.
@@ -180,5 +179,10 @@ Features we *do* support:
 - - [ ] Thumby Color
 - - [ ] PicoSystem
 - - [ ] Playdate
-- - [ ] Pre-OSX Mac?
+- - [ ] Pre-OSX Mac? +Pippin if so.
 - - [ ] NES? SNES? Gameboy? That's probably insane, right?
+- - [ ] Wii/GameCube (maybe a full target)
+- - [ ] Xbox ('')
+- - [ ] Can we find a toolchain for Playstation? That would be super cool. And might be a full target.
+- - [ ] Dreamcast. I recall this is highly doable, security-wise.
+- - [ ] Philips CDI. I'm told it's very easy to develop for. Can we find one?
