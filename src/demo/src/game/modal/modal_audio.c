@@ -129,13 +129,13 @@ static void modal_audio_adjust(struct modal *modal,int d) {
  
 static void modal_audio_start_song(struct modal *modal) {
   if ((MODAL->songidp<0)||(MODAL->songidp>=MODAL->songidc)) return;
-  int songid=MODAL->songidv[MODAL->songidp];
-  egg_play_song(songid,MODAL->force,MODAL->repeat);
+  int rid=MODAL->songidv[MODAL->songidp];
+  egg_play_song(1,rid,MODAL->repeat,1.0f,0.0f);
   // Do not update the now-playing fields; we poll for them aggressively during update.
 }
  
 static void modal_audio_commit_playhead(struct modal *modal) {
-  egg_song_set_playhead(MODAL->playhead);
+  egg_song_set(1,0xff,EGG_SONG_PROP_PLAYHEAD,MODAL->playhead);
 }
  
 static void modal_audio_start_sound(struct modal *modal) {
@@ -161,6 +161,7 @@ static void modal_audio_activate(struct modal *modal) {
  */
  
 static void modal_audio_note(struct modal *modal,int holdp,int value) {
+  #if 0 /*TODO*/
   if ((holdp<0)||(holdp>=HOLD_LIMIT)) return;
   if (value) {
     int noteid=0x38+holdp*4;
@@ -169,6 +170,7 @@ static void modal_audio_note(struct modal *modal,int holdp,int value) {
     egg_release_note(MODAL->holdv[holdp]);
     MODAL->holdv[holdp]=0;
   }
+  #endif
 }
 
 /* Input.
@@ -181,7 +183,7 @@ static void _audio_input(struct modal *modal,int btnid,int value) {
     case EGG_BTN_LEFT: modal_audio_adjust(modal,-1); break;
     case EGG_BTN_RIGHT: modal_audio_adjust(modal,1); break;
     case EGG_BTN_SOUTH: modal_audio_activate(modal); break;
-    case EGG_BTN_WEST: egg_play_song(0,0,0); break; // Not perfect, but try to stop the music when we dismiss.
+    case EGG_BTN_WEST: egg_play_song(1,0,0,0.0f,0.0f); break; // Not perfect, but try to stop the music when we dismiss.
   }
   switch (btnid) { // regardless of value...
     // EAST and NORTH to play notes manually.
@@ -226,6 +228,7 @@ static void _audio_update(struct modal *modal,double elapsed,int input,int pvinp
   #endif
   
   // Adjust the wheel.
+  #if 0 /*TODO*/
   switch (input&(EGG_BTN_L1|EGG_BTN_R1)) {
     case EGG_BTN_L1: {
         if ((MODAL->wheeltarget-=10)<-512) MODAL->wheeltarget=-512;
@@ -248,6 +251,7 @@ static void _audio_update(struct modal *modal,double elapsed,int input,int pvinp
     MODAL->wheelcurrent-=1;
     egg_adjust_wheel(0,MODAL->wheelcurrent);
   }
+  #endif
   
   gui_term_update(MODAL->term,elapsed);
 }

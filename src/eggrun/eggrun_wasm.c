@@ -92,26 +92,36 @@ static int egg_wasm_input_get_one(wasm_exec_env_t ee,int playerid) {
   return egg_input_get_one(playerid);
 }
 
-static void egg_wasm_play_sound(wasm_exec_env_t ee,int rid,double trim,double repeat) {
-  egg_play_sound(rid,trim,repeat);
+static void egg_wasm_play_sound(wasm_exec_env_t ee,int soundid,float trim,float pan) {
+  egg_play_sound(soundid,trim,pan);
 }
 
-static void egg_wasm_play_song(wasm_exec_env_t ee,int rid,int force,int repeat) {
-  egg_play_song(rid,force,repeat);
+static void egg_wasm_play_song(wasm_exec_env_t ee,int songid,int rid,int repeat,float trim,float pan) {
+  egg_play_song(songid,rid,repeat,trim,pan);
 }
 
-/*XXX
-static int egg_wasm_song_get_id(wasm_exec_env_t ee) {
-  return egg_song_get_id();
+static void egg_wasm_song_set(wasm_exec_env_t ee,int songid,int chid,int prop,float v) {
+  egg_song_set(songid,chid,prop,v);
 }
 
-static double egg_wasm_song_get_playhead(wasm_exec_env_t ee) {
-  return egg_song_get_playhead();
+static void egg_wasm_song_event_note_on(wasm_exec_env_t ee,int songid,int chid,int noteid,int velocity) {
+  egg_song_event_note_on(songid,chid,noteid,velocity);
 }
-/**/
 
-static void egg_wasm_song_set_playhead(wasm_exec_env_t ee,double s) {
-  egg_song_set_playhead(s);
+static void egg_wasm_song_event_note_off(wasm_exec_env_t ee,int songid,int chid,int noteid) {
+  egg_song_event_note_off(songid,chid,noteid);
+}
+
+static void egg_wasm_song_event_note_once(wasm_exec_env_t ee,int songid,int chid,int noteid,int velocity,int durms) {
+  egg_song_event_note_once(songid,chid,noteid,velocity,durms);
+}
+
+static void egg_wasm_song_event_wheel(wasm_exec_env_t ee,int songid,int chid,int v) {
+  egg_song_event_wheel(songid,chid,v);
+}
+
+static float egg_wasm_song_get_playhead(wasm_exec_env_t ee,int songid) {
+  return egg_song_get_playhead(songid);
 }
 
 static void egg_wasm_texture_del(wasm_exec_env_t ee,int texid) {
@@ -163,15 +173,17 @@ static NativeSymbol eggrun_wasm_exports[]={
   {"egg_store_get",egg_wasm_store_get,"(*~*~)i"},
   {"egg_store_set",egg_wasm_store_set,"(*~*~)i"},
   {"egg_store_key_by_index",egg_wasm_store_key_by_index,"(*~i)i"},
-  {"egg_input_configure",egg_wasm_input_configure,"()i"},
+  {"egg_input_configure",egg_wasm_input_configure,"()"},
   {"egg_input_get_all",egg_wasm_input_get_all,"(ii)"},
   {"egg_input_get_one",egg_wasm_input_get_one,"(i)i"},
-  {"egg_play_sound",egg_wasm_play_sound,"(iFF)"},
-  {"egg_play_song",egg_wasm_play_song,"(iii)"},
-  //XXX
-  //{"egg_song_get_id",egg_wasm_song_get_id,"()i"},
-  //{"egg_song_get_playhead",egg_wasm_song_get_playhead,"()F"},
-  {"egg_song_set_playhead",egg_wasm_song_set_playhead,"(F)"},
+  {"egg_play_sound",egg_wasm_play_sound,"(iff)"},
+  {"egg_play_song",egg_wasm_play_song,"(iiiff)"},
+  {"egg_song_set",egg_wasm_song_set,"(iiif)"},
+  {"egg_song_event_note_on",egg_wasm_song_event_note_on,"(iiii)"},
+  {"egg_song_event_note_off",egg_wasm_song_event_note_off,"(iii)"},
+  {"egg_song_event_note_once",egg_wasm_song_event_note_once,"(iiiii)"},
+  {"egg_song_event_wheel",egg_wasm_song_event_wheel,"(iii)"},
+  {"egg_song_get_playhead",egg_wasm_song_get_playhead,"(i)f"},
   {"egg_texture_del",egg_wasm_texture_del,"(i)"},
   {"egg_texture_new",egg_wasm_texture_new,"()i"},
   {"egg_texture_get_size",egg_wasm_texture_get_size,"(iii)"},

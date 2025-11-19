@@ -7,8 +7,6 @@
 
 #include <stdint.h>
 
-// I'm only exporting things I expect to link to the Egg Platform API.
-// Can freely add this to other functions when needed.
 #if USE_native
   #define WASM_EXPORT(name)
   #define WASM_IMPORT(name)
@@ -185,6 +183,49 @@ WASM_IMPORT("egg_input_get_one") int egg_input_get_one(int playerid);
 /* Audio.
  **********************************************************************************************/
 
+/* Play a fire-and-forget sound effect (a "sound" resource).
+ * (trim) in 0..1, (pan) in -1..0..1 = left..center..right. Typically (1.0f,0.0f).
+ */
+WASM_IMPORT("egg_play_sound") void egg_play_sound(int rid,float trim,float pan);
+
+/* Begin playing a song.
+ * (songid) is an arbitrary number you make up, to distinguish songs playing concurrently. >=1.
+ * In the typical case that you only ever have one song playing, just use 1 every time.
+ * (rid) names a "song" resource, or zero to play silence.
+ * (repeat) nonzero to loop until manually stopped.
+ * (trim,pan) as in egg_play_sound.
+ * If you request a (rid) that's already playing on this (songid), we restart it. No special handling for that case on our end.
+ */
+WASM_IMPORT("egg_play_song") void egg_play_song(int songid,int rid,int repeat,float trim,float pan);
+
+/* Set properties of a running song.
+ * Moving the playhead is messy. It won't try to trigger notes that you land in the middle of them.
+ * If you start a song and immediately move its playhead, the first notes might trigger too.
+ */
+WASM_IMPORT("egg_song_set") void egg_song_set(int songid,int chid,int prop,float v);
+#define EGG_SONG_PROP_PLAYHEAD 3 /* (songid) only. (v) in seconds. */
+#define EGG_SONG_PROP_TRIM     4 /* Invalid (chid) to address the song's full trim, or a real (chid) to adjust it individually. */
+#define EGG_SONG_PROP_PAN      5 /* (chid) like TRIM. */
+
+/* Inject events into a running song, for ocarinas and such.
+ * Recommendation is to create a dummy song with no notes, just a long delay, and use that for injection only.
+ * But you can also use these to interfere with real songs if you like.
+ * Wheel (v) in -8192..8191, the same range as MIDI but signed.
+ * Note that buffering interferes with timing. You can't inject events with enough precision to play music.
+ * It's for user-driven events, where a few milliseconds here or there would not be noticeable.
+ */
+WASM_IMPORT("egg_song_event_note_on") void egg_song_event_note_on(int songid,int chid,int noteid,int velocity);
+WASM_IMPORT("egg_song_event_note_off") void egg_song_event_note_off(int songid,int chid,int noteid);
+WASM_IMPORT("egg_song_event_note_once") void egg_song_event_note_once(int songid,int chid,int noteid,int velocity,int durms);
+WASM_IMPORT("egg_song_event_wheel") void egg_song_event_wheel(int songid,int chid,int v);
+
+/* Estimate the playhead of a running song, in seconds.
+ * Synthesizers run in their own thread and are subject to buffering, so this is always going to be somewhat fuzzy.
+ * Never exactly zero if a song on this (songid) is running.
+ */
+WASM_IMPORT("egg_song_get_playhead") float egg_song_get_playhead(int songid);
+
+#if 0 /*XXX Before AudioWorkletNode */
 /* (trim) in 0..1.
  * (pan) -1..0..1 = left..center..right
  */
@@ -221,6 +262,7 @@ WASM_IMPORT("egg_song_get_id") int egg_song_get_id();
 WASM_IMPORT("egg_song_get_playhead") double egg_song_get_playhead();
 #endif
 WASM_IMPORT("egg_song_set_playhead") void egg_song_set_playhead(double playhead);
+#endif
 
 /* Video.
  ******************************************************************************************/

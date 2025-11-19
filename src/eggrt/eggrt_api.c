@@ -21,7 +21,7 @@ void egg_log(const char *msg) {
     while (msg[msgc]) msgc++;
     while (msgc&&((unsigned char)msg[msgc-1]<=0x20)) msgc--;
   }
-  fprintf(stderr,"GAME: %s\n",msg);
+  fprintf(stderr,"GAME: %.*s\n",msgc,msg);
 }
 
 double egg_time_real() {
@@ -145,23 +145,79 @@ int egg_input_get_one(int playerid) {
 /* Audio.
  */
  
-void egg_play_sound(int soundid,double trim,double pan) {
-  if (!eggrt.sound_enable) return;
+void egg_play_sound(int soundid,float trim,float pan) {
+  //if (!eggrt.sound_enable) return;//XXX
   if (hostio_audio_lock(eggrt.hostio)<0) return;
   synth_play_sound(soundid,trim,pan);
   hostio_audio_unlock(eggrt.hostio);
 }
 
-void egg_play_song(int songid,int force,int repeat) {
-  eggrt.songid=songid;
+void egg_play_song(int songid,int rid,int repeat,float trim,float pan) {
+  eggrt.songid=rid;//XXX eggrt needs to track multiple songs. (or none, do we need to track at all anymore?)
   eggrt.songrepeat=repeat;
-  if (!eggrt.music_enable) return;
+  //if (!eggrt.music_enable) return;//XXX
   if (hostio_audio_lock(eggrt.hostio)<0) return;
-  if (force) synth_play_song(1,0,0,0.0f,0.0f);
-  synth_play_song(1,songid,repeat,1.0f,0.0f);
+  synth_play_song(songid,rid,repeat,trim,pan);
   hostio_audio_unlock(eggrt.hostio);
 }
 
+void egg_song_set(int songid,int chid,int prop,float v) {
+  // EGG_SONG_PROP_* and SYNTH_PROP_* are the same thing.
+  // But don't pass them thru blindly; any properties not defined by Egg Platform API must be discarded.
+  switch (prop) {
+    case EGG_SONG_PROP_PLAYHEAD:
+    case EGG_SONG_PROP_TRIM:
+    case EGG_SONG_PROP_PAN:
+      break;
+    default: return;
+  }
+  if (hostio_audio_lock(eggrt.hostio)<0) return;
+  synth_set(songid,chid,prop,v);
+  hostio_audio_unlock(eggrt.hostio);
+}
+
+void egg_song_event_note_on(int songid,int chid,int noteid,int velocity) {
+  if (hostio_audio_lock(eggrt.hostio)<0) return;
+  synth_event_note_on(songid,chid,noteid,velocity);
+  hostio_audio_unlock(eggrt.hostio);
+}
+
+void egg_song_event_note_off(int songid,int chid,int noteid) {
+  if (hostio_audio_lock(eggrt.hostio)<0) return;
+  synth_event_note_off(songid,chid,noteid,0x40);
+  hostio_audio_unlock(eggrt.hostio);
+}
+
+void egg_song_event_note_once(int songid,int chid,int noteid,int velocity,int durms) {
+  if (hostio_audio_lock(eggrt.hostio)<0) return;
+  synth_event_note_once(songid,chid,noteid,velocity,durms);
+  hostio_audio_unlock(eggrt.hostio);
+}
+
+void egg_song_event_wheel(int songid,int chid,int v) {
+  float vf;
+  if (v<=-8192) vf=-1.0f;
+  else if (v>=8192) vf=1.0f;
+  else vf=(float)v/8192.0f;
+  if (hostio_audio_lock(eggrt.hostio)<0) return;
+  synth_set(songid,chid,SYNTH_PROP_WHEEL,vf);
+  hostio_audio_unlock(eggrt.hostio);
+}
+
+float egg_song_get_playhead(int songid) {
+  if (hostio_audio_lock(eggrt.hostio)<0) return 0.0;
+  double p=synth_get(1,0xff,SYNTH_PROP_PLAYHEAD);
+  if (p<=0.0) {
+    hostio_audio_unlock(eggrt.hostio);
+    return 0.0;
+  }
+  double remaining=hostio_audio_estimate_remaining_buffer(eggrt.hostio->audio);
+  hostio_audio_unlock(eggrt.hostio);
+  if (remaining>=p) return 0.0;
+  return p-remaining;
+}
+
+#if 0 /*XXX old api */
 int egg_play_note(int chid,int noteid,int velocity,int durms) {
   if (!eggrt.music_enable) return 0;
   if (hostio_audio_lock(eggrt.hostio)<0) return 0;
@@ -206,6 +262,7 @@ double egg_song_get_playhead() {//XXX API can't support this anymore; won't be f
 void egg_song_set_playhead(double playhead) {
   synth_set(1,0xff,SYNTH_PROP_PLAYHEAD,playhead);
 }
+#endif
 
 /* Video.
  */

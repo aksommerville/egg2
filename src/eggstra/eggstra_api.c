@@ -55,22 +55,30 @@ void egg_input_get_all(int *statev,int statea) {
 int egg_input_get_one(int playerid) {
   return 0;
 }
-
-void egg_play_sound(int soundid,double trim,double pan) {
+ 
+void egg_play_sound(int soundid,float trim,float pan) {
 }
 
-void egg_play_song(int songid,int force,int repeat) {
+void egg_play_song(int songid,int rid,int repeat,float trim,float pan) {
 }
 
-int egg_song_get_id() {
-  return 0;
+void egg_song_set(int songid,int chid,int prop,float v) {
 }
 
-double egg_song_get_playhead() {
-  return 0.0;
+void egg_song_event_note_on(int songid,int chid,int noteid,int velocity) {
 }
 
-void egg_song_set_playhead(double playhead) {
+void egg_song_event_note_off(int songid,int chid,int noteid) {
+}
+
+void egg_song_event_note_once(int songid,int chid,int noteid,int velocity,int durms) {
+}
+
+void egg_song_event_wheel(int songid,int chid,int v) {
+}
+
+float egg_song_get_playhead(int songid) {
+  return 0.0f;
 }
 
 void egg_texture_del(int texid) {
