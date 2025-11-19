@@ -268,31 +268,6 @@ export class Audio {
     return total / 1000;
   }
   
-  playSoundBuffer(buffer, trim, pan) {
-    /*TODO Do we still need this? I think we can eliminate the compare-the-synthesizers modal.
-    if (!this.ctx) return;
-    if (this.ctx.state === "suspended") return;
-    if (trim <= 0) return;
-    const node = new AudioBufferSourceNode(this.ctx, { buffer });
-    let tail = node;
-    if (trim < 1) {
-      const gain = new GainNode(this.ctx, { gain: trim });
-      tail.connect(gain);
-      tail = gain;
-    }
-    if (pan) {
-      const panner = new StereoPannerNode(this.ctx, { pan });
-      tail.connect(panner);
-      tail = panner;
-    }
-    tail.connect(this.ctx.destination);
-    const endTime = this.ctx.currentTime + buffer.duration + 0.010;
-    this.soundPlayers.push({ node, endTime });
-    if (tail !== node) this.soundPlayers.push({ node: tail, endTime });
-    node.start();
-    */
-  }
-  
   printWave(serial) {
     const cookie = this.nextWaveCookie++;
     let resolve, reject;

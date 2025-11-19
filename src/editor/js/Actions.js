@@ -17,7 +17,6 @@ import { MapEditor } from "./map/MapEditor.js";
 import { SongEditor } from "./song/SongEditor.js";
 import { StringsEditor } from "./std/StringsEditor.js";
 import { MissingResourcesService } from "./std/MissingResourcesService.js";
-import { AudioCompareModal } from "./song/AudioCompareModal.js";
 import { WorldMapModal } from "./map/WorldMapModal.js";
  
 export class Actions {
@@ -35,7 +34,6 @@ export class Actions {
       ...this.override.actions,
       { name: "launch", label: "Launch", fn: () => this.launchService.launch() },
       { name: "missingResources", label: "Missing Resources...", fn: () => this.missingResourcesService.detectAndReport() },
-      { name: "audioCompare", label: "Compare native/web audio...", fn: () => this.dom.spawnModal(AudioCompareModal) },
       { name: "worldMap", label: "World Map...", fn: () => this.dom.spawnModal(WorldMapModal) },
     ];
     

@@ -89,7 +89,7 @@ Features we *do* support:
 - - [x] `GET /api/webpath` is changed to return the Zip instead. That probably breaks launching from editor. ...confirmed, broken
 - - [ ] `eau_cvt_eau_midi`: Look up in SDK instruments.
 - - [x] Is web playing mono only? ...YES. 9-sand_farming has a post, makes it obvious.
-- - [ ] Eliminate the global modal for comparing synthesizers. They're now the same thing.
+- - [x] Eliminate the global modal for comparing synthesizers. They're now the same thing.
 - [ ] Major changes.
 - - [ ] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
