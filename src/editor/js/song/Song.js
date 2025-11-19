@@ -535,9 +535,9 @@ export class Song {
     
     // If we don't already have a noop event at the end, push one and we're done.
     const final = this.events[this.events.length - 1];
-    if (final.type !== "noop") {
+    if (final.type !== "marker") {
       if (endTime < final.time) return false; // oops?
-      this.events.push(new SongEvent(endTime, "noop"));
+      this.events.push(new SongEvent(endTime, "marker"));
       return true;
     }
     

@@ -180,6 +180,7 @@ static int gen_makefile(struct eggdev_project_context *ctx) {
     "  --htdocs=EGG_SDK/src/web \\\n"
     "  --htdocs=EGG_SDK/src/editor \\\n"
     "  --htdocs=src/editor \\\n"
+    "  --htdocs=/synth.wasm:EGG_SDK/out/web/synth.wasm \\n"
     "  --htdocs=/build:out/%.*s-web.zip \\\n"
     "  --htdocs=/out:out \\\n"
     "  --writeable=src/data \\\n"

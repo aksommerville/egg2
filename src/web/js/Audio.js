@@ -18,11 +18,12 @@ const wsrc =
       "this.memory = new WebAssembly.Memory({ initial: 100, maximum: 1000 });" + /* TODO Maximum memory size, can we get smarter about it? */
       "this.buffers = [];" + /* Float32Array */
       "this.bufferSize = 128;" + /* frames */
+      "this.deferredSongs = [];" + /* m.data */
       "this.port.onmessage = m => {" +
         "switch (m.data.cmd) {" +
           "case 'init': this.init(m.data); break;" +
           "case 'reinit': this.reinit(m.data); break;" +
-          "case 'playSong': this.playSong(m.data); break;" +
+          "case 'playSong': this.playSong(m.data, true); break;" +
           "case 'playSound': this.playSound(m.data); break;" +
           "case 'setPlayhead': this.setPlayhead(m.data); break;" +
           "case 'printWave': this.printWave(m.data); break;" +
@@ -51,6 +52,8 @@ const wsrc =
         "}" +
         "this.transferRom(m.rom);" +
         "this.acquireBuffers();" +
+        "for (const req of this.deferredSongs) this.playSong(req, false);" +
+        "this.deferredSongs = [];" +
       "}).catch(e => {" +
         "console.error(e);" +
       "});" +
@@ -80,8 +83,11 @@ const wsrc =
       "}" +
     "}" +
     
-    "playSong(m) {" +
-      "if (!this.instance) return;" +
+    "playSong(m, deferrable) {" +
+      "if (!this.instance) {" +
+        "if (deferrable) this.deferredSongs.push(m);" +
+        "return;" +
+      "}" +
       "this.instance.exports.synth_play_song(m.songid, m.rid, m.repeat, m.trim, m.pan);" +
     "}" +
     
@@ -385,7 +391,12 @@ export class Audio {
   }
   
   egg_play_song(songid, rid, repeat, trim, pan) {
-    if (!this.ready) return; //TODO Should we stash the request to retry after becoming ready?
+    if (!this.ready) {
+      this.initPromise.then(() => {
+        if (this.ready) this.egg_play_song(songid, rid, repeat, trim, pan);
+      });
+      return;
+    }
     this.songParams = [songid, 0/*force*/, repeat, 0]; // To restore when prefs change.XXX
     this.node.port.postMessage({ cmd: "playSong", songid, rid, repeat, trim, pan });
     this.songStartTime = this.ctx.currentTime;//TODO track time per songid

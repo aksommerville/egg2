@@ -73,7 +73,7 @@ Features we *do* support:
 
 ## TODO
 
-- [ ] Branch 20251106-synth3: Replace synthesizer with the AudioWorkletNode strategy proven out in egg3. (egg3 is not real; 2 is the go-forward version).
+- [x] Branch 20251106-synth3: Replace synthesizer with the AudioWorkletNode strategy proven out in egg3. (egg3 is not real; 2 is the go-forward version).
 - - [x] Update MIDI notes in etc/doc/eau-format.md
 - - [x] Are we going to have an EAU-Text format? v3 doesn't have one. ...I think we don't need, at least it's not worth the enormous effort right now.
 - - [x] API changes
@@ -94,7 +94,15 @@ Features we *do* support:
 - - [x] `eau_cvt_eau_midi`: Look up in SDK instruments. ...punt
 - - [x] Is web playing mono only? ...YES. 9-sand_farming has a post, makes it obvious.
 - - [x] Eliminate the global modal for comparing synthesizers. They're now the same thing.
-- - [ ] Update one client project before finalizing. Zen Garden?
+- - [x] Update one client project before finalizing. Zen Garden?
+- - - Update `egg_play_song` from `(rid,force,repeat)` to `(1,rid,repeat,1.0f,0.0f)`
+- - - Use midevil to remove Meta 0x77 from songs. Old regime used multiple, and that will choke the new regime.
+- - - Zap all sound effects. `echo -n "" > 1-yadda_yadda`
+- - - Play natively to validate.
+- - - If songs are requested redundantly, add a global `playing_song_id` -- synth doesn't manage that anymore.
+- - - Add to Makefile for edit: `--htdocs=/synth.wasm:EGG_SDK/out/web/synth.wasm`
+- - - Also `--htdocs=/build:out/%.*s-web.zip` tho we don't necessarily need it right now.
+- - - Revoice song and sound resources.
 - [ ] Major changes.
 - - [ ] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
