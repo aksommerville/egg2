@@ -86,9 +86,10 @@ Features we *do* support:
 - - [x] Editor: UI
 - - [x] Eliminate standalone builds.
 - - [x] Build synth wasm.
-- - [ ] `GET /api/webpath` is changed to return the Zip instead. That probably breaks launching from editor. ...confirmed, broken
+- - [x] `GET /api/webpath` is changed to return the Zip instead. That probably breaks launching from editor. ...confirmed, broken
 - - [ ] `eau_cvt_eau_midi`: Look up in SDK instruments.
 - - [x] Is web playing mono only? ...YES. 9-sand_farming has a post, makes it obvious.
+- - [ ] Eliminate the global modal for comparing synthesizers. They're now the same thing.
 - [ ] Major changes.
 - - [ ] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
@@ -137,6 +138,7 @@ Features we *do* support:
 - - [ ] eggstra play: Show CPU consumption.
 - - [ ] eggstra play: Read from stdin.
 - - [ ] eggstra play: Play WAV files.
+- - [ ] Editor Launch: Is it possible to dismiss the iframe when game ends? Or allow Esc after it terminates? Having trouble capturing key events for it.
 - [ ] Review all "TODO" in source, there's a ton of them.
 - With the above complete, we can start migrating games:
 - [ ] Rewrite or migrate eggsamples for v2.

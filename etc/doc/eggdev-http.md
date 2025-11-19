@@ -40,6 +40,9 @@ Returns the path to the output web bundle of this project, relative to project's
 Typically `/out/MYGAME-web.zip`.
 Fails if no suitable target is configured.
 
+Note that after removing standalone builds, this is probably not useful anymore.
+Clients should serve their web bundle as `--htdocs=/build:out/mygame-web.zip` and access as `GET /build/index.html`.
+
 ### GET /api/projname
 
 Returns a short simple string, the name of the project being edited (ie basename of its top directory).

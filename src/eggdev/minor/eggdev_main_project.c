@@ -180,10 +180,11 @@ static int gen_makefile(struct eggdev_project_context *ctx) {
     "  --htdocs=EGG_SDK/src/web \\\n"
     "  --htdocs=EGG_SDK/src/editor \\\n"
     "  --htdocs=src/editor \\\n"
+    "  --htdocs=/build:out/%.*s-web.zip \\\n"
     "  --htdocs=/out:out \\\n"
     "  --writeable=src/data \\\n"
     "  --project=.\n"
-  )<0) return -1;
+  ,ctx->namec,ctx->name)<0) return -1;
   
   return eggdev_project_write(ctx,"Makefile",ctx->scratch.v,ctx->scratch.c);
 }

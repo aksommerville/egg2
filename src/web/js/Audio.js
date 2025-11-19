@@ -231,21 +231,6 @@ export class Audio {
     this.node.port.postMessage({ cmd: "reinit", rom });
     this.node.port.postMessage({ cmd: "playSong", songid: 1, rid: 1, repeat, trim: 1, pan: 0 });
     this.songStartTime = this.ctx.currentTime;
-    /*TODO
-    let playhead = 0;
-    if (this.song) {
-      if (songid && (songid === this.song.id)) playhead = this.song.getPlayhead();
-      this.song.stop();
-      this.song = null;
-    }
-    if (serial) {
-      if (!this.ctx) this.start();
-      //this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid, this.noise);
-      this.song.play();
-      if (playhead > 0) this.song.setPlayhead(playhead);
-      this.update(); // Editor updates on a long period; ensure we get one initial priming update.
-    }
-    */
   }
   
   /* (serial) is a Uint8Array containing an EAU file.
@@ -284,7 +269,7 @@ export class Audio {
   }
   
   playSoundBuffer(buffer, trim, pan) {
-    /*TODO
+    /*TODO Do we still need this? I think we can eliminate the compare-the-synthesizers modal.
     if (!this.ctx) return;
     if (this.ctx.state === "suspended") return;
     if (trim <= 0) return;
@@ -372,53 +357,14 @@ export class Audio {
   egg_play_sound(soundid, trim, pan) {
     if (!this.ctx) return;
     this.node.port.postMessage({ cmd: "playSound", rid: soundid, trim, pan });
-    
-    //if (!this.soundEnabled) return;
-    /*
-    const buffer = this.sounds[soundid];
-    if (buffer) {
-      if (buffer === "pending") return; // Drop it; the printer will also play it, once ready.
-      return this.playSoundBuffer(buffer, trim, pan);
-    }
-    this.sounds[soundid] = "pending";
-    
-    const serial = this.rt.rom.getRes(EGG_TID_sound, soundid);
-    if (!serial) return;
-    */
-    /*TODO
-    const durms = Math.min(5000, Math.max(1, SongPlayer.calculateDuration(serial)));
-    const framec = Math.ceil((durms * this.ctx.sampleRate) / 1000);
-    const ctx = new OfflineAudioContext(1, framec, this.ctx.sampleRate);
-    const song = new SongPlayer(ctx, serial, 1.0, 0.0, false, 0, this.noise);
-    song.play();
-    song.update(5.0);
-    ctx.startRendering().then(buffer => {
-      this.sounds[soundid] = buffer;
-      this.playSoundBuffer(buffer, trim, pan);
-    });
-    /**/
   }
   
-  egg_play_song(songid, force, repeat) {//TODO
+  egg_play_song(songid, force, repeat) {
     if (!this.ctx) return;
-    //if (!this.musicEnabled) return;
     if (!force && (songid === this.song?.id)) return;
     this.songParams = [songid, force, repeat, 0]; // To restore when prefs change.
     this.node.port.postMessage({ cmd: "playSong", songid: 1, rid: songid, repeat, trim: 1, pan: 0 });
     this.songStartTime = this.ctx.currentTime;
-    /*XXX
-    const serial = this.rt.rom.getRes(EGG_TID_song, songid);
-    if (!serial) songid = 0;
-    if (this.song) {
-      if (this.pvsong) this.pvsong.stop();
-      this.pvsong = this.song;
-      this.song.stopSoon();
-      this.song = null;
-    }
-    if (!serial) return;
-    //this.song = new SongPlayer(this.ctx, serial, 1.0, 0.0, repeat, songid, this.noise);
-    this.song.play();
-    */
   }
   
   egg_play_note(chid, noteid, velocity, durms) {
@@ -441,7 +387,6 @@ export class Audio {
   }
   
   egg_song_get_playhead() {
-    //if (this.song) return this.song.getPlayhead();
     if (this.ctx && this.songPlaying) {
       return (this.ctx.currentTime - this.songStartTime) % this.songDuration;
     }
@@ -456,7 +401,6 @@ export class Audio {
   }
   
   egg_song_set_playhead(ph) {
-    //if (this.song) this.song.setPlayhead(ph);
     this.node.port.postMessage({ cmd: "setPlayhead", songid: 1, ph });
     this.songStartTime = this.ctx.currentTime - ph;
   }

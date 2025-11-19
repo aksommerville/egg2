@@ -12,26 +12,12 @@ export class LaunchService {
     this.window = window;
     this.dom = dom;
     this.comm = comm;
-    
-    this.webpath = "";
-    this.webpathPromise = null;
   }
   
   launch() {
-    this.requireWebPath().then(path => {
-      const url = `/api/buildfirst${path}`;
-      const modal = this.dom.spawnModal(LaunchModal);
-      modal.iframe.src = url;
-    }).catch(e => this.dom.modalError(e));
-  }
-  
-  requireWebPath() {
-    if (this.webpath) return Promise.resolve(this.webpath);
-    if (this.webpathPromise) return this.webpathPromise;
-    return this.webpathPromise = this.comm.httpText("GET", "/api/webpath").then(rsp => {
-      this.webpathPromise = null;
-      return this.webpath = rsp;
-    });
+    const url = `/build/index.html`;
+    const modal = this.dom.spawnModal(LaunchModal);
+    modal.iframe.src = url;
   }
 }
 
