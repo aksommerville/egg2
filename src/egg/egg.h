@@ -225,45 +225,6 @@ WASM_IMPORT("egg_song_event_wheel") void egg_song_event_wheel(int songid,int chi
  */
 WASM_IMPORT("egg_song_get_playhead") float egg_song_get_playhead(int songid);
 
-#if 0 /*XXX Before AudioWorkletNode */
-/* (trim) in 0..1.
- * (pan) -1..0..1 = left..center..right
- */
-WASM_IMPORT("egg_play_sound") void egg_play_sound(int soundid,double trim,double pan);
-
-/* Request a (songid) that doesn't exist to play silence, eg 0.
- * If you request what's already playing, default is to do nothing.
- * (force) nonzero to start it over in that case.
- */
-WASM_IMPORT("egg_play_song") void egg_play_song(int songid,int force,int repeat);
-
-/* Programmatic access to synthesizer.
- * These use the same channels as the song. You must arrange your songs so as to support this.
- * Starting a note requires a maximum duration in milliseconds, and returns a "holdid".
- * You may cut it off early via egg_release_note().
- * (noteid,velocity) are both in 0..127.
- * Wheel in -512..511. The actual bend from wheel is established in the song's channel headers.
- * Changing song releases all programmatic notes too.
- * Intended for rhythm games and maybe ocarina-like interactions.
- */
-WASM_IMPORT("egg_play_note") int egg_play_note(int chid,int noteid,int velocity,int durms);
-WASM_IMPORT("egg_release_note") void egg_release_note(int holdid);
-WASM_IMPORT("egg_adjust_wheel") void egg_adjust_wheel(int chid,int v/*-512..511*/);
-
-/* Current song ID is zero if the song didn't exist or finished playing, regardless of what ID was requested.
- * When a song repeats, its playhead repeats too.
- * Behavior of setting to an OOB playhead is undefined, but will never cause a repeating song to stop or anything crazy.
- * Playhead is in seconds.
- * The platform may impose a transition period between songs.
- * Anything you ask for during that period relates to the new song, even if it hasn't actually started yet.
- */
-#if 0 /* XXX with the new AudioWorkletNode synthesizer, feedback is not possible. */
-WASM_IMPORT("egg_song_get_id") int egg_song_get_id();
-WASM_IMPORT("egg_song_get_playhead") double egg_song_get_playhead();
-#endif
-WASM_IMPORT("egg_song_set_playhead") void egg_song_set_playhead(double playhead);
-#endif
-
 /* Video.
  ******************************************************************************************/
  

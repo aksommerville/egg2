@@ -15,7 +15,7 @@ const wsrc =
   "class EggAudio extends AudioWorkletProcessor {" +
     "constructor(args) {" +
       "super(args);" +
-      "this.memory = new WebAssembly.Memory({ initial: 100, maximum: 1000 });" + /* TODO Maximum memory size, can we get smarter about it? */
+      "this.memory = new WebAssembly.Memory({ initial: 100, maximum: 2000 });" + /* TODO Maximum memory size, can we get smarter about it? */
       "this.buffers = [];" + /* Float32Array */
       "this.bufferSize = 128;" + /* frames */
       "this.deferredSongs = [];" + /* m.data */

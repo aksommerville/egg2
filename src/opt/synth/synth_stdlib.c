@@ -182,14 +182,14 @@ static int synth_mem_master_grown(struct synth_mem *mem,int nc) {
     if (mem.c) return -1;
     // When running native, we will never resize (mem.v). So initialize it with a huge block.
     #if USE_native
-      int wordc=0x800000; // 32 MB.
+      int wordc=0xf00000; // <64 MB.
       if (!(mem.v=malloc(wordc<<2))) return -1;
       mem.c=wordc;
     // When running in WebAssembly, use intrinsics to query the initial memory size, then grow it to something huge.
     #else
       if (!synth_pagec0) {
         synth_pagec0=__builtin_wasm_memory_size(0);
-        int na=synth_pagec0+512; // Another 32 MB.
+        int na=synth_pagec0+1280;
         __builtin_wasm_memory_grow(0,na);
         synth_pagea=na;
       }

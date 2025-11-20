@@ -103,6 +103,9 @@ Features we *do* support:
 - - - Add to Makefile for edit: `--htdocs=/synth.wasm:EGG_SDK/out/web/synth.wasm`
 - - - Also `--htdocs=/build:out/%.*s-web.zip` tho we don't necessarily need it right now.
 - - - Revoice song and sound resources.
+- - [x] Humm Fu
+- - [x] Mysteries of the Crypt
+- - [x] When You Wish Upon a Bone
 - [ ] Major changes.
 - - [ ] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
@@ -115,13 +118,22 @@ Features we *do* support:
 - - - [ ] Web input config.
 - - [ ] Web: Touch input, on-screen gamepad.
 - [ ] Audio
-- - [ ] Web synth: Play thru song 8, then start song 9 in demo. 9 doesn't start. Will start on second try. Are we running out of memory? (both big songs)
+- - [x] Web synth: Play thru song 8, then start song 9 in demo. 9 doesn't start. Will start on second try. Are we running out of memory? (both big songs)
+- - - ...Humm Fu does it at the end. ...increasing memory fixed it.
+- - [ ] ^ No but seriously. We need better insight into memory usage, and maybe some mitigations at runtime, like evicting sounds not currently in use, or forcing a terminating song off.
 - - [ ] Redefine `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` as trims in 0..99.
 - - [ ] Web Audio.js: Slice out audio parts of ROM, don't send the whole thing.
 - - [ ] Look up SDK instruments during song compile.
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
 - [ ] Audio review, when close to ready.
 - [ ] Minor bugs and tweaks outstanding.
+- - [ ] Song event modal: Default to note, not marker.
+- - [ ] FM modecfg modal: Rate and range should present as float, regardless of how they're encoded.
+- - [ ] Wave modal: Per-stage UI. Esp for harmonics, I want a clickable bar chart.
+- - [ ] EnvUi: Is it enforcing a minimum 1 s or something? These typically run around 300 ms. Aim for the existing chart to fill like 3/4 of the available width.
+- - [ ] Song editor: Set tempo. An action I guess.
+- - [ ] Song editor: Adding event goes before those at same time; must be after.
+- - [ ] Song editor: Auto end time clearly wrong for SUB voices.
 - - [ ] Remove `eggdev_convert_context`. Make a similar thing in "serial", so we can share it around. Then share it around.
 - - [ ] DecalsheetEditor: After using one of the clicky macros, sidebar scrolls to the top again. Can we keep it where it was? So annoying.
 - - [ ] Permit command-line and query params to prepopulate the store, for keys specified via metadata.
