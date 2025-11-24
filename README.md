@@ -127,6 +127,7 @@ Features we *do* support:
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
 - [ ] Audio review, when close to ready.
 - [ ] Minor bugs and tweaks outstanding.
+- - [ ] Launch from within map editor didn't rebuild.
 - - [ ] Song event modal: Default to note, not marker.
 - - [ ] FM modecfg modal: Rate and range should present as float, regardless of how they're encoded.
 - - [ ] Wave modal: Per-stage UI. Esp for harmonics, I want a clickable bar chart.
