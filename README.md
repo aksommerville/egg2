@@ -70,13 +70,14 @@ Features we *do* support:
 - [Humm Fu](https://github.com/aksommerville/hummfu)
 - [Mysteries of the Crypt](https://github.com/aksommerville/myscrypt)
 - [When You Wish Upon A Bone](https://github.com/aksommerville/wishbone)
+- [Queen of Clocks](https://github.com/aksommerville/queenofclocks)
 
 ## TODO
 
 - [ ] Major changes.
 - - [x] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
 - - - Now that I'm thinking about it, these really aren't "opt" units at all. Make a new concept of "util" units, and build all for every target.
-- - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
+- - [x] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
 - - [ ] Edit SDK instruments. Maybe a global option in the Editor's actions menu?
 - - [ ] Standard instruments.
 - - [ ] In-game menu. Quit, Audio prefs, Language, Input config.

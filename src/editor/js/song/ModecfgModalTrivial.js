@@ -3,14 +3,19 @@
  
 import { Dom } from "../Dom.js";
 import { decodeModecfg, encodeModecfg } from "./EauDecoder.js";
+import { Encoder } from "../Encoder.js";
+import { MidiService } from "./MidiService.js";
+import { Audio } from "../Audio.js";
 
 export class ModecfgModalTrivial {
   static getDependencies() {
-    return [HTMLDialogElement, Dom];
+    return [HTMLDialogElement, Dom, MidiService, Audio];
   }
-  constructor(element, dom) {
+  constructor(element, dom, midiService, audio) {
     this.element = element;
     this.dom = dom;
+    this.midiService = midiService;
+    this.audio = audio;
     
     this.unitForField = {
       maxlevel: "/ 65535",
@@ -25,10 +30,14 @@ export class ModecfgModalTrivial {
       this.resolve = resolve;
       this.reject = reject;
     });
+    
+    this.midiServiceListener = this.midiService.listen(e => this.onMidiEvent(e));
+    this.playbackDirty = true;
   }
   
   onRemoveFromDom() {
     this.resolve(null);
+    this.midiService.unlisten(this.midiServiceListener);
   }
   
   /* All "Modecfg" modals must implement.
@@ -47,7 +56,10 @@ export class ModecfgModalTrivial {
   buildUi() {
     this.element.innerHTML = "";
     this.dom.spawn(this.element, "H2", `Trivial voice for channel ${this.chid}:`);
-    const form = this.dom.spawn(this.element, "FORM", { "on-submit": e => { e.preventDefault(); e.stopPropagation(); } });
+    const form = this.dom.spawn(this.element, "FORM", {
+      "on-submit": e => { e.preventDefault(); e.stopPropagation(); },
+      "on-input": e => { this.playbackDirty = true; },
+    });
     const table = this.dom.spawn(form, "TABLE");
     // Every field in our model is u16, a happy coincidence.
     for (const name of ["maxlevel", "minlevel", "minhold", "rlstime", "wheelrange"]) {
@@ -63,16 +75,56 @@ export class ModecfgModalTrivial {
     firstInput.focus();
     firstInput.select();
   }
+  
+  /* Communication with MIDI bus and synthesizer.
+   ********************************************************************/
+  
+  onMidiEvent(event) {
+    switch (event.opcode) {
+      case 0x80:
+      case 0x90:
+      case 0xe0: {
+          this.requirePlaybackSerial();
+          event.chid = 0; // Don't care about input channel, we've registered on channel zero.
+          this.audio.sendEvent(event);
+        } break;
+    }
+  }
+  
+  requirePlaybackSerial() {
+    if (this.playbackDirty) {
+      this.playbackDirty = false;
+      const modecfg = this.encodeModel();
+      const encoder = new Encoder();
+      encoder.raw("\0EAU");
+      encoder.u16be(500); // tempo, whatever
+      encoder.u32be(modecfg.length + 8); // Channel Headers length
+      encoder.u8(0); // Channel zero.
+      encoder.u8(0x80); // Trim.
+      encoder.u8(0x80); // Pan.
+      encoder.u8(this.mode); // Should always be 1==TRIVIAL, but we got it generically so use it.
+      encoder.u16be(modecfg.length);
+      encoder.raw(modecfg);
+      encoder.u16be(0); // Post length
+      encoder.u32be(1); // Events length
+      encoder.u8(0x7f); // Long delay
+      this.audio.playEauSong(encoder.finish(), true);
+    }
+  }
    
   /* Events.
    *****************************************************************************/
    
-  onSubmit(event) {
+  encodeModel() {
     const model = { ...this.model };
     for (const input of this.element.querySelectorAll("input[type='number']")) {
       model[input.name] = +input.value;
     }
-    this.resolve(encodeModecfg(model));
+    return encodeModecfg(model);
+  }
+   
+  onSubmit(event) {
+    this.resolve(this.encodeModel());
     this.element.remove();
     event.preventDefault();
   }

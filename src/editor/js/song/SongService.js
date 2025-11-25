@@ -43,7 +43,7 @@ export class SongService {
    * XXX This shouldn't be necessary anymore; we're not a singleton now.
    */
   reset(song, rid) {
-    this.audio.playEauSong(null, 0, false);
+    this.audio.playEauSong(null, false);
     this.playing = false;
     this.song = song;
     this.rid = rid;
@@ -57,7 +57,7 @@ export class SongService {
    * Beware the another SongEditor may have already reset us by the time this happens.
    */
   unload() {
-    this.audio.playEauSong(null, 0, false);
+    this.audio.playEauSong(null, false);
     this.playing = false;
   }
   
@@ -71,7 +71,7 @@ export class SongService {
       } else if (song instanceof Uint8Array) serial = song;
       else if (!song) ;
       else throw new Error(`Unexpected input to playSong()`);
-      this.audio.playEauSong(serial, rid, duration >= 5);
+      this.audio.playEauSong(serial, duration >= 5);
       this.playing = !!serial;
     } catch (e) {
       this.dom.modalError(e);

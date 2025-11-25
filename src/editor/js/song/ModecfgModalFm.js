@@ -7,24 +7,33 @@ import { Dom } from "../Dom.js";
 import { decodeModecfg, encodeModecfg } from "./EauDecoder.js";
 import { EnvUi } from "./EnvUi.js";
 import { WaveUi } from "./WaveUi.js";
+import { MidiService } from "./MidiService.js";
+import { Encoder } from "../Encoder.js";
+import { Audio } from "../Audio.js";
 
 export class ModecfgModalFm {
   static getDependencies() {
-    return [HTMLDialogElement, Dom];
+    return [HTMLDialogElement, Dom, MidiService, Audio];
   }
-  constructor(element, dom) {
+  constructor(element, dom, midiService, audio) {
     this.element = element;
     this.dom = dom;
+    this.midiService = midiService;
+    this.audio = audio;
     
     // All "Modecfg" modals must implement, and resolve with Uint8Array or null.
     this.result = new Promise((resolve, reject) => {
       this.resolve = resolve;
       this.reject = reject;
     });
+    
+    this.midiServiceListener = this.midiService.listen(e => this.onMidiEvent(e));
+    this.playbackDirty = true;
   }
   
   onRemoveFromDom() {
     this.resolve(null);
+    this.midiService.unlisten(this.midiServiceListener);
   }
   
   /* All "Modecfg" modals must implement.
@@ -42,7 +51,10 @@ export class ModecfgModalFm {
    
   buildUi() {
     this.element.innerHTML = "";
-    const form = this.dom.spawn(this.element, "FORM", { "on-submit": e => { e.preventDefault(); e.stopPropagation(); }});
+    const form = this.dom.spawn(this.element, "FORM", {
+      "on-submit": e => { e.preventDefault(); e.stopPropagation(); },
+      "on-input": e => { this.playbackDirty = true; },
+    });
     
     // Left half of the form is our four envelopes, with time scales synced.
     const leftSide = this.dom.spawn(form, "DIV", ["leftSide"]);
@@ -69,7 +81,7 @@ export class ModecfgModalFm {
     
     const modRow = this.dom.spawn(rightSide, "DIV", ["row"]);
     const modTable = this.dom.spawn(modRow, "TABLE", ["modTable"]);
-    this.spawnRow(modTable, "modrate", 0, 65535, 1);//TODO this needs to account for abs vs rel
+    this.spawnRow(modTable, "modrate", 0, 65535, 1);//TODO this needs to account for abs vs rel. Also present as float even though it's not. Decimal u8.8 is painful.
     this.spawnRow(modTable, "modrange", 0, 65535, 1);
     this.dom.spawnController(modRow, WaveUi).setup(this.model.modulator, "modulator", v => this.onWaveChange("modulator", v));
     
@@ -99,24 +111,66 @@ export class ModecfgModalFm {
     );
   }
   
-  /* Events.
+  /* Communication with MIDI bus and synthesizer.
+   ********************************************************************/
+  
+  onMidiEvent(event) {
+    switch (event.opcode) {
+      case 0x80:
+      case 0x90:
+      case 0xe0: {
+          this.requirePlaybackSerial();
+          event.chid = 0; // Don't care about input channel, we've registered on channel zero.
+          this.audio.sendEvent(event);
+        } break;
+    }
+  }
+  
+  requirePlaybackSerial() {
+    if (this.playbackDirty) {
+      this.playbackDirty = false;
+      const modecfg = this.encodeModel();
+      const encoder = new Encoder();
+      encoder.raw("\0EAU");
+      encoder.u16be(500); // tempo, whatever
+      encoder.u32be(modecfg.length + 8); // Channel Headers length
+      encoder.u8(0); // Channel zero.
+      encoder.u8(0x80); // Trim.
+      encoder.u8(0x80); // Pan.
+      encoder.u8(this.mode); // Should always be 2==FM, but we got it generically so use it.
+      encoder.u16be(modecfg.length);
+      encoder.raw(modecfg);
+      encoder.u16be(0); // Post length
+      encoder.u32be(1); // Events length
+      encoder.u8(0x7f); // Long delay
+      this.audio.playEauSong(encoder.finish(), true);
+    }
+  }
+  
+  /* UI Events.
    *****************************************************************/
    
-  onEnvChange(name, v) {
-    this.model[name] = v;
-  }
-  
-  onWaveChange(name, v) {
-    this.model[name] = v;
-  }
-  
-  onSubmit(event) {
-    event.preventDefault();
+  encodeModel() {
     const model = {...this.model};
     for (const name of ["modrate", "modrange", "wheelrange", "rangelforate", "rangelfodepth", "mixlforate", "mixlfodepth"]) {
       model[name] = +this.element.querySelector(`input[name='${name}']`)?.value || 0;
     }
-    this.resolve(encodeModecfg(model));
+    return encodeModecfg(model);
+  }
+   
+  onEnvChange(name, v) {
+    this.model[name] = v;
+    this.playbackDirty = true;
+  }
+  
+  onWaveChange(name, v) {
+    this.model[name] = v;
+    this.playbackDirty = true;
+  }
+  
+  onSubmit(event) {
+    event.preventDefault();
+    this.resolve(this.encodeModel());
     this.element.remove();
   }
 }

@@ -250,9 +250,8 @@ export class Audio {
   }
   
   /* For editor.
-   * If (songid) nonzero and matches the current song, we'll start at the prior playhead.
    */
-  playEauSong(serial, songid, repeat) {
+  playEauSong(serial, repeat) {
     if (serial instanceof ArrayBuffer) serial = new Uint8Array(serial);
     if (serial && (serial.length > 0x3fffff)) return;
     if (!this.ready) return;
@@ -272,6 +271,18 @@ export class Audio {
     this.node.port.postMessage({ cmd: "reinit", rom });
     this.node.port.postMessage({ cmd: "playSong", songid: 1, rid: 1, repeat, trim: 1, pan: 0 });
     this.songStartTime = this.ctx.currentTime;
+  }
+  
+  /* For editor.
+   * (event) is what editor's MidiService produces: { opcode, chid, a, b }
+   */
+  sendEvent(event) {
+    if (!this.node) return;
+    switch (event.opcode) {
+      case 0x80: this.node.port.postMessage({ cmd: "noteOff", songid: 1, chid: event.chid, noteid: event.a, velocity: event.b }); break;
+      case 0x90: this.node.port.postMessage({ cmd: "noteOn", songid: 1, chid: event.chid, noteid: event.a, velocity: event.b }); break;
+      case 0xe0: this.node.port.postMessage({ cmd: "wheel", songid: 1, chid: event.chid, v: (event.a | (event.b << 7)) - 8192 }); break;
+    }
   }
   
   /* (serial) is a Uint8Array containing an EAU file.
