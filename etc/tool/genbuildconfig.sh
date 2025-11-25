@@ -56,7 +56,7 @@ int main(int argc,char **argv) { return 0; }
 EOF
 ) ; then
   EGG_TARGETS="$EGG_TARGETS web"
-  web_OPT_ENABLE="stdlib res graf font"
+  web_OPT_ENABLE=""
   web_AR=ar
   web_CC="clang -c -MMD -O3 --target=wasm32 -nostdlib -Werror -Wno-comment -Wno-parentheses -Isrc -Wno-incompatible-library-redeclaration -Wno-builtin-requires-header"
   web_LD="wasm-ld --no-entry"
@@ -81,7 +81,7 @@ EGG_TARGETS="$EGG_TARGETS $ADDL"
 #-----------------------------------------------------------------------------------------
 # Prepare config for each target.
 
-STDRTOPT="fs serial synth res graf font hostio render image real_stdlib native"
+STDRTOPT="fs serial synth hostio render image real_stdlib native"
 
 for TARGET in $EGG_TARGETS ; do
   case "$TARGET" in
@@ -170,7 +170,7 @@ done
 #-----------------------------------------------------------------------------------------
 # Set eggdev up with hard-coded defaults.
 
-eggdev_OPT_ENABLE="serial fs synth zip http image res real_stdlib eau midi native"
+eggdev_OPT_ENABLE="serial fs synth zip http image real_stdlib eau midi native"
 if [ "$EGG_NATIVE_TARGET" = macos ] ; then
   eggdev_OPT_ENABLE="$eggdev_OPT_ENABLE ismac"
   eggdev_CC="gcc -c -MMD -O3 -Isrc -Werror -Wimplicit -Wno-parentheses -Wno-empty-body -Wno-comment -Wno-pointer-sign -Wno-deprecated-declarations"

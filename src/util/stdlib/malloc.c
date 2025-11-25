@@ -1,3 +1,7 @@
+#if USE_real_stdlib
+  int egg_stdlib_malloc_dummy=0;
+#else
+
 #include "egg-stdlib.h"
 
 /* Globals.
@@ -121,3 +125,5 @@ void *calloc(long unsigned int c,long unsigned int size) {
   memset(v,0,c*size);
   return v;
 }
+
+#endif

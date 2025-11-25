@@ -73,41 +73,9 @@ Features we *do* support:
 
 ## TODO
 
-- [x] Branch 20251106-synth3: Replace synthesizer with the AudioWorkletNode strategy proven out in egg3. (egg3 is not real; 2 is the go-forward version).
-- - [x] Update MIDI notes in etc/doc/eau-format.md
-- - [x] Are we going to have an EAU-Text format? v3 doesn't have one. ...I think we don't need, at least it's not worth the enormous effort right now.
-- - [x] API changes
-- - - [x] `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` should be continuous trims, say 0..99. ...punt
-- - - [x] Permit multiple songs? I really think we should, along the lines of egg3.
-- - - [x] Note On / Note Off / Note Once / Wheel, make Egg Platform API match synth's API. Also "songid".
-- - - [x] Update eggrt.
-- - - [x] Update eggrun.
-- - - [x] Update web.
-- - - [x] Update demo.
-- - [x] Web. Orchestrate load in Audio.js.
-- - [x] Web: Estimate playhead. Do in Audio.js, not editor, so we can expose it via Platform API.
-- - [x] Editor: Song model
-- - [x] Editor: UI
-- - [x] Eliminate standalone builds.
-- - [x] Build synth wasm.
-- - [x] `GET /api/webpath` is changed to return the Zip instead. That probably breaks launching from editor. ...confirmed, broken
-- - [x] `eau_cvt_eau_midi`: Look up in SDK instruments. ...punt
-- - [x] Is web playing mono only? ...YES. 9-sand_farming has a post, makes it obvious.
-- - [x] Eliminate the global modal for comparing synthesizers. They're now the same thing.
-- - [x] Update one client project before finalizing. Zen Garden?
-- - - Update `egg_play_song` from `(rid,force,repeat)` to `(1,rid,repeat,1.0f,0.0f)`
-- - - Use midevil to remove Meta 0x77 from songs. Old regime used multiple, and that will choke the new regime.
-- - - Zap all sound effects. `echo -n "" > 1-yadda_yadda`
-- - - Play natively to validate.
-- - - If songs are requested redundantly, add a global `playing_song_id` -- synth doesn't manage that anymore.
-- - - Add to Makefile for edit: `--htdocs=/synth.wasm:EGG_SDK/out/web/synth.wasm`
-- - - Also `--htdocs=/build:out/%.*s-web.zip` tho we don't necessarily need it right now.
-- - - Revoice song and sound resources.
-- - [x] Humm Fu
-- - [x] Mysteries of the Crypt
-- - [x] When You Wish Upon a Bone
 - [ ] Major changes.
-- - [ ] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
+- - [x] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
+- - - Now that I'm thinking about it, these really aren't "opt" units at all. Make a new concept of "util" units, and build all for every target.
 - - [ ] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
 - - [ ] Edit SDK instruments. Maybe a global option in the Editor's actions menu?
 - - [ ] Standard instruments.
@@ -127,6 +95,7 @@ Features we *do* support:
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
 - [ ] Audio review, when close to ready.
 - [ ] Minor bugs and tweaks outstanding.
+- - [ ] Change malloc in egg-stdlib to use Wasm intrinsics, like synth. Then it won't produce a 16 MB ofile.
 - - [ ] Launch from within map editor didn't rebuild.
 - - [ ] Song event modal: Default to note, not marker.
 - - [ ] FM modecfg modal: Rate and range should present as float, regardless of how they're encoded.
@@ -151,7 +120,7 @@ Features we *do* support:
 - - - Confirm that all impacted cases are single calls into graf. If so, the fix will be easy, just start allocating multiple vertices at once internally.
 - - [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
 - - [ ] editor: SidebarUi scroll bar broken, doesn't appear
-- - [ ] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
+- - [x] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - - [ ] native: Record and playback session.
 - - [ ] native: Add an initial audio delay like we did in v1. I've noticed missed notes in Humm Fu.
 - - [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols.

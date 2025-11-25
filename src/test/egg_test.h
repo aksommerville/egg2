@@ -4,7 +4,7 @@
 #ifndef EGG_TEST_H
 #define EGG_TEST_H
 
-#include "opt/stdlib/egg-stdlib.h"
+#include "util/stdlib/egg-stdlib.h"
 
 #define EGG_ITEST(name,...) int name()
 #define XXX_EGG_ITEST(name,...) int name()

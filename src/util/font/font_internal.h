@@ -2,7 +2,7 @@
 #define FONT_INTERNAL_H
 
 #include "egg/egg.h"
-#include "opt/stdlib/egg-stdlib.h"
+#include "util/stdlib/egg-stdlib.h"
 #include "font.h"
 
 struct font {

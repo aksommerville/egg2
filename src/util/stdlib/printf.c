@@ -1,3 +1,7 @@
+#if USE_real_stdlib
+  int egg_stdlib_printf_dummy=0;
+#else
+
 #include "egg-stdlib.h"
 #include "egg/egg.h"
 #include <limits.h>
@@ -393,3 +397,5 @@ int snprintf(char *dst,unsigned long int dsta,const char *fmt,...) {
 int fwrite(const void *src,int size,int count,void *file) {
   return fprintf(file,"%.*s",size*count,src);
 }
+
+#endif

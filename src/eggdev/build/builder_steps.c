@@ -183,6 +183,28 @@ int builder_schedule_link(struct builder *builder,struct builder_step *step) {
     if (sr_encode_fmt(&cmd," %.*s",req->pathc,req->path)<0) { sr_encoder_cleanup(&cmd); return -1; }
   }
   if (sr_encode_fmt(&cmd," %.*s",target->ldpostc,target->ldpost)<0) { sr_encoder_cleanup(&cmd); return -1; }
+  
+  const char *utillist=0;
+  int utillistc=eggdev_client_get_string(&utillist,"importUtil",10);
+  if (utillistc>0) {
+    if (sr_encode_fmt(&cmd," -L%s/out/%.*s",g.sdkpath,target->namec,target->name)<0) { sr_encoder_cleanup(&cmd); return -1; }
+  }
+  while (utillistc>0) {
+    if (((unsigned char)(*utillist)<=0x20)||(*utillist==',')) {
+      utillist++;
+      utillistc--;
+      continue;
+    }
+    const char *token=utillist;
+    int tokenc=0;
+    while (utillistc&&(*utillist!=',')) {
+      utillist++;
+      utillistc--;
+      tokenc++;
+    }
+    if (sr_encode_fmt(&cmd," -l%.*s",tokenc,token)<0) { sr_encoder_cleanup(&cmd); return -1; }
+  }
+  
   int err=builder_begin_command(builder,step,cmd.v,cmd.c,0,0);
   sr_encoder_cleanup(&cmd);
   return err;

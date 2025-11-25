@@ -1,3 +1,7 @@
+#if USE_real_stdlib
+  int egg_stdlib_string_dummy=0;
+#else
+
 #include "egg-stdlib.h"
 
 void *memcpy(void *dst,const void *src,unsigned long c) {
@@ -64,3 +68,5 @@ void *memset(void *dst,int src,long unsigned int c) {
   for (;c-->0;DST++) *DST=src;
   return dst;
 }
+
+#endif

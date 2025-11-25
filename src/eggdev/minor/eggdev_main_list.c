@@ -1,5 +1,5 @@
 #include "eggdev/eggdev_internal.h"
-#include "opt/res/res.h"
+#include "util/res/res.h"
 
 /* List, default format.
  */

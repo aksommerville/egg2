@@ -11,6 +11,7 @@ local/config.mk:;etc/tool/genbuildconfig.sh $@
 include local/config.mk
 
 SRCFILES:=$(shell find src -type f)
+UTIL_UNITS:=$(notdir $(wildcard src/util/*))
 
 eggdev_CC:=$(eggdev_CC) $(foreach U,$(eggdev_OPT_ENABLE),-DUSE_$U=1)
 include etc/make/eggdev.mk

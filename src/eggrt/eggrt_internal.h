@@ -2,7 +2,7 @@
 #define EGGRT_INTERNAL_H
 
 #include "egg/egg.h"
-#include "opt/res/res.h"
+#include "util/res/res.h"
 #include "opt/hostio/hostio.h"
 #include "opt/synth/synth.h"
 #include "opt/render/render.h"

@@ -1,5 +1,7 @@
 /* rand.c
  * Using George Marsaglia's Xorshift algorithm, as described here: https://en.wikipedia.org/wiki/Xorshift
+ * This file gets built even when USE_real_stdlib, it's the only such file.
+ * Reason for that is I want a deterministic PRNG that builds for both native (real_stdlib) and web (egg_stdlib).
  */
 
 #include "egg-stdlib.h"
@@ -9,14 +11,22 @@ static struct {
   unsigned int state;
 } grand={0};
 
-int rand() {
+#if USE_real_stdlib
+  #define NAME_OF_RAND egg_rand
+  #define NAME_OF_SRAND egg_srand
+#else
+  #define NAME_OF_RAND rand
+  #define NAME_OF_SRAND srand
+#endif
+
+int NAME_OF_RAND() {
   grand.state^=grand.state<<13;
   grand.state^=grand.state>>17;
   grand.state^=grand.state<<5;
   return grand.state&0x7fffffff;
 }
 
-void srand(int seed) {
+void NAME_OF_SRAND(int seed) {
   grand.state=seed;
 }
 

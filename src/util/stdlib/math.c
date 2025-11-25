@@ -34,6 +34,10 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#if USE_real_stdlib
+  int egg_stdlib_math_dummy=0;
+#else
+
 #include "egg-stdlib.h"
 #include <stdint.h>
 
@@ -847,3 +851,5 @@ fpclassify (double x)
   return FP_NORMAL;
   //TODO aks: Should we check for SUBNORMAL too? What does that mean?
 }
+
+#endif

@@ -21,7 +21,11 @@
   #include <math.h>
   #include <time.h>
   #include <stdio.h>
-  static inline void srand_auto() { srand(time(0)); }
+  int egg_rand();
+  void egg_srand(int seed);
+  void srand_auto();
+  #define rand egg_rand
+  #define srand egg_srand
 #else
 
 #define INT_MIN (int)(0x80000000)
