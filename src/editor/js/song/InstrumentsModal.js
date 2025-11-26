@@ -3,16 +3,16 @@
  */
  
 import { Dom } from "../Dom.js";
-import { SharedSymbols } from "../SharedSymbols.js";
+import { SdkInstrumentsService } from "./SdkInstrumentsService.js";
 
 export class InstrumentsModal {
   static getDependencies() {
-    return [HTMLDialogElement, Dom, SharedSymbols];
+    return [HTMLDialogElement, Dom, SdkInstrumentsService];
   }
-  constructor(element, dom, sharedSymbols) {
+  constructor(element, dom, sdkInstrumentsService) {
     this.element = element;
     this.dom = dom;
-    this.sharedSymbols = sharedSymbols;
+    this.sdkInstrumentsService = sdkInstrumentsService;
     this.instruments = null;
     
     this.result = new Promise((resolve, reject) => {
@@ -20,7 +20,7 @@ export class InstrumentsModal {
       this.reject = reject;
     });
     
-    this.sharedSymbols.getInstruments().then(instruments => {
+    this.sdkInstrumentsService.getInstruments().then(instruments => {
       this.instruments = instruments;
       this.buildUi();
     });
@@ -54,7 +54,7 @@ export class InstrumentsModal {
       const select = this.dom.spawn(this.element, "SELECT", { "on-input": e => this.onSelect(e) });
       this.dom.spawn(select, "OPTION", { value: "", disabled: "disabled" }, InstrumentsModal.BUCKET_NAMES[i]);
       for (const instrument of bucket) {
-        this.dom.spawn(select, "OPTION", { value: instrument.chid }, this.instruments.getNameForce(instrument.chid, 0));
+        this.dom.spawn(select, "OPTION", { value: instrument.chid }, this.instruments.getNameForce(instrument.chid, 0xff));
       }
       select.value = "";
     }
@@ -72,7 +72,7 @@ export class InstrumentsModal {
   
   getInstrumentName(instrument) {
     if (!instrument || !this.instruments) return "";
-    return this.instruments.getName(instrument.chid, 0);
+    return this.instruments.getName(instrument.chid, 0xff);
   }
 }
 

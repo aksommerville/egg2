@@ -60,8 +60,10 @@ export class SharedSymbols {
   
   /* Resolves to an Instruments instance containing the SDK's default instruments.
    * Logs errors and never rejects.
+   * XXX Use SdkInstrumentsService instead.
    */
   getInstruments() {
+    console.log(`XXX Use of deprecated SharedSymbols.getInstruments`, new Error());
     if (this.instruments) return Promise.resolve(this.instruments);
     if (this.instrumentsPromise) return this.instrumentsPromise;
     return this.instrumentsPromise = this.comm.httpBinary("GET", "/api/instruments").catch(e => {

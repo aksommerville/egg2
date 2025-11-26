@@ -808,6 +808,36 @@ input.toggle:checked + label.toggle.light {
 .chid-14 { background-color: #202 !important }
 .chid-15 { background-color: #012 !important }
 
+.InstrumentsEditor {
+  width: 90vw;
+  height: 90vh;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+.InstrumentsEditor > .bank {
+  flex: 1;
+  overflow-y: scroll;
+  list-style-type: none;
+  padding-left: 0;
+}
+.InstrumentsEditor > .midline {
+  border: 1px solid #000;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+.InstrumentsEditor .instrument {
+  display: flex;
+  flex-direction: row;
+}
+.InstrumentsEditor .instrument:hover {
+  background-color: #eee;
+}
+.InstrumentsEditor .instrument .name {
+  flex: 1;
+  cursor: pointer;
+}
+
 .ModecfgModalRaw {
   display: flex;
   flex-direction: column;

@@ -79,6 +79,7 @@ Features we *do* support:
 - - - Now that I'm thinking about it, these really aren't "opt" units at all. Make a new concept of "util" units, and build all for every target.
 - - [x] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
 - - [x] Edit SDK instruments. Maybe a global option in the Editor's actions menu?
+- - [x] ^ SongEditor forbids new channels chid>=16, and chid have to be assigned sequentially. Also has lots of UI we're not going to use here. Write a new InstrumentsEditor?
 - - [ ] Standard instruments.
 - - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
 - - - [ ] Native menu.

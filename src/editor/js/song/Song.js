@@ -29,6 +29,7 @@ export class Song {
     this.channelsByChid = []; // WEAK SongChannel, sparse, index is chid.
     this.events = []; // SongEvent, sorted by time. Note that Delay is not an event in this model.
     this.text = []; // [chid,noteid,name], sorted.
+    this.dropNoopChannels = false; // InstrumentsEditor sets this true, and any channel with mode NOOP will be dropped at encode.
   }
   
   _copy(src) {
@@ -248,7 +249,7 @@ export class Song {
       if (noteid) return `${chid}:${noteid}: ${this.text[p][2]}`;
       return `${chid}: ${this.text[p][2]}`;
     }
-    if (noteid) return `Note ${noteid} on channel ${chid}`;
+    if (noteid < 0x80) return `Note ${noteid} on channel ${chid}`;
     return `Channel ${chid}`;
   }
   
@@ -301,6 +302,7 @@ export class Song {
           skippedChids.add(channel.chid);
           continue;
         }
+        if (this.dropNoopChannels && !channel.mode) continue;
         encoder.u8(channel.chid);
         encoder.u8(channel.trim);
         encoder.u8(channel.pan);
