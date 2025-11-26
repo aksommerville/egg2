@@ -78,7 +78,7 @@ Features we *do* support:
 - - [x] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
 - - - Now that I'm thinking about it, these really aren't "opt" units at all. Make a new concept of "util" units, and build all for every target.
 - - [x] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
-- - [ ] Edit SDK instruments. Maybe a global option in the Editor's actions menu?
+- - [x] Edit SDK instruments. Maybe a global option in the Editor's actions menu?
 - - [ ] Standard instruments.
 - - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
 - - - [ ] Native menu.
@@ -87,6 +87,7 @@ Features we *do* support:
 - - - [ ] Web input config.
 - - [ ] Web: Touch input, on-screen gamepad.
 - [ ] Audio
+- - [ ] SongEditor: Need MIDI-In to include post at modecfg, and also play at post modal.
 - - [x] Web synth: Play thru song 8, then start song 9 in demo. 9 doesn't start. Will start on second try. Are we running out of memory? (both big songs)
 - - - ...Humm Fu does it at the end. ...increasing memory fixed it.
 - - [ ] ^ No but seriously. We need better insight into memory usage, and maybe some mitigations at runtime, like evicting sounds not currently in use, or forcing a terminating song off.

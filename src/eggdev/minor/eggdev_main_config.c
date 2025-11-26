@@ -1,4 +1,5 @@
 #include "eggdev/eggdev_internal.h"
+#include "opt/eau/eau.h"
 
 /* Read the build configuration if we don't have it yet.
  */
@@ -152,36 +153,37 @@ int eggdev_main_config() {
 int eggdev_config_get_instruments(void *dstpp) {
   if (!g.instruments) {
     void *src=0;
-    int srcc=eggdev_config_get_instruments_text(&src);
+    int srcc=eggdev_config_get_instruments_raw(&src);
     if (srcc>=0) {
-      struct sr_encoder dst={0};
-      struct eggdev_convert_context ctx={
-        .dst=&dst,
-        .src=src,
-        .srcc=srcc,
-        .refname="EGG_SDK/src/eggdev/instruments.eaut",
-      };
-      int err=eggdev_eau_from_eaut(&ctx);
-      free(src);
-      if (err>=0) {
-        g.instruments=dst.v;
-        g.instrumentsc=dst.c;
-      } else {
-        sr_encoder_cleanup(&dst);
-      }
-    }
-    if (!g.instruments) {
+      g.instruments=src;
+      g.instrumentsc=srcc;
+    } else {
       fprintf(stderr,"%s: Failed to acquire default instruments from Egg SDK.\n",g.exename);
-      g.instruments=malloc(1);
+      g.instruments=malloc(1); // So we only report it once.
     }
   }
   *(void**)dstpp=g.instruments;
   return g.instrumentsc;
 }
 
-int eggdev_config_get_instruments_text(void *dstpp) {
+int eggdev_config_get_instruments_raw(void *dstpp) {
   char path[1024];
-  int pathc=snprintf(path,sizeof(path),"%s/src/eggdev/instruments.eaut",g.sdkpath);
+  int pathc=snprintf(path,sizeof(path),"%s/src/eggdev/instruments.eau",g.sdkpath);
   if ((pathc>0)&&(pathc>=sizeof(path))) return -1;
   return file_read(dstpp,path);
+}
+
+const char *eggdev_config_set_instruments(const void *src,int srcc) {
+  const char *msg=eau_validate(src,srcc);
+  if (msg) return msg;
+  char path[1024];
+  int pathc=snprintf(path,sizeof(path),"%s/src/eggdev/instruments.eau",g.sdkpath);
+  if ((pathc>0)&&(pathc>=sizeof(path))) return "SDK path too long.";
+  if (file_write(path,src,srcc)<0) return "Failed to write instruments to SDK.";
+  if (g.instruments) {
+    free(g.instruments);
+    g.instruments=0;
+    g.instrumentsc=0;
+  }
+  return 0;
 }

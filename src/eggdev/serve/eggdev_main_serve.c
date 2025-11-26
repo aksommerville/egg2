@@ -179,30 +179,28 @@ static int eggdev_cb_get_symbols(struct http_xfer *req,struct http_xfer *rsp) {
  
 static int eggdev_cb_get_instruments(struct http_xfer *req,struct http_xfer *rsp) {
   void *src=0;
-  int srcc=eggdev_config_get_instruments_text(&src);
-  if (srcc<0) srcc=0;
-  struct sr_encoder *dst=http_xfer_get_body(rsp);
-  int dstc0=dst->c;
-  struct sr_encoder errmsg={0};
-  struct eggdev_convert_context ctx={
-    .dst=dst,
-    .src=src,
-    .srcc=srcc,
-    .errmsg=&errmsg,
-  };
-  int err=eggdev_eau_from_eaut(&ctx);
-  if (src) free(src);
-  if (err>=0) {
-    sr_encoder_cleanup(&errmsg);
-    http_xfer_set_header(rsp,"Content-Type",12,"application/octet-stream",24);
-    return http_xfer_set_status(rsp,200,"OK");
-  } else {
-    dst->c=dstc0;
-    sr_encode_raw(dst,errmsg.v,errmsg.c);
-    sr_encoder_cleanup(&errmsg);
-    http_xfer_set_header(rsp,"Content-Type",12,"text/plain",10);
-    return http_xfer_set_status(rsp,500,"Failed to convert");
+  int srcc=eggdev_config_get_instruments_raw(&src);
+  int ownsrc=1;
+  if (srcc<=0) {
+    src="\0EAU\x01\x00\0\0\0\0\0\0\0\0\0\0\0\0";
+    srcc=18;
+    ownsrc=0;
   }
+  struct sr_encoder *dst=http_xfer_get_body(rsp);
+  sr_encode_raw(dst,src,srcc);
+  if (src&&ownsrc) free(src);
+  http_xfer_set_header(rsp,"Content-Type",12,"application/octet-stream",24);
+  return http_xfer_set_status(rsp,200,"OK");
+}
+
+/* PUT /api/instruments
+ */
+ 
+static int eggdev_cb_put_instruments(struct http_xfer *req,struct http_xfer *rsp) {
+  struct sr_encoder *reqbody=http_xfer_get_body(req);
+  const char *msg=eggdev_config_set_instruments(reqbody->v,reqbody->c);
+  if (msg) return http_xfer_set_status(rsp,500,"%s",msg);
+  return http_xfer_set_status(rsp,204,"Saved");
 }
 
 /* GET /api/toc/**
@@ -559,6 +557,7 @@ static int eggdev_cb_serve(struct http_xfer *req,struct http_xfer *rsp,void *use
     HTTP_METHOD_GET,"/api/buildfirst**",eggdev_cb_get_buildfirst,
     HTTP_METHOD_GET,"/api/symbols",eggdev_cb_get_symbols,
     HTTP_METHOD_GET,"/api/instruments",eggdev_cb_get_instruments,
+    HTTP_METHOD_PUT,"/api/instruments",eggdev_cb_put_instruments,
     HTTP_METHOD_GET,"/api/toc**",eggdev_cb_get_toc,
     HTTP_METHOD_GET,"/api/allcontent**",eggdev_cb_get_allcontent,
     HTTP_METHOD_POST,"/api/convert",eggdev_cb_post_convert,

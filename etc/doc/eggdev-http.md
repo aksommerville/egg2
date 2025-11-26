@@ -60,10 +60,15 @@ If no project was specified at launch, or anything else goes wrong, returns an e
 
 ### GET /api/instruments
 
-Returns the synth instruments config file as binary EAU (it's stored as EAU-Text).
-That should be stored at `EGG_SDK/src/eggdev/instruments.eaut`.
+Returns the synth instruments config file as binary EAU.
+That should be stored at `EGG_SDK/src/eggdev/instruments.eau`.
 This is read from scratch every time you call it; no need to restart the server if you change the underlying file.
 Beware that regular conversion against the default instruments does cache, and you do have to restart to get that.
+
+### PUT /api/instruments
+
+Provide an EAU file and we'll save it to the SDK.
+Presumably a modification of what you got from `GET /api/instruments`.
 
 ### GET /api/toc/**
 

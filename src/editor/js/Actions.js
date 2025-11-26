@@ -18,23 +18,26 @@ import { SongEditor } from "./song/SongEditor.js";
 import { StringsEditor } from "./std/StringsEditor.js";
 import { MissingResourcesService } from "./std/MissingResourcesService.js";
 import { WorldMapModal } from "./map/WorldMapModal.js";
+import { SdkInstrumentsService } from "./song/SdkInstrumentsService.js";
  
 export class Actions {
   static getDependencies() {
-    return [Override, Dom, Window, LaunchService, MissingResourcesService];
+    return [Override, Dom, Window, LaunchService, MissingResourcesService, SdkInstrumentsService];
   }
-  constructor(override, dom, window, launchService, missingResourcesService) {
+  constructor(override, dom, window, launchService, missingResourcesService, sdkInstrumentsService) {
     this.override = override;
     this.dom = dom;
     this.window = window;
     this.launchService = launchService;
     this.missingResourcesService = missingResourcesService;
+    this.sdkInstrumentsService = sdkInstrumentsService;
     
     this.actions = [
       ...this.override.actions,
       { name: "launch", label: "Launch", fn: () => this.launchService.launch() },
       { name: "missingResources", label: "Missing Resources...", fn: () => this.missingResourcesService.detectAndReport() },
       { name: "worldMap", label: "World Map...", fn: () => this.dom.spawnModal(WorldMapModal) },
+      { name: "editSdkInstruments", label: "Edit SDK Instruments...", fn: () => this.sdkInstrumentsService.edit() },
     ];
     
     this.editors = [

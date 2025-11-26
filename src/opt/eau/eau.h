@@ -9,6 +9,12 @@ struct sr_encoder;
 
 typedef int (*eau_get_chdr_fn)(void *dstpp,int fqpid);
 
+/* Null if valid, or a canned failure message.
+ * Validates framing aggressively.
+ * But we don't guarantee that it's completely valid, eg we don't visit modecfg or post.
+ */
+const char *eau_validate(const void *src,int srcc);
+
 int eau_cvt_eau_midi(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg);
 int eau_cvt_midi_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg);
 int eau_cvt_eau_eaut(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg);

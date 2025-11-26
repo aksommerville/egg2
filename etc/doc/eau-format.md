@@ -16,7 +16,7 @@ EAU is similar to MIDI, with these notable exceptions:
 
 Song and sound resources are both EAU when shipped.
 Pretty much anything allowed in one is allowed in the other, but:
-- Only one song can play at a time.
+- You can interfere with playing songs, and loop them.
 - Sounds must mark their end time with explicit delays.
 - Duration of a sound is strictly limited to 5 seconds.
 - Sounds will be printed and replayed after the first time, while songs are synthesized from scratch each time. You shouldn't need to care.
@@ -63,6 +63,9 @@ Opening a MIDI file in our editor and resaving it will destroy information:
 4 Text length.
 ... Text, see below.
 ```
+
+Signature and Tempo are required.
+Legal to stop before any of the other chunks. (though it doesn't make sense to omit both Channel Headers and Events).
 
 ### Channel Headers
 
@@ -265,6 +268,7 @@ Key differences:
 
 Songs may contain names of channels or drum notes.
 Tooling should drop this content when building for production, and the runtime should never use it.
+ASCII G0 only.
 
 Zero or more of:
 ```
