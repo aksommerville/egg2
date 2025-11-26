@@ -129,6 +129,7 @@ export class MidiService {
       case 0xd0:
         return { opcode, chid, a };
       case 0xe0:
+        return { opcode: 0, chid, a: 0, b: 0 }; // XXX My MPK225 has a noisy wheel and it's becoming a problem. Need some way to say "ignore wheels" in the UI.
         return { opcode, chid, a, b, v: ((a | (b << 7)) - 8192) / 8192 };
       case 0xf0: switch (src[srcp]) {
           case 0xf2: return { opcode: 0xf2, p: a | (b << 7) };

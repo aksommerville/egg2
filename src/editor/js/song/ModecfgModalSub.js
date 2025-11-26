@@ -35,12 +35,12 @@ export class ModecfgModalSub {
   
   /* All "Modecfg" modals must implement.
    */
-  setup(mode, modecfg, chid, post) {
-    this.mode = mode;
-    this.modecfg = modecfg;
-    this.chid = chid;
-    this.post = post;
-    this.model = decodeModecfg(mode, modecfg);
+  setup(channel) {
+    this.mode = channel.mode;
+    this.modecfg = channel.modecfg;
+    this.chid = channel.chid;
+    this.channel = channel;
+    this.model = decodeModecfg(this.mode, this.modecfg);
     this.buildUi();
   }
   
@@ -101,16 +101,16 @@ export class ModecfgModalSub {
       const encoder = new Encoder();
       encoder.raw("\0EAU");
       encoder.u16be(500); // tempo, whatever
-      encoder.u32be(modecfg.length + 8 + (this.post?.length || 0)); // Channel Headers length
+      encoder.u32be(modecfg.length + 8 + (this.channel.post?.length || 0)); // Channel Headers length
       encoder.u8(0); // Channel zero.
-      encoder.u8(0x80); // Trim.
-      encoder.u8(0x80); // Pan.
-      encoder.u8(this.mode); // Should always be 3==SUB, but we got it generically so use it.
+      encoder.u8(this.channel.trim);
+      encoder.u8(this.channel.pan);
+      encoder.u8(this.mode);
       encoder.u16be(modecfg.length);
       encoder.raw(modecfg);
-      if (this.post) {
-        encoder.u16be(this.post.length);
-        encoder.raw(this.post);
+      if (this.channel.post) {
+        encoder.u16be(this.channel.post.length);
+        encoder.raw(this.channel.post);
       } else {
         encoder.u16be(0);
       }

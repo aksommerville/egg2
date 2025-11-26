@@ -302,7 +302,7 @@ static int synth_channel_fm_decode(struct synth_channel *channel,const uint8_t *
     if (pre&0x8000) CHANNEL->modabs=1; else CHANNEL->modabs=0;
     CHANNEL->modrate=(float)(pre&0x7fff)/256.0f;
   }
-  if (srcp<=srcc-2) { CHANNEL->modrange=((src[srcp]<<8)|src[srcp+1])/256.0f; srcp+=2; }
+  if (srcp<=srcc-2) { CHANNEL->modrange=((src[srcp]<<8)|src[srcp+1])/256.0f; srcp+=2; } else CHANNEL->modrange=1.0f;
   if ((err=synth_env_decode(&CHANNEL->rangeenv,src+srcp,srcc-srcp,SYNTH_ENV_FALLBACK_ONE))<0) return -1; srcp+=err;
   if ((err=synth_env_decode(&CHANNEL->pitchenv,src+srcp,srcc-srcp,SYNTH_ENV_FALLBACK_HALF))<0) return -1; srcp+=err;
   RDWAVE(modulator)

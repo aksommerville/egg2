@@ -25,14 +25,14 @@ export class ModecfgModalRaw {
   
   /* All "Modecfg" modals must implement.
    */
-  setup(mode, modecfg, chid, post) {
-    this.mode = mode;
-    this.modecfg = modecfg;
-    this.chid = chid;
-    this.post = post;
+  setup(channel) {
+    this.mode = channel.mode;
+    this.modecfg = channel.modecfg;
+    this.chid = channel.chid;
+    this.channel = channel;
     
     this.element.innerHTML = "";
-    this.dom.spawn(this.element, "TEXTAREA", this.reprHex(modecfg));
+    this.dom.spawn(this.element, "TEXTAREA", this.reprHex(this.modecfg));
     this.dom.spawn(this.element, "INPUT", { type: "button", value: "OK", "on-click": e => this.onSubmit(e) });
   }
   

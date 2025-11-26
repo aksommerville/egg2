@@ -21,6 +21,7 @@ export class PostModal {
     this.post = null; // Post, see below.
     this.serial = null;
     this.raw = false;
+    this.channel = null;
     this.result = new Promise((resolve, reject) => {
       this.resolve = resolve;
       this.reject = reject;
@@ -35,12 +36,11 @@ export class PostModal {
     this.midiService.unlisten(this.midiServiceListener);
   }
   
-  setup(serial, raw, mode, modecfg) {
-    this.serial = serial;
-    this.post = new Post(serial);
+  setup(channel, raw) {
+    this.serial = channel.post;
+    this.post = new Post(this.serial);
     this.raw = raw;
-    this.mode = mode;
-    this.modecfg = modecfg;
+    this.channel = channel;
     this.buildUi();
   }
   
@@ -293,13 +293,13 @@ export class PostModal {
       const encoder = new Encoder();
       encoder.raw("\0EAU");
       encoder.u16be(500); // tempo, whatever
-      encoder.u32be(this.modecfg.length + 8 + post.length); // Channel Headers length
+      encoder.u32be(this.channel.modecfg.length + 8 + post.length); // Channel Headers length
       encoder.u8(0); // Channel zero.
-      encoder.u8(0x80); // Trim.
-      encoder.u8(0x80); // Pan.
-      encoder.u8(this.mode);
-      encoder.u16be(this.modecfg.length);
-      encoder.raw(this.modecfg);
+      encoder.u8(this.channel.trim);
+      encoder.u8(this.channel.pan);
+      encoder.u8(this.channel.mode);
+      encoder.u16be(this.channel.modecfg.length);
+      encoder.raw(this.channel.modecfg);
       encoder.u16be(post.length);
       encoder.raw(post);
       encoder.u32be(1); // Events length

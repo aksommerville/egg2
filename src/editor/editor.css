@@ -695,12 +695,16 @@ input.toggle:checked + label.toggle.light {
 .SongEditor.shorter {
   height: 90vh !important;
   width: 90vw !important;
+  
 }
 .SongEditor > .bottom {
   flex: 1;
   display: flex;
   flex-direction: row;
   max-height: calc(100vh - 40px);
+}
+.SongEditor.shorter > .bottom {
+  max-height: calc(90vh - 40px);
 }
 
 .SongToolbarUi {

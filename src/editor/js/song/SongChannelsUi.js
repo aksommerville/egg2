@@ -187,7 +187,7 @@ export class SongChannelsUi {
   
   onEditModecfg(event, channel) {
     const modal = this.dom.spawnModal(this.getModecfgModalClass(event, channel), [this.songService]);
-    modal.setup(channel.mode, channel.modecfg, channel.chid, channel.post);
+    modal.setup(channel);
     modal.result.then(rsp => {
       if (!rsp) return;
       channel.modecfg = rsp;
@@ -210,7 +210,7 @@ export class SongChannelsUi {
   
   onEditPost(event, channel) {
     const modal = this.dom.spawnModal(PostModal);
-    modal.setup(channel.post, event.ctrlKey, channel.mode, channel.modecfg);
+    modal.setup(channel, event.ctrlKey);
     modal.result.then(rsp => {
       if (!rsp) return;
       channel.post = rsp;
