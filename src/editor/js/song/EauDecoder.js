@@ -444,7 +444,7 @@ export function encodeFmModecfg(dst, src) {
   if (fldc < 13) return; encodeWave(dst, src.rangelfowave);
   if (fldc < 14) return; dst.u8_8(src.mixlforate);
   if (fldc < 15) return; dst.u8(src.mixlfodepth);
-  if (fldc < 16) return; encodeWave(dsdt, src.mixlfowave);
+  if (fldc < 16) return; encodeWave(dst, src.mixlfowave);
 }
 
 /* {

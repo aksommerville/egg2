@@ -246,7 +246,7 @@ export class Song {
   getNameForce(chid, noteid) {
     const p = this.textSearch(chid, noteid);
     if (p >= 0) {
-      if (noteid) return `${chid}:${noteid}: ${this.text[p][2]}`;
+      if (noteid < 0x80) return `${chid}:${noteid}: ${this.text[p][2]}`;
       return `${chid}: ${this.text[p][2]}`;
     }
     if (noteid < 0x80) return `Note ${noteid} on channel ${chid}`;
