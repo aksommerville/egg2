@@ -87,7 +87,7 @@ Features we *do* support:
 - - - [ ] Web input config.
 - - [ ] Web: Touch input, on-screen gamepad.
 - [ ] Audio
-- - [ ] SongEditor: Need MIDI-In to include post at modecfg, and also play at post modal.
+- - [x] SongEditor: Need MIDI-In to include post at modecfg, and also play at post modal.
 - - [x] Web synth: Play thru song 8, then start song 9 in demo. 9 doesn't start. Will start on second try. Are we running out of memory? (both big songs)
 - - - ...Humm Fu does it at the end. ...increasing memory fixed it.
 - - [ ] ^ No but seriously. We need better insight into memory usage, and maybe some mitigations at runtime, like evicting sounds not currently in use, or forcing a terminating song off.

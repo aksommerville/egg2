@@ -25,10 +25,11 @@ export class ModecfgModalRaw {
   
   /* All "Modecfg" modals must implement.
    */
-  setup(mode, modecfg, chid) {
+  setup(mode, modecfg, chid, post) {
     this.mode = mode;
     this.modecfg = modecfg;
     this.chid = chid;
+    this.post = post;
     
     this.element.innerHTML = "";
     this.dom.spawn(this.element, "TEXTAREA", this.reprHex(modecfg));

@@ -38,10 +38,11 @@ export class ModecfgModalFm {
   
   /* All "Modecfg" modals must implement.
    */
-  setup(mode, modecfg, chid) {
+  setup(mode, modecfg, chid, post) {
     this.mode = mode;
     this.modecfg = modecfg;
     this.chid = chid;
+    this.post = post;
     this.model = decodeModecfg(mode, modecfg);
     this.buildUi();
   }
@@ -133,14 +134,19 @@ export class ModecfgModalFm {
       const encoder = new Encoder();
       encoder.raw("\0EAU");
       encoder.u16be(500); // tempo, whatever
-      encoder.u32be(modecfg.length + 8); // Channel Headers length
+      encoder.u32be(modecfg.length + 8 + (this.post?.length || 0)); // Channel Headers length
       encoder.u8(0); // Channel zero.
       encoder.u8(0x80); // Trim.
       encoder.u8(0x80); // Pan.
       encoder.u8(this.mode); // Should always be 2==FM, but we got it generically so use it.
       encoder.u16be(modecfg.length);
       encoder.raw(modecfg);
-      encoder.u16be(0); // Post length
+      if (this.post) {
+        encoder.u16be(this.post.length);
+        encoder.raw(this.post);
+      } else {
+        encoder.u16be(0);
+      }
       encoder.u32be(1); // Events length
       encoder.u8(0x7f); // Long delay
       this.audio.playEauSong(encoder.finish(), true);

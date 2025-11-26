@@ -5,14 +5,18 @@
 import { Dom } from "../Dom.js";
 import { Encoder } from "../Encoder.js";
 import { EauDecoder, encodePostStage, decodePostStage } from "./EauDecoder.js";
+import { MidiService } from "./MidiService.js";
+import { Audio } from "../Audio.js";
 
 export class PostModal {
   static getDependencies() {
-    return [HTMLDialogElement, Dom];
+    return [HTMLDialogElement, Dom, MidiService, Audio];
   }
-  constructor(element, dom) {
+  constructor(element, dom, midiService, audio) {
     this.element = element;
     this.dom = dom;
+    this.midiService = midiService;
+    this.audio = audio;
     
     this.post = null; // Post, see below.
     this.serial = null;
@@ -21,16 +25,22 @@ export class PostModal {
       this.resolve = resolve;
       this.reject = reject;
     });
+    
+    this.midiServiceListener = this.midiService.listen(e => this.onMidiEvent(e));
+    this.playbackDirty = true;
   }
   
   onRemoveFromDom() {
     this.resolve(null);
+    this.midiService.unlisten(this.midiServiceListener);
   }
   
-  setup(serial, raw) {
+  setup(serial, raw, mode, modecfg) {
     this.serial = serial;
     this.post = new Post(serial);
     this.raw = raw;
+    this.mode = mode;
+    this.modecfg = modecfg;
     this.buildUi();
   }
   
@@ -41,6 +51,7 @@ export class PostModal {
         event.preventDefault();
         event.stopPropagation();
       },
+      "on-input": () => { this.playbackDirty = true; },
     });
     if (this.raw) {
       const textarea = this.dom.spawn(form, "TEXTAREA", { name: "raw", "on-input": e => this.onRawChange(e) });
@@ -248,12 +259,53 @@ export class PostModal {
   onSubmit(event) {
     event.preventDefault();
     event.stopPropagation();
-    if (this.raw) {
-      this.resolve(this.unhexdump(this.element.querySelector("textarea[name='raw']").value));
-    } else {
-      this.resolve(this.post.encode());
-    }
+    this.resolve(this.serialFromUi());
     this.element.remove();
+  }
+  
+  serialFromUi() {
+    if (this.raw) {
+      return this.unhexdump(this.element.querySelector("textarea[name='raw']").value);
+    } else {
+      return this.post.encode();
+    }
+  }
+  
+  /* Communication with MIDI bus and synthesizer.
+   ********************************************************************/
+  
+  onMidiEvent(event) {
+    switch (event.opcode) {
+      case 0x80:
+      case 0x90:
+      case 0xe0: {
+          this.requirePlaybackSerial();
+          event.chid = 0; // Don't care about input channel, we've registered on channel zero.
+          this.audio.sendEvent(event);
+        } break;
+    }
+  }
+  
+  requirePlaybackSerial() {
+    if (this.playbackDirty) {
+      this.playbackDirty = false;
+      const post = this.serialFromUi();
+      const encoder = new Encoder();
+      encoder.raw("\0EAU");
+      encoder.u16be(500); // tempo, whatever
+      encoder.u32be(this.modecfg.length + 8 + post.length); // Channel Headers length
+      encoder.u8(0); // Channel zero.
+      encoder.u8(0x80); // Trim.
+      encoder.u8(0x80); // Pan.
+      encoder.u8(this.mode);
+      encoder.u16be(this.modecfg.length);
+      encoder.raw(this.modecfg);
+      encoder.u16be(post.length);
+      encoder.raw(post);
+      encoder.u32be(1); // Events length
+      encoder.u8(0x7f); // Long delay
+      this.audio.playEauSong(encoder.finish(), true);
+    }
   }
 }
 

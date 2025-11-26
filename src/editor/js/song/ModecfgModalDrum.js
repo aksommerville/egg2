@@ -30,10 +30,11 @@ export class ModecfgModalDrum {
   
   /* All "Modecfg" modals must implement.
    */
-  setup(mode, modecfg, chid) {
+  setup(mode, modecfg, chid, post) {
     this.mode = mode;
     this.modecfg = modecfg;
     this.chid = chid;
+    this.post = post;
     this.model = decodeModecfg(mode, modecfg);
     this.buildUi();
   }
