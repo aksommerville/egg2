@@ -784,3 +784,83 @@ export function encodePostStage(encoder, stage) {
     encoder.raw(stage.extra);
   });
 }
+
+/* Given a MIDI file as Uint8Array, return { chdr?, text? } for the two special Egg events.
+ */
+ 
+export function extractEggsFromMidi(src) {
+  const eggs = {};
+  for (let srcp=0; srcp<src.length; ) {
+    const chunkid = (src[srcp] << 24) | (src[srcp+1] << 16) | (src[srcp+2] << 8) | src[srcp+3];
+    const chunklen = (src[srcp+4] << 24) | (src[srcp+5] << 16) | (src[srcp+6] << 8) | src[srcp+7];
+    srcp += 8;
+    if ((chunklen < 0) || (srcp > src.length - chunklen)) {
+      throw new Error(`Malformed MIDI file.`);
+    }
+    if (chunkid === 0x4d54726b) { // MTrk
+      extractEggsFromMTrk(eggs, new Uint8Array(src.buffer, src.byteOffset + srcp, chunklen));
+      if (eggs.chdr && eggs.text) return eggs;
+    }
+    srcp += chunklen;
+  }
+  return eggs;
+}
+
+function extractEggsFromMTrk(eggs, src) {
+  let srcp=0;
+  const VLQ = () => {
+    let v = 0;
+    for (;;) {
+      if (srcp >= src.length) throw new Error(`Unexpected EOF in MIDI MTrk.`);
+      const next = src[srcp++];
+      v <<= 7;
+      v |= next & 0x7f;
+      if (!(next & 0x80)) return v;
+    }
+  };
+  
+  for (let status=0; srcp<src.length; ) {
+    
+    // The special events are required to be at time zero (tho other decoders may be looser about it).
+    // We'll be strict. If there's a delay, we're done reading.
+    if (src[srcp++]) return;
+    
+    // It would be a little weird maybe, but it's certainly possible for Running Status to be in play at time zero.
+    // eg if the song begins with a chord.
+    // So read opcode as we would in a real MIDI decoder.
+    let lead = src[srcp];
+    if (lead & 0x80) srcp++;
+    else if (!status) throw new Error(`Unexpected leading byte ${lead} in MIDI MTrk.`);
+    else lead = status;
+    status = lead;
+    
+    // Channel Voice events are legal and we can ignore them all.
+    switch (lead & 0xf0) {
+      case 0x80: case 0x90: case 0xa0: case 0xb0: case 0xe0: srcp += 2; continue;
+      case 0xc0: case 0xd0: srcp += 1; continue;
+    }
+    
+    // Anything that isn't Channel Voice resets Running Status.
+    status = 0;
+    
+    // Sysex is legal, ignore it.
+    if ((lead === 0xf0) || (lead === 0xf7)) {
+      const paylen = VLQ();
+      if (srcp > src.length - paylen) throw new Error(`Sysex overrun.`);
+      srcp += paylen;
+      continue;
+    }
+    
+    // Everything else must be Meta.
+    if (lead !== 0xff) throw new Error(`Unexpected leading byte ${lead} in MIDI MTrk.`);
+    const type = src[srcp++];
+    const paylen = VLQ();
+    if (srcp > src.length - paylen) throw new Error(`Meta overrun.`);
+    switch (type) {
+      case 0x77: eggs.chdr = new Uint8Array(src.buffer, src.byteOffset + srcp, paylen); break; // mmm eggs with cheddar
+      case 0x78: eggs.text = new Uint8Array(src.buffer, src.byteOffset + srcp, paylen); break;
+    }
+    if (eggs.chdr && eggs.text) return;
+    srcp += paylen;
+  }
+}

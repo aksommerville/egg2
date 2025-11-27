@@ -7,6 +7,7 @@ import { encodeModecfg, decodeModecfg } from "./EauDecoder.js";
 import { GM_DRUM_NAMES } from "./MidiConstants.js";
 import { SongService } from "./SongService.js";
 import { SongEditor } from "./SongEditor.js";
+import { PickSoundModal } from "./PickSoundModal.js";
 
 export class ModecfgModalDrum {
   static getDependencies() {
@@ -22,6 +23,13 @@ export class ModecfgModalDrum {
       this.resolve = resolve;
       this.reject = reject;
     });
+    
+    this.cbSave = null; // (Uint8Array) => void ; Set manually to enable save-without-submit.
+    
+    // We deliberately do not subscribe to MidiService.
+    // We open child SongEditor modals, and one assumes they will be talking to MidiService.
+    // Avoid the conflict by declining to participate at all.
+    // User can play our drums by clicking the buttons.
   }
   
   onRemoveFromDom() {
@@ -29,6 +37,7 @@ export class ModecfgModalDrum {
   }
   
   /* All "Modecfg" modals must implement.
+   * If you can allow saving before submit, set cbSave *before* calling this.
    */
   setup(channel) {
     this.mode = channel.mode;
@@ -56,6 +65,9 @@ export class ModecfgModalDrum {
     this.dom.spawn(footer, "INPUT", { type: "button", value: "From Events", "on-click": () => this.onFromEvents() });
     this.dom.spawn(footer, "INPUT", { type: "button", value: "Remove Unsed", "on-click": () => this.onRemoveUnused() });
     this.dom.spawn(footer, "DIV", ["spacer"]);
+    if (this.cbSave) {
+      this.dom.spawn(footer, "INPUT", { type: "button", value: "Save", "on-click": () => this.onSave() });
+    }
     this.dom.spawn(footer, "INPUT", { type: "button", value: "OK", "on-click": () => this.onSubmit() });
   }
   
@@ -72,10 +84,18 @@ export class ModecfgModalDrum {
     this.dom.spawn(row, "INPUT", { type: "button", value: ">", "on-click": () => this.onPlay(drum) });
     this.dom.spawn(row, "INPUT", { type: "button", value: "...", "on-click": () => this.onEdit(drum) });
     this.dom.spawn(row, "INPUT", { type: "text", name: "name", value: this.drumNameForNoteid(drum.noteid) });
+    this.dom.spawn(row, "DIV", ["length"], drum.serial.length);
   }
   
   drumNameForNoteid(noteid) {
     return this.songService.song.getName(this.chid, noteid) || GM_DRUM_NAMES[noteid] || "";
+  }
+  
+  rowForNoteid(noteid) {
+    const input = this.element.querySelector(`input[name='noteid'][value='${noteid}']`);
+    let row = input;
+    while (row && !row.classList.contains("row")) row = row.parentNode;
+    return row;
   }
   
   /* Events.
@@ -86,9 +106,7 @@ export class ModecfgModalDrum {
     if (p >= 0) {
       this.model.drums.splice(p, 1);
     }
-    const input = this.element.querySelector(`input[name='noteid'][value='${noteid}']`);
-    let row = input;
-    while (row && !row.classList.contains("row")) row = row.parentNode;
+    const row = this.rowForNoteid(noteid);
     if (row) row.remove();
   }
   
@@ -101,7 +119,9 @@ export class ModecfgModalDrum {
     const modal = this.dom.spawnModal(SongEditor);
     modal.setupSerial(drum.serial, (song) => {
       drum.serial = song.encode();
-      // No need to update UI; we don't report the serial length or anything.
+      const row = this.rowForNoteid(drum.noteid);
+      const tattle = row?.querySelector(".length");
+      if (tattle) tattle.innerText = drum.serial.length;
     });
   }
    
@@ -115,7 +135,7 @@ export class ModecfgModalDrum {
       for (const drum of this.model.drums) {
         noteidInUse.add(drum.noteid);
         if (drum.noteid < lowest) lowest = drum.noteid;
-        else if (drum.noteid > highest) highest = drum.noteid;
+        if (drum.noteid > highest) highest = drum.noteid;
       }
       if (highest < 127) {
         noteid = highest + 1;
@@ -141,8 +161,34 @@ export class ModecfgModalDrum {
   }
   
   onImport() {
-    console.log(`TODO ModecfgModalDrum.onImport`);
-    //TODO Present a modal allowing user to pick sound resources and drums from other songs, esp from the SDK, to copy in at a noteid they provide.
+    const modal = this.dom.spawnModal(PickSoundModal);
+    modal.setupForDrums(this.model);
+    modal.result.then(serial => {
+      if (!serial) return;
+      // Add or update.
+      let row = null;
+      let drum = this.model.drums.find(d => d.noteid === modal.noteid);
+      if (drum) {
+        drum.serial = serial;
+        row = this.rowForNoteid(modal.noteid);
+      } else {
+        drum = { noteid: modal.noteid, trimlo: 0x40, trimhi: 0xff, pan: 0x80, serial };
+        this.model.drums.push(drum);
+        const scroller = this.element.querySelector(".scroller");
+        row = this.dom.spawn(scroller, "DIV", ["row"]);
+      }
+      // If the modal provides a name, and we don't already have one, use it.
+      // But if we already have a name, keep it.
+      if (modal.name) {
+        const existing = this.songService.song.getName(this.chid, drum.noteid);
+        if (!existing) {
+          this.songService.song.setName(this.chid, drum.noteid, modal.name);
+        }
+      }
+      if (row) this.populateRow(row, drum);
+    }).catch(e => {
+      this.dom.modalError(e);
+    });
   }
   
   onSort() {
@@ -189,7 +235,7 @@ export class ModecfgModalDrum {
     }
   }
   
-  onSubmit() {
+  encode() {
     // Model stays fresh in real time, for the most part.
     // Do need to send each name to the song; those aren't actually recorded in modecfg.
     for (const row of this.element.querySelectorAll(".scroller > .row")) {
@@ -199,7 +245,16 @@ export class ModecfgModalDrum {
         this.songService.song.setName(this.chid, noteid, name);
       }
     }
-    this.resolve(encodeModecfg(this.model));
+    return encodeModecfg(this.model);
+  }
+  
+  onSubmit() {
+    this.resolve(this.encode());
     this.element.remove();
+  }
+  
+  onSave() {
+    if (!this.cbSave) return this.dom.modalError("save-without-submit not supported here");
+    this.cbSave(this.encode());
   }
 }

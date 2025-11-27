@@ -80,7 +80,8 @@ Features we *do* support:
 - - [x] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
 - - [x] Edit SDK instruments. Maybe a global option in the Editor's actions menu?
 - - [x] ^ SongEditor forbids new channels chid>=16, and chid have to be assigned sequentially. Also has lots of UI we're not going to use here. Write a new InstrumentsEditor?
-- - [ ] Standard instruments.
+- - [x] Standard instruments.
+- - - [x] Drum kit.
 - - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
 - - - [ ] Native menu.
 - - - [ ] Native input config.
@@ -95,10 +96,14 @@ Features we *do* support:
 - - [ ] Redefine `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` as trims in 0..99.
 - - [ ] Web Audio.js: Slice out audio parts of ROM, don't send the whole thing.
 - - [ ] Look up SDK instruments during song compile.
+- - [ ] SongEditor: Ensure we can receive natural EAU files, save them as EAU, and also use EAU rather than MIDI for ones that started blank.
+- - [ ] Demo sounds are still in the old format.
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
 - [ ] Audio review, when close to ready.
 - [ ] Minor bugs and tweaks outstanding.
+- - [ ] SongEditor EventModal: Show noteid in hex and musical name too.
 - - [ ] SongEditor: Channel trim and pan can adjust in real time, in the synth. We should do that eagerly when it changes in the UI.
+- - [ ] Editor: Sometimes deleting a post step doesn't work.
 - - [ ] Editor: Pitch wheel disabled at MidiService.readEvent() because my device is noisy. Find a long-term solution.
 - - [ ] Change malloc in egg-stdlib to use Wasm intrinsics, like synth. Then it won't produce a 16 MB ofile.
 - - [ ] Launch from within map editor didn't rebuild.

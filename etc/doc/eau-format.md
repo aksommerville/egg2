@@ -24,7 +24,7 @@ Pretty much anything allowed in one is allowed in the other, but:
 ## From MIDI
 
 Meta 0x51 Set Tempo should appear once at time zero.
-Tempo changes are permitted, but we will declare only the initial tempo.
+Tempo changes are permitted and respected, but only the time-zero tempo gets encoded in the EAU header.
 
 Meta 0x07 Cue Point with the payload "LOOP" to mark the loop point. This is permitted only zero or one times.
 Legal but redundant at time zero.
@@ -33,6 +33,7 @@ The Channel Header and Text chunks may be encoded as custom Meta events at time 
  - Meta 0x77 Channel Headers.
  - Meta 0x78 Text.
 If one of those is present, compiler should not attempt to synthesize any content from other MIDI events.
+More than one of either of them is an error.
 
 In the absence of Meta 0x77 Channel Headers, we generate headers based on:
  - Bank Select.

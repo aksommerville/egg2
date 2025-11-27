@@ -6,15 +6,18 @@ import { Dom } from "../Dom.js";
 import { Comm } from "../Comm.js";
 import { InstrumentsEditor } from "./InstrumentsEditor.js";
 import { Song } from "./Song.js";
+import { SongService } from "./SongService.js";
+import { ModecfgModalDrum } from "./ModecfgModalDrum.js";
 
 export class SdkInstrumentsService {
   static getDependencies() {
-    return [Dom, Comm, Window];
+    return [Dom, Comm, Window, SongService];
   }
-  constructor(dom, comm, window) {
+  constructor(dom, comm, window, songService) {
     this.dom = dom;
     this.comm = comm;
     this.window = window;
+    this.songService = songService;
     
     this.serial = null;
     this.serialPromise = null;
@@ -25,7 +28,7 @@ export class SdkInstrumentsService {
   getInstruments() {
     if (this.song) return Promise.resolve(this.song);
     return this.getSerial().then(serial => {
-      this.song = new Song(this.serial);
+      this.song = Song.withoutEvents(this.serial);
       return this.song;
     });
   }
@@ -47,6 +50,28 @@ export class SdkInstrumentsService {
     this.getSerial().then(serial => {
       const controller = this.dom.spawnModal(InstrumentsEditor);
       controller.setup(new Song(serial), song => this.saveSoon(song));
+    }).catch(e => {
+      this.dom.modalError(e);
+    });
+  }
+  
+  // A wee convenience to open a modecfg modal for fqpid 0x80 Default Kit.
+  // You could reach this via edit(), but InstrumentsEditor is really heavy.
+  editDefaultDrumKit() {
+    this.getSerial().then(serial => {
+      const song = new Song(serial);
+      const channel = song.channels.find(c => c.chid === 0x80);
+      if (!channel) throw new Error(`Program 0x80 not found in SDK instruments.`);
+      this.songService.reset(song, 0);
+      const onSave = modecfg => {
+        if (!modecfg) return;
+        channel.modecfg = modecfg;
+        this.saveSoon(song);
+      };
+      const controller = this.dom.spawnModal(ModecfgModalDrum, [this.songService]);
+      controller.cbSave = onSave;
+      controller.setup(channel);
+      controller.result.then(onSave);
     }).catch(e => {
       this.dom.modalError(e);
     });

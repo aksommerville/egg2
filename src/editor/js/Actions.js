@@ -38,6 +38,7 @@ export class Actions {
       { name: "missingResources", label: "Missing Resources...", fn: () => this.missingResourcesService.detectAndReport() },
       { name: "worldMap", label: "World Map...", fn: () => this.dom.spawnModal(WorldMapModal) },
       { name: "editSdkInstruments", label: "Edit SDK Instruments...", fn: () => this.sdkInstrumentsService.edit() },
+      { name: "editDefaultDrumKit", label: "Edit Default Drum Kit...", fn: () => this.sdkInstrumentsService.editDefaultDrumKit() },
     ];
     
     this.editors = [

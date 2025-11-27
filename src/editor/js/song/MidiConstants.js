@@ -8,7 +8,7 @@ export const GM_DRUM_NAMES = [
   null, null, null, null, null, null, null,
   null, null, null, null, null, null, null,
   null, null, null, null, null, null, null,
-  "WRONG Acoustic Bass Drum",
+  "Acoustic Bass Drum",
   "Bass Drum 1",
   "Side Stick",
   "Acoustic Snare",

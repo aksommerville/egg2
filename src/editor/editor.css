@@ -903,6 +903,9 @@ input.toggle:checked + label.toggle.light {
   height: 60vh;
   min-width: 50vw;
 }
+.ModecfgModalDrum .length {
+  margin-left: 5px;
+}
 
 .WaveUi {
   margin: 4px;
@@ -981,6 +984,11 @@ input.toggle:checked + label.toggle.light {
 .InstrumentsModal {
   display: flex;
   flex-direction: column;
+}
+
+.PickSoundModal .sounds {
+  list-style-type: none;
+  padding-left: 0;
 }
 
 .StringsEditor {

@@ -8,7 +8,7 @@
  */
  
 import { Encoder } from "../Encoder.js";
-import { EauDecoder } from "./EauDecoder.js";
+import { EauDecoder, extractEggsFromMidi } from "./EauDecoder.js";
 
 export class Song {
 
@@ -19,8 +19,29 @@ export class Song {
     this._init();
     if (!src) ;
     else if (src instanceof Song) this._copy(src);
-    else if (src instanceof Uint8Array) this._decode(src);
+    else if (src instanceof Uint8Array) this._decode(src, false);
     else throw new Error(`Unexpected input to Song`);
+  }
+  
+  /* Sometimes a caller only wants channels and text.
+   * Decoding all the events is wasteful then.
+   */
+  static withoutEvents(serial) {
+    const song = new Song();
+    song._decode(serial, true);
+    return song;
+  }
+  
+  /* Same idea as withoutEvents() but from a MIDI file.
+   * This is a big deal: If you wanted events, you'd have to bounce it off the server instead.
+   * Note that we don't bother detecting the tempo. That could be added if need be.
+   */
+  static fromMidiWithoutEvents(serial) {
+    const eggs = extractEggsFromMidi(serial);
+    const song = new Song();
+    if (eggs.chdr) song._decodeChdr(eggs.chdr);
+    if (eggs.text) song._decodeText(eggs.text);
+    return song;
   }
   
   _init() {
@@ -40,7 +61,7 @@ export class Song {
     this.events = src.events.map(e => new SongEvent(e));
   }
   
-  _decode(src) {
+  _decode(src, skipEvents) {
     
     // If the input is empty, call it ok. We're already in a sane default state.
     if (!src?.length) return;
@@ -73,7 +94,9 @@ export class Song {
     
     // Enter each of those blocks.
     this._decodeChdr(chdr);
-    this._decodeEvents(evt);
+    if (!skipEvents) {
+      this._decodeEvents(evt);
+    }
     this._decodeText(text);
     
     // Warn and create a default channel for any events that lack a channel.
@@ -666,12 +689,12 @@ export class SongEvent {
   // New event with all the fields, on the assumption that user is going to change type.
   static newFullyPopulated() {
     const event = new SongEvent();
-    event.type = "marker";
+    event.type = "note";
     event.noteid = 0x40;
     event.velocity = 0x40;
     event.chid = 0;
     event.durms = 0;
-    event.wheel = 0x100;
+    event.wheel = 0x2000;
     event.mark = -1;
     return event;
   }

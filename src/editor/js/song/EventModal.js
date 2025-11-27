@@ -4,21 +4,27 @@
  
 import { Dom } from "../Dom.js";
 import { SongEvent } from "./Song.js";
+import { MidiService } from "./MidiService.js";
 
 export class EventModal {
   static getDependencies() {
-    return [HTMLDialogElement, Dom];
+    return [HTMLDialogElement, Dom, MidiService];
   }
-  constructor(element, dom) {
+  constructor(element, dom, midiService) {
     this.element = element;
     this.dom = dom;
+    this.midiService = midiService;
+    
     this.result = new Promise((resolve, reject) => {
       this.resolve = resolve;
       this.reject = reject;
     });
+    
+    this.midiServiceListener = this.midiService.listen(e => this.onMidiEvent(e));
   }
   
   onRemoveFromDom() {
+    this.midiService.unlisten(this.midiServiceListener);
     this.resolve(null);
   }
   
@@ -99,6 +105,16 @@ export class EventModal {
     _("durms", "note");
     _("wheel", "wheel");
     this.element.querySelector("input[name='chid']").disabled = ((type !== "note") && (type !== "wheel"));
+  }
+  
+  /* If we get a Note On event, capture it.
+   * Do not change time obviously, and also don't change chid, since normally we're not paying attention to the device's chid.
+   */
+  onMidiEvent(mevent) {
+    if (mevent.opcode !== 0x90) return;
+    this.element.querySelector("select[name='type']").value = "note";
+    this.element.querySelector("input[name='noteid']").value = mevent.a;
+    this.element.querySelector("input[name='velocity']").value = mevent.b;
   }
   
   eventFromUi() {
