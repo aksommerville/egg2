@@ -162,11 +162,11 @@ static int eggrt_prefs_choose_language() {
 static void eggrt_prefs_init_audio() {
   if (!eggrt.hostio->audio||(eggrt.hostio->audio->type==&hostio_audio_type_dummy)) {
     fprintf(stderr,"%s: Starting sound preferences disabled due to dummy driver.\n",eggrt.exename);
-    eggrt.music_enable=0;
-    eggrt.sound_enable=0;
+    eggrt.music_level=0;
+    eggrt.sound_level=0;
   } else {
-    eggrt.music_enable=1;
-    eggrt.sound_enable=1;
+    eggrt.music_level=99;
+    eggrt.sound_level=99;
   }
 }
 

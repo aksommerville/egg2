@@ -14,6 +14,7 @@ void eggrt_quit(int status) {
   
   if (!status) eggrt_clock_report();
   
+  umenu_del(eggrt.umenu);
   render_del(eggrt.render);
   inmgr_quit();
   eggrt_store_quit();
@@ -182,6 +183,7 @@ static int eggrt_init_input() {
     return -2;
   }
   inmgr_set_signal(INMGR_BTN_QUIT,eggrt_cb_quit);
+  inmgr_set_signal(INMGR_BTN_MENU,eggrt_cb_quit);
   if (eggrt.hostio->video&&eggrt.hostio->video->type->provides_input) {
     eggrt.devid_keyboard=hostio_input_devid_next();
     inmgr_connect_keyboard(eggrt.devid_keyboard);
@@ -280,14 +282,21 @@ int eggrt_update() {
   if (!eggrt.focus) return 0;
   
   // Update client.
-  if ((err=eggrt_call_client_update(elapsed))<0) return err;
+  if (eggrt.umenu) {
+    if ((err=umenu_update(eggrt.umenu,elapsed))<0) return err;
+  } else {
+    if ((err=eggrt_call_client_update(elapsed))<0) return err;
+  }
   if ((err=eggrt_store_update())<0) return err;
   if (eggrt.terminate) return 0;
   
   // Render.
   if ((err=eggrt.hostio->video->type->gx_begin(eggrt.hostio->video))<0) return err;
   render_begin(eggrt.render);
-  if ((err=eggrt_call_client_render())<0) return err;
+  if ((err=eggrt_call_client_render())<0) return err; // Render the client even when umenu open; it may show in the background.
+  if (eggrt.umenu) {
+    if ((err=umenu_render(eggrt.umenu))<0) return err;
+  }
   render_commit(eggrt.render);
   if ((err=eggrt.hostio->video->type->gx_end(eggrt.hostio->video))<0) return err;
   

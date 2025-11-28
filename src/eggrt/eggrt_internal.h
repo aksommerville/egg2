@@ -7,6 +7,7 @@
 #include "opt/synth/synth.h"
 #include "opt/render/render.h"
 #include "inmgr/inmgr.h"
+#include "umenu/umenu.h"
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -41,6 +42,7 @@ extern struct eggrt {
   void *titlestorage,*iconstorage;
   int focus; // Current state of window manager focus. Hard-pause when blurred.
   int devid_keyboard;
+  struct umenu *umenu; // Null normally. If not, the Universal Menu is open.
   
 // eggrt_rom.c:
   void *rom;
@@ -83,8 +85,8 @@ extern struct eggrt {
   
 // Preferences exposed via Platform API:
   int lang;
-  int music_enable;
-  int sound_enable;
+  int music_level; // 0..99
+  int sound_level; // 0..99
   
 } eggrt;
 

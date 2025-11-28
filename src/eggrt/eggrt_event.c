@@ -115,5 +115,12 @@ void eggrt_cb_button(struct hostio_input *driver,int devid,int btnid,int value) 
  */
  
 void eggrt_cb_quit() {
-  eggrt.terminate=1;
+  // We don't actually quit from here. Maybe we should. But both QUIT and MENU buttons from inmgr map to this, the Universal Menu.
+  fprintf(stderr,"%s\n",__func__);
+  if (eggrt.umenu) {
+    umenu_del(eggrt.umenu);
+    eggrt.umenu=0;
+  } else {
+    eggrt.umenu=umenu_new();
+  }
 }

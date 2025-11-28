@@ -83,11 +83,12 @@ Features we *do* support:
 - - [x] Standard instruments.
 - - - [x] Drum kit.
 - - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
-- - - [ ] Native menu.
+- - - [x] Native menu.
 - - - [ ] Native input config.
 - - - [ ] Web menu.
 - - - [ ] Web input config.
 - - [ ] Web: Touch input, on-screen gamepad.
+- - [ ] Consider adding a client hook `egg_client_notify(k,v)` for changed preferences, eg lang from Universal Menu.
 - [ ] Audio
 - - [x] SongEditor: Need MIDI-In to include post at modecfg, and also play at post modal.
 - - [x] Web synth: Play thru song 8, then start song 9 in demo. 9 doesn't start. Will start on second try. Are we running out of memory? (both big songs)
@@ -144,6 +145,7 @@ Features we *do* support:
 - - [ ] eggstra play: Read from stdin.
 - - [ ] eggstra play: Play WAV files.
 - - [ ] Editor Launch: Is it possible to dismiss the iframe when game ends? Or allow Esc after it terminates? Having trouble capturing key events for it.
+- - [ ] Would be nice if `eggdev convert` could change the pixel format of a PNG file, eg `eggdev convert -oout.png in.png --depth=1 --colortype=0`
 - [ ] Review all "TODO" in source, there's a ton of them.
 - With the above complete, we can start migrating games:
 - [ ] Rewrite or migrate eggsamples for v2.

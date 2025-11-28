@@ -88,13 +88,12 @@ WASM_IMPORT("egg_time_local") void egg_time_local(int *dst,int dsta);
 
 /* Read or write a global preference.
  * Do not change these unless the user has prompted you to.
- * When music is disabled, it will not pretend to play. egg_song_get_id and egg_song_get_playhead report zero while disabled.
  */
 WASM_IMPORT("egg_prefs_get") int egg_prefs_get(int k);
 WASM_IMPORT("egg_prefs_set") int egg_prefs_set(int k,int v);
-#define EGG_PREF_LANG 1
-#define EGG_PREF_MUSIC 2
-#define EGG_PREF_SOUND 3
+#define EGG_PREF_LANG  1 /* See macros above. */
+#define EGG_PREF_MUSIC 2 /* 0..99 */
+#define EGG_PREF_SOUND 3 /* 0..99 */
 
 /* Storage.
  *************************************************************************************/
