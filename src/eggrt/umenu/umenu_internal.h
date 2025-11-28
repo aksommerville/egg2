@@ -46,6 +46,7 @@ struct umenu {
     int x,y,w,h;
     int enable;
     int strix;
+    int done; // Can be set for dpad if we've configured from the other side.
   } buttonv[15];
   int buttonc;
   int buttonp; // <0 until a device is selected
@@ -58,6 +59,11 @@ struct umenu {
     int position;
   } labelv[INCFG_LABEL_LIMIT];
   int labelc;
+  struct incfg_cap {
+    int srcbtnid,usage,lo,hi,value;
+    int blackout;
+  } *capv;
+  int capc,capa;
 };
 
 void umenu_fill_rect(int x,int y,int w,int h,uint32_t rgba);

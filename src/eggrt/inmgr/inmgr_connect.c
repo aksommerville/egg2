@@ -549,7 +549,7 @@ void inmgr_connect_end(int devid) {
 /* Manually modify one button mapping.
  */
 
-int inmgr_remap_button(int devid,int srcbtnid,int dstbtnid) {
+int inmgr_remap_button(int devid,int srcbtnid,int dstbtnid,const char *comment,int commentc) {
   if (!srcbtnid) return -1;
   if (dstbtnid==INMGR_BTN_CD) return -1;
 
@@ -575,7 +575,7 @@ int inmgr_remap_button(int devid,int srcbtnid,int dstbtnid) {
     memset(button,0,sizeof(struct inmgr_button));
     button->srcbtnid=srcbtnid;
   }
-  inmgr_button_remap(button,dstbtnid,0,0);
+  inmgr_button_remap(button,dstbtnid,comment,commentc);
   
   if (device->tmid) {
     struct inmgr_tm *tm=inmgr.tmv;

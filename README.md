@@ -84,7 +84,7 @@ Features we *do* support:
 - - - [x] Drum kit.
 - - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
 - - - [x] Native menu.
-- - - [ ] Native input config.
+- - - [x] Native input config.
 - - - [ ] Web menu.
 - - - [ ] Web input config.
 - - [ ] Web: Touch input, on-screen gamepad.

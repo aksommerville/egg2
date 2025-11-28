@@ -203,8 +203,10 @@ int inmgr_playerid_for_devid(int devid);
  * Does not actually write out to the file -- you should inmgr_save() soon after.
  * (dstbtnid) zero to unmap.
  * This may cause a device to start or stop particpating in player mapping.
+ * (comment):
+ *   "reverse" for signed axes, to make <0 Right or Down.
  */
-int inmgr_remap_button(int devid,int srcbtnid,int dstbtnid);
+int inmgr_remap_button(int devid,int srcbtnid,int dstbtnid,const char *comment,int commentc);
 
 //TODO Should we expose the gritty details of the config file?
 
