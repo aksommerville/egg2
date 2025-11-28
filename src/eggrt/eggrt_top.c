@@ -43,11 +43,6 @@ void eggrt_quit(int status) {
  */
  
 void eggrt_language_changed() {
-  /**
-  char name[2];
-  EGG_STRING_FROM_LANG(name,eggrt.lang)
-  fprintf(stderr,"%s: %.2s\n",__func__,name);
-  /**/
   if ((eggrt.metadata.title_strix<1)||(eggrt.metadata.title_strix>1024)) return;
   if (!eggrt.hostio->video||!eggrt.hostio->video->type->set_title) return;
   int resp=eggrt_rom_search(EGG_TID_strings,(eggrt.lang<<6)|1);

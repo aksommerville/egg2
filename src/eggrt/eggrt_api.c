@@ -122,7 +122,8 @@ int egg_store_key_by_index(char *k,int ka,int p) {
  */
  
 void egg_input_configure() {
-  fprintf(stderr,"TODO %s\n",__func__);
+  if (eggrt.umenu) return;
+  eggrt.umenu=umenu_new(1);
 }
 
 void egg_input_get_all(int *statev,int statea) {

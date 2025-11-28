@@ -62,6 +62,9 @@ extern struct eggrt {
     int requiredc;
     const char *optional;
     int optionalc;
+    const char *incfgMask;
+    int incfgMaskc;
+    int incfgNames; // index in strings:1
   } metadata;
   
 // eggrt_clock.c:
@@ -100,6 +103,7 @@ int eggrt_update();
 void eggrt_rom_quit();
 int eggrt_rom_init();
 int eggrt_rom_search(int tid,int rid);
+int eggrt_string_get(void *dstpp,int rid,int strix);
 
 int eggrt_prefs_init();
 

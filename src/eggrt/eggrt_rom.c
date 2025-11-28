@@ -120,6 +120,13 @@ static int eggrt_rom_load_metadata() {
     } else if ((entry.kc==8)&&!memcmp(entry.k,"optional",8)) {
       eggrt.metadata.optional=entry.v;
       eggrt.metadata.optionalc=entry.vc;
+      
+    } else if ((entry.kc==9)&&!memcmp(entry.k,"incfgMask",9)) {
+      eggrt.metadata.incfgMask=entry.v;
+      eggrt.metadata.incfgMaskc=entry.vc;
+      
+    } else if ((entry.kc==10)&&!memcmp(entry.k,"incfgNames",10)) {
+      sr_int_eval(&eggrt.metadata.incfgNames,entry.v,entry.vc);
 
     }
   }
@@ -177,4 +184,25 @@ int eggrt_rom_search(int tid,int rid) {
     else return ck;
   }
   return -lo-1;
+}
+
+/* Get string.
+ */
+ 
+int eggrt_string_get(void *dstpp,int rid,int strix) {
+  if ((rid<1)||(strix<1)||(strix>1024)) return 0;
+  if (rid<64) rid|=eggrt.lang<<6;
+  int resp=eggrt_rom_search(EGG_TID_strings,rid);
+  if (resp<0) return 0;
+  struct strings_reader reader;
+  if (strings_reader_init(&reader,eggrt.resv[resp].v,eggrt.resv[resp].c)<0) return 0;
+  struct strings_entry entry;
+  while (strings_reader_next(&entry,&reader)>0) {
+    if (entry.index==strix) {
+      *(const void**)dstpp=entry.v;
+      return entry.c;
+    }
+    if (entry.index>strix) return 0;
+  }
+  return 0;
 }

@@ -13,7 +13,9 @@ struct umenu;
 
 void umenu_del(struct umenu *umenu);
 
-struct umenu *umenu_new();
+/* (incfg_only) nonzero to just do input config and don't show the Universal Menu.
+ */
+struct umenu *umenu_new(int incfg_only);
 
 int umenu_update(struct umenu *umenu,double elapsed);
 int umenu_render(struct umenu *umenu);

@@ -13,3 +13,5 @@ desc=Exposes Egg's capabilities for troubleshooting.
 genre=Technical
 contact=aksommerville@gmail.com
 source=https://github.com/aksommerville/egg2
+incfgMask=dsw1
+incfgNames=3

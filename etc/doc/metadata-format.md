@@ -75,3 +75,10 @@ Line-oriented text.
 `required` and `optional` are comma-delimited lists:
 - `audio`: Fail fast if audio disabled. eg for rhythm games where it's absolutely necessary.
 - `store`: Fail fast if permanent storage will not be available.
+
+`incfgMask` and `incfgNames` influence the interactive input configurer.
+`incfgMask` must be some combination of "dswen123lrLR", where "d" means the D-pad, "123" are AUX, "lr" are the first triggers, and "LR" the second triggers.
+List buttons the game uses, in order of importance. We won't prompt the user for ones you don't use.
+`incfgNames` is an index in strings:1 corresponding to the first char in `incfgMask`.
+Must be followed by as many buttons as you list, with a name for each.
+It's fine to omit button names. The configurer presents them visually. But it's an opportunity to say "Jump" instead of just "That button over there".

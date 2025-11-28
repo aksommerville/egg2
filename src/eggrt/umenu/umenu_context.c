@@ -5,6 +5,7 @@
  
 void umenu_del(struct umenu *umenu) {
   if (!umenu) return;
+  incfg_quit(umenu);
   render_texture_del(eggrt.render,umenu->texid_tiles);
   if (umenu->langv) free(umenu->langv);
   free(umenu);
@@ -99,6 +100,7 @@ static int umenu_load_textures(struct umenu *umenu) {
  */
  
 static int umenu_list_languages(struct umenu *umenu) {
+  if (umenu->incfg_only) return 0; // No need to load these if we're not showing the Universal Menu.
   const char *src=eggrt.metadata.lang; // comma-delimited
   int srcc=eggrt.metadata.langc;
   int srcp=0;
@@ -128,9 +130,16 @@ static int umenu_list_languages(struct umenu *umenu) {
 /* New.
  */
 
-struct umenu *umenu_new() {
+struct umenu *umenu_new(int incfg_only) {
   struct umenu *umenu=calloc(1,sizeof(struct umenu));
   if (!umenu) return 0;
+  
+  if (umenu->incfg_only=incfg_only) {
+    umenu->incfg=1;
+    incfg_begin(umenu);
+  }
+  umenu->fbw=eggrt.metadata.fbw;
+  umenu->fbh=eggrt.metadata.fbh;
   
   if (umenu_list_languages(umenu)<0) {
     umenu_del(umenu);
@@ -141,9 +150,6 @@ struct umenu *umenu_new() {
     umenu_del(umenu);
     return 0;
   }
-  
-  umenu->fbw=eggrt.metadata.fbw;
-  umenu->fbh=eggrt.metadata.fbh;
   
   /* Determine tile size. One of 4,8,16,32.
    * First compute based on 11x7 cells, but if that's too many, try the bare minimum 5x4.
@@ -227,7 +233,7 @@ static int umenu_find_widget(const struct umenu *umenu,int actionid) {
 static void umenu_activate(struct umenu *umenu) {
   if ((umenu->widgetp<0)||(umenu->widgetp>=umenu->widgetc)) return;
   switch (umenu->widgetv[umenu->widgetp].actionid) {
-    case UMENU_ACTIONID_INPUT: egg_input_configure(); break;
+    case UMENU_ACTIONID_INPUT: incfg_begin(umenu); break;
     case UMENU_ACTIONID_RESUME: {
         umenu->defunct=1;
         inmgr_artificial_event(0,EGG_BTN_SOUTH,0);
@@ -287,14 +293,19 @@ static void umenu_move(struct umenu *umenu,int dx,int dy) {
 int umenu_update(struct umenu *umenu,double elapsed) {
   if (!umenu) return -1;
   
-  int input=egg_input_get_one(0);
-  if (input!=umenu->pvinput) {
-    if ((input&EGG_BTN_LEFT)&&!(umenu->pvinput&EGG_BTN_LEFT)) umenu_move(umenu,-1,0);
-    if ((input&EGG_BTN_RIGHT)&&!(umenu->pvinput&EGG_BTN_RIGHT)) umenu_move(umenu,1,0);
-    if ((input&EGG_BTN_UP)&&!(umenu->pvinput&EGG_BTN_UP)) umenu_move(umenu,0,-1);
-    if ((input&EGG_BTN_DOWN)&&!(umenu->pvinput&EGG_BTN_DOWN)) umenu_move(umenu,0,1);
-    if ((input&EGG_BTN_SOUTH)&&!(umenu->pvinput&EGG_BTN_SOUTH)) umenu_activate(umenu);
-    umenu->pvinput=input;
+  if (umenu->incfg) {
+    incfg_update(umenu,elapsed);
+    
+  } else {
+    int input=egg_input_get_one(0);
+    if (input!=umenu->pvinput) {
+      if ((input&EGG_BTN_LEFT)&&!(umenu->pvinput&EGG_BTN_LEFT)) umenu_move(umenu,-1,0);
+      if ((input&EGG_BTN_RIGHT)&&!(umenu->pvinput&EGG_BTN_RIGHT)) umenu_move(umenu,1,0);
+      if ((input&EGG_BTN_UP)&&!(umenu->pvinput&EGG_BTN_UP)) umenu_move(umenu,0,-1);
+      if ((input&EGG_BTN_DOWN)&&!(umenu->pvinput&EGG_BTN_DOWN)) umenu_move(umenu,0,1);
+      if ((input&EGG_BTN_SOUTH)&&!(umenu->pvinput&EGG_BTN_SOUTH)) umenu_activate(umenu);
+      umenu->pvinput=input;
+    }
   }
 
   if (umenu->defunct) {
@@ -308,7 +319,7 @@ int umenu_update(struct umenu *umenu,double elapsed) {
  * The client does render too, before us.
  */
  
-static void umenu_fill_rect(int x,int y,int w,int h,uint32_t rgba) {
+void umenu_fill_rect(int x,int y,int w,int h,uint32_t rgba) {
   uint8_t r=rgba>>24,g=rgba>>16,b=rgba>>8,a=rgba;
   struct egg_render_raw vtxv[]={
     {x  ,y  ,0,0,r,g,b,a},
@@ -326,7 +337,7 @@ static void umenu_fill_rect(int x,int y,int w,int h,uint32_t rgba) {
 }
 
 // (dstx,dsty) is the top left. We don't actually use TILE render mode.
-static void umenu_blit_tile(struct umenu *umenu,int dstx,int dsty,uint8_t tileid) {
+void umenu_blit_tile(struct umenu *umenu,int dstx,int dsty,uint8_t tileid) {
   int srcx,srcy;
   switch (umenu->tilesize) {
     case 32: srcx=0; srcy=0; break;
@@ -378,6 +389,12 @@ static void umenu_render_lang(struct umenu *umenu,struct umenu_widget *widget,in
 int umenu_render(struct umenu *umenu) {
   if (!umenu) return -1;
   umenu_fill_rect(0,0,eggrt.metadata.fbw,eggrt.metadata.fbh,0x000000e0);
+  
+  if (umenu->incfg) {
+    incfg_render(umenu);
+    return 0;
+  }
+  
   struct umenu_widget *widget=umenu->widgetv;
   int i=0;
   for (;i<umenu->widgetc;i++,widget++) {
