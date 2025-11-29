@@ -129,13 +129,59 @@ void egg_input_configure() {
 void egg_input_get_all(int *statev,int statea) {
   if (!statev||(statea<1)) return;
   if (statea>INMGR_PLAYER_LIMIT) statea=INMGR_PLAYER_LIMIT; // sanity check
-  int i=statea; while (i-->0) {
-    statev[i]=inmgr_get_player(i);
+  switch (eggrt.input_mode) {
+    case EGG_INPUT_MODE_GAMEPAD: {
+        int i=statea; while (i-->0) {
+          statev[i]=inmgr_get_player(i);
+        }
+      } break;
+    case EGG_INPUT_MODE_MOUSE: {
+        int i=statea; while (i-->0) {
+          statev[i]=inmgr_get_player(i);
+        }
+        statev[0]&=(EGG_BTN_SOUTH|EGG_BTN_WEST|EGG_BTN_EAST);
+      } break;
+    default: {
+        memset(statev,0,sizeof(int)*statea);
+      }
   }
 }
 
 int egg_input_get_one(int playerid) {
-  return inmgr_get_player(playerid);
+  switch (eggrt.input_mode) {
+    case EGG_INPUT_MODE_GAMEPAD: return inmgr_get_player(playerid);
+    case EGG_INPUT_MODE_MOUSE: {
+        if (playerid) return inmgr_get_player(playerid);
+        return inmgr_get_player(0)&(EGG_BTN_SOUTH|EGG_BTN_WEST|EGG_BTN_EAST);
+      }
+    default: return 0;
+  }
+}
+
+void egg_input_set_mode(int mode) {
+  if (mode==eggrt.input_mode) return;
+  switch (mode) {
+    case EGG_INPUT_MODE_GAMEPAD: {
+        eggrt.input_mode=EGG_INPUT_MODE_GAMEPAD;
+        uint16_t btnid=0x4000;
+        for (;btnid;btnid>>=1) inmgr_artificial_event(0,btnid,0);
+      } break;
+    case EGG_INPUT_MODE_MOUSE: {
+        eggrt.input_mode=EGG_INPUT_MODE_MOUSE;
+        uint16_t btnid=0x4000;
+        for (;btnid;btnid>>=1) inmgr_artificial_event(0,btnid,0);
+      } break;
+  }
+}
+
+int egg_input_get_mouse(int *x,int *y) {
+  switch (eggrt.input_mode) {
+    case EGG_INPUT_MODE_MOUSE: {
+        if (x) *x=eggrt.mousex;
+        if (y) *y=eggrt.mousey;
+      } return 1;
+  }
+  return 0;
 }
 
 /* Audio.

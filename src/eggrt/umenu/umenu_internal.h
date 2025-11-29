@@ -35,6 +35,7 @@ struct umenu {
   int *langv;
   int langc,langa;
   int incfg_only;
+  int input_mode0; // We must be in GAMEPAD mode. We'll restore to this on deletion.
   
   int incfg; // Nonzero if we're in Input Config mode.
   int inlistener;

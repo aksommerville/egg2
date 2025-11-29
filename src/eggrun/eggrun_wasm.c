@@ -92,6 +92,17 @@ static int egg_wasm_input_get_one(wasm_exec_env_t ee,int playerid) {
   return egg_input_get_one(playerid);
 }
 
+static void egg_wasm_input_set_mode(wasm_exec_env_t ee,int mode) {
+  egg_input_set_mode(mode);
+}
+
+static int egg_wasm_input_get_mouse(wasm_exec_env_t ee,int xp,int yp) {
+  int *x=0,*y=0;
+  if (xp) x=eggrun_wasm_get_client_memory(xp,sizeof(int));
+  if (yp) y=eggrun_wasm_get_client_memory(yp,sizeof(int));
+  return egg_input_get_mouse(x,y);
+}
+
 static void egg_wasm_play_sound(wasm_exec_env_t ee,int soundid,float trim,float pan) {
   egg_play_sound(soundid,trim,pan);
 }
@@ -176,6 +187,8 @@ static NativeSymbol eggrun_wasm_exports[]={
   {"egg_input_configure",egg_wasm_input_configure,"()"},
   {"egg_input_get_all",egg_wasm_input_get_all,"(ii)"},
   {"egg_input_get_one",egg_wasm_input_get_one,"(i)i"},
+  {"egg_input_set_mode",egg_wasm_input_set_mode,"(i)"},
+  {"egg_input_get_mouse",egg_wasm_input_get_mouse,"(**)i"},
   {"egg_play_sound",egg_wasm_play_sound,"(iff)"},
   {"egg_play_song",egg_wasm_play_song,"(iiiff)"},
   {"egg_song_set",egg_wasm_song_set,"(iiif)"},

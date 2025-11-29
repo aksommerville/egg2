@@ -43,6 +43,8 @@ extern struct eggrt {
   int focus; // Current state of window manager focus. Hard-pause when blurred.
   int devid_keyboard;
   struct umenu *umenu; // Null normally. If not, the Universal Menu is open.
+  int input_mode; // EGG_INPUT_MODE_GAMEPAD by default.
+  int mousex,mousey; // In framebuffer coords as reported to client. Updates only when in MOUSE mode.
   
 // eggrt_rom.c:
   void *rom;
@@ -133,6 +135,8 @@ void eggrt_cb_close(struct hostio_video *driver);
 void eggrt_cb_focus(struct hostio_video *driver,int focus);
 void eggrt_cb_resize(struct hostio_video *driver,int w,int h);
 void eggrt_cb_pcm_out(int16_t *v,int c,struct hostio_audio *driver);
+void eggrt_cb_mmotion(struct hostio_video *driver,int x,int y);
+void eggrt_cb_mbutton(struct hostio_video *driver,int btnid,int value);
 int eggrt_cb_key(struct hostio_video *driver,int keycode,int value);
 void eggrt_cb_connect(struct hostio_input *driver,int devid);
 void eggrt_cb_disconnect(struct hostio_input *driver,int devid);

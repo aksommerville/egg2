@@ -8,6 +8,7 @@ void umenu_del(struct umenu *umenu) {
   incfg_quit(umenu);
   render_texture_del(eggrt.render,umenu->texid_tiles);
   if (umenu->langv) free(umenu->langv);
+  eggrt.input_mode=umenu->input_mode0;
   free(umenu);
 }
 
@@ -133,6 +134,10 @@ static int umenu_list_languages(struct umenu *umenu) {
 struct umenu *umenu_new(int incfg_only) {
   struct umenu *umenu=calloc(1,sizeof(struct umenu));
   if (!umenu) return 0;
+  
+  // We must be in GAMEPAD mode. Remember to turn it back when done.
+  umenu->input_mode0=eggrt.input_mode;
+  eggrt.input_mode=EGG_INPUT_MODE_GAMEPAD;
   
   if (umenu->incfg_only=incfg_only) {
     umenu->incfg=1;

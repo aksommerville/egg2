@@ -167,6 +167,8 @@ static int eggrt_init_audio() {
 }
 
 static int eggrt_init_input() {
+  eggrt.mousex=eggrt.metadata.fbw>>1;
+  eggrt.mousey=eggrt.metadata.fbh>>1;
   struct hostio_input_setup setup={0};
   if (hostio_init_input(eggrt.hostio,eggrt.input_driver,&setup)<0) {
     fprintf(stderr,"%s: Error initializing input drivers.\n",eggrt.exename);
@@ -193,6 +195,8 @@ static int eggrt_init_drivers() {
     .cb_focus=eggrt_cb_focus,
     .cb_resize=eggrt_cb_resize,
     .cb_key=eggrt_cb_key,
+    .cb_mmotion=eggrt_cb_mmotion,
+    .cb_mbutton=eggrt_cb_mbutton,
   };
   struct hostio_audio_delegate adelegate={
     .cb_pcm_out=eggrt_cb_pcm_out,
@@ -218,6 +222,7 @@ int eggrt_init() {
   int err;
   
   eggrt.focus=1;
+  eggrt.input_mode=EGG_INPUT_MODE_GAMEPAD;
   
   // ROM must initialize before drivers, drivers before prefs, and prefs before client.
   if ((err=eggrt_rom_init())<0) {
@@ -275,6 +280,23 @@ int eggrt_update() {
   
   // If we're hard-paused, get out.
   if (!eggrt.focus) return 0;
+  
+  // In EGG_INPUT_MODE_MOUSE, we need to move the cursor according to gamepads.
+  if (eggrt.input_mode==EGG_INPUT_MODE_MOUSE) {
+    int input=inmgr_get_player(0);
+    if (input&(EGG_BTN_LEFT|EGG_BTN_RIGHT|EGG_BTN_UP|EGG_BTN_DOWN)) {
+      int mouse_speed=eggrt.metadata.fbw/150;
+      if (mouse_speed<1) mouse_speed=1;
+      switch (input&(EGG_BTN_LEFT|EGG_BTN_RIGHT)) {
+        case EGG_BTN_LEFT: if ((eggrt.mousex-=mouse_speed)<0) eggrt.mousex=-1; break;
+        case EGG_BTN_RIGHT: if ((eggrt.mousex+=mouse_speed)>=eggrt.metadata.fbw) eggrt.mousex=eggrt.metadata.fbw; break;
+      }
+      switch (input&(EGG_BTN_UP|EGG_BTN_DOWN)) {
+        case EGG_BTN_UP: if ((eggrt.mousey-=mouse_speed)<0) eggrt.mousey=-1; break;
+        case EGG_BTN_DOWN: if ((eggrt.mousey+=mouse_speed)>=eggrt.metadata.fbh) eggrt.mousey=eggrt.metadata.fbh; break;
+      }
+    }
+  }
   
   // Update client.
   if (eggrt.umenu) {

@@ -16,6 +16,13 @@ export class Video {
     this.vbufs16 = new Uint16Array(this.vbuf);
     this.tex_current = null;
     this.resizeObserver = new ResizeObserver(e => this.onResize(e));
+
+    const [w, h] = (this.rt.rom.getMeta("fb") || "640x360").split("x").map(v => +v);
+    if (isNaN(w) || (w < 1) || (w > TEX_SIZE_LIMIT) || isNaN(h) || (h < 1) || (h > TEX_SIZE_LIMIT)) {
+      throw new Error(`Invalid framebuffer size.`);
+    }
+    this.fbw = w;
+    this.fbh = h;
   }
   
   start() {
@@ -23,21 +30,19 @@ export class Video {
     this.resizeObserver.observe(document.getElementById("fbouter"));
     this.canvas = document.getElementById("eggfb");
     if (this.canvas?.tagName !== "CANVAS") throw new Error(`Canvas not found.`);
-    const [w, h] = (this.rt.rom.getMeta("fb") || "640x360").split("x").map(v => +v);
-    if (isNaN(w) || (w < 1) || (w > TEX_SIZE_LIMIT) || isNaN(h) || (h < 1) || (h > TEX_SIZE_LIMIT)) {
-      throw new Error(`Invalid framebuffer size.`);
-    }
-    this.canvas.width = w;
-    this.canvas.height = h;
+    this.canvas.addEventListener("contextmenu", e => { e.preventDefault(); e.stopPropagation(); });
+    this.canvas.width = this.fbw;
+    this.canvas.height = this.fbh;
     this.onResize(null); // Force canvas element size.
     this.gl = this.canvas.getContext("webgl");
     this.texv[1] = {
       gltexid: 0,
       border: 0,
-      w, h,
+      w: this.fbw, 
+      h: this.fbh,
       fbid: 0,
     };
-    this.egg_texture_load_raw(1, w, h, 0, null);
+    this.egg_texture_load_raw(1, this.fbw, this.fbh, 0, null);
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     this.gl.enable(this.gl.BLEND);
     if (!(this.buffer = this.gl.createBuffer())) throw new Error(`Failed to create WebGL vertex buffer.`);

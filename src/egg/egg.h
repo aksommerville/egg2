@@ -179,6 +179,19 @@ WASM_IMPORT("egg_input_get_one") int egg_input_get_one(int playerid);
 #define EGG_BTN_AUX3   0x4000
 #define EGG_BTN_CD     0x8000
 
+/* We start in GAMEPAD mode and I recommend that all games stay in that mode permanently.
+ * But we also provide a MOUSE mode, where gamepads masquerade as a mouse, and the system mouse is used if available.
+ * Egg will never render a cursor, so you must.
+ * When in MOUSE mode, call egg_input_get_mouse() to get the cursor's position in framebuffer coordinates.
+ * It returns nonzero if MOUSE mode is actually in effect, in case you forget.
+ * When in MOUSE mode, players 1 and above will continue reporting as usual,
+ * and player zero will report only SOUTH, WEST, and EAST, for the Left, Right, and Middle buttons.
+ */
+#define EGG_INPUT_MODE_GAMEPAD 0
+#define EGG_INPUT_MODE_MOUSE   1
+WASM_IMPORT("egg_input_set_mode") void egg_input_set_mode(int mode);
+WASM_IMPORT("egg_input_get_mouse") int egg_input_get_mouse(int *x,int *y);
+
 /* Audio.
  **********************************************************************************************/
 

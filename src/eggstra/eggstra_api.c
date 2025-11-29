@@ -55,6 +55,13 @@ void egg_input_get_all(int *statev,int statea) {
 int egg_input_get_one(int playerid) {
   return 0;
 }
+
+void egg_input_set_mode(int mode) {
+}
+
+int egg_input_get_mouse(int *x,int *y) {
+  return 0;
+}
  
 void egg_play_sound(int soundid,float trim,float pan) {
 }

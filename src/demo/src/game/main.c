@@ -1,6 +1,7 @@
 #include "demo.h"
 
 struct g g={0};
+static int mousex=0,mousey=0;//XXX TEMP
 
 /* Cleanup.
  */
@@ -23,13 +24,11 @@ int egg_client_init() {
     fprintf(stderr,"Framebuffer size mismatch! metadata=%dx%d header=%dx%d\n",fbw,fbh,FBW,FBH);
     return -1;
   }
-  fprintf(stderr,"framebuffer %dx%d\n",fbw,fbh);
 
   // Acquire the ROM.
   g.romc=egg_rom_get(0,0);
   if (!(g.rom=malloc(g.romc))) return -1;
   egg_rom_get(g.rom,g.romc);
-  fprintf(stderr,"rom size %d\n",g.romc);
   
   // Break ROM into resources.
   {
@@ -48,7 +47,6 @@ int egg_client_init() {
         memcpy(g.resv+g.resc++,&res,sizeof(struct rom_entry));
       }
     }
-    fprintf(stderr,"resc %d\n",g.resc);
   }
   
   // Create our standard font.
@@ -78,8 +76,10 @@ int egg_client_init() {
     fprintf(stderr,"Float plain(%.3f) pad(%7.3f) zeropad(%07.3f) leftalign(%-7.3f)\n",-3.141,-3.141,-3.141,-3.141);
     fprintf(stderr,"String plain(%s) pad(%6s) leftalign(%-6s)\n","egg","egg","egg");
   }
+  
+  // XXX very temporary, test mouse input.
+  egg_input_set_mode(EGG_INPUT_MODE_MOUSE);
 
-  fprintf(stderr,"init ok\n");
   return 0;
 }
 
@@ -111,6 +111,10 @@ void egg_client_update(double elapsed) {
     }
     g.pvinput=input;
   }
+  
+  //XXX
+  egg_input_get_mouse(&mousex,&mousey);
+  
   if (modal->update) {
     modal->update(modal,elapsed,input,pvinput);
   }
@@ -148,6 +152,10 @@ void egg_client_render() {
     graf_gradient_rect(&g.graf,0,0,FBW,FBH,0x100808ff,0x302020ff,0x302020ff,0x100808ff);
   }
   if (modal->render) modal->render(modal);
+  
+  //XXX
+  graf_fill_rect(&g.graf,mousex,mousey,1,1,0x00ffffff);
+  
   graf_flush(&g.graf);
 }
 

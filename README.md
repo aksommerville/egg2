@@ -89,6 +89,9 @@ Features we *do* support:
 - - - [ ] Web input config.
 - - [ ] Web: Touch input, on-screen gamepad.
 - - [ ] Consider adding a client hook `egg_client_notify(k,v)` for changed preferences, eg lang from Universal Menu.
+- - [x] Consider mouse input. `xmark` demo, a jigsaw puzzle, desperately needs it. No matter what, games must remain playable with only a gamepad, so that's the trick.
+- - - [x] Prove the concept far enough to use with `xmark`, natively.
+- - - [x] Web.
 - [ ] Audio
 - - [x] SongEditor: Need MIDI-In to include post at modecfg, and also play at post modal.
 - - [x] Web synth: Play thru song 8, then start song 9 in demo. 9 doesn't start. Will start on second try. Are we running out of memory? (both big songs)
@@ -102,6 +105,7 @@ Features we *do* support:
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
 - [ ] Audio review, when close to ready.
 - [ ] Minor bugs and tweaks outstanding.
+- - [ ] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".
 - - [ ] SongEditor EventModal: Show noteid in hex and musical name too.
 - - [ ] SongEditor: Channel trim and pan can adjust in real time, in the synth. We should do that eagerly when it changes in the UI.
 - - [ ] Editor: Sometimes deleting a post step doesn't work.

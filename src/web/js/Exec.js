@@ -30,6 +30,8 @@ export class Exec {
       egg_input_configure: () => this.rt.input.egg_input_configure(),
       egg_input_get_all: (dst, dsta) => this.rt.input.egg_input_get_all(dst, dsta),
       egg_input_get_one: playerid => this.rt.input.egg_input_get_one(playerid),
+      egg_input_set_mode: m => this.rt.input.egg_input_set_mode(m),
+      egg_input_get_mouse: (xp, yp) => this.rt.input.egg_input_get_mouse(xp, yp),
       
       egg_play_sound: (rid, trim, pan) => this.rt.audio.egg_play_sound(rid, trim, pan),
       egg_play_song: (songid, rid, repeat, trim, pan) => this.rt.audio.egg_play_song(songid, rid, repeat, trim, pan),
@@ -39,17 +41,6 @@ export class Exec {
       egg_song_event_note_once: (s, c, n, v, d) => this.rt.audio.egg_song_event_note_once(s, c, n, v, d),
       egg_song_event_wheel: (s, c, v) => this.rt.audio.egg_song_event_wheel(s, c, v),
       egg_song_get_playhead: (s) => this.rt.audio.egg_song_get_playhead(s),
-      
-      /*XXX old synth *
-      egg_play_sound: (soundid, trim, pan) => this.rt.audio.egg_play_sound(soundid, trim, pan),
-      egg_play_song: (songid, force, repeat) => this.rt.audio.egg_play_song(songid, force, repeat),
-      egg_play_note: (chid, noteid, velocity, durms) => this.rt.audio.egg_play_note(chid, noteid, velocity, durms),
-      egg_release_note: (holdid) => this.rt.audio.egg_release_note(holdid),
-      egg_adjust_wheel: (chid, v) => this.rt.audio.egg_adjust_wheel(chid, v),
-      egg_song_get_id: () => this.rt.audio.egg_song_get_id(),
-      egg_song_get_playhead: () => this.rt.audio.egg_song_get_playhead(),
-      egg_song_set_playhead: ph => this.rt.audio.egg_song_set_playhead(ph),
-      /**/
       
       egg_texture_del: texid => this.rt.video.egg_texture_del(texid),
       egg_texture_new: () => this.rt.video.egg_texture_new(),

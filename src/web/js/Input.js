@@ -22,6 +22,8 @@ const BTN_AUX1   = 0x1000;
 const BTN_AUX2   = 0x2000;
 const BTN_AUX3   = 0x4000;
 const BTN_CD     = 0x8000;
+const MODE_GAMEPAD = 0;
+const MODE_MOUSE   = 1;
  
 export class Input {
   constructor(rt) {
@@ -30,6 +32,10 @@ export class Input {
     this.playerc = 1;
     this.keyListener = null;
     this.gamepads = []; // Sparse, indexed by (gamepad.index). {id,index,axes:(-1,0,1)[],buttons:(0,1)[],playerid,state}
+    this.mode = MODE_GAMEPAD;
+    this.mousex = this.rt.video.fbw >> 1;
+    this.mousey = this.rt.video.fbh >> 1;
+    this.mouseListener = null;
     
     // Keyboard, only listen when running.
     // Gamepads, we listen always:
@@ -119,6 +125,7 @@ export class Input {
       window.removeEventListener("keyup", this.keyListener);
       this.keyListener = null;
     }
+    this.dropMouseListener();
   }
   
   update() {
@@ -127,6 +134,20 @@ export class Input {
       const record = this.gamepads[device.index];
       if (!record) continue;
       this.updateGamepad(record, device);
+    }
+    
+    if (this.mode === MODE_MOUSE) {
+      if (this.statev[0] & 0x000f) {
+        const speed = Math.max(1, Math.floor(this.rt.video.fbw / 150));
+        switch (this.statev[0] & (BTN_LEFT | BTN_RIGHT)) {
+          case BTN_LEFT: if ((this.mousex -= speed) < 0) this.mousex = -1; break;
+          case BTN_RIGHT: if ((this.mousex += speed) >= this.rt.video.fbw) this.mousex = this.rt.video.fbw; break;
+        }
+        switch (this.statev[0] & (BTN_UP | BTN_DOWN)) {
+          case BTN_UP: if ((this.mousey -= speed) < 0) this.mousey = -1; break;
+          case BTN_DOWN: if ((this.mousey += speed) >= this.rt.video.fbh) this.mousey = this.rt.video.fbh; break;
+        }
+      }
     }
   }
   
@@ -175,6 +196,58 @@ export class Input {
       this.statev[1] &= ~btnid;
       this.statev[0] &= ~btnid;
     }
+  }
+  
+  /* Mouse.
+   ************************************************************************/
+   
+  requireMouseListener() {
+    if (!this.mouseListener && this.rt.video.canvas) {
+      this.mouseListener = e => this.onMouse(e);
+      this.rt.video.canvas.addEventListener("mousemove", this.mouseListener);
+      this.rt.video.canvas.addEventListener("mouseenter", this.mouseListener);
+      this.rt.video.canvas.addEventListener("mouseleave", this.mouseListener);
+      this.rt.video.canvas.addEventListener("mousedown", this.mouseListener);
+      this.rt.video.canvas.addEventListener("mouseup", this.mouseListener);
+    }
+  }
+  
+  dropMouseListener() {
+    if (this.mouseListener && this.rt.video.canvas) {
+      this.rt.video.canvas.removeEventListener("mousemove", this.mouseListener);
+      this.rt.video.canvas.removeEventListener("mouseenter", this.mouseListener);
+      this.rt.video.canvas.removeEventListener("mouseleave", this.mouseListener);
+      this.rt.video.canvas.removeEventListener("mousedown", this.mouseListener);
+      this.rt.video.canvas.removeEventListener("mouseup", this.mouseListener);
+      this.mouseListener = null;
+    }
+  }
+   
+  onMouse(event) {
+    switch (event.type) {
+      case "mousemove":
+      case "mouseenter":
+      case "mouseleave": {
+          const bounds = event.target.getBoundingClientRect();
+          this.mousex = Math.max(-1, Math.min(this.rt.video.fbw, Math.floor(((event.x - bounds.x) * this.rt.video.fbw) / bounds.width)));
+          this.mousey = Math.max(-1, Math.min(this.rt.video.fbh, Math.floor(((event.y - bounds.y) * this.rt.video.fbh) / bounds.height)));
+        } break;
+      case "mousedown":
+      case "mouseup": {
+          let btnid = 0;
+          switch (event.button) {
+            case 0: btnid = BTN_SOUTH; break; // Left
+            case 1: btnid = BTN_EAST; break; // Middle
+            case 2: btnid = BTN_WEST; break; // Right
+          }
+          if (btnid) {
+            if (event.type === "mousedown") this.statev[0] |= btnid;
+            else this.statev[0] &= ~btnid;
+          }
+        } break;
+    }
+    event.preventDefault();
+    event.stopPropagation();
   }
   
   /* Gamepad.
@@ -287,14 +360,47 @@ export class Input {
   }
   
   egg_input_get_all(dstp, dsta) {
-    if ((dstp < 1) || (dsta < 0)) return;
+    if ((dstp < 1) || (dsta < 1)) return;
     dstp >>= 2;
     const m32 = this.rt.exec.mem32;
     if (dstp > m32.length - dsta) return;
+    const dstp0 = dstp;
     for (let i=0; dsta-->0; i++, dstp++) m32[dstp] = this.statev[i] || 0;
+    if (this.mode === MODE_MOUSE) {
+      m32[dstp0] &= (BTN_SOUTH | BTN_WEST | BTN_EAST);
+    }
   }
   
   egg_input_get_one(playerid) {
+    if (!playerid && (this.mode === MODE_MOUSE)) {
+      return this.statev[0] & (BTN_SOUTH | BTN_WEST | BTN_EAST);
+    }
     return this.statev[playerid] || 0;
+  }
+  
+  egg_input_set_mode(mode) {
+    if (mode === this.mode) return;
+    switch (mode) {
+      case MODE_GAMEPAD: {
+          this.mode = mode;
+          this.statev[0] = 0;
+          this.dropMouseListener();
+        } break;
+      case MODE_MOUSE: {
+          this.mode = mode;
+          this.statev[0] = 0;
+          this.requireMouseListener();
+        } break;
+    }
+  }
+  
+  egg_input_get_mouse(xp, yp) {
+    switch (this.mode) {
+      case MODE_MOUSE: {
+          if (xp) this.rt.exec.mem32[xp >> 2] = this.mousex;
+          if (yp) this.rt.exec.mem32[yp >> 2] = this.mousey;
+        } return 1;
+    }
+    return 0;
   }
 }

@@ -82,6 +82,26 @@ int eggrt_cb_key(struct hostio_video *driver,int keycode,int value) {
   return 1;
 }
 
+/* System pointer.
+ */
+ 
+void eggrt_cb_mmotion(struct hostio_video *driver,int x,int y) {
+  render_coords_fb_from_win(eggrt.render,&x,&y);
+  // Allow OOB but only by 1 pixel. We can't know how reliable OOB mouse reporting is across platforms, so keep it tight.
+  if (x<0) x=-1; else if (x>=eggrt.metadata.fbw) x=eggrt.metadata.fbw;
+  if (y<0) y=-1; else if (y>=eggrt.metadata.fbh) y=eggrt.metadata.fbh;
+  eggrt.mousex=x;
+  eggrt.mousey=y;
+}
+
+void eggrt_cb_mbutton(struct hostio_video *driver,int btnid,int value) {
+  switch (btnid) {
+    case 1: inmgr_artificial_event(0,EGG_BTN_SOUTH,value); break; // Left
+    case 2: inmgr_artificial_event(0,EGG_BTN_WEST,value); break; // Right
+    case 3: inmgr_artificial_event(0,EGG_BTN_EAST,value); break; // Middle
+  }
+}
+
 /* Input events.
  */
  
