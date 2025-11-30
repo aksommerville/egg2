@@ -16,6 +16,11 @@ int eggrt_call_client_init() {
   return egg_client_init();
 }
 
+int eggrt_call_client_notify(int k,int v) {
+  egg_client_notify(k,v);
+  return 0;
+}
+
 int eggrt_call_client_update(double elapsed) {
   egg_client_update(elapsed);
   return 0;

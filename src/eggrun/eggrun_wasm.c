@@ -14,6 +14,7 @@ static struct eggrun_wasm {
   
   wasm_function_inst_t egg_client_quit;
   wasm_function_inst_t egg_client_init;
+  wasm_function_inst_t egg_client_notify;
   wasm_function_inst_t egg_client_update;
   wasm_function_inst_t egg_client_render;
 } eggrun_wasm={0};
@@ -296,6 +297,7 @@ int eggrun_boot(const void *rom,int romc,const char *path) {
   }
   LOADFN(egg_client_quit)
   LOADFN(egg_client_init)
+  LOADFN(egg_client_notify)
   LOADFN(egg_client_update)
   LOADFN(egg_client_render)
   #undef LOADFN
@@ -336,6 +338,17 @@ int egg_client_init() {
     return -2;
   }
   return 0;
+}
+
+void egg_client_notify(int k,int v) {
+  if (!eggrun_wasm.ee) return;
+  if (eggrun_wasm.exec_callstate!=1) return;
+  uint32_t argv[2]={k,v};
+  if (wasm_runtime_call_wasm(eggrun_wasm.ee,eggrun_wasm.egg_client_notify,2,argv)) return;
+  const char *msg=wasm_runtime_get_exception(eggrun_wasm.inst);
+  fprintf(stderr,"%s: egg_client_notify failed hard: %s\n",eggrt.exename,msg);
+  eggrt.terminate=1;
+  eggrt.status=1;
 }
 
 void egg_client_update(double elapsed) {

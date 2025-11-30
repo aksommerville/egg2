@@ -61,6 +61,7 @@ export class Exec {
       yoink("memory");
       yoink("egg_client_quit");
       yoink("egg_client_init");
+      yoink("egg_client_notify");
       yoink("egg_client_update");
       yoink("egg_client_render");
       this.mem8 = new Uint8Array(this.memory.buffer);

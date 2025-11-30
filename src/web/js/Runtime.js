@@ -210,6 +210,7 @@ export class Runtime {
   
   languageChanged() {
     document.title = this.rom.getMeta("title", this.lang);
+    this.exec.egg_client_notify(1, this.lang);
   }
   
   /* Loading of async things (wasm and images).
@@ -304,9 +305,22 @@ export class Runtime {
   
   egg_prefs_set(k, v) {
     switch (k) {
-      case 1: if (v === this.lang) return 0; if (!this.validLang(v)) return -1; this.lang = v; this.languageChanged(); return 0;
-      case 2: this.audio.setMusicTrim(v); return 0;
-      case 3: this.audio.setSoundTrim(v); return 0;
+      case 1: {
+          if (v === this.lang) return 0;
+          if (!this.validLang(v)) return -1;
+          this.lang = v;
+          this.languageChanged();
+        } return 0;
+      case 2: {
+          const pv = this.audio.musicTrim;
+          this.audio.setMusicTrim(v);
+          if (this.audio.musicTrim !== pv) this.exec.egg_client_notify(2, this.audio.musicTrim);
+        } return 0;
+      case 3: {
+          const pv = this.audio.soundTrim;
+          this.audio.setSoundTrim(v);
+          if (this.audio.soundTrim !== pv) this.exec.egg_client_notify(3, this.audio.soundTrim);
+        } return 0;
     }
     return -1;
   }

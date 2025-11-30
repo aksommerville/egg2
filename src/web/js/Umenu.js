@@ -100,12 +100,12 @@ export class Umenu {
    
   onMusic(event) {
     const v = Math.max(0, Math.min(99, +event.target.value || 0));
-    this.rt.audio.setMusicTrim(v);
+    this.rt.egg_prefs_set(2, v);
   }
   
   onSound(event) {
     const v = Math.max(0, Math.min(99, +event.target.value || 0));
-    this.rt.audio.setSoundTrim(v);
+    this.rt.egg_prefs_set(3, v);
   }
   
   onLang(event) {

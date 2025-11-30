@@ -79,6 +79,13 @@ int egg_client_init() {
   return 0;
 }
 
+/* Notify.
+ */
+ 
+void egg_client_notify(int k,int v) {
+  fprintf(stderr,"%s %d=%d\n",__func__,k,v);
+}
+
 /* Update.
  */
 

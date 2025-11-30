@@ -128,6 +128,7 @@ void eggrt_language_changed();
  */
 int eggrt_call_client_quit(int status);
 int eggrt_call_client_init();
+int eggrt_call_client_notify(int k,int v);
 int eggrt_call_client_update(double elapsed);
 int eggrt_call_client_render();
 

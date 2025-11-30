@@ -46,6 +46,13 @@ WASM_EXPORT("egg_client_update") void egg_client_update(double elapsed);
  */
 WASM_EXPORT("egg_client_render") void egg_client_render();
 
+/* Called when a global preference changes.
+ * This can be outside egg_client_update, and also within it.
+ * Called for changes via the Universal Menu, and also for ones you instigate via egg_prefs_set().
+ * Mostly needed by multi-language games, which should react to (k==EGG_PREF_LANG).
+ */
+WASM_EXPORT("egg_client_notify") void egg_client_notify(int k,int v);
+
 /* Global odds and ends.
  ***********************************************************************************/
 
@@ -88,6 +95,7 @@ WASM_IMPORT("egg_time_local") void egg_time_local(int *dst,int dsta);
 
 /* Read or write a global preference.
  * Do not change these unless the user has prompted you to.
+ * Any change to a preference while running will trigger egg_client_notify(), even ones you instigate yourself.
  */
 WASM_IMPORT("egg_prefs_get") int egg_prefs_get(int k);
 WASM_IMPORT("egg_prefs_set") int egg_prefs_set(int k,int v);

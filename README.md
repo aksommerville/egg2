@@ -79,7 +79,7 @@ Features we *do* support:
 - - - [ ] Web menu.
 - - - [ ] Web input config.
 - - [ ] Web: Touch input, on-screen gamepad.
-- - [ ] Consider adding a client hook `egg_client_notify(k,v)` for changed preferences, eg lang from Universal Menu.
+- - [x] Consider adding a client hook `egg_client_notify(k,v)` for changed preferences, eg lang from Universal Menu.
 - [ ] Audio
 - - [ ] Synth: We need better insight into memory usage, and maybe some mitigations at runtime, like evicting sounds not currently in use, or forcing a terminating song off.
 - - [ ] Redefine `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` as trims in 0..99.

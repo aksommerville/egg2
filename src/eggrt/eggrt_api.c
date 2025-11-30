@@ -66,18 +66,21 @@ int egg_prefs_set(int k,int v) {
         fprintf(stderr,"%s: Changing language to '%.2s'\n",eggrt.exename,name);
         eggrt.lang=v;
         eggrt_language_changed();
+        eggrt_call_client_notify(k,v);
       } return 0;
   
     case EGG_PREF_MUSIC: {
         if (v<0) v=0; else if (v>99) v=99;
         if (v==eggrt.music_level) return 0;
         eggrt.music_level=v;
+        eggrt_call_client_notify(k,v);
       } return 0;
   
     case EGG_PREF_SOUND: {
         if (v<0) v=0; else if (v>99) v=99;
         if (v==eggrt.sound_level) return 0;
         eggrt.sound_level=v;
+        eggrt_call_client_notify(k,v);
       } return 0;
   }
   return -1;
