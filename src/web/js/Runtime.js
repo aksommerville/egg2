@@ -9,6 +9,7 @@ import { Exec } from "./Exec.js";
 import { Video } from "./Video.js";
 import { Audio } from "./Audio.js";
 import { Input } from "./Input.js";
+import { Umenu } from "./Umenu.js";
  
 export class Runtime {
   constructor(serial) {
@@ -19,6 +20,7 @@ export class Runtime {
     this.video = new Video(this);
     this.audio = new Audio(this);
     this.input = new Input(this);
+    this.umenu = null; // Umenu|null
     this.pendingFrame = null;
     this.terminated = false;
     this.clientInit = false;
@@ -73,6 +75,10 @@ export class Runtime {
     this.video.stop();
     this.audio.stop();
     this.input.stop();
+    if (this.umenu) {
+      this.umenu.stop();
+      this.umenu = null;
+    }
     this.terminated = true;
     if (this.pendingFrame) {
       cancelAnimationFrame(this.pendingFrame);
@@ -130,11 +136,16 @@ export class Runtime {
     }
     this.lastUpdateTime = now;
     
-    this.exec.egg_client_update(elapsed);
+    if (this.umenu) {
+      this.umenu.update(elapsed);
+    } else {
+      this.exec.egg_client_update(elapsed);
+    }
     if (this.terminated) return this.stop();
     
     this.video.beginFrame();
-    this.exec.egg_client_render();
+    this.exec.egg_client_render(); // Even if umenu open, despite not getting updated.
+    // umenu doesn't have a render hook; it uses the regular dom.
     this.video.endFrame();
     
     this.pendingFrame = requestAnimationFrame(() => this.update());
@@ -177,6 +188,15 @@ export class Runtime {
     let b = src.charCodeAt(1); if ((b >= 0x41) && (b <= 0x5a)) b += 0x20; b -= 0x60;
     if ((a < 1) || (a > 26) || (b < 1) || (b > 26)) return 0;
     return (a << 5) | b;
+  }
+  
+  langRepr(lang) {
+    const hi = lang >> 5;
+    const lo = lang & 0x1f;
+    if ((hi >= 1) && (hi <= 26) && (lo >= 1) && (lo <= 26)) {
+      return String.fromCharCode(0x60 + hi) + String.fromCharCode(0x60 + lo);
+    }
+    return "??";
   }
   
   /* Modify DOM at startup.
@@ -228,6 +248,19 @@ export class Runtime {
     });
   }
   
+  /* Universal Menu.
+   ******************************************************************************/
+   
+  toggleUmenu() {
+    if (this.umenu) {
+      this.umenu.stop();
+      this.umenu = null;
+    } else {
+      this.umenu = new Umenu(this);
+      this.umenu.start();
+    }
+  }
+  
   /* Egg Platform API.
    *******************************************************************************/
   
@@ -263,8 +296,8 @@ export class Runtime {
   egg_prefs_get(k) {
     switch (k) {
       case 1: return this.lang;
-      case 2: return this.audio.musicEnabled ? 1 : 0;
-      case 3: return this.audio.soundEnabled ? 1 : 0;
+      case 2: return this.audio.musicTrim;
+      case 3: return this.audio.soundTrim;
     }
     return 0;
   }
@@ -272,8 +305,8 @@ export class Runtime {
   egg_prefs_set(k, v) {
     switch (k) {
       case 1: if (v === this.lang) return 0; if (!this.validLang(v)) return -1; this.lang = v; this.languageChanged(); return 0;
-      case 2: this.audio.enableMusic(v); return 0;
-      case 3: this.audio.enableSound(v); return 0;
+      case 2: this.audio.setMusicTrim(v); return 0;
+      case 3: this.audio.setSoundTrim(v); return 0;
     }
     return -1;
   }

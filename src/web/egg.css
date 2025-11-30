@@ -19,9 +19,45 @@ egg-rom {
   align-items: center;
   justify-content: center;
   background-color: #000;
+  position: relative;
 }
 
 canvas#eggfb {
   image-rendering: pixelated;
   cursor: none;
+}
+
+#umenu {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000e;
+  cursor: normal;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 36pt;
+}
+
+#umenu .row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 50%;
+}
+
+#umenu .keyIcon {
+  width: 120px;
+}
+
+#umenu input[type='range'] {
+  flex: 1;
+}
+
+#umenu input[type='button'] {
+  font-size: 36pt; /* For some reason, they don't inherit this from umenu. */
 }

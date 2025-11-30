@@ -162,6 +162,8 @@ export class Audio {
     this.songDuration = 0;
     this.pendingWavePrints = []; // {cookie,promise,resolve,reject}
     this.nextWaveCookie = 1;
+    this.musicTrim = 99; // 0..99 exactly as in Egg prefs (those read from here blindly).
+    this.soundTrim = 99;
     this.initPromise = this.init()
       .then(() => { this.initStatus = 1; })
       .catch(e => { console.error(e); this.initStatus = -1; });
@@ -359,41 +361,18 @@ export class Audio {
   /* Egg Platform API.
    ********************************************************************************/
    
-  enableMusic(enable) {//TODO redefining api as a trim rather than switch
-    if (enable) {
-      if (this.musicEnabled) return;
-      this.musicEnabled = true;
-      if (this.songParams) {
-        const ph = this.songParams[3];
-        this.egg_play_song(this.songParams[0], this.songParams[1], this.songParams[2]);
-        if (this.song) this.song.setPlayhead(ph);
-      }
-    } else {
-      if (!this.musicEnabled) return;
-      this.musicEnabled = false;
-      if (this.song) {
-        if (this.songParams) this.songParams[3] = this.song.getPlayhead();
-        if (this.pvsong) this.pvsong.stop();
-        this.pvsong = this.song;
-        this.song.stopSoon();
-        this.song = null;
-      }
-    }
+  setMusicTrim(trim) {
+    if (isNaN(trim) || (trim < 0) || (trim > 99)) return;
+    if (trim === this.musicTrim) return;
+    this.musicTrim = trim;
+    //TODO use it
   }
   
-  enableSound(enable) {//TODO
-    if (enable) {
-      if (this.soundEnabled) return;
-      this.soundEnabled = true;
-    } else {
-      if (!this.soundEnabled) return;
-      this.soundEnabled = false;
-      for (const sound of this.soundPlayers) {
-        sound.node.stop?.();
-        sound.node.disconnect();
-      }
-      this.soundPlayers = [];
-    }
+  setSoundTrim(trim) {
+    if (isNaN(trim) || (trim < 0) || (trim > 99)) return;
+    if (trim === this.soundTrim) return;
+    this.soundTrim = trim;
+    //TODO use it
   }
   
   egg_play_sound(rid, trim, pan) {

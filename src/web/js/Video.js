@@ -334,13 +334,16 @@ export class Video {
     };
   }
   
+  // See readUniforms(); you may supply the object as (unp), or a pointer to client memory.
+  // Same with (vtxp), it may be a Uint8Array instead of client memory address.
   egg_render(unp, vtxp, vtxc) {
   
     // Acquire uniforms and vertices.
-    const un = this.readUniforms(unp);
+    const un = (typeof(unp) === "number") ? this.readUniforms(unp) : unp;
     if (!un) return;
     if (!un.dsttexid) return;
-    const vtxv = this.rt.exec.getMemory(vtxp, vtxc);
+    if (vtxp instanceof Uint8Array) vtxc = vtxp.length;
+    const vtxv = (typeof(vtxp) === "number") ? this.rt.exec.getMemory(vtxp, vtxc) : vtxp;
     if (!vtxv) return;
     
     // Determine program, vertex size, and vertex count.

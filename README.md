@@ -75,28 +75,13 @@ Features we *do* support:
 ## TODO
 
 - [ ] Major changes.
-- - [x] Build client libraries individually per target, do not roll into libeggrt. Clients should include a la carte by just adding to OPT_ENABLE in their Makefile.
-- - - Now that I'm thinking about it, these really aren't "opt" units at all. Make a new concept of "util" units, and build all for every target.
-- - [x] editor: MIDI-In for synth instrument testing. Maybe just while the modecfg modal is open?
-- - [x] Edit SDK instruments. Maybe a global option in the Editor's actions menu?
-- - [x] ^ SongEditor forbids new channels chid>=16, and chid have to be assigned sequentially. Also has lots of UI we're not going to use here. Write a new InstrumentsEditor?
-- - [x] Standard instruments.
-- - - [x] Drum kit.
 - - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
-- - - [x] Native menu.
-- - - [x] Native input config.
 - - - [ ] Web menu.
 - - - [ ] Web input config.
 - - [ ] Web: Touch input, on-screen gamepad.
 - - [ ] Consider adding a client hook `egg_client_notify(k,v)` for changed preferences, eg lang from Universal Menu.
-- - [x] Consider mouse input. `xmark` demo, a jigsaw puzzle, desperately needs it. No matter what, games must remain playable with only a gamepad, so that's the trick.
-- - - [x] Prove the concept far enough to use with `xmark`, natively.
-- - - [x] Web.
 - [ ] Audio
-- - [x] SongEditor: Need MIDI-In to include post at modecfg, and also play at post modal.
-- - [x] Web synth: Play thru song 8, then start song 9 in demo. 9 doesn't start. Will start on second try. Are we running out of memory? (both big songs)
-- - - ...Humm Fu does it at the end. ...increasing memory fixed it.
-- - [ ] ^ No but seriously. We need better insight into memory usage, and maybe some mitigations at runtime, like evicting sounds not currently in use, or forcing a terminating song off.
+- - [ ] Synth: We need better insight into memory usage, and maybe some mitigations at runtime, like evicting sounds not currently in use, or forcing a terminating song off.
 - - [ ] Redefine `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` as trims in 0..99.
 - - [ ] Web Audio.js: Slice out audio parts of ROM, don't send the whole thing.
 - - [ ] Look up SDK instruments during song compile.
@@ -135,7 +120,6 @@ Features we *do* support:
 - - - Confirm that all impacted cases are single calls into graf. If so, the fix will be easy, just start allocating multiple vertices at once internally.
 - - [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
 - - [ ] editor: SidebarUi scroll bar broken, doesn't appear
-- - [x] native: Can we use egg-stdlib's rand()? There might be some value in having PRNG behave exactly the same across targets.
 - - [ ] native: Record and playback session.
 - - [ ] native: Add an initial audio delay like we did in v1. I've noticed missed notes in Humm Fu.
 - - [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols.

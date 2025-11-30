@@ -117,6 +117,9 @@ export class Input {
       window.addEventListener("keydown", this.keyListener);
       window.addEventListener("keyup", this.keyListener);
     }
+    if (this.mode === MODE_MOUSE) {
+      this.requireMouseListener();
+    }
   }
   
   stop() {
@@ -153,9 +156,15 @@ export class Input {
   
   dispatchAction(action) {
     switch (action) {
-      case ACTION_QUIT: this.rt.stop(); break;
+      case ACTION_QUIT: this.rt.toggleUmenu(); break;
       case ACTION_FULLSCREEN: console.log(`TODO Input: ACTION_FULLSCREEN`); break;
       default: console.log(`Input.dispatchAction: Unknown action 0x${action.toString(16)}`);
+    }
+  }
+  
+  zeroAllStates() {
+    for (let i=this.statev.length; i-->0; ) {
+      this.statev[i] &= 0x8000; // Don't blank CD.
     }
   }
   
@@ -383,12 +392,12 @@ export class Input {
     switch (mode) {
       case MODE_GAMEPAD: {
           this.mode = mode;
-          this.statev[0] = 0;
+          this.statev[0] &= 0x8000;
           this.dropMouseListener();
         } break;
       case MODE_MOUSE: {
           this.mode = mode;
-          this.statev[0] = 0;
+          this.statev[0] &= 0x8000;
           this.requireMouseListener();
         } break;
     }

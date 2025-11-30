@@ -1,7 +1,6 @@
 #include "demo.h"
 
 struct g g={0};
-static int mousex=0,mousey=0;//XXX TEMP
 
 /* Cleanup.
  */
@@ -76,9 +75,6 @@ int egg_client_init() {
     fprintf(stderr,"Float plain(%.3f) pad(%7.3f) zeropad(%07.3f) leftalign(%-7.3f)\n",-3.141,-3.141,-3.141,-3.141);
     fprintf(stderr,"String plain(%s) pad(%6s) leftalign(%-6s)\n","egg","egg","egg");
   }
-  
-  // XXX very temporary, test mouse input.
-  egg_input_set_mode(EGG_INPUT_MODE_MOUSE);
 
   return 0;
 }
@@ -111,9 +107,6 @@ void egg_client_update(double elapsed) {
     }
     g.pvinput=input;
   }
-  
-  //XXX
-  egg_input_get_mouse(&mousex,&mousey);
   
   if (modal->update) {
     modal->update(modal,elapsed,input,pvinput);
@@ -152,9 +145,6 @@ void egg_client_render() {
     graf_gradient_rect(&g.graf,0,0,FBW,FBH,0x100808ff,0x302020ff,0x302020ff,0x100808ff);
   }
   if (modal->render) modal->render(modal);
-  
-  //XXX
-  graf_fill_rect(&g.graf,mousex,mousey,1,1,0x00ffffff);
   
   graf_flush(&g.graf);
 }
