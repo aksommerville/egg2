@@ -9,11 +9,13 @@ export class Umenu {
     this.rt = rt;
     
     this.pvmode = this.rt.input.mode;
+    this.pvinput = 0xffff; // Wait for them to go zero first.
   }
   
   // This won't get called from outside, because we've stopped input.
   stop() {
     this.rt.input.egg_input_set_mode(this.pvmode);
+    this.rt.input.zeroAllStates();
     const container = document.querySelector("#umenu");
     if (container) container.remove();
     this.rt.umenu = null; // Destroy self.
@@ -55,14 +57,100 @@ export class Umenu {
     }
     langSelect.value = this.rt.lang;
     
+    let resumeButton;
     this.spawn(umenu, "DIV", ["row"],
-      this.spawn(null, "INPUT", { type: "button", value: "\u2328", "on-click": e => this.onInput(e) }), // U+2328 KEYBOARD
-      this.spawn(null, "INPUT", { type: "button", value: "\u25b6", "on-click": e => this.onResume(e) }), // U+25b6 BLACK RIGHT-POINTING TRIANGLE
-      this.spawn(null, "INPUT", { type: "button", value: "\u23fb", "on-click": e => this.onQuit(e) }) // U+23fb POWER SYMBOL
+      this.spawn(null, "INPUT", { type: "button", value: "\u2328", name: "input", "on-click": e => this.onInput(e) }), // U+2328 KEYBOARD
+      resumeButton = this.spawn(null, "INPUT", { type: "button", value: "\u25b6", name: "resume", "on-click": e => this.onResume(e) }), // U+25b6 BLACK RIGHT-POINTING TRIANGLE
+      this.spawn(null, "INPUT", { type: "button", value: "\u23fb", name: "quit", "on-click": e => this.onQuit(e) }) // U+23fb POWER SYMBOL
     );
+    resumeButton.focus();
   }
   
+  /* Update.
+   ************************************************************************/
+  
   update(elapsed) {
+    const input = this.rt.input.statev[0];
+    if (input !== this.pvinput) {
+      if ((input & 0x0001) && !(this.pvinput & 0x0001)) this.move(-1, 0);
+      if ((input & 0x0002) && !(this.pvinput & 0x0002)) this.move(1, 0);
+      if ((input & 0x0004) && !(this.pvinput & 0x0004)) this.move(0, -1);
+      if ((input & 0x0008) && !(this.pvinput & 0x0008)) this.move(0, 1);
+      if ((input & 0x0010) && !(this.pvinput & 0x0010)) this.activate();
+      if ((input & 0x0020) && !(this.pvinput & 0x0020)) this.cancel();
+      this.pvinput = input;
+    }
+  }
+  
+  move(dx, dy) {
+    const focus = document.activeElement;
+    if (!focus) return;
+    let next = null;
+    // Hard-code the focus ring for access via gamepads.
+    switch (focus.name) {
+      case "music": {
+          if (dx) {
+            focus.value = Math.max(0, Math.min(99, +focus.value + dx * 10));
+            this.onMusic({ target: focus });
+          } else if (dy < 0) next = "resume";
+          else if (dy > 0) next = "sound";
+        } break;
+      case "sound": {
+          if (dx) {
+            focus.value = Math.max(0, Math.min(99, +focus.value + dx * 10));
+            this.onSound({ target: focus });
+          } else if (dy < 0) next = "music";
+          else if (dy > 0) next = "lang";
+        } break;
+      case "lang": {
+          if (dx) this.moveLang(dx);
+          else if (dy < 0) next = "sound";
+          else if (dy > 0) next = "resume";
+        } break;
+      case "input": {
+          if (dx < 0) next = "quit";
+          else if (dx > 0) next = "resume";
+          else if (dy < 0) next = "lang";
+          else if (dy > 0) next = "music";
+        } break;
+      case "resume": {
+          if (dx < 0) next = "input";
+          else if (dx > 0) next = "quit";
+          else if (dy < 0) next = "lang";
+          else if (dy > 0) next = "music";
+        } break;
+      case "quit": {
+          if (dx < 0) next = "resume";
+          else if (dx > 0) next = "input";
+          else if (dy < 0) next = "lang";
+          else if (dy > 0) next = "music";
+        } break;
+      default: next = document.querySelector("input[name='resume']"); break;
+    }
+    if (typeof(next) === "string") {
+      next = document.querySelector(`*[name='${next}']`);
+    }
+    if (next) {
+      next.focus();
+    }
+  }
+  
+  moveLang(d) {
+    const select = document.querySelector("select[name='lang']");
+    let np = select.selectedIndex + d;
+    if (np < 0) np = select.options.length - 1;
+    else if (np >= select.options.length) np = 0;
+    select.selectedIndex = np;
+    this.onLang({ target: select });
+  }
+  
+  activate() {
+    const focus = document.activeElement;
+    focus?.click?.();
+  }
+  
+  cancel() {
+    this.stop();
   }
   
   /* DOM helpers.

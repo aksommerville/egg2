@@ -76,7 +76,7 @@ Features we *do* support:
 
 - [ ] Major changes.
 - - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
-- - - [ ] Web menu.
+- - - [x] Web menu.
 - - - [ ] Web input config.
 - - [ ] Web: Touch input, on-screen gamepad.
 - - [x] Consider adding a client hook `egg_client_notify(k,v)` for changed preferences, eg lang from Universal Menu.
