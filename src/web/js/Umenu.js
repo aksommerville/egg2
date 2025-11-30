@@ -72,13 +72,14 @@ export class Umenu {
   update(elapsed) {
     const input = this.rt.input.statev[0];
     if (input !== this.pvinput) {
-      if ((input & 0x0001) && !(this.pvinput & 0x0001)) this.move(-1, 0);
-      if ((input & 0x0002) && !(this.pvinput & 0x0002)) this.move(1, 0);
-      if ((input & 0x0004) && !(this.pvinput & 0x0004)) this.move(0, -1);
-      if ((input & 0x0008) && !(this.pvinput & 0x0008)) this.move(0, 1);
-      if ((input & 0x0010) && !(this.pvinput & 0x0010)) this.activate();
-      if ((input & 0x0020) && !(this.pvinput & 0x0020)) this.cancel();
+      const pv = this.pvinput; // Need to juggle these; activate() may interfere.
       this.pvinput = input;
+      if ((input & 0x0001) && !(pv & 0x0001)) this.move(-1, 0);
+      if ((input & 0x0002) && !(pv & 0x0002)) this.move(1, 0);
+      if ((input & 0x0004) && !(pv & 0x0004)) this.move(0, -1);
+      if ((input & 0x0008) && !(pv & 0x0008)) this.move(0, 1);
+      if ((input & 0x0010) && !(pv & 0x0010)) this.activate();
+      if ((input & 0x0020) && !(pv & 0x0020)) this.cancel();
     }
   }
   
@@ -147,6 +148,10 @@ export class Umenu {
   activate() {
     const focus = document.activeElement;
     focus?.click?.();
+    // If it's a sub-modal, poison our "previous" state. Won't get updated again until it returns.
+    if (focus?.name === "input") {
+      this.pvinput = 0xffff;
+    }
   }
   
   cancel() {
@@ -201,7 +206,7 @@ export class Umenu {
   }
   
   onInput(event) {
-    console.log(`Umenu.onInput`, event);
+    this.rt.input.egg_input_configure();
   }
   
   onResume(event) {

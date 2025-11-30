@@ -1,5 +1,7 @@
 /* Input.js
  */
+ 
+import { Incfg } from "./Incfg.js";
 
 // Match src/eggrt/inmgr/inmgr.h, not because they need to, but just to keep things straight.
 const ACTION_QUIT       = 0x01000001;
@@ -24,6 +26,7 @@ const BTN_AUX3   = 0x4000;
 const BTN_CD     = 0x8000;
 const MODE_GAMEPAD = 0;
 const MODE_MOUSE   = 1;
+const MODE_RAW     = -1; // Private mode for Incfg.
  
 export class Input {
   constructor(rt) {
@@ -36,6 +39,7 @@ export class Input {
     this.mousex = this.rt.video.fbw >> 1;
     this.mousey = this.rt.video.fbh >> 1;
     this.mouseListener = null;
+    this.rawCb = null; // (devid,btnid,value) => {}
     
     // Keyboard, only listen when running.
     // Gamepads, we listen always:
@@ -43,8 +47,32 @@ export class Input {
     window.addEventListener("gamepadconnected", this.gamepadListener);
     window.addEventListener("gamepaddisconnected", this.gamepadListener);
     
+    this.loadMaps();
+  }
+  
+  loadMaps() {
+    try {
+      this.keyMap = JSON.parse(localStorage.getItem("egg.keyMap"));
+      if (!Object.keys(this.keyMap).length) throw null;
+    } catch (e) {
+      this.keyMap = this.defaultKeyMap();
+    }
+    try {
+      this.joyMap = JSON.parse(localStorage.getItem("egg.joyMap"));
+      if (!this.joyMap || (typeof(this.joyMap) !== "object")) throw null; // Empty is fine, but don't let it be null or whatever.
+    } catch (e) {
+      this.joyMap = {};
+    }
+  }
+  
+  saveMaps() {
+    localStorage.setItem("egg.keyMap", JSON.stringify(this.keyMap));
+    localStorage.setItem("egg.joyMap", JSON.stringify(this.joyMap));
+  }
+  
+  defaultKeyMap() {
     // Default keyMap should match src/eggrt/inmgr/inmgr_device.c:inmgr_keymapv
-    this.keyMap = {
+    return {
       KeyW: BTN_UP,
       KeyA: BTN_LEFT,
       KeyS: BTN_DOWN,
@@ -89,16 +117,24 @@ export class Input {
       Escape: ACTION_QUIT,
       F11: ACTION_FULLSCREEN,
     };
-    
+  }
+  
+  defaultJoyMap() {
     // Indexed by Standard Mapping gamepad button index.
-    this.joyMap = [
-      BTN_SOUTH, BTN_EAST, BTN_WEST, BTN_NORTH,
-      BTN_L1, BTN_R1, BTN_L2, BTN_R2,
-      BTN_AUX2, BTN_AUX1, // Select, Start
-      BTN_AUX3, ACTION_QUIT, // Plungers.
-      BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT,
-      BTN_AUX3,
-    ];
+    return {
+      buttons: [
+        BTN_SOUTH, BTN_EAST, BTN_WEST, BTN_NORTH,
+        BTN_L1, BTN_R1, BTN_L2, BTN_R2,
+        BTN_AUX2, BTN_AUX1, // Select, Start
+        BTN_AUX3, ACTION_QUIT, // Plungers.
+        BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT,
+        BTN_AUX3,
+      ],
+      axes: [
+        BTN_LEFT | BTN_RIGHT,
+        BTN_UP | BTN_DOWN,
+      ],
+    };
   }
   
   start() {
@@ -166,6 +202,92 @@ export class Input {
     for (let i=this.statev.length; i-->0; ) {
       this.statev[i] &= 0x8000; // Don't blank CD.
     }
+    for (const gp of this.gamepads) {
+      if (gp) gp.state &= 0x8000;
+    }
+  }
+  
+  /* Raw mode, for Incfg.
+   ****************************************************************************/
+  
+  /* In raw mode, normal operation is suspended, and instead we call (cb)(devid,btnid,value)
+   * for all nonzero input state changes.
+   */
+  beginRawMode(cb) {
+    this.pvmode = this.mode;
+    this.mode = MODE_RAW;
+    this.rawCb = cb;
+    this.zeroAllStates();
+  }
+  
+  /* (assignments) null or an array of [devid,srcbtnid,dstbtnid].
+   * (srcbtnid) may be negative to reverse axes.
+   */
+  endRawMode(assignments) {
+    this.mode = this.pvmode;
+    this.rawCb = null;
+    if (assignments?.length) {
+      let dirty = false;
+      for (const assignment of assignments) {
+        if (this.updateAssignment(assignment[0], assignment[1], assignment[2])) {
+          dirty = true;
+        }
+      }
+      if (dirty) {
+        this.saveMaps();
+        this.reassignLiveMaps();
+      }
+    }
+  }
+  
+  updateAssignment(devid, srcbtnid, dstbtnid) {
+    if (!devid || !srcbtnid) return false;
+    
+    if (devid === "Keyboard") {
+      if (this.keyMap[srcbtnid] === dstbtnid) return false;
+      this.keyMap[srcbtnid] = dstbtnid;
+    
+    } else {
+      let map = this.joyMap[devid];
+      if (!map) {
+        map = this.defaultJoyMap();
+        this.joyMap[devid] = map;
+      }
+      if ((srcbtnid > -0x200) && (srcbtnid <= -0x100)) { // reverse axis
+        const p = (-srcbtnid) & 0xff;
+        while (map.axes.length <= p) map.axes.push(0);
+        if (map.axes[p] === dstbtnid) return false;
+        map.axes[p] = dstbtnid;
+      } else if ((srcbtnid >= 0x100) && (srcbtnid < 0x200)) { // axis
+        const p = srcbtnid & 0xff;
+        while (map.axes.length <= p) map.axes.push(0);
+        if (map.axes[p] === dstbtnid) return false;
+        map.axes[p] = dstbtnid;
+      } else if ((srcbtnid >= 0x200) && (srcbtnid < 0x300)) { // button
+        const p = srcbtnid & 0xff;
+        while (map.buttons.length <= p) map.buttons.push(0);
+        if (map.buttons[p] === dstbtnid) return false;
+        map.buttons[p] = dstbtnid;
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  reassignLiveMaps() {
+    for (const gp of this.gamepads) {
+      if (!gp) continue;
+      const map = this.joyMap[gp.id];
+      if (!map) continue;
+      gp.map = map;
+      gp.state &= BTN_CD;
+    }
+  }
+  
+  buttonIsAxis(devid, btnid) {
+    if (devid === "Keyboard") return false;
+    return ((btnid >= 0x100) && (btnid < 0x200));
   }
   
   /* Keyboard.
@@ -175,6 +297,16 @@ export class Input {
   
     // If a modifier key is down, ignore it and do not consume.
     if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) return;
+    
+    // In raw mode, consume and report everything.
+    if (this.mode === MODE_RAW) {
+      event.stopPropagation();
+      event.preventDefault();
+      if ((event.type === "keydown") && !event.repeat) {
+        this.rawCb("Keyboard", event.code, 1);
+      }
+      return;
+    }
     
     // Locate in keyMap. If it's not named there, ignore and do not consume.
     const btnid = this.keyMap[event.code];
@@ -265,15 +397,14 @@ export class Input {
   onGamepad(event) {
     if (!event?.gamepad) return;
     if (event.type === "gamepadconnected") {
-      //TODO Generic gamepad mapping. For now assuming Standard Mapping.
-      //console.log(`connected gamepad`, event.gamepad);
       const record = {
         id: event.gamepad.id,
         index: event.gamepad.index,
-        axes: [0, 0], // Two axes, regardless of what the device has.
-        buttons: event.gamepad.buttons.map(v => 0), // Buttons match the device.
+        axes: event.gamepad.axes.map(v => 0),
+        buttons: event.gamepad.buttons.map(v => 0),
         playerid: 0, // Zero until the first significant event.
         state: BTN_CD,
+        map: this.joyMap[event.gamepad.id] || this.defaultJoyMap(),
       };
       // Standard Mapping only describes 17 buttons. If there are more, ignore the excess.
       if (record.buttons.length > 17) record.buttons = record.buttons.slice(0, 17);
@@ -296,25 +427,37 @@ export class Input {
    */
   updateGamepad(record, device) {
     const AXTHRESH = 0.250;
-    for (let i=0; i<2; i++) {
+    for (let i=device.axes.length; i-->0; ) {
       let nv = device.axes[i] || 0;
       if (nv > AXTHRESH) nv = 1;
       else if (nv < -AXTHRESH) nv = -1;
       else nv = 0;
       if (nv === record.axes[i]) continue;
-      const btnidlo = i ? BTN_UP : BTN_LEFT;
-      const btnidhi = i ? BTN_DOWN : BTN_RIGHT;
-      if (record.axes[i] < 0) this.setGamepadButton(record, btnidlo, 0);
-      else if (record.axes[i] > 0) this.setGamepadButton(record, btnidhi, 0);
+      if (this.mode === MODE_RAW) {
+        this.rawCb?.(device.id, 0x100 + i, nv);
+        record.axes[i] = nv;
+        continue;
+      }
+      const btnid = record.map.axes[i];
+      if (btnid) {
+        const btnidlo = btnid & (BTN_LEFT | BTN_UP);//TODO This doesn't accomodate reverse.
+        const btnidhi = btnid & (BTN_RIGHT | BTN_DOWN);//TODO And are we going to allow axes to map to regular buttons?
+        if (record.axes[i] < 0) this.setGamepadButton(record, btnidlo, 0);
+        else if (record.axes[i] > 0) this.setGamepadButton(record, btnidhi, 0);
+        if (nv < 0) this.setGamepadButton(record, btnidlo, 1);
+        else if (nv > 0) this.setGamepadButton(record, btnidhi, 1);
+      }
       record.axes[i] = nv;
-      if (nv < 0) this.setGamepadButton(record, btnidlo, 1);
-      else if (nv > 0) this.setGamepadButton(record, btnidhi, 1);
     }
     for (let i=record.buttons.length; i-->0; ) {
       const nv = device.buttons[i]?.value ? 1 : 0;
       if (record.buttons[i] === nv) continue;
       record.buttons[i] = nv;
-      const dstbtnid = this.joyMap[i];
+      if (this.mode === MODE_RAW) {
+        this.rawCb?.(device.id, 0x200 + i, nv);
+        continue;
+      }
+      const dstbtnid = record.map.buttons[i];
       if (dstbtnid & ~0xffff) {
         if (nv) this.dispatchAction(dstbtnid);
       } else if (dstbtnid) {
@@ -365,7 +508,9 @@ export class Input {
    *****************************************************************************/
    
   egg_input_configure() {
-    console.log(`TODO Input.egg_input_configure`);
+    if (this.rt.incfg) return;
+    this.rt.incfg = new Incfg(this.rt);
+    this.rt.incfg.start();
   }
   
   egg_input_get_all(dstp, dsta) {

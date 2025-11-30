@@ -75,9 +75,9 @@ Features we *do* support:
 ## TODO
 
 - [ ] Major changes.
-- - [ ] In-game menu. Quit, Audio prefs, Language, Input config.
+- - [x] In-game menu. Quit, Audio prefs, Language, Input config.
 - - - [x] Web menu.
-- - - [ ] Web input config.
+- - - [x] Web input config.
 - - [ ] Web: Touch input, on-screen gamepad.
 - - [x] Consider adding a client hook `egg_client_notify(k,v)` for changed preferences, eg lang from Universal Menu.
 - [ ] Audio
@@ -90,6 +90,9 @@ Features we *do* support:
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
 - [ ] Audio review, when close to ready.
 - [ ] Minor bugs and tweaks outstanding.
+- - [ ] Add a metadata field to suppress the universal menu. `menu=none|default`? So we don't get disqualified from LowRezJam.
+- - [ ] native incfg: Timeout. See incfg_update().
+- - [ ] Web incfg could bear some prettying-up.
 - - [ ] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".
 - - [ ] SongEditor EventModal: Show noteid in hex and musical name too.
 - - [ ] SongEditor: Channel trim and pan can adjust in real time, in the synth. We should do that eagerly when it changes in the UI.

@@ -10,6 +10,7 @@ import { Video } from "./Video.js";
 import { Audio } from "./Audio.js";
 import { Input } from "./Input.js";
 import { Umenu } from "./Umenu.js";
+import { Incfg } from "./Incfg.js";
  
 export class Runtime {
   constructor(serial) {
@@ -21,6 +22,7 @@ export class Runtime {
     this.audio = new Audio(this);
     this.input = new Input(this);
     this.umenu = null; // Umenu|null
+    this.incfg = null; // Incfg|null
     this.pendingFrame = null;
     this.terminated = false;
     this.clientInit = false;
@@ -79,6 +81,10 @@ export class Runtime {
       this.umenu.stop();
       this.umenu = null;
     }
+    if (this.incfg) {
+      this.incfg.stop();
+      this.incfg = null;
+    }
     this.terminated = true;
     if (this.pendingFrame) {
       cancelAnimationFrame(this.pendingFrame);
@@ -136,7 +142,9 @@ export class Runtime {
     }
     this.lastUpdateTime = now;
     
-    if (this.umenu) {
+    if (this.incfg) {
+      this.incfg.update(elapsed);
+    } else if (this.umenu) {
       this.umenu.update(elapsed);
     } else {
       this.exec.egg_client_update(elapsed);
@@ -144,8 +152,9 @@ export class Runtime {
     if (this.terminated) return this.stop();
     
     this.video.beginFrame();
-    this.exec.egg_client_render(); // Even if umenu open, despite not getting updated.
+    if (!this.incfg) this.exec.egg_client_render(); // Even if umenu open, despite not getting updated.
     // umenu doesn't have a render hook; it uses the regular dom.
+    if (this.incfg) this.incfg.render(); // incfg uses the dom too, but just to produce a canvas.
     this.video.endFrame();
     
     this.pendingFrame = requestAnimationFrame(() => this.update());
