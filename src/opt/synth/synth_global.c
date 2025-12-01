@@ -138,10 +138,9 @@ void *synth_get_rom(int len) {
   if (synth.framec_in_progress) return 0;
   if (!synth.rate) return 0;
   synth_drop_everything();
-  if (len) {
-    if (!(synth.rom=synth_calloc(1,len))) return 0;
-    synth.romc=len;
-  }
+  if (!len) len=1; // malloc might balk at allocating zero.
+  if (!(synth.rom=synth_calloc(1,len))) return 0;
+  synth.romc=len;
   return synth.rom;
 }
 
