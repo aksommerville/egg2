@@ -86,7 +86,7 @@ Features we *do* support:
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
 - [ ] Audio review, when close to ready.
 - [ ] Minor bugs and tweaks outstanding.
-- - [ ] Add a metadata field to suppress the universal menu. `menu=none|default`? So we don't get disqualified from LowRezJam.
+- - [x] Add a metadata field to suppress the universal menu. `menu=none|default`? So we don't get disqualified from LowRezJam.
 - - [ ] native incfg: Timeout. See incfg_update().
 - - [ ] Web incfg could bear some prettying-up.
 - - [ ] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".

@@ -78,6 +78,7 @@ static int eggrt_rom_load_metadata() {
   eggrt.metadata.fbh=360;
   eggrt.metadata.playerclo=1;
   eggrt.metadata.playerchi=1;
+  eggrt.metadata.menu=1;
   
   /* metadata:1 must be the first resource, and it's required.
    */
@@ -128,6 +129,13 @@ static int eggrt_rom_load_metadata() {
     } else if ((entry.kc==10)&&!memcmp(entry.k,"incfgNames",10)) {
       sr_int_eval(&eggrt.metadata.incfgNames,entry.v,entry.vc);
 
+    } else if ((entry.kc==4)&&!memcmp(entry.k,"menu",4)) {
+      if ((entry.vc==4)&&!memcmp(entry.v,"none",4)) eggrt.metadata.menu=0;
+      else if ((entry.vc==7)&&!memcmp(entry.v,"default",7)) eggrt.metadata.menu=1;
+      else {
+        fprintf(stderr,"%s: Unexpected value '%.*s' for menu, using default.\n",eggrt.exename,entry.vc,entry.v);
+        eggrt.metadata.menu=1;
+      }
     }
   }
   return 0;

@@ -67,6 +67,7 @@ extern struct eggrt {
     const char *incfgMask;
     int incfgMaskc;
     int incfgNames; // index in strings:1
+    int menu; // 0=disable, 1=default
   } metadata;
   
 // eggrt_clock.c:

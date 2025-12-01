@@ -213,6 +213,8 @@ static int gen_metadata(struct eggdev_project_context *ctx) {
   if (sr_encode_fmt(&ctx->scratch,"iconImage=1\n")<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,"version=0.0.1\n")<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,"time=%04d-%02d-%02d\n",year,month,day)<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"incfgMask=dswen12lrLR\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"incfgNames=3\n")<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,"#freedom=free|intact|limited|restricted\n")<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,"#posterImage=\n")<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,"#desc=\n")<0) return -1;
@@ -226,6 +228,7 @@ static int gen_metadata(struct eggdev_project_context *ctx) {
   if (sr_encode_fmt(&ctx->scratch,"#homepage=\n")<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,"#source=\n")<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,"#persistKey=\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"#menu=none\n")<0) return -1;
   return eggdev_project_write(ctx,"src/data/metadata",ctx->scratch.v,ctx->scratch.c);
 }
 
@@ -238,6 +241,18 @@ static int gen_strings(struct eggdev_project_context *ctx) {
   ctx->scratch.c=0;
   if (sr_encode_fmt(&ctx->scratch,"1 English\n")<0) return -1; // strings:1:1 is always the language's own name, by convention.
   if (sr_encode_fmt(&ctx->scratch,"2 %.*s\n",ctx->titlec,ctx->title)<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"# Button names for incfg. Replace with something meaningful to your game.\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"3 Movement\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"4 South\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"5 West\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"6 East\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"7 North\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"8 AUX1\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"9 AUX2\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"10 L1\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"11 R1\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"12 L2\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"13 R2\n")<0) return -1;
   return eggdev_project_write(ctx,"src/data/strings/en-1",ctx->scratch.v,ctx->scratch.c);
 }
 

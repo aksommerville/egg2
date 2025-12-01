@@ -28,6 +28,11 @@ export class Runtime {
     this.clientInit = false;
     this.exitStatus = 0;
     this.storePrefix = (this.rom.getMeta("title") || "eggGame") + ".";
+    switch (this.rom.getMeta("menu")) {
+      case "none": this.menuEnablement = 0; break;
+      case "default": this.menuEnablement = 1; break;
+      default: this.menuEnablement = 1; // Fall back to the default, enable menu.
+    }
     const pfx = this.rom.getMeta("persistKey");
     if (pfx) this.storePrefix += pfx + ".";
     this.lastUpdateTime = 0;
@@ -265,7 +270,7 @@ export class Runtime {
     if (this.umenu) {
       this.umenu.stop();
       this.umenu = null;
-    } else {
+    } else if (this.menuEnablement === 1) {
       this.umenu = new Umenu(this);
       this.umenu.start();
     }

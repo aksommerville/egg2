@@ -139,7 +139,7 @@ void eggrt_cb_quit() {
   if (eggrt.umenu) {
     umenu_del(eggrt.umenu);
     eggrt.umenu=0;
-  } else {
+  } else if (eggrt.metadata.menu==1) {
     eggrt.umenu=umenu_new(0);
   }
 }
