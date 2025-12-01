@@ -11,7 +11,20 @@
  */
  
 static int eggdev_get_chdr(void *dstpp,int fqpid) {
-  //TODO
+  if ((fqpid<0)||(fqpid>0xff)) return 0;
+  const void *eau=0;
+  int eauc=eggdev_config_get_instruments(&eau);
+  if (eauc<1) return 0;
+  struct eau_file eau_file;
+  if (eau_file_decode(&eau_file,eau,eauc)<0) return 0;
+  struct eau_chdr_reader reader={.v=eau_file.chdr,.c=eau_file.chdrc};
+  struct eau_chdr_entry entry;
+  while (eau_chdr_reader_next(&entry,&reader)>0) {
+    if (entry.chid==fqpid) {
+      *(const void**)dstpp=entry.v;
+      return entry.c;
+    }
+  }
   return 0;
 }
 

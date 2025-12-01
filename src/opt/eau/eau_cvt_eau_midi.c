@@ -49,6 +49,8 @@ struct eau_from_midi {
   int namec,namea;
   struct eau_from_midi_event *eventv; // Used transiently while encoding events; stored in context mostly as a convenience.
   int eventc,eventa;
+  const void *chdr80; // Default drum kit, loaded once if we need it.
+  int chdr80c; // <0 if we tried and failed.
 };
 
 static void eau_from_midi_cleanup(struct eau_from_midi *ctx) {
@@ -157,12 +159,58 @@ static int eau_from_midi_generate_default_instrument(struct eau_from_midi *ctx,i
   return 0;
 }
 
+/* Locate drum in a drum channel header.
+ */
+ 
+static int eau_from_midi_find_drum(void *dstpp,const uint8_t *src,int srcc,int noteid) {
+  // (src) is the entire channel header. Trim to its modecfg.
+  if (srcc<6) return 0;
+  int modecfgc=(src[4]<<8)|src[5];
+  if (modecfgc>srcc-6) return 0;
+  src=src+6;
+  srcc=modecfgc;
+  // OK, now read it:
+  int srcp=0;
+  for (;;) {
+    if (srcp>srcc-6) return 0;
+    int len=(src[srcp+4]<<8)|src[srcp+5];
+    if (srcp>srcc-len-6) return 0;
+    if (src[srcp]==noteid) {
+      *(const void**)dstpp=src+srcp;
+      return 6+len;
+    }
+    srcp+=6+len;
+  }
+  return 0;
+}
+
 /* Generate one entry in the default drum modecfg.
  */
  
 static int eau_from_midi_generate_default_drum(struct eau_from_midi *ctx,int noteid) {
 
-  //TODO Try to use the SDK's default drum kit.
+  /* First look in fqpid 0x80, the default drum kit.
+   */
+  if (!ctx->chdr80c) {
+    if (!ctx->get_chdr) ctx->chdr80c=-1;
+    else {
+      const void *src=0;
+      int srcc=ctx->get_chdr(&src,0x80);
+      if (srcc>0) {
+        ctx->chdr80=src;
+        ctx->chdr80c=srcc;
+      } else {
+        ctx->chdr80c=-1;
+      }
+    }
+  }
+  if (ctx->chdr80c>0) {
+    const void *src=0;
+    int srcc=eau_from_midi_find_drum(&src,ctx->chdr80,ctx->chdr80c,noteid);
+    if (srcc>0) {
+      return sr_encode_raw(ctx->dst,src,srcc);
+    }
+  }
 
   sr_encode_u8(ctx->dst,noteid);
   sr_encode_u8(ctx->dst,0x40); // trimlo
@@ -246,7 +294,23 @@ static int eau_from_midi_generate_default_drums(struct eau_from_midi *ctx,int ch
 static int eau_from_midi_generate_chdr_from_fqpid(struct eau_from_midi *ctx,int chid,struct eau_from_midi_channel *channel) {
 
   // Look up (channel->fqpid) in the SDK's standard instruments.
-  fprintf(stderr,"[%s:%d] TODO Look up fqpid 0x%08x\n",__FILE__,__LINE__,channel->fqpid);//TODO
+  if (ctx->get_chdr) {
+    const uint8_t *src=0;
+    int srcc=ctx->get_chdr(&src,channel->fqpid);
+    if (srcc>=8) {
+      // Ignore the SDK's first three bytes.
+      sr_encode_u8(ctx->dst,chid);
+      sr_encode_u8(ctx->dst,channel->trim);
+      sr_encode_u8(ctx->dst,channel->pan);
+      // Everything else, framing included, take it on faith.
+      sr_encode_raw(ctx->dst,src+3,srcc-3);
+      return 0;
+    } else if (srcc>0) {
+      return eau_from_midi_error(ctx,"Invalid length %d for fqpid 0x%08x returned from SDK.",srcc,channel->fqpid);
+    } else {
+      // SDK lookup failed. No big deal, proceed with defaults.
+    }
+  }
   
   // If it's in Bank One, assume it's a drum kit.
   if ((channel->fqpid&0x00003f80)==0x00000080) {
@@ -363,12 +427,12 @@ static int eau_from_midi_chdr(struct eau_from_midi *ctx) {
   int chid=0,err;
   for (channel=ctx->channelv;chid<16;chid++,channel++) {
     if (!channel->notec) continue;
-    if (channel->pgmset) {
+    if (channel->pgmset) { // They asked for a specific program, so it's either that or the default.
       if ((err=eau_from_midi_generate_chdr_from_fqpid(ctx,chid,channel))<0) return err;
-    } else if (chid==9) {
+    } else if (chid==9) { // On channel 9, attempt a drum kit.
       if ((err=eau_from_midi_generate_default_drums(ctx,chid,channel))<0) return err;
-    } else {
-      if ((err=eau_from_midi_generate_default_instrument(ctx,chid,channel))<0) return err;
+    } else { // Any other channel with no program change, pretend they asked for program zero.
+      if ((err=eau_from_midi_generate_chdr_from_fqpid(ctx,chid,channel))<0) return err;
     }
   }
   

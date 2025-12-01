@@ -137,6 +137,7 @@ static int play_acquire_serial() {
     
     case FORMAT_MIDI: { // Convert.
         struct sr_encoder eau={0};
+        //TODO If we're doing things right, we should imitate eggdev's SDK instruments lookup.
         int err=eau_cvt_eau_midi(&eau,play.src,play.srcc,play.srcpath,0,1,0);
         if (err<0) {
           if (err!=-2) fprintf(stderr,"%s: Unspecified error converting MIDI to EAU.\n",play.srcpath);

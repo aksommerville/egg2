@@ -80,7 +80,7 @@ Features we *do* support:
 - - [ ] Synth: We need better insight into memory usage, and maybe some mitigations at runtime, like evicting sounds not currently in use, or forcing a terminating song off.
 - - [ ] Redefine `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` as trims in 0..99.
 - - [x] Web Audio.js: Slice out audio parts of ROM, don't send the whole thing.
-- - [ ] Look up SDK instruments during song compile.
+- - [x] Look up SDK instruments during song compile.
 - - [ ] SongEditor: Ensure we can receive natural EAU files, save them as EAU, and also use EAU rather than MIDI for ones that started blank.
 - - [ ] Demo sounds are still in the old format.
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
