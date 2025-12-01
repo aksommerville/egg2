@@ -112,11 +112,60 @@ static int eggrt_populate_video_setup(struct hostio_video_setup *setup) {
 /* Deliver songs and sounds to the new synthesizer.
  */
  
+static int eggrt_slice_rom(void *dstpp) {
+  // Alas we really can't use rom_reader for this. We need to definitely know positions in the encoded ROM.
+  if (eggrt.rom&&(eggrt.romc>=4)&&!memcmp(eggrt.rom,"\0ERM",4)) {
+    const uint8_t *src=eggrt.rom;
+    int srcc=eggrt.romc,srcp=4,tid=1;
+    int startp=0,stopp=srcc;
+    while (srcp<srcc) {
+      int cmdp=srcp;
+      uint8_t lead=src[srcp++];
+      if (!lead) break;
+      switch (lead&0xc0) {
+        case 0x00: { // TID
+            int next_tid=tid+lead;
+            if (!startp) {
+              if (next_tid==5) {
+                startp=srcp; // Start reading right after the advancement to tid 5.
+              } else if (next_tid==6) {
+                srcp=srcc; // No songs. We'd have to generate a new rom starting with a (tid+1). Not worth the trouble.
+              }
+            } else if (next_tid>7) {
+              stopp=cmdp;
+              srcp=srcc;
+            }
+            tid=next_tid;
+          } break;
+        case 0x40: srcp++; break; // RID (don't care)
+        case 0x80: { // RES
+            if (srcp>srcc-2) { srcp=srcc; break; }
+            int len=(lead&0x3f)<<16;
+            len|=src[srcp++]<<8;
+            len|=src[srcp++];
+            len++;
+            srcp+=len;
+          } break;
+        case 0xc0: startp=0; srcp=srcc; break; // Illegal, default.
+      }
+    }
+    if (startp) { // Got something.
+      *(const void**)dstpp=src+startp;
+      return stopp-startp;
+    }
+    return 0; // Invalid or no songs in a valid rom, return empty.
+  }
+  // Anything goes wrong, hand them all of whatever we have.
+  *(const void**)dstpp=eggrt.rom;
+  return eggrt.romc;
+}
+ 
 static int eggrt_load_synth_resources() {
-  //TODO We should slice (eggrt.rom) to just the song and sound resources; giving synth the whole thing is wasteful.
-  void *dst=synth_get_rom(eggrt.romc);
+  const void *src=0;
+  int srcc=eggrt_slice_rom(&src);
+  void *dst=synth_get_rom(srcc);
   if (!dst) return -1;
-  memcpy(dst,eggrt.rom,eggrt.romc);
+  memcpy(dst,src,srcc);
   return 0;
 }
 

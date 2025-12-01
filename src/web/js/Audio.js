@@ -190,8 +190,7 @@ export class Audio {
       this.node.port.onmessage = e => this.onWorkerMessage(e.data);
       return this.acquireWasm();
     }).then(wasm => {
-      //TODO Don't send the entire ROM, slice out the song and sound parts.
-      this.node.port.postMessage({ cmd: "init", rom: this.rt?.rom?.serial, wasm, r: this.ctx.sampleRate, c: this.ctx.destination.channelCount });
+      this.node.port.postMessage({ cmd: "init", rom: this.sliceRom(this.rt?.rom?.serial), wasm, r: this.ctx.sampleRate, c: this.ctx.destination.channelCount });
       this.ready = true;
     });
     this.ctx.audioWorklet.addModule(url).then(() => {
@@ -208,6 +207,50 @@ export class Audio {
       reject(e);
     });
     return promise;
+  }
+  
+  /* Given a full Egg ROM, return just the song and sound bits.
+   * Tid (5,6), deliberately assigned next to each other.
+   */
+  sliceRom(src) {
+    if (!src || (src.length < 4)) return src;
+    if ((src[0] !== 0x00) || (src[1] !== 0x45) || (src[2] !== 0x52) || (src[3] !== 0x4d)) return src;
+    let startp=4, stopp=src.length, startTid=0;
+    for (let srcp=4, tid=1; srcp<src.length; ) {
+      const lead = src[srcp++];
+      if (!lead) break;
+      switch (lead & 0xc0) {
+        case 0x00: { // TID
+            const nextTid = tid + lead;
+            if (!startTid && (nextTid >= 5)) {
+              startp = srcp;
+              startTid = nextTid;
+            }
+            if (nextTid > 6) {
+              stopp = srcp - 1;
+              srcp = src.length;
+            }
+            tid = nextTid;
+          } break;
+        case 0x40: srcp++; break; // RID, skip it.
+        case 0x80: { // RES, skip it.
+            const len = (((lead & 0x3f) << 16) | (src[srcp] << 8) | src[srcp+1]) + 1;
+            srcp += 2;
+            srcp += len;
+          } break;
+        case 0xc0: return src; // Illegal. Abort, return the input.
+      }
+    }
+    if (!startTid) return new Uint8Array(0); // Didn't find anything. Give them an empty ROM.
+    // If the first tid is 6, ie there's no songs, we need to insert a tid advancement.
+    if (startTid === 6) {
+      const len = stopp - startp;
+      const dst = new Uint8Array(1 + len);
+      dst[0] = 0x01; // tid+1
+      new Uint8Array(dst.buffer, dst.byteOffset + 1, len).set(new Uint8Array(src.buffer, src.byteOffset + startp, stopp - startp));
+      return dst;
+    }
+    return src.slice(startp, stopp);
   }
   
   acquireWasm() {
@@ -248,7 +291,8 @@ export class Audio {
     this.ready = false;
   }
   
-  update() {//XXX no longer needed
+  update() {
+    // No longer needed. But keep the plumbing in place just in case.
   }
   
   /* For editor.
