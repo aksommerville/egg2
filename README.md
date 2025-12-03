@@ -87,6 +87,8 @@ Features we *do* support:
 - [ ] Audio review, when close to ready.
 - [ ] Minor bugs and tweaks outstanding.
 - - [x] Add a metadata field to suppress the universal menu. `menu=none|default`? So we don't get disqualified from LowRezJam.
+- - [ ] SpriteEditor: Setting image or tile from the conveniences should fill a blank row if there is one, rather than adding.
+- - [ ] Native build didn't detect a change to libfont.
 - - [ ] native incfg: Timeout. See incfg_update().
 - - [ ] Web incfg could bear some prettying-up.
 - - [ ] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".

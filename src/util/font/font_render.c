@@ -107,7 +107,7 @@ int font_render_to_texture(
   for (;startp<linec;startp++,y+=font->lineh) {
     int len=srcc-startv[startp];
     if (startp<linec-1) len=startv[startp+1]-startv[startp];
-    font_render(rgba+y*w,w,h,stride,font,src+startv[startp],len,color);
+    font_render(rgba+y*w,w,h-y,stride,font,src+startv[startp],len,color);
   }
   
   // Trim empty columns from the right edge.
