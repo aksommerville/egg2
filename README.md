@@ -71,6 +71,7 @@ Features we *do* support:
 - [Mysteries of the Crypt](https://github.com/aksommerville/myscrypt)
 - [When You Wish Upon A Bone](https://github.com/aksommerville/wishbone)
 - [Queen of Clocks](https://github.com/aksommerville/queenofclocks)
+- [Vexularg](https://github.com/aksommerville/vexularg)
 
 ## TODO
 
@@ -79,14 +80,13 @@ Features we *do* support:
 - [ ] Audio
 - - [ ] Synth: We need better insight into memory usage, and maybe some mitigations at runtime, like evicting sounds not currently in use, or forcing a terminating song off.
 - - [ ] Redefine `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` as trims in 0..99.
-- - [x] Web Audio.js: Slice out audio parts of ROM, don't send the whole thing.
-- - [x] Look up SDK instruments during song compile.
 - - [ ] SongEditor: Ensure we can receive natural EAU files, save them as EAU, and also use EAU rather than MIDI for ones that started blank.
 - - [ ] Demo sounds are still in the old format.
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
 - [ ] Audio review, when close to ready.
 - [ ] Minor bugs and tweaks outstanding.
-- - [x] Add a metadata field to suppress the universal menu. `menu=none|default`? So we don't get disqualified from LowRezJam.
+- - [ ] SongEditor: Something akin to MIDI-In when modecfg modals are open, for when there's no MIDI device.
+- - [ ] Revise SDK's program zero to be more neutral config-wise, since it is what every tuned channel will default to. Doesn't matter whether it sounds nice.
 - - [ ] SpriteEditor: Setting image or tile from the conveniences should fill a blank row if there is one, rather than adding.
 - - [ ] Native build didn't detect a change to libfont.
 - - [ ] native incfg: Timeout. See incfg_update().

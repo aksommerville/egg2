@@ -161,6 +161,7 @@ static int render_texture_upload(struct render *render,struct render_texture *te
  */
 
 int render_texture_load_raw(struct render *render,int texid,int w,int h,int stride,const void *src,int srcc) {
+  if (!srcc) src=0;
   if ((w<1)||(w>RENDER_FB_LIMIT)) return -1;
   if ((h<1)||(h>RENDER_FB_LIMIT)) return -1;
   int p=render_texturev_search(render,texid);
