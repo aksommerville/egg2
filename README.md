@@ -77,6 +77,10 @@ Features we *do* support:
 
 - [ ] Major changes.
 - - [ ] Web: Touch input, on-screen gamepad.
+- - - Where do we stand so far? `make demo-serve-public`, `GET http://192.168.1.82:8080` from a phone, it loads and appears to be working, but of course no input. No rotation either.
+- - - The touch device shouldn't participate in incfg or mapping; those only take source devices to Egg's Generic Gamepad, and the Touch Device will expose like that in any case.
+- - - We can test from the PC, we shouldn't actually need `make demo-serve-public` or the phone until it's close to ready.
+- - - [ ] How to detect whether touch input is warranted?
 - [ ] Audio
 - - [ ] Synth: We need better insight into memory usage, and maybe some mitigations at runtime, like evicting sounds not currently in use, or forcing a terminating song off.
 - - [ ] Redefine `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` as trims in 0..99.
@@ -85,6 +89,9 @@ Features we *do* support:
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
 - [ ] Audio review, when close to ready.
 - [ ] Minor bugs and tweaks outstanding.
+- - [ ] eggrun: Saving to "EGG_SDK/out/linux/eggrun.save" for every game. Should be "{{ROM}}.save".
+- - [ ] `eggdev convert`: Saved games to/from JSON, for migrating your saves between native and web.
+- - - [ ] That's such a simple conversion, and useful to players, maybe we should put it in `eggrun` too?
 - - [ ] SongEditor: Something akin to MIDI-In when modecfg modals are open, for when there's no MIDI device.
 - - [ ] Revise SDK's program zero to be more neutral config-wise, since it is what every tuned channel will default to. Doesn't matter whether it sounds nice.
 - - [ ] SpriteEditor: Setting image or tile from the conveniences should fill a blank row if there is one, rather than adding.
@@ -98,7 +105,7 @@ Features we *do* support:
 - - [ ] Editor: Pitch wheel disabled at MidiService.readEvent() because my device is noisy. Find a long-term solution.
 - - [ ] Change malloc in egg-stdlib to use Wasm intrinsics, like synth. Then it won't produce a 16 MB ofile.
 - - [ ] Launch from within map editor didn't rebuild.
-- - [ ] Song event modal: Default to note, not marker.
+- - [x] Song event modal: Default to note, not marker.
 - - [ ] FM modecfg modal: Rate and range should present as float, regardless of how they're encoded.
 - - [ ] Wave modal: Per-stage UI. Esp for harmonics, I want a clickable bar chart.
 - - [ ] EnvUi: Is it enforcing a minimum 1 s or something? These typically run around 300 ms. Aim for the existing chart to fill like 3/4 of the available width.
@@ -135,6 +142,8 @@ Features we *do* support:
 - - [ ] eggstra play: Play WAV files.
 - - [ ] Editor Launch: Is it possible to dismiss the iframe when game ends? Or allow Esc after it terminates? Having trouble capturing key events for it.
 - - [ ] Would be nice if `eggdev convert` could change the pixel format of a PNG file, eg `eggdev convert -oout.png in.png --depth=1 --colortype=0`
+- - [ ] `eggdev build` generates an Egg file qualified with "-web". That's correct, since there might be multiple web targets. But I dunno, should we drop the "-web" if there's just one target?
+- - - (if that sounds super pointless, consider: Egg ROMs are universal. It was built as part of the Web process, but it can run anywhere, it's not really a "web" artifact)
 - [ ] Review all "TODO" in source, there's a ton of them.
 - With the above complete, we can start migrating games:
 - [ ] Rewrite or migrate eggsamples for v2.

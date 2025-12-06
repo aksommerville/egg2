@@ -27,6 +27,12 @@ demo-serve:$(eggdev_EXE) $(eggdev_SEPARATE_TEMPLATE);$(eggdev_EXE) serve \
   --project=src/demo \
   --htdocs=src/demo/out/demo-web.zip
 
+# demo-serve-public to unpack the web zip and serve with node http-server.
+# `eggdev serve` could do it too, but I just don't trust it talking to anyone but localhost.
+demo_WEB_ZIP:=src/demo/out/demo-web.zip
+$(demo_WEB_ZIP):$(eggdev_EXE) $(demo_SRCFILES);$(eggdev_EXE) build $(demo_SRCDIR)
+demo-serve-public:$(demo_WEB_ZIP);rm -rf mid/webtmp ; unzip -dmid/webtmp $(demo_WEB_ZIP) && http-server -c-1 -p8080 -a0.0.0.0 mid/webtmp
+
 # demo-edit is just like the skeleton project, but builds eggdev first and points to "src/demo" instead of "."
 # "--htdocs=src/web" enables us to load the web runtime, necessary for audio.
 demo-edit:$(eggdev_EXE) $(web_SYNTH_WASM);$(eggdev_EXE) serve \
