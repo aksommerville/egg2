@@ -118,6 +118,7 @@ static int synth_mem_allocate(struct synth_mem *mem,int c) {
     if (mem->v[p]<0) {
       int available=synth_mem_get_free_size(mem,p);
       if (available>=c) {
+        //if ((mem->v[p]<0)&&(p+1-mem->v[p]>=mem->c)) logint(p+1+c); // XXX TEMP Log the high-water mark.
         mem->v[p]=c;
         if (c<available) { // Mark the remainder free.
           mem->v[p+1+c]=-(available-c)+1;
@@ -194,7 +195,7 @@ static int synth_mem_master_grown(struct synth_mem *mem,int nc) {
         synth_pagea=na;
       }
       mem.v=(int32_t*)(((uint8_t*)&__heap_base)+(synth_pagec0*0x10000));
-      mem.c=(synth_pagea-synth_pagec0)*(0x1000>>2); // words from pages
+      mem.c=(synth_pagea-synth_pagec0)*(0x10000>>2); // words from pages
     #endif
     mem.v[0]=-(mem.c-1);
     return 0;
