@@ -2,6 +2,7 @@
  */
  
 import { Incfg } from "./Incfg.js";
+import { TouchInput } from "./TouchInput.js";
 
 // Match src/eggrt/inmgr/inmgr.h, not because they need to, but just to keep things straight.
 const ACTION_QUIT       = 0x01000001;
@@ -40,6 +41,7 @@ export class Input {
     this.mousey = this.rt.video.fbh >> 1;
     this.mouseListener = null;
     this.rawCb = null; // (devid,btnid,value) => {}
+    this.touch = null; // null or TouchInput. Only when running, and only if we deem it appropriate.
     
     // Keyboard, only listen when running.
     // Gamepads, we listen always:
@@ -156,6 +158,10 @@ export class Input {
     if (this.mode === MODE_MOUSE) {
       this.requireMouseListener();
     }
+    if (!this.touch && this.shouldUseTouchInput()) {
+      this.touch = new TouchInput(this);
+      this.touch.onEvent = e => this.onTouch(e);
+    }
   }
   
   stop() {
@@ -165,6 +171,10 @@ export class Input {
       this.keyListener = null;
     }
     this.dropMouseListener();
+    if (this.touch) {
+      this.touch.stop();
+      this.touch = null;
+    }
   }
   
   update() {
@@ -288,6 +298,29 @@ export class Input {
   buttonIsAxis(devid, btnid) {
     if (devid === "Keyboard") return false;
     return ((btnid >= 0x100) && (btnid < 0x200));
+  }
+  
+  /* Touch.
+   *******************************************************************************/
+  
+  shouldUseTouchInput() {
+    return window?.navigator?.maxTouchPoints > 0;
+  }
+   
+  onTouch(event) {
+    if (!(event.btnid & 0xffff)) return; // Not handling signals, I don't think we're going to use them from TouchInput.
+    if (event.btnid === BTN_CD) return; // Don't want TouchInput's opinion of CD, it shouldn't have one.
+    if (event.value) {
+      if (this.statev[1] & event.btnid) return; // Already down.
+      // Down.
+      this.statev[1] |= event.btnid;
+      this.statev[0] |= event.btnid;
+    } else {
+      if (!(this.statev[1] & event.btnid)) return; // Already up.
+      // Up.
+      this.statev[1] &= ~event.btnid;
+      this.statev[0] &= ~event.btnid;
+    }
   }
   
   /* Keyboard.

@@ -75,12 +75,12 @@ Features we *do* support:
 
 ## TODO
 
-- [ ] Major changes.
-- - [ ] Web: Touch input, on-screen gamepad.
+- [x] Major changes.
+- - [x] Web: Touch input, on-screen gamepad.
 - - - Where do we stand so far? `make demo-serve-public`, `GET http://192.168.1.82:8080` from a phone, it loads and appears to be working, but of course no input. No rotation either.
 - - - The touch device shouldn't participate in incfg or mapping; those only take source devices to Egg's Generic Gamepad, and the Touch Device will expose like that in any case.
 - - - We can test from the PC, we shouldn't actually need `make demo-serve-public` or the phone until it's close to ready.
-- - - [ ] How to detect whether touch input is warranted?
+- - - [x] How to detect whether touch input is warranted? `navigator.maxTouchPoints`, it even updates in Desktop Chrome when you toggle the Mobile Simulator.
 - [ ] Audio
 - - [ ] Synth: We need better insight into memory usage, and maybe some mitigations at runtime, like evicting sounds not currently in use, or forcing a terminating song off.
 - - [ ] Redefine `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` as trims in 0..99.

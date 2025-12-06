@@ -60,7 +60,7 @@ Line-oriented text.
 | source      | URL of source code, presumably clonable with git. |
 | players     | "MIN..MAX" decimal. |
 | persistKey  | If present, contributes to store isolation. Only versions of your game with the same persistKey will see the same store. |
-| incfgMask   | Which gamepad keys are used? Some combination of: dswen123lrLR |
+| incfgMask   | Which gamepad keys are used? For incfg and TouchInput. Some combination of: dswen123lrLR |
 | incfgNames  | Decimal index in strings:1, for the first key in incfgMask. Must be followed by as many keys as you listed. For interactive configurer. |
 | revdns      | Reverse-DNS namespace for this game. MacOS builds require it. "com.aksommerville.unspec.{{PROJECT}}" if you don't specify. |
 | menu        | "default" or omit to enable, or "none" to suppress the Universal Menu. eg if game must be black-and-white or low-resolution. |
@@ -80,6 +80,8 @@ Line-oriented text.
 `incfgMask` and `incfgNames` influence the interactive input configurer.
 `incfgMask` must be some combination of "dswen123lrLR", where "d" means the D-pad, "123" are AUX, "lr" are the first triggers, and "LR" the second triggers.
 List buttons the game uses, in order of importance. We won't prompt the user for ones you don't use.
+This also controls which buttons are available for touch input, on mobile devices.
+We assume all buttons are in use if `incfgMask` is empty or missing.
 `incfgNames` is an index in strings:1 corresponding to the first char in `incfgMask`.
 Must be followed by as many buttons as you list, with a name for each.
 It's fine to omit button names. The configurer presents them visually. But it's an opportunity to say "Jump" instead of just "That button over there".
