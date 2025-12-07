@@ -35,13 +35,15 @@
 #define EGGDEV_FMT_cmdlist    27
 #define EGGDEV_FMT_cmdltxt    28
 #define EGGDEV_FMT_ico        29
+#define EGGDEV_FMT_json       30
+#define EGGDEV_FMT_save       31
 #define EGGDEV_FMT_FOR_EACH \
   _(egg) _(exe) _(zip) _(html) _(css) _(js) \
   _(png) _(gif) _(jpeg) _(wav) _(mid) _(eau) \
   _(wasm) _(metadata) _(metatxt) _(strings) _(strtxt) \
   _(tilesheet) _(tstxt) _(decalsheet) _(dstxt) \
   _(map) _(maptxt) _(sprite) _(sprtxt) _(cmdlist) _(cmdltxt) \
-  _(ico)
+  _(ico) _(json) _(save)
 
 /* Format properties and detection.
  */
@@ -80,6 +82,8 @@ int eggdev_sprite_from_sprtxt(struct sr_convert_context *ctx);
 int eggdev_sprtxt_from_sprite(struct sr_convert_context *ctx);
 int eggdev_cmdlist_from_cmdltxt(struct sr_convert_context *ctx);
 int eggdev_cmdltxt_from_cmdlist(struct sr_convert_context *ctx);
+int eggdev_json_from_save(struct sr_convert_context *ctx);
+int eggdev_save_from_json(struct sr_convert_context *ctx);
 
 /* Generic access to converters and conveniences for common use cases.
  * These may use extra parameters in (eggdev): strip,rate,chanc

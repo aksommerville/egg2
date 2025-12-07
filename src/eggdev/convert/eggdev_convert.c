@@ -376,6 +376,12 @@ sr_convert_fn eggdev_get_converter(int dstfmt,int srcfmt) {
     case EGGDEV_FMT_cmdltxt: switch (srcfmt) {
         case EGGDEV_FMT_cmdlist: return eggdev_cmdltxt_from_cmdlist;
       } break;
+    case EGGDEV_FMT_json: switch (srcfmt) {
+        case EGGDEV_FMT_save: return eggdev_json_from_save;
+      } break;
+    case EGGDEV_FMT_save: switch (srcfmt) {
+        case EGGDEV_FMT_json: return eggdev_save_from_json;
+      } break;
   }
   return 0;
 }

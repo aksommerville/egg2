@@ -890,3 +890,50 @@ int eggdev_cmdltxt_from_cmdlist(struct sr_convert_context *ctx) {
   }
   return 0;
 }
+
+/* JSON from binary save.
+ */
+ 
+int eggdev_json_from_save(struct sr_convert_context *ctx) {
+  const uint8_t *src=ctx->src;
+  int srcp=0;
+  int jsonctx=sr_encode_json_object_start(ctx->dst,0,0);
+  while (srcp<ctx->srcc) {
+    if (srcp>ctx->srcc-3) return sr_convert_error(ctx,"Malformed save file.");
+    int kc=src[srcp++];
+    int vc=src[srcp++]<<8;
+    vc|=src[srcp++];
+    if (srcp>ctx->srcc-vc-kc) return sr_convert_error(ctx,"Malformed save file.");
+    const char *k=(char*)(src+srcp); srcp+=kc;
+    const char *v=(char*)(src+srcp); srcp+=vc;
+    if (sr_encode_json_string(ctx->dst,k,kc,v,vc)<0) return -1;
+  }
+  if (sr_encode_json_end(ctx->dst,jsonctx)<0) return -1;
+  sr_encode_u8(ctx->dst,0x0a); // Just to be polite.
+  return 0;
+}
+
+/* Binary save from JSON.
+ */
+ 
+int eggdev_save_from_json(struct sr_convert_context *ctx) {
+  struct sr_decoder decoder={.v=ctx->src,.c=ctx->srcc};
+  int jsonctx=sr_decode_json_object_start(&decoder);
+  if (jsonctx<0) return sr_convert_error(ctx,"Malformed JSON.");
+  const char *k;
+  int kc;
+  while ((kc=sr_decode_json_next(&k,&decoder))>0) {
+    if (kc>0xff) return sr_convert_error(ctx,"Key too long (%d, limit 255).",kc);
+    sr_encode_u8(ctx->dst,kc);
+    int vlenp=ctx->dst->c;
+    sr_encode_intbe(ctx->dst,0,2);
+    sr_encode_raw(ctx->dst,k,kc);
+    int vp=ctx->dst->c;
+    if (sr_decode_json_string_to_encoder(ctx->dst,&decoder)<0) return sr_convert_error(ctx,"Malformed JSON.");
+    int vlen=ctx->dst->c-vp;
+    if ((vlen<0)||(vlen>0xffff)) return sr_convert_error(ctx,"Value too long (%d, limit 65535).",vlen);
+    ((uint8_t*)ctx->dst->v)[vlenp]=vlen>>8;
+    ((uint8_t*)ctx->dst->v)[vlenp+1]=vlen;
+  }
+  return sr_encoder_assert(ctx->dst);
+}

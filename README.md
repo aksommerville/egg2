@@ -76,9 +76,11 @@ Features we *do* support:
 ## TODO
 
 - [x] Remove `eggdev_convert_context`. Make a similar thing in "serial", so we can share it around. Then share it around.
-- [ ] Would be nice if `eggdev convert` could change the pixel format of a PNG file, eg `eggdev convert -oout.png in.png --depth=1 --colortype=0`
-- [ ] `eggdev convert`: Saved games to/from JSON, for migrating your saves between native and web.
-- - [ ] That's such a simple conversion, and useful to players, maybe we should put it in `eggrun` too?
+- [x] Would be nice if `eggdev convert` could change the pixel format of a PNG file, eg `eggdev convert -oout.png in.png --depth=1 --colortype=0`
+- - ...DECLINE. This is a bigger ask than you'd think, because the "image" unit forces everything RGBA. That's a good interface for the runtime. Get your general image conversion somewhere else.
+- [x] `eggdev convert`: Saved games to/from JSON, for migrating your saves between native and web.
+- - [x] That's such a simple conversion, and useful to players, maybe we should put it in `eggrun` too?
+- - - ...DECLINE. A reasonable ask I guess, but that's just not what eggrun is for.
 - [ ] Revise SDK's program zero to be more neutral config-wise, since it is what every tuned channel will default to. Doesn't matter whether it sounds nice.
 - [ ] SongEditor: Something akin to MIDI-In when modecfg modals are open, for when there's no MIDI device.
 - [ ] SongEditor EventModal: Show noteid in hex and musical name too.
