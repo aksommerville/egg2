@@ -78,6 +78,17 @@ export class SongService {
     }
   }
   
+  /* Provide channel trim and pan in 0..255 when they change.
+   * If we have a song running, we'll try to effect the change live.
+   * Changing the song model is your problem.
+   */
+  updateTrim(chid, trim) {
+    if (this.playing) this.audio.egg_song_set(1, chid, 4, trim / 255);
+  }
+  updatePan(chid, pan) {
+    if (this.playing) this.audio.egg_song_set(1, chid, 5, pan / 127);
+  }
+  
   getNormalizedPlayhead() {
     if (!this.playing) return 0;
     return this.audio.getNormalizedPlayhead();

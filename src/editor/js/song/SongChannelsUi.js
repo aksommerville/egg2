@@ -164,6 +164,7 @@ export class SongChannelsUi {
     event.target.parentNode.querySelector(".tattle").innerText = event.target.value;
     channel.trim = trim;
     this.songService.broadcast("dirty");
+    this.songService.updateTrim(channel.chid, trim);
   }
   
   onPanChange(event, channel) {
@@ -172,6 +173,7 @@ export class SongChannelsUi {
     event.target.parentNode.querySelector(".tattle").innerText = event.target.value;
     channel.pan = pan;
     this.songService.broadcast("dirty");
+    this.songService.updatePan(channel.chid, pan);
   }
   
   onModeChange(event, channel) {
