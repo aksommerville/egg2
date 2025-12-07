@@ -157,13 +157,12 @@ export class Audio {
     this.ctx = null; // AudioContext
     this.ready = false; // True after all the things are instantiated and we've sent the "init" message.
     this.initStatus = 0; // <0=error, >0=ready
-    this.songStartTime = 0; // AudioContext.currentTime when song starts, approximate at best.
-    this.songPlaying = false; // May need to abstract these song things to run multiple. Getting it working for one first.
-    this.songDuration = 0;
     this.pendingWavePrints = []; // {cookie,promise,resolve,reject}
     this.nextWaveCookie = 1;
     this.musicTrim = 99; // 0..99 exactly as in Egg prefs (those read from here blindly).
     this.soundTrim = 99;
+    this.songsBySongid = []; // Sparse, indexed by songid. {rid,startTime,duration}
+    this.durationsByRid = []; // Sparse, indexed by rid. Number, seconds.
     this.initPromise = this.init()
       .then(() => { this.initStatus = 1; })
       .catch(e => { console.error(e); this.initStatus = -1; });
@@ -308,15 +307,10 @@ export class Audio {
       rom[1] = (serial.length - 1) >> 8;
       rom[2] = (serial.length - 1);
       new Uint8Array(rom.buffer, rom.byteOffset + 3, serial.length).set(serial);
-      this.songPlaying = true;
-      this.songDuration = this.calculateSongDuration(serial);
-    } else {
-      this.songPlaying = false;
-      this.songDuration = 0;
     }
     this.node.port.postMessage({ cmd: "reinit", rom });
     this.node.port.postMessage({ cmd: "playSong", songid: 1, rid: 1, repeat, trim: 1, pan: 0 });
-    this.songStartTime = this.ctx.currentTime;
+    this.songsBySongid[1] = { rid: 1, startTime: this.ctx.currentTime, duration: serial ? this.calculateSongDuration(serial) : 0 };
   }
   
   /* For editor.
@@ -366,6 +360,19 @@ export class Audio {
     return total / 1000;
   }
   
+  durationByRid(rid) {
+    let s = this.durationsByRid[rid];
+    if (typeof(s) === "number") return s;
+    const serial = this.rt.rom.getRes(5, rid);
+    if (serial) {
+      s = this.calculateSongDuration(serial);
+    } else {
+      s = 0.0;
+    }
+    this.durationsByRid[rid] = s;
+    return s;
+  }
+  
   printWave(serial) {
     const cookie = this.nextWaveCookie++;
     let resolve, reject;
@@ -388,17 +395,21 @@ export class Audio {
   }
   
   getNormalizedPlayhead() {
-    if (this.ctx && this.songPlaying) {
-      return ((this.ctx.currentTime - this.songStartTime) % this.songDuration) / this.songDuration;
+    if (!this.ctx) return 0.0;
+    const song = this.songsBySongid[1];
+    if (song?.duration) {
+      return ((this.ctx.currentTime - song.startTime) % song.duration) / song.duration;
     }
     return 0.0;
   }
   
   setNormalizedPlayhead(p) {
-    if (this.ctx && this.songPlaying) {
-      const ph = p * this.songDuration;
+    if (!this.ctx) return;
+    const song = this.songsBySongid[1];
+    if (song?.duration) {
+      const ph = p * song.duration;
       this.node.port.postMessage({ cmd: "setPlayhead", songid: 1, ph });
-      this.songStartTime = this.ctx.currentTime - ph;
+      song.startTime = this.ctx.currentTime - ph;
     }
   }
   
@@ -420,26 +431,32 @@ export class Audio {
   }
   
   egg_play_sound(rid, trim, pan) {
+    if (rid < 1) return;
     if (!this.ready) return;
     this.node.port.postMessage({ cmd: "playSound", rid, trim, pan });
   }
   
   egg_play_song(songid, rid, repeat, trim, pan) {
+    if (songid < 1)return;
     if (!this.ready) {
       this.initPromise.then(() => {
         if (this.ready) this.egg_play_song(songid, rid, repeat, trim, pan);
       });
       return;
     }
-    this.songParams = [songid, 0/*force*/, repeat, 0]; // To restore when prefs change.XXX
     this.node.port.postMessage({ cmd: "playSong", songid, rid, repeat, trim, pan });
-    this.songStartTime = this.ctx.currentTime;//TODO track time per songid
+    this.songsBySongid[songid] = { rid, startTime: this.ctx.currentTime };
   }
   
   egg_song_set(songid, chid, prop, v) {
     if (!this.ready) return;
     this.node.port.postMessage({ cmd: "set", songid, chid, prop, v });
-    //TODO if prop==3 (PLAYHEAD) update our bookkeeping
+    if (prop === 3) { // PLAYHEAD
+      const song = this.songsBySongid[songid];
+      if (song) {
+        song.startTime = v - this.ctx.currentTime;
+      }
+    }
   }
   
   egg_song_event_note_on(songid, chid, noteid, velocity) {
@@ -462,9 +479,11 @@ export class Audio {
     this.node.port.postMessage({ cmd: "wheel", songid, chid, v });
   }
   
-  egg_song_get_playhead(s) {
-    if (this.ctx && this.songPlaying) {//TODO track time per songid
-      return (this.ctx.currentTime - this.songStartTime) % this.songDuration;
+  egg_song_get_playhead(songid) {
+    const song = this.songsBySongid[songid];
+    if (song) {
+      if (!song.duration) song.duration = this.durationByRid(song.rid);
+      return Math.max(0.001, (this.ctx.currentTime - song.startTime) % song.duration);
     }
     return 0.0;
   }

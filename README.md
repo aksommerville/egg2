@@ -80,7 +80,7 @@ Features we *do* support:
 - - - Added a cudgel at synth_stdlib that can uncomment on demand to show web memory usage in words. Demo currently tops out around 1.4 MB.
 - - - There was a typo in synth_stdlib causing us to ignore 15/16 of our available memory. Fixed that, and I don't think we'll see synth memory problems again.
 - - [x] Redefine `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` as trims in 0..99.
-- - [ ] Web audio playhead.
+- - [x] Web audio playhead.
 - - [ ] SongEditor: Ensure we can receive natural EAU files, save them as EAU, and also use EAU rather than MIDI for ones that started blank.
 - - [ ] Demo sounds are still in the old format.
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
