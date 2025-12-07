@@ -1,5 +1,6 @@
 /* MidiService.js
  * Provides MIDI-In for synth testing.
+ * Also generates note events from strokes on the numeric keypad, for when you don't have a piano attached.
  */
  
 export class MidiService {
@@ -14,6 +15,10 @@ export class MidiService {
     this.pollTimeout = null;
     this.listeners = []; // {id,cb}
     this.nextListenerId = 1;
+    this.keypadBase = 0x40; // Note ID for KP1 - 1.
+    
+    this.window.addEventListener("keydown", e => this.onKey(e));
+    this.window.addEventListener("keyup", e => this.onKey(e));
   }
   
   listen(cb) {
@@ -138,6 +143,31 @@ export class MidiService {
         } break;
     }
     throw new Error(`Error reading event at ${srcp}:${len}/${src.length}`, src);
+  }
+  
+  onKey(event) {
+    if (event.repeat) return;
+    if (!event.code.startsWith("Numpad")) return;
+    const n = +event.code[6];
+    if ((n >= 1) && (n <= 9)) {
+      if (event.type === "keydown") {
+        this.onMidiEvent({ opcode: 0x90, chid: 0, a: this.keypadBase + n, b: 0x40 });
+      } else {
+        this.onMidiEvent({ opcode: 0x80, chid: 0, a: this.keypadBase + n, b: 0x40 });
+      }
+      event.stopPropagation();
+      event.preventDefault();
+    } else if (event.type === "keydown") {
+      if (event.code === "NumpadAdd") {
+        if ((this.keypadBase += 9) > 0x70) this.keypadBase = 0x70;
+        event.stopPropagation();
+        event.preventDefault();
+      } else if (event.code === "NumpadEnter") {
+        if ((this.keypadBase -= 9) < 0x00) this.keypadBase = 0x00;
+        event.stopPropagation();
+        event.preventDefault();
+      }
+    }
   }
 }
 

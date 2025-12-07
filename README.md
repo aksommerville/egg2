@@ -81,8 +81,9 @@ Features we *do* support:
 - [x] `eggdev convert`: Saved games to/from JSON, for migrating your saves between native and web.
 - - [x] That's such a simple conversion, and useful to players, maybe we should put it in `eggrun` too?
 - - - ...DECLINE. A reasonable ask I guess, but that's just not what eggrun is for.
-- [ ] Revise SDK's program zero to be more neutral config-wise, since it is what every tuned channel will default to. Doesn't matter whether it sounds nice.
-- [ ] SongEditor: Something akin to MIDI-In when modecfg modals are open, for when there's no MIDI device.
+- [x] Revise SDK's program zero to be more neutral config-wise, since it is what every tuned channel will default to. Doesn't matter whether it sounds nice.
+- [x] SongEditor: Something akin to MIDI-In when modecfg modals are open, for when there's no MIDI device.
+- - ...Keypad 1..9, and Add/Enter to shift it.
 - [ ] SongEditor EventModal: Show noteid in hex and musical name too.
 - [ ] SongEditor: Channel trim and pan can adjust in real time, in the synth. We should do that eagerly when it changes in the UI.
 - [ ] Editor: Sometimes deleting a post step doesn't work.
