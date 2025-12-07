@@ -49,6 +49,7 @@ export class SongToolbarUi {
     
     const actionsMenu = this.dom.spawn(this.element, "SELECT", { name: "actions", "on-change": () => this.onActionsChange() },
       this.dom.spawn(null, "OPTION", { value: "", disabled: "disabled" }, "Actions..."),
+      this.dom.spawn(null, "OPTION", { value: "tempo" }, "Tempo..."),
       this.dom.spawn(null, "OPTION", { value: "dropUnusedNames" }, "Drop Unused Names"),
       this.dom.spawn(null, "OPTION", { value: "dropAllNames" }, "Drop All Names"),
       this.dom.spawn(null, "OPTION", { value: "autoStartTime" }, "Auto Start Time"),
@@ -256,6 +257,18 @@ export class SongToolbarUi {
   
   /* Actions.
    ***********************************************************************************/
+   
+  action_tempo() {
+    if (!this.songService.song) return;
+    this.dom.modalText("Tempo, ms/qnote. Affects LFOs and Post, not actual note timing.", this.songService.song.tempo).then(rsp => {
+      if (!rsp) return;
+      rsp = +rsp;
+      if ((rsp < 1) || (rsp > 0x7fff)) throw "Unreasonable tempo. Try again.";
+      if (rsp === this.songService.song.tempo) return;
+      this.songService.song.tempo = rsp;
+      this.songService.broadcast("dirty");
+    }).catch(e => this.dom.modalError(e));
+  }
   
   action_dropUnusedNames() {
     if (!this.songService.song) return;

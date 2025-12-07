@@ -507,11 +507,12 @@ export class Song {
     if (!event) throw new Error("Null event");
     let lo=0, hi=this.events.length;
     while (lo < hi) {
-      const ck = (lo + hi) >> 1;
+      let ck = (lo + hi) >> 1;
       const q = this.events[ck];
            if (event.time < q.time) hi = ck;
       else if (event.time > q.time) lo = ck + 1;
       else {
+        while ((ck < hi) && (this.events[ck].time === event.time)) ck++;
         lo = ck;
         break;
       }
@@ -651,21 +652,22 @@ export class SongChannel {
     const tail = [0, 0, 0, 0];
     if (!env) return tail;
     let i;
-    if (env.flags & 0x04) { // Sustain in play.
-      for (i=1; i<env.susp; i++) tail[0] += env.lo[i].t;
-      for (; i<env.lo.length; i++) tail[2] += env.lo[i].t;
-      if (!tail[2]) tail[2] = 1; // Can't be zero, it's the "sustain" flag too.
+    if ((env.susp > 0) && (env.susp < env.lo.length)) { // Sustain in play.
+      tail[0] = env.lo[env.susp].t;
+      tail[2] = env.lo[env.lo.length - 1] - tail[0];
+      if (tail[2] < 1) tail[2] = 1; // Can't be zero, it's the "sustain" flag too.
       if (env.hi) {
-        for (i=1; i<env.susp; i++) tail[1] += env.hi[i].t;
-        for (; i<env.hi.length; i++) tail[3] += env.hi[i].t;
+        tail[1] = env.hi[env.susp].t;
+        tail[3] = env.hi[env.hi.length - 1] - tail[1];
+        if (tail[3] < 1) tail[3] = 1;
       } else {
         tail[1] = tail[0];
         tail[3] = tail[2];
       }
     } else {
-      for (const pt of env.lo) tail[0] += pt.t;
+      tail[0] = env.lo[env.lo.length - 1].t;
       if (env.hi) {
-        for (const pt of env.hi) tail[1] += pt.t;
+        tail[1] = env.hi[env.hi.length -1].t;
       } else {
         tail[1] = tail[0];
       }
