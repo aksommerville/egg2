@@ -1,3 +1,8 @@
+/* Just a simple menu.
+ * You shouldn't need to edit this ever.
+ * Add things to modal.h:VIDEO_TEST_* instead.
+ */
+
 #include "../demo.h"
 #include "../gui/gui.h"
 

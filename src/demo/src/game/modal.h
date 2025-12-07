@@ -59,4 +59,15 @@ struct modal *modal_new_misc();
 VIDEO_FOR_EACH_TEST
 #undef _
 
+/* Audio sub-menu.
+ */
+#define AUDIO_TEST_Playback 1
+#define AUDIO_TEST_Interference 2
+#define AUDIO_FOR_EACH_TEST \
+  _(Playback) \
+  _(Interference)
+#define _(tag) struct modal *modal_new_audio_##tag();
+AUDIO_FOR_EACH_TEST
+#undef _
+
 #endif

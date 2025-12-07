@@ -9,6 +9,17 @@
 #ifndef GUI_H
 #define GUI_H
 
+/* Contextless bits and bobs.
+ ******************************************************************/
+
+/* Render a single line of text.
+ * (x,y) is the top-left corner of the first glyph.
+ * Returns horizontal advancement in pixels, typically (srcc*8).
+ * WARNING: Leaves graf's tint at (rgba).
+ */
+int gui_render_string(int x,int y,const char *src,int srcc,uint32_t rgba);
+#define gui_string_h 8
+
 /* List.
  * Text labels arranged vertically, with scrolling.
  * Intended to occupy the whole screen but you can give a smaller box too.

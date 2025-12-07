@@ -257,7 +257,7 @@ void egg_song_event_wheel(int songid,int chid,int v) {
 
 float egg_song_get_playhead(int songid) {
   if (hostio_audio_lock(eggrt.hostio)<0) return 0.0;
-  double p=synth_get(1,0xff,SYNTH_PROP_PLAYHEAD);
+  double p=synth_get(songid,0xff,SYNTH_PROP_PLAYHEAD);
   if (p<=0.0) {
     hostio_audio_unlock(eggrt.hostio);
     return 0.0;
