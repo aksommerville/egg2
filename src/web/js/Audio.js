@@ -409,14 +409,14 @@ export class Audio {
     if (isNaN(trim) || (trim < 0) || (trim > 99)) return;
     if (trim === this.musicTrim) return;
     this.musicTrim = trim;
-    //TODO use it
+    this.node.port.postMessage({ cmd: "set", songid: 0, chid: 0, prop: 7, v: trim / 99 });
   }
   
   setSoundTrim(trim) {
     if (isNaN(trim) || (trim < 0) || (trim > 99)) return;
     if (trim === this.soundTrim) return;
     this.soundTrim = trim;
-    //TODO use it
+    this.node.port.postMessage({ cmd: "set", songid: 0, chid: 0, prop: 8, v: trim / 99 });
   }
   
   egg_play_sound(rid, trim, pan) {
@@ -468,52 +468,6 @@ export class Audio {
     }
     return 0.0;
   }
-  
-  /*XXX old synth
-  egg_play_sound(soundid, trim, pan) {
-    if (!this.ctx) return;
-    this.node.port.postMessage({ cmd: "playSound", rid: soundid, trim, pan });
-  }
-  
-  egg_play_song(songid, force, repeat) {
-    if (!this.ctx) return;
-    if (!force && (songid === this.song?.id)) return;
-    this.songParams = [songid, force, repeat, 0]; // To restore when prefs change.
-    this.node.port.postMessage({ cmd: "playSong", songid: 1, rid: songid, repeat, trim: 1, pan: 0 });
-    this.songStartTime = this.ctx.currentTime;
-  }
-  
-  egg_play_note(chid, noteid, velocity, durms) {
-    if (!this.song) return 0;
-    return this.song.playNote(chid, noteid, velocity, durms);
-  }
-  
-  egg_release_note(holdid) {
-    if (!this.song) return;
-    this.song.releaseNote(holdid);
-  }
-  
-  egg_adjust_wheel(chid, v) {
-    if (!this.song) return;
-    this.song.adjustWheel(chid, v);
-  }
-  
-  egg_song_get_id() {
-    return this.song?.id || 0;
-  }
-  
-  egg_song_get_playhead() {
-    if (this.ctx && this.songPlaying) {
-      return (this.ctx.currentTime - this.songStartTime) % this.songDuration;
-    }
-    return 0.0;
-  }
-  
-  egg_song_set_playhead(ph) {
-    this.node.port.postMessage({ cmd: "setPlayhead", songid: 1, ph });
-    this.songStartTime = this.ctx.currentTime - ph;
-  }
-  */
 }
 
 Audio.singleton = true; // Not required by Egg Runtime, but necessary for the editor.

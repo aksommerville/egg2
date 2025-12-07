@@ -148,6 +148,7 @@ struct synth_channel {
   const struct synth_channel_type *type;
   struct synth_song *song; // WEAK
   float trim,pan;
+  float trim0; // Straight off the config, without the song's trim.
   float wheelf; // -1..1
   uint8_t chid;
   uint8_t mode;
@@ -252,6 +253,7 @@ struct synth_song {
   int durframes; // Computed the first time someone asks. We don't use internally.
   int phframes; // Playhead. Total output since beginning of song, but it wraps around at loop.
   int loopframes; // Playhead at loop point.
+  float trim0; // For adjusting the global. synth_global manages it.
 };
 
 void synth_song_del(struct synth_song *song);
@@ -364,11 +366,16 @@ struct synth_pcmplay {
   struct synth_pcm *pcm; // WEAK
   int p;
   float triml,trimr;
+  float trim0; // For adjusting the global. synth_global manages it.
+  float pan0;
 };
 
 void synth_pcmplay_cleanup(struct synth_pcmplay *pcmplay);
 
 int synth_pcmplay_init(struct synth_pcmplay *pcmplay,struct synth_pcm *pcm,float trim,float pan);
+
+// Updates trim or pan, does not affect playhead.
+void synth_pcmplay_reinit(struct synth_pcmplay *pcmplay,float trim,float pan);
 
 /* <0 for errors, 0 if complete, >0 if still running.
  * (dstr) optional.
@@ -436,6 +443,9 @@ extern struct synth {
   void *wp_serial;
   int wp_serialc,wp_seriala;
   float *wp_pcm;
+  
+  // Mostly as a convenience, we provide extra global trims for music and sound, above the per-unit trim.
+  float music_trim,sound_trim;
   
 } synth;
 

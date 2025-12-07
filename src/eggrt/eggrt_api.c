@@ -72,6 +72,9 @@ int egg_prefs_set(int k,int v) {
     case EGG_PREF_MUSIC: {
         if (v<0) v=0; else if (v>99) v=99;
         if (v==eggrt.music_level) return 0;
+        if (hostio_audio_lock(eggrt.hostio)<0) return -1;
+        synth_set(0,0,SYNTH_PROP_MUSIC_TRIM,v/99.0f);
+        hostio_audio_unlock(eggrt.hostio);
         eggrt.music_level=v;
         eggrt_call_client_notify(k,v);
       } return 0;
@@ -79,6 +82,9 @@ int egg_prefs_set(int k,int v) {
     case EGG_PREF_SOUND: {
         if (v<0) v=0; else if (v>99) v=99;
         if (v==eggrt.sound_level) return 0;
+        if (hostio_audio_lock(eggrt.hostio)<0) return -1;
+        synth_set(0,0,SYNTH_PROP_SOUND_TRIM,v/99.0f);
+        hostio_audio_unlock(eggrt.hostio);
         eggrt.sound_level=v;
         eggrt_call_client_notify(k,v);
       } return 0;

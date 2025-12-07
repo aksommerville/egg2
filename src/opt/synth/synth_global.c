@@ -90,6 +90,8 @@ int synth_init(int rate,int chanc,int buffer_frames) {
   synth.rate=rate;
   synth.chanc=chanc;
   synth.buffer_frames=buffer_frames;
+  synth.music_trim=1.0f;
+  synth.sound_trim=1.0f;
   
   if (!(synth.bufl=synth_malloc(sizeof(float)*buffer_frames))) { synth_quit(); return -1; }
   if (chanc>=2) {
@@ -367,6 +369,8 @@ void synth_play_sound(int rid,float trim,float pan) {
   if ((rid<1)||(rid>0xffff)) return;
   struct synth_res *res=synth_res_get(SYNTH_RID_SOUND|rid);
   if (!res) return;
+  float trim0=trim;
+  trim*=synth.sound_trim;
   
   // Start printing if we need to.
   // If it fails to start, eg malformed data, try to create a single-sample pcm as a marker, so we don't try to decode again next time.
@@ -387,7 +391,12 @@ void synth_play_sound(int rid,float trim,float pan) {
     synth.pcmplaya=na;
   }
   struct synth_pcmplay *pcmplay=synth.pcmplayv+synth.pcmplayc++;
-  if (synth_pcmplay_init(pcmplay,res->pcm,trim,pan)<0) synth.pcmplayc--;
+  if (synth_pcmplay_init(pcmplay,res->pcm,trim,pan)<0) {
+    synth.pcmplayc--;
+    return;
+  }
+  pcmplay->trim0=trim0;
+  pcmplay->pan0=pan;
 }
 
 /* Begin song.
@@ -396,6 +405,8 @@ void synth_play_sound(int rid,float trim,float pan) {
 int synth_play_song(int songid,int rid,int repeat,float trim,float pan) {
   if (synth.framec_in_progress) return -1;
   if (songid<=0) return -1;
+  float trim0=trim;
+  trim*=synth.music_trim;
   
   // Stop any song already using this songid.
   struct synth_song **p=synth.songv;
@@ -426,6 +437,7 @@ int synth_play_song(int songid,int rid,int repeat,float trim,float pan) {
   song->repeat=repeat;
   song->rid=rid;
   synth.songv[synth.songc++]=song;
+  song->trim0=trim0;
 
   return song->songid;
 }
@@ -482,6 +494,8 @@ float synth_get(int songid,int chid,int prop) {
         if (!channel) return 0.0f;
         return channel->wheelf;
       }
+    case SYNTH_PROP_MUSIC_TRIM: return synth.music_trim;
+    case SYNTH_PROP_SOUND_TRIM: return synth.sound_trim;
   }
   return 0.0f;
 }
@@ -491,20 +505,24 @@ float synth_get(int songid,int chid,int prop) {
  
 void synth_set(int songid,int chid,int prop,float v) {
   if (synth.framec_in_progress) return;
-  struct synth_song *song=synth_song_by_songid(songid);
-  if (!song) return;
-  struct synth_channel *channel=0;
-  if ((chid>=0)&&(chid<0x10)) channel=song->channel_by_chid[chid];
+  #define NEEDSONG \
+    struct synth_song *song=synth_song_by_songid(songid); \
+    if (!song) return; \
+    struct synth_channel *channel=0; \
+    if ((chid>=0)&&(chid<0x10)) channel=song->channel_by_chid[chid];
   switch (prop) {
     case SYNTH_PROP_EXISTENCE: {
+        NEEDSONG
         if ((chid>=0)&&(chid<0x10)) return; // Can't unexist a channel.
         if (v<=0.0f) synth_song_stop(song);
       } break;
     case SYNTH_PROP_TEMPO: break; // readonly
     case SYNTH_PROP_PLAYHEAD: {
+        NEEDSONG
         synth_song_set_playhead(song,v);
       } break;
     case SYNTH_PROP_TRIM: {
+        NEEDSONG
         if ((chid>=0)&&(chid<0x10)) {
           if (channel) synth_channel_set_trim(channel,v);
         } else {
@@ -512,6 +530,7 @@ void synth_set(int songid,int chid,int prop,float v) {
         }
       } break;
     case SYNTH_PROP_PAN: {
+        NEEDSONG
         if ((chid>=0)&&(chid<0x10)) {
           if (channel) synth_channel_set_pan(channel,v);
         } else {
@@ -519,9 +538,30 @@ void synth_set(int songid,int chid,int prop,float v) {
         }
       } break;
     case SYNTH_PROP_WHEEL: {
+        NEEDSONG
         if (channel) synth_channel_set_wheel(channel,v);
       } break;
+    case SYNTH_PROP_MUSIC_TRIM: {
+        if (v<0.0f) v=0.0f; else if (v>1.0f) v=1.0f;
+        synth.music_trim=v;
+        struct synth_song **songp=synth.songv;
+        int i=synth.songc;
+        for (;i-->0;songp++) {
+          struct synth_song *song=*songp;
+          synth_song_set_trim(song,song->trim0*synth.music_trim);
+        }
+      } break;
+    case SYNTH_PROP_SOUND_TRIM: {
+        if (v<0.0f) v=0.0f; else if (v>1.0f) v=1.0f;
+        synth.sound_trim=v;
+        struct synth_pcmplay *pcmplay=synth.pcmplayv;
+        int i=synth.pcmplayc;
+        for (;i-->0;pcmplay++) {
+          synth_pcmplay_reinit(pcmplay,pcmplay->trim0*synth.sound_trim,pcmplay->pan0);
+        }
+      } break;
   }
+  #undef NEEDSONG
 }
 
 /* Dispatch event.

@@ -80,12 +80,14 @@ WASM_EXPORT("synth_stop_all_songs") void synth_stop_all_songs();
  */
 float synth_get(int songid,int chid,int prop);
 WASM_EXPORT("synth_set") void synth_set(int songid,int chid,int prop,float v);
-#define SYNTH_PROP_EXISTENCE 1 /* (chid) optional, readonly if present. Value 0.0 or 1.0. Set a song's existence to zero to end it. */
-#define SYNTH_PROP_TEMPO     2 /* (songid) only, readonly, constant per song. */
-#define SYNTH_PROP_PLAYHEAD  3 /* (songid) only, value in seconds. Setting is messy; we don't try to catch up earlier tails or anything, and LFOs will go out of whack. */
-#define SYNTH_PROP_TRIM      4 /* (chid) optional, value 0..1. There's trim per channel and per song, they multiply. */
-#define SYNTH_PROP_PAN       5 /* (chid) optional, value -1..0..1 = left..center..right. Channel and song pans combine by simple clamping addition. */
-#define SYNTH_PROP_WHEEL     6 /* (chid) required, value -1..0..1. Arguably should be an "event" function, implemented as "prop" just to reduce API size. */
+#define SYNTH_PROP_EXISTENCE  1 /* (chid) optional, readonly if present. Value 0.0 or 1.0. Set a song's existence to zero to end it. */
+#define SYNTH_PROP_TEMPO      2 /* (songid) only, readonly, constant per song. */
+#define SYNTH_PROP_PLAYHEAD   3 /* (songid) only, value in seconds. Setting is messy; we don't try to catch up earlier tails or anything, and LFOs will go out of whack. */
+#define SYNTH_PROP_TRIM       4 /* (chid) optional, value 0..1. There's trim per channel and per song, they multiply. */
+#define SYNTH_PROP_PAN        5 /* (chid) optional, value -1..0..1 = left..center..right. Channel and song pans combine by simple clamping addition. */
+#define SYNTH_PROP_WHEEL      6 /* (chid) required, value -1..0..1. Arguably should be an "event" function, implemented as "prop" just to reduce API size. */
+#define SYNTH_PROP_MUSIC_TRIM 7 /* No (songid) or (chid), applies to all songs. */
+#define SYNTH_PROP_SOUND_TRIM 8 /* '' sounds. */
 
 /* Inject events into a song.
  * If your events conflict with the song's, that's your own problem.

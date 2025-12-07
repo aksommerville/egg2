@@ -354,7 +354,7 @@ void synth_song_set_trim(struct synth_song *song,float trim) {
   else song->trim=trim;
   struct synth_channel **p=song->channelv;
   int i=song->channelc;
-  for (;i-->0;p++) synth_channel_set_trim(*p,(*p)->trim);
+  for (;i-->0;p++) synth_channel_set_trim(*p,(*p)->trim0*song->trim);
 }
  
 void synth_song_set_pan(struct synth_song *song,float pan) {

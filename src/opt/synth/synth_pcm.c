@@ -455,6 +455,11 @@ int synth_pcmplay_init(struct synth_pcmplay *pcmplay,struct synth_pcm *pcm,float
   if (!pcm) return -1;
   pcmplay->pcm=pcm;
   pcmplay->p=0;
+  synth_pcmplay_reinit(pcmplay,trim,pan);
+  return 0;
+}
+
+void synth_pcmplay_reinit(struct synth_pcmplay *pcmplay,float trim,float pan) {
   if (trim<0.0f) trim=0.0f; else if (trim>1.0f) trim=1.0f;
   if (pan<=-1.0f) {
     pcmplay->triml=trim;
@@ -472,7 +477,6 @@ int synth_pcmplay_init(struct synth_pcmplay *pcmplay,struct synth_pcm *pcm,float
     pcmplay->triml=trim;
     pcmplay->trimr=trim;
   }
-  return 0;
 }
 
 /* Update player.
