@@ -363,7 +363,7 @@ void synth_song_set_pan(struct synth_song *song,float pan) {
   else song->pan=pan;
   struct synth_channel **p=song->channelv;
   int i=song->channelc;
-  for (;i-->0;p++) synth_channel_set_pan(*p,(*p)->pan);
+  for (;i-->0;p++) synth_channel_set_pan(*p,(*p)->pan0);
 }
 
 /* Derive useful values from tempo.

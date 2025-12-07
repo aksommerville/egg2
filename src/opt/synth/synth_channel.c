@@ -51,7 +51,7 @@ struct synth_channel *synth_channel_new(
   channel->mode=mode;
   channel->song=owner;
   synth_channel_set_trim(channel,channel->trim0=(float)trim/255.0f);
-  synth_channel_set_pan(channel,(float)(pan-0x80)/127.0f);
+  synth_channel_set_pan(channel,channel->pan0=(float)(pan-0x80)/127.0f);
   if ((type->init(channel,modecfg,modecfgc)<0)||!channel->update_mono) {
     synth_channel_del(channel);
     return 0;

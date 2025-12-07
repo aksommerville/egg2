@@ -149,6 +149,7 @@ struct synth_channel {
   struct synth_song *song; // WEAK
   float trim,pan;
   float trim0; // Straight off the config, without the song's trim.
+  float pan0; // ''
   float wheelf; // -1..1
   uint8_t chid;
   uint8_t mode;

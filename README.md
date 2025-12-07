@@ -88,8 +88,8 @@ Features we *do* support:
 - - Could also be super helpful during development: `./mygame --startAtLevel=13`
 - - Do require games to opt in to this behavior per field by naming the keys in metadata.
 - [x] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
-- [ ] Synth: Drum channels don't appear to respect song's pan.
-- [ ] Synth: Odd behavior when adjusting song's pan live, it seemed to clamp unexpectedly? Dig in.
+- [x] Synth: Drum channels don't appear to respect song's pan.
+- [x] Synth: Odd behavior when adjusting song's pan live, it seemed to clamp unexpectedly? Dig in. ...needed a capture of the initial pan per channel, like trim.
 - [ ] Remove `eggdev_convert_context`. Make a similar thing in "serial", so we can share it around. Then share it around.
 - [ ] Would be nice if `eggdev convert` could change the pixel format of a PNG file, eg `eggdev convert -oout.png in.png --depth=1 --colortype=0`
 - [ ] `eggdev convert`: Saved games to/from JSON, for migrating your saves between native and web.

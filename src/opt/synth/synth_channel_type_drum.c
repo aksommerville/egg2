@@ -124,7 +124,8 @@ static void _drum_note_on(struct synth_channel *channel,uint8_t noteid,float vel
   
   // Determine trim, and start playing.
   float trim=drum->trimlo*(1.0f-velocity)+drum->trimhi*velocity;
-  if (synth_pcmplay_init(&voice->pcmplay,drum->pcm,trim,drum->pan)<0) {
+  float pan=drum->pan+channel->pan;
+  if (synth_pcmplay_init(&voice->pcmplay,drum->pcm,trim,pan)<0) {
     CHANNEL->voicec--;
   }
 }
