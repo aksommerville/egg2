@@ -81,8 +81,8 @@ Features we *do* support:
 - - - There was a typo in synth_stdlib causing us to ignore 15/16 of our available memory. Fixed that, and I don't think we'll see synth memory problems again.
 - - [x] Redefine `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` as trims in 0..99.
 - - [x] Web audio playhead.
-- - [ ] SongEditor: Ensure we can receive natural EAU files, save them as EAU, and also use EAU rather than MIDI for ones that started blank.
-- - [ ] Demo sounds are still in the old format.
+- - [x] SongEditor: Ensure we can receive natural EAU files, save them as EAU, and also use EAU rather than MIDI for ones that started blank. CONFIRMED.
+- - [x] Demo sounds are still in the old format. ...blanked. will remake these at some point, bla bla bla.
 - - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
 - [ ] Audio review, when close to ready.
 - [ ] Minor bugs and tweaks outstanding.
