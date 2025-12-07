@@ -67,6 +67,11 @@ export class ModecfgModalFm {
     rangeenv.setup(this.model.rangeenv, "rangeenv", v => this.onEnvChange("rangeenv", v));
     const pitchenv = this.dom.spawnController(leftSide, EnvUi);
     pitchenv.setup(this.model.pitchenv, "pitchenv", v => this.onEnvChange("pitchenv", v));
+    const longtrange = Math.max(levelenv.trange, mixenv.trange, rangeenv.trange, pitchenv.trange);
+    levelenv.setTime(0, longtrange);
+    mixenv.setTime(0, longtrange);
+    rangeenv.setTime(0, longtrange);
+    pitchenv.setTime(0, longtrange);
     levelenv.onTimeChange = mixenv.onTimeChange = rangeenv.onTimeChange = pitchenv.onTimeChange = (p, c) => {
       levelenv.setTime(p, c);
       mixenv.setTime(p, c);

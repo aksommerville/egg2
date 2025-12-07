@@ -23,7 +23,7 @@ export class EnvUi {
     this.cb = v => {};
     this.renderTimeout = null;
     this.zoomPointerListener = null;
-    this.trange = 800; // Horizontal view range in ms.
+    this.trange = 200; // Horizontal view range in ms.
     this.vrange = 65535; // Vertical view range in level units.
     this.t0 = 0; // Time at left edge.
     this.v0 = 0; // Level at bottom edge -- vertical axis is positive up.
@@ -59,6 +59,11 @@ export class EnvUi {
           this.v0 = 0x8000 - 1200;
         } break;
     }
+    
+    let endTime = 0;
+    if (this.env.lo?.length) endTime = this.env.lo[this.env.lo.length - 1].t;
+    if (this.env.hi?.length) endTime = Math.max(endTime, this.env.hi[this.env.hi.length - 1].t);
+    if (endTime > 0) this.trange = Math.round(endTime * 1.25);
     
     this.buildUi();
   }

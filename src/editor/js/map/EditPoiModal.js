@@ -65,7 +65,7 @@ export class EditPoiModal {
       // If there are sprite resources, offer a list of proposals.
       const sprites = this.data.resv.filter(r => (r.type === "sprite"));
       if (sprites.length) {
-        sprites.sort((a, b) => (a.path < b.path) ? -1 : (a.path > b.path) ? 1 : 0);
+        sprites.sort((a, b) => a.rid - b.rid);
         const select = this.dom.spawn(macros, "SELECT", { name: "sprite", "on-change": e => this.onSelectSprite(e) });
         this.dom.spawn(select, "OPTION", { value: "", disabled: true }, "Sprite...");
         for (const res of sprites) {

@@ -86,7 +86,7 @@ export class SongService {
     if (this.playing) this.audio.egg_song_set(1, chid, 4, trim / 255);
   }
   updatePan(chid, pan) {
-    if (this.playing) this.audio.egg_song_set(1, chid, 5, pan / 127);
+    if (this.playing) this.audio.egg_song_set(1, chid, 5, (pan - 0x80) / 127);
   }
   
   getNormalizedPlayhead() {

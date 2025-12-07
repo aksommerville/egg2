@@ -27,6 +27,10 @@ body {
   flex: 1;
 }
 
+.hidden {
+  display: none;
+}
+
 dialog {
   border-radius: 5px;
   box-shadow: #000 0 0 10px;
@@ -200,6 +204,16 @@ input.toggle:checked + label.toggle.light {
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
+  align-items: center;
+}
+.NewResourceModal .heyLookAtMatchImage {
+  margin-left: 5px;
+  animation: 1s linear 0s infinite blink;
+}
+@keyframes blink {
+  0% { opacity: 0 }
+  50% { opacity: 1 }
+  100% { opacity: 0 }
 }
 
 .ResourceDetailsModal .path {

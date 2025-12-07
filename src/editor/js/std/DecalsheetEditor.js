@@ -390,7 +390,12 @@ export class DecalsheetEditor {
     
     this.autoMode = "";
     this.autoDecal = null;
+    const scroll = this.element.querySelector(".sidebar")?.scrollTop;
     this.buildUi(); // Easier than figuring out which panel they belong to.
+    if (scroll) {
+      const element = this.element.querySelector(".sidebar");
+      if (element) element.scrollTop = scroll;
+    }
   }
   
   /* Auto-detect bounds.

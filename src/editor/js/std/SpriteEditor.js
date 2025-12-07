@@ -164,10 +164,16 @@ export class SpriteEditor {
     if (!this.model) return;
     let ok = false;
     for (const command of this.model.commands) {
-      if (command[0] !== "image") continue;
-      command[1] = src;
-      ok = true;
-      break;
+      if (!command.length) {
+        command.push("image");
+        command.push(src);
+        ok = true;
+        break;
+      } else if (command[0] === "image") {
+        command[1] = src;
+        ok = true;
+        break;
+      }
     }
     if (!ok) this.model.commands.push(["image", src]);
     this.clctl.setup(this.model, "sprite", true);
@@ -179,10 +185,17 @@ export class SpriteEditor {
     if (!this.model) return;
     let ok = false;
     for (const command of this.model.commands) {
-      if (command[0] !== "tile") continue;
-      command[1] = tileid.toString();
-      ok = true;
-      break;
+      if (!command.length) {
+        command.push("tile");
+        command.push(tileid.toString());
+        command.push("0");
+        ok = true;
+        break;
+      } else if (command[0] === "tile") {
+        command[1] = tileid.toString();
+        ok = true;
+        break;
+      }
     }
     if (!ok) this.model.commands.push(["tile", tileid.toString(), "0"]);
     this.clctl.setup(this.model, "sprite", true);

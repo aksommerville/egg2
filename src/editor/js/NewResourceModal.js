@@ -3,6 +3,7 @@
  
 import { Dom } from "./Dom.js";
 import { Data } from "./Data.js";
+import { PickImageModal } from "./PickImageModal.js";
 
 export class NewResourceModal {
   static getDependencies() {
@@ -52,6 +53,9 @@ export class NewResourceModal {
     this.spawnRow(table, "ID", "rid");
     this.spawnRow(table, "Path", "path");
     this.dom.spawn(form, "DIV", ["bottomRow"],
+      this.dom.spawn(null, "INPUT", { type: "button", value: "Match image...", "on-click": e => this.onMatchImage(e) }),
+      this.dom.spawn(null, "DIV", ["heyLookAtMatchImage", "hidden"], "<--"),
+      this.dom.spawn(null, "DIV", ["spacer"]),
       this.dom.spawn(null, "INPUT", { type: "submit", value: "OK", "on-click": event => {
         event.stopPropagation();
         event.preventDefault();
@@ -93,14 +97,36 @@ export class NewResourceModal {
     let rid = this.data.unusedId(type);
     if ((type === "strings") && (rid >= 1) && (rid < 0x40)) rid = this.data.defaultLanguage + "-" + rid;
     this.element.querySelector("input[name='rid']").value = rid;
+    return type;
+  }
+  
+  drawAttentionToMatchImage(attention) {
+    const element = this.element.querySelector(".heyLookAtMatchImage");
+    if (!element) return;
+    if (attention) element.classList.remove("hidden");
+    else element.classList.add("hidden");
   }
   
   onInput(k) {
     if (k === "path") {
       this.populateSplitFromPath();
     } else {
-      if (k === "type") this.autoselectRid();
+      if (k === "type") {
+        const type = this.autoselectRid();
+        this.drawAttentionToMatchImage((type === "tilesheet") || (type === "decalsheet"));
+      }
       this.populatePathFromSplit();
     }
+  }
+  
+  onMatchImage(event) {
+    const modal = this.dom.spawnModal(PickImageModal);
+    modal.setup(null);
+    modal.result.then(rsp => {
+      if (!rsp) return;
+      this.element.querySelector("input[name='rid']").value = rsp.rid;
+      this.element.querySelector("input[name='name']").value = rsp.name;
+      this.populatePathFromSplit();
+    }).catch( e => this.dom.modalError(e));
   }
 }
