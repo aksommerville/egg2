@@ -82,8 +82,9 @@ export class ModecfgModalFm {
     
     const modRow = this.dom.spawn(rightSide, "DIV", ["row"]);
     const modTable = this.dom.spawn(modRow, "TABLE", ["modTable"]);
-    this.spawnRow(modTable, "modrate", 0, 65535, 1);//TODO this needs to account for abs vs rel. Also present as float even though it's not. Decimal u8.8 is painful.
-    this.spawnRow(modTable, "modrange", 0, 65535, 1);
+    this.spawnBooleanRow(modTable, "modabs", this.model.modrate & 0x8000);
+    this.spawnRow(modTable, "modrate", 0, 127, 1/256, "u7.8");
+    this.spawnRow(modTable, "modrange", 0, 256, 1/256, "u8.8");
     this.dom.spawnController(modRow, WaveUi).setup(this.model.modulator, "modulator", v => this.onWaveChange("modulator", v));
     
     const rangeRow = this.dom.spawn(rightSide, "DIV", ["row"]);
@@ -104,11 +105,26 @@ export class ModecfgModalFm {
     this.dom.spawn(rightSide, "INPUT", { type: "submit", value: "OK", "on-click": e => this.onSubmit(e) });
   }
   
-  spawnRow(table, name, min, max, step) {
+  spawnBooleanRow(table, name, checked) {
+    const tr = this.dom.spawn(table, "TR");
+    this.dom.spawn(tr, "TD", ["k"], name);
+    let checkbox;
+    this.dom.spawn(tr, "TD",
+      checkbox = this.dom.spawn(null, "INPUT", { type: "checkbox", name })
+    );
+    if (checked) checkbox.checked = true;
+  }
+  
+  spawnRow(table, name, min, max, step, adjust) {
+    let value = this.model[name];
+    switch (adjust) {
+      case "u7.8": value = (value & 0x7fff) / 256; break;
+      case "u8.8": value /= 256; break;
+    }
     const tr = this.dom.spawn(table, "TR");
     this.dom.spawn(tr, "TD", ["k"], name);
     this.dom.spawn(tr, "TD",
-      this.dom.spawn(null, "INPUT", { type: "number", min, max, step, name, value: this.model[name] })
+      this.dom.spawn(null, "INPUT", { type: "number", min, max, step, name, value })
     );
   }
   
@@ -158,7 +174,17 @@ export class ModecfgModalFm {
    
   encodeModel() {
     const model = {...this.model};
-    for (const name of ["modrate", "modrange", "wheelrange", "rangelforate", "rangelfodepth", "mixlforate", "mixlfodepth"]) {
+    for (const name of ["modrate", "modrange"]) { // Stored u8.8, presented as float.
+      let v = +this.element.querySelector(`input[name='${name}']`)?.value || 0;
+      v = Math.round(v * 256);
+      if (v < 0) v = 0;
+      else if (v > 0xffff) v = 0xffff;
+      model[name] = v;
+    }
+    if (this.element.querySelector("input[name='modabs']")?.checked) {
+      model.modrate |= 0x8000;
+    }
+    for (const name of ["wheelrange", "rangelforate", "rangelfodepth", "mixlforate", "mixlfodepth"]) { // Stored as presented.
       model[name] = +this.element.querySelector(`input[name='${name}']`)?.value || 0;
     }
     return encodeModecfg(model);

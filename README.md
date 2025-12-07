@@ -80,8 +80,8 @@ Features we *do* support:
 - [x] Song editor: Set tempo. An action I guess.
 - [x] Song editor: Adding event goes before those at same time; must be after.
 - [x] Song editor: Auto end time clearly wrong for SUB voices. ...was treating (envpt.t) as relative, but they are absolute, oops.
-- [ ] editor: "Copy from other resource" option in the channels' "Store..." modal.
-- [ ] FM modecfg modal: Rate and range should present as float, regardless of how they're encoded.
+- [x] editor: "Copy from other resource" option in the channels' "Store..." modal.
+- [x] FM modecfg modal: Rate and range should present as float, regardless of how they're encoded.
 - [ ] Wave modal: Per-stage UI. Esp for harmonics, I want a clickable bar chart.
 - [ ] EnvUi: Is it enforcing a minimum 1 s or something? These typically run around 300 ms. Aim for the existing chart to fill like 3/4 of the available width.
 - [ ] SpriteEditor: Setting image or tile from the conveniences should fill a blank row if there is one, rather than adding.

@@ -983,6 +983,10 @@ input.toggle:checked + label.toggle.light {
 
 .InstrumentsModal {
   display: flex;
+  flex-direction: row;
+}
+.InstrumentsModal > * {
+  display: flex;
   flex-direction: column;
 }
 
