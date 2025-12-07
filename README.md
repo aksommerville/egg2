@@ -75,72 +75,60 @@ Features we *do* support:
 
 ## TODO
 
-- [ ] Audio
-- - [x] Synth: We need better insight into memory usage, and maybe some mitigations at runtime, like evicting sounds not currently in use, or forcing a terminating song off.
-- - - Added a cudgel at synth_stdlib that can uncomment on demand to show web memory usage in words. Demo currently tops out around 1.4 MB.
-- - - There was a typo in synth_stdlib causing us to ignore 15/16 of our available memory. Fixed that, and I don't think we'll see synth memory problems again.
-- - [x] Redefine `EGG_PREF_MUSIC` and `EGG_PREF_SOUND` as trims in 0..99.
-- - [x] Web audio playhead.
-- - [x] SongEditor: Ensure we can receive natural EAU files, save them as EAU, and also use EAU rather than MIDI for ones that started blank. CONFIRMED.
-- - [x] Demo sounds are still in the old format. ...blanked. will remake these at some point, bla bla bla.
-- - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
-- [ ] Audio review, when close to ready.
-- [ ] Minor bugs and tweaks outstanding.
-- - [ ] eggrun: Saving to "EGG_SDK/out/linux/eggrun.save" for every game. Should be "{{ROM}}.save".
-- - [ ] `eggdev convert`: Saved games to/from JSON, for migrating your saves between native and web.
-- - - [ ] That's such a simple conversion, and useful to players, maybe we should put it in `eggrun` too?
-- - [ ] SongEditor: Something akin to MIDI-In when modecfg modals are open, for when there's no MIDI device.
-- - [ ] Revise SDK's program zero to be more neutral config-wise, since it is what every tuned channel will default to. Doesn't matter whether it sounds nice.
-- - [ ] SpriteEditor: Setting image or tile from the conveniences should fill a blank row if there is one, rather than adding.
-- - [ ] Native build didn't detect a change to libfont.
-- - [ ] native incfg: Timeout. See incfg_update().
-- - [ ] Web incfg could bear some prettying-up.
-- - [ ] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".
-- - [ ] SongEditor EventModal: Show noteid in hex and musical name too.
-- - [ ] SongEditor: Channel trim and pan can adjust in real time, in the synth. We should do that eagerly when it changes in the UI.
-- - [ ] Editor: Sometimes deleting a post step doesn't work.
-- - [ ] Editor: Pitch wheel disabled at MidiService.readEvent() because my device is noisy. Find a long-term solution.
-- - [ ] Change malloc in egg-stdlib to use Wasm intrinsics, like synth. Then it won't produce a 16 MB ofile.
-- - [ ] Launch from within map editor didn't rebuild.
-- - [x] Song event modal: Default to note, not marker.
-- - [ ] FM modecfg modal: Rate and range should present as float, regardless of how they're encoded.
-- - [ ] Wave modal: Per-stage UI. Esp for harmonics, I want a clickable bar chart.
-- - [ ] EnvUi: Is it enforcing a minimum 1 s or something? These typically run around 300 ms. Aim for the existing chart to fill like 3/4 of the available width.
-- - [ ] Song editor: Set tempo. An action I guess.
-- - [ ] Song editor: Adding event goes before those at same time; must be after.
-- - [ ] Song editor: Auto end time clearly wrong for SUB voices.
-- - [ ] Remove `eggdev_convert_context`. Make a similar thing in "serial", so we can share it around. Then share it around.
-- - [ ] DecalsheetEditor: After using one of the clicky macros, sidebar scrolls to the top again. Can we keep it where it was? So annoying.
-- - [ ] Permit command-line and query params to prepopulate the store, for keys specified via metadata.
-- - - I'm picturing printing QR codes that embed a saved game from one machine, that the user can reopen in her browser.
-- - - Could also be super helpful during development: `./mygame --startAtLevel=13`
-- - - Do require games to opt in to this behavior per field by naming the keys in metadata.
-- - [ ] editor: New map in "neighbors" regime created an incorrect (zeroes) command in the new one, and didn't create in the old one.
-- - - ...might only happen to the first map in a layer, or maybe the first in a project. Wishbone got it on the first neighbor creation, and not after.
-- - - ...no, it did happen later in wishbone too.
-- - [ ] editor: Sprite in the edit-poi modal are sorted as strings; prefer to sort numerically by rid.
-- - [ ] editor: "Copy from other resource" option in the channels' "Store..." modal.
-- - [ ] editor: Creating new tilesheet or decalsheet, somehow prompt existing images.
-- - [ ] graf: Can flush due to full buffer in the middle of raw geometry, breaking sets. eg try a bunch of `EGG_RENDER_LINES`.
-- - - Confirm that all impacted cases are single calls into graf. If so, the fix will be easy, just start allocating multiple vertices at once internally.
-- - [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
-- - [ ] editor: SidebarUi scroll bar broken, doesn't appear
-- - [ ] native: Record and playback session.
-- - [ ] native: Add an initial audio delay like we did in v1. I've noticed missed notes in Humm Fu.
-- - [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols.
-- - [ ] macos: System language
-- - [ ] windows: System language
-- - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
-- - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
-- - [ ] macos: eggrun
-- - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
-- - [ ] eggstra play: Show CPU consumption.
-- - [ ] eggstra play: Read from stdin.
-- - [ ] eggstra play: Play WAV files.
-- - [ ] Editor Launch: Is it possible to dismiss the iframe when game ends? Or allow Esc after it terminates? Having trouble capturing key events for it.
-- - [ ] Would be nice if `eggdev convert` could change the pixel format of a PNG file, eg `eggdev convert -oout.png in.png --depth=1 --colortype=0`
-- - [ ] `eggdev build` generates an Egg file qualified with "-web". That's correct, since there might be multiple web targets. But I dunno, should we drop the "-web" if there's just one target?
-- - - (if that sounds super pointless, consider: Egg ROMs are universal. It was built as part of the Web process, but it can run anywhere, it's not really a "web" artifact)
+- [ ] Permit command-line and query params to prepopulate the store, for keys specified via metadata.
+- - I'm picturing printing QR codes that embed a saved game from one machine, that the user can reopen in her browser.
+- - Check whether Itch passes query params down to the iframe.
+- - Could also be super helpful during development: `./mygame --startAtLevel=13`
+- - Do require games to opt in to this behavior per field by naming the keys in metadata.
+- [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
+- [ ] Remove `eggdev_convert_context`. Make a similar thing in "serial", so we can share it around. Then share it around.
+- [ ] Would be nice if `eggdev convert` could change the pixel format of a PNG file, eg `eggdev convert -oout.png in.png --depth=1 --colortype=0`
+- [ ] `eggdev convert`: Saved games to/from JSON, for migrating your saves between native and web.
+- - [ ] That's such a simple conversion, and useful to players, maybe we should put it in `eggrun` too?
+- [ ] Revise SDK's program zero to be more neutral config-wise, since it is what every tuned channel will default to. Doesn't matter whether it sounds nice.
+- [ ] SongEditor: Something akin to MIDI-In when modecfg modals are open, for when there's no MIDI device.
+- [ ] SongEditor EventModal: Show noteid in hex and musical name too.
+- [ ] SongEditor: Channel trim and pan can adjust in real time, in the synth. We should do that eagerly when it changes in the UI.
+- [ ] Editor: Sometimes deleting a post step doesn't work.
+- [ ] Editor: Pitch wheel disabled at MidiService.readEvent() because my device is noisy. Find a long-term solution.
+- [ ] Song editor: Set tempo. An action I guess.
+- [ ] Song editor: Adding event goes before those at same time; must be after.
+- [ ] Song editor: Auto end time clearly wrong for SUB voices.
+- [ ] editor: "Copy from other resource" option in the channels' "Store..." modal.
+- [ ] FM modecfg modal: Rate and range should present as float, regardless of how they're encoded.
+- [ ] Wave modal: Per-stage UI. Esp for harmonics, I want a clickable bar chart.
+- [ ] EnvUi: Is it enforcing a minimum 1 s or something? These typically run around 300 ms. Aim for the existing chart to fill like 3/4 of the available width.
+- [ ] SpriteEditor: Setting image or tile from the conveniences should fill a blank row if there is one, rather than adding.
+- [ ] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".
+- [ ] DecalsheetEditor: After using one of the clicky macros, sidebar scrolls to the top again. Can we keep it where it was? So annoying.
+- [ ] editor: New map in "neighbors" regime created an incorrect (zeroes) command in the new one, and didn't create in the old one.
+- - ...might only happen to the first map in a layer, or maybe the first in a project. Wishbone got it on the first neighbor creation, and not after.
+- - ...no, it did happen later in wishbone too.
+- [ ] editor: Sprite in the edit-poi modal are sorted as strings; prefer to sort numerically by rid.
+- [ ] editor: Creating new tilesheet or decalsheet, somehow prompt existing images.
+- [ ] graf: Can flush due to full buffer in the middle of raw geometry, breaking sets. eg try a bunch of `EGG_RENDER_LINES`.
+- - Confirm that all impacted cases are single calls into graf. If so, the fix will be easy, just start allocating multiple vertices at once internally.
+- [ ] eggrun: Saving to "EGG_SDK/out/linux/eggrun.save" for every game. Should be "{{ROM}}.save".
+- [ ] native incfg: Timeout. See incfg_update().
+- [ ] native: Record and playback session.
+- [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
+- [ ] Native build didn't detect a change to libfont.
+- [ ] Launch from within map editor didn't rebuild.
+- [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols.
+- [ ] `eggdev build` generates an Egg file qualified with "-web". That's correct, since there might be multiple web targets. But I dunno, should we drop the "-web" if there's just one target?
+- - (if that sounds super pointless, consider: Egg ROMs are universal. It was built as part of the Web process, but it can run anywhere, it's not really a "web" artifact)
+- [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
+- [ ] eggstra play: Show CPU consumption.
+- [ ] eggstra play: Read from stdin.
+- [ ] eggstra play: Play WAV files.
+- [ ] windows: System language
+- [ ] macos: System language
+- [ ] macos: eggrun
+- [ ] EGG_GLSL_VERSION. Currently pretty hacky.
+- [ ] Change malloc in egg-stdlib to use Wasm intrinsics, like synth. Then it won't produce a 16 MB ofile.
+- [ ] Editor Launch: Is it possible to dismiss the iframe when game ends? Or allow Esc after it terminates? Having trouble capturing key events for it.
+- [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
+- [ ] Web incfg could bear some prettying-up.
 - [ ] Review all "TODO" in source, there's a ton of them.
 - With the above complete, we can start migrating games:
 - [ ] Rewrite or migrate eggsamples for v2.
