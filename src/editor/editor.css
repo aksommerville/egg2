@@ -1038,6 +1038,11 @@ input.toggle:checked + label.toggle.light {
   margin-bottom: 0.5em;
 }
 
+.EventModal td.v {
+  display: flex;
+  flex-direction: row;
+}
+
 .AudioCompareModal {
   display: flex;
   flex-direction: column;

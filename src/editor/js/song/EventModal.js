@@ -71,8 +71,9 @@ export class EventModal {
     );
     this.dom.spawn(table, "TR",
       this.dom.spawn(null, "TD", ["k"], "Note"),
-      this.dom.spawn(null, "TD",
-        this.dom.spawn(null, "INPUT", { name: "noteid", type: "number", min: 0, max: 127, value: this.event.noteid || 0 })
+      this.dom.spawn(null, "TD", ["v"],
+        this.dom.spawn(null, "INPUT", { name: "noteid", type: "number", min: 0, max: 127, value: this.event.noteid || 0, "on-input": e => this.onNoteidChanged(e) }),
+        this.dom.spawn(null, "DIV", ["noteidDesc"], this.reprNote(this.event.noteid))
       )
     );
     this.dom.spawn(table, "TR",
@@ -105,6 +106,18 @@ export class EventModal {
     _("durms", "note");
     _("wheel", "wheel");
     this.element.querySelector("input[name='chid']").disabled = ((type !== "note") && (type !== "wheel"));
+  }
+  
+  onNoteidChanged(event) {
+    const noteid = +event.target.value;
+    this.element.querySelector(".noteidDesc").innerText = this.reprNote(noteid);
+  }
+  
+  reprNote(noteid) {
+    if (!noteid) return "";
+    const octave = Math.floor(noteid / 12) - 1; // First octave is -1, and it starts at note zero (on C).
+    const name = ["c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"][noteid % 12]; // Yes, octaves begin on C, not A. So fucking stupid.
+    return "0x" + noteid.toString(16).padStart(2, '0') + " " + name + octave;
   }
   
   /* If we get a Note On event, capture it.

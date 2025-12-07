@@ -84,7 +84,7 @@ Features we *do* support:
 - [x] Revise SDK's program zero to be more neutral config-wise, since it is what every tuned channel will default to. Doesn't matter whether it sounds nice.
 - [x] SongEditor: Something akin to MIDI-In when modecfg modals are open, for when there's no MIDI device.
 - - ...Keypad 1..9, and Add/Enter to shift it.
-- [ ] SongEditor EventModal: Show noteid in hex and musical name too.
+- [x] SongEditor EventModal: Show noteid in hex and musical name too.
 - [ ] SongEditor: Channel trim and pan can adjust in real time, in the synth. We should do that eagerly when it changes in the UI.
 - [ ] Editor: Sometimes deleting a post step doesn't work.
 - [ ] Editor: Pitch wheel disabled at MidiService.readEvent() because my device is noisy. Find a long-term solution.
