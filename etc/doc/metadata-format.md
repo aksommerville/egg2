@@ -64,6 +64,7 @@ Line-oriented text.
 | incfgNames  | Decimal index in strings:1, for the first key in incfgMask. Must be followed by as many keys as you listed. For interactive configurer. |
 | revdns      | Reverse-DNS namespace for this game. MacOS builds require it. "com.aksommerville.unspec.{{PROJECT}}" if you don't specify. |
 | menu        | "default" or omit to enable, or "none" to suppress the Universal Menu. eg if game must be black-and-white or low-resolution. |
+| params      | Comma-delimited list of command line args or query params to prepopulate store with. Params consumed by the platform are not accessible. |
 
 `freedom` is `limited` if unspecified, and is only a convenient summary of your game's real license:
 - `free`: Assume you are allowed to reuse assets and redistribute freely.
@@ -85,3 +86,11 @@ We assume all buttons are in use if `incfgMask` is empty or missing.
 `incfgNames` is an index in strings:1 corresponding to the first char in `incfgMask`.
 Must be followed by as many buttons as you list, with a name for each.
 It's fine to omit button names. The configurer presents them visually. But it's an opportunity to say "Jump" instead of just "That button over there".
+
+`params` is for taking little bits of config from the user.
+eg if your metadata says `params=abc,def`, native users can provide `--abc=123 --def=leppard` and web users `?abc=123&def=jam`.
+You can read these out of the store during init, or whenever.
+Note that because we're using the store for this, they will persist if you don't clear it.
+Users can't override your private store fields this way, only ones you declare in metadata.
+The hope is we can use it for cool tricks like printing a QR code at GDEX, handing to the player, and they can scan it later to resume their saved game.
+Or as a level-select or debug toggle during development.

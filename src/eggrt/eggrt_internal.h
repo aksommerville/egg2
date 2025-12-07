@@ -18,6 +18,8 @@
 #define EGGRT_CLOCKMODE_UNIFORM  1 /* Sleep if necessary but return a constant every time. */
 #define EGGRT_CLOCKMODE_REDLINE  2 /* Never sleep, and return the same constant as UNIFORM. */
 
+#define PARAM_LIMIT 16
+
 extern struct eggrt {
 
 // eggrt_configure():
@@ -32,6 +34,11 @@ extern struct eggrt {
   char *audio_device;
   char *input_driver;
   char *store_req;
+  struct param {
+    const char *k,*v;
+    int kc,vc;
+  } paramv[PARAM_LIMIT];
+  int paramc;
   
   int terminate;
   int status;
@@ -68,6 +75,8 @@ extern struct eggrt {
     int incfgMaskc;
     int incfgNames; // index in strings:1
     int menu; // 0=disable, 1=default
+    const char *params;
+    int paramsc;
   } metadata;
   
 // eggrt_clock.c:

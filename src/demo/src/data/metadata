@@ -16,3 +16,4 @@ source=https://github.com/aksommerville/egg2
 incfgMask=dsw1
 incfgNames=3
 #menu=none
+params=helloMessage

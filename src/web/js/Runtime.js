@@ -49,6 +49,7 @@ export class Runtime {
     this.exitStatus = 0;
     this.selectLanguage();
     this.populateDocument();
+    this.populateStorePerParams();
     if (!this.focusListener) {
       this.focusListener = e => this.onFocus(e);
       window.addEventListener("focus", this.focusListener);
@@ -225,6 +226,26 @@ export class Runtime {
   languageChanged() {
     document.title = this.rom.getMeta("title", this.lang);
     this.exec.egg_client_notify(1, this.lang);
+  }
+  
+  populateStorePerParams() {
+    let query = location?.search?.substring?.(1);
+    if (!query) return;
+    query = query.split('&').reduce((a, fld) => {
+      const kv = fld.split('=');
+      const k = decodeURIComponent(kv[0]);
+      const v = decodeURIComponent(kv[1] || "");
+      a[k] = v;
+      return a;
+    }, {});
+    const keys = this.rom.getMeta("params").split(",");
+    for (const key of keys) {
+      const v = query[key];
+      if (typeof(v) !== "string") continue;
+      const k = this.storePrefix + key;
+      if (v) localStorage.setItem(k, v);
+      else localStorage.removeItem(k);
+    }
   }
   
   /* Loading of async things (wasm and images).

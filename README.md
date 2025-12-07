@@ -75,9 +75,16 @@ Features we *do* support:
 
 ## TODO
 
-- [ ] Permit command-line and query params to prepopulate the store, for keys specified via metadata.
+- [x] Permit command-line and query params to prepopulate the store, for keys specified via metadata.
 - - I'm picturing printing QR codes that embed a saved game from one machine, that the user can reopen in her browser.
 - - Check whether Itch passes query params down to the iframe.
+- - - iframes do not get their parent's query params naturally (duh).
+- - - Itch does not modify its iframe URL per query params (why would it).
+- - - `parent.location.search` is accessible if CORS allows it. Itch landing pages and iframes are different domains. Better test.
+- - - index.html:8 SecurityError: Failed to read a named property 'search' from 'Location': Blocked a frame with origin "https://html-classic.itch.zone" from accessing a cross-origin frame.
+- - - alas
+- - - There's some chatter about this on the Itch boards, mostly due to OAuth. Seems there is just no way to do it.
+- - - Nothing in their docs about it.
 - - Could also be super helpful during development: `./mygame --startAtLevel=13`
 - - Do require games to opt in to this behavior per field by naming the keys in metadata.
 - [ ] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...

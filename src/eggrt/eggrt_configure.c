@@ -111,6 +111,17 @@ static int eggrt_arg_kv(const char *k,int kc,const char *v,int vc) {
   #undef STROPT
   #undef INTOPT
   
+  /* Cache any further options in (eggrt.paramv) in case the ROM wants them.
+   */
+  if (eggrt.paramc<PARAM_LIMIT) {
+    struct param *param=eggrt.paramv+eggrt.paramc++;
+    param->k=k;
+    param->kc=kc;
+    param->v=v;
+    param->vc=vc;
+    return 0;
+  }
+  
   fprintf(stderr,"%s: Unexpected option '%.*s' = '%.*s'\n",eggrt.exename,kc,k,vc,v);
   return -2;
 }

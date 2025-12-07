@@ -264,6 +264,47 @@ static int eggrt_init_drivers() {
   return 0;
 }
 
+/* Check the ROM's list of prepopulate params.
+ * If we have a value for them, stashed from command-line reception, write it to the store.
+ * If we're left with any stashed params, fail.
+ */
+ 
+static int eggrt_params_init() {
+  if (!eggrt.paramc) return 0; // No extra args, no problemo, leave everything as is.
+  
+  // First, process each of the ROM's declared params.
+  const char *src=eggrt.metadata.params;
+  int srcc=eggrt.metadata.paramsc;
+  int srcp=0;
+  while (srcp<srcc) {
+    if ((unsigned char)src[srcp]<=0x20) { srcp++; continue; }
+    if (src[srcp]==',') { srcp++; continue; }
+    const char *token=src+srcp;
+    int tokenc=0;
+    while ((srcp<srcc)&&(src[srcp++]!=',')) tokenc++;
+    while (tokenc&&((unsigned char)token[tokenc-1]<=0x20)) tokenc--;
+    if (tokenc) {
+      int i=eggrt.paramc;
+      struct param *param=eggrt.paramv+i-1;
+      for (;i-->0;param--) {
+        if (param->kc!=tokenc) continue;
+        if (memcmp(param->k,token,tokenc)) continue;
+        // Got it.
+        egg_store_set(param->k,param->kc,param->v,param->vc);
+        eggrt.paramc--;
+        memmove(param,param+1,sizeof(struct param)*(eggrt.paramc-i));
+        break;
+      }
+    }
+  }
+  
+  // Anything left? Raise an error like eggrt_configure would, against the first param.
+  if (!eggrt.paramc) return 0;
+  const struct param *param=eggrt.paramv;
+  fprintf(stderr,"%s: Unexpected option '%.*s' = '%.*s'\n",eggrt.exename,param->kc,param->k,param->vc,param->v);
+  return -2;
+}
+
 /* Init.
  */
  
@@ -284,6 +325,9 @@ int eggrt_init() {
     if (err!=-2) fprintf(stderr,"%s: Failed to initialize persistence.\n",eggrt.exename);
     return -2;
   }
+  
+  // With store and ROM loaded, check params.
+  if ((err=eggrt_params_init())<0) return err;
   
   // Initialize drivers.
   if ((err=eggrt_init_drivers())<0) {

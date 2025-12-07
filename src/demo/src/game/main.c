@@ -75,6 +75,15 @@ int egg_client_init() {
     fprintf(stderr,"Float plain(%.3f) pad(%7.3f) zeropad(%07.3f) leftalign(%-7.3f)\n",-3.141,-3.141,-3.141,-3.141);
     fprintf(stderr,"String plain(%s) pad(%6s) leftalign(%-6s)\n","egg","egg","egg");
   }
+  
+  // Test prepopulating params.
+  if (1) {
+    char tmp[64];
+    int tmpc=egg_store_get(tmp,sizeof(tmp),"helloMessage",12);
+    if ((tmpc>0)&&(tmpc<=sizeof(tmp))) {
+      fprintf(stderr,"Got helloMessage: '%.*s'\n",tmpc,tmp);
+    }
+  }
 
   return 0;
 }

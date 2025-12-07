@@ -136,6 +136,10 @@ static int eggrt_rom_load_metadata() {
         fprintf(stderr,"%s: Unexpected value '%.*s' for menu, using default.\n",eggrt.exename,entry.vc,entry.v);
         eggrt.metadata.menu=1;
       }
+      
+    } else if ((entry.kc==6)&&!memcmp(entry.k,"params",6)) {
+      eggrt.metadata.params=entry.v;
+      eggrt.metadata.paramsc=entry.vc;
     }
   }
   return 0;
