@@ -6,6 +6,7 @@
 #define EAU_H
 
 struct sr_encoder;
+struct sr_convert_context;
 
 /* Give us a Channel Header for the given fqpid ((BankMsb<<14)|(BankLsb<<7)|Program).
  * This must be at least 8 bytes, beginning with (chid).
@@ -17,16 +18,17 @@ struct sr_encoder;
  */
 typedef int (*eau_get_chdr_fn)(void *dstpp,int fqpid);
 
+// Ugly hack to supply the instruments, because sr_convert_context doesn't have a place for arbitrary pointers.
+extern eau_get_chdr_fn eau_get_chdr;
+
 /* Null if valid, or a canned failure message.
  * Validates framing aggressively.
  * But we don't guarantee that it's completely valid, eg we don't visit modecfg or post.
  */
 const char *eau_validate(const void *src,int srcc);
 
-int eau_cvt_eau_midi(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg);
-int eau_cvt_midi_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg);
-int eau_cvt_eau_eaut(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg);
-int eau_cvt_eaut_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg);
+int eau_cvt_eau_midi(struct sr_convert_context *ctx);
+int eau_cvt_midi_eau(struct sr_convert_context *ctx);
 
 /* Helpers for EAU file dissection.
  ******************************************************************/

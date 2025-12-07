@@ -226,6 +226,8 @@ int eggdev_configure(int argc,char **argv) {
   int err;
   
   g.sdkpath=EGG_SDK;
+  g.argv=argv;
+  g.argc=argc;
   
   if ((argc>=1)&&argv&&argv[0]&&argv[0][0]) g.exename=argv[0];
   else g.exename="eggdev";

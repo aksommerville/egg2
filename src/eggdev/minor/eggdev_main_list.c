@@ -112,14 +112,14 @@ int eggdev_main_list() {
   }
   int srcfmt=eggdev_fmt_by_signature(rom,romc);
   if (srcfmt!=EGGDEV_FMT_egg) {
-    eggdev_convert_fn convert=eggdev_get_converter(EGGDEV_FMT_egg,srcfmt);
+    sr_convert_fn convert=eggdev_get_converter(EGGDEV_FMT_egg,srcfmt);
     if (!convert) {
       fprintf(stderr,"%s: Invalid ROM, no converter found.\n",srcpath);
       free(rom);
       return -2;
     }
     struct sr_encoder dst={0};
-    struct eggdev_convert_context ctx={
+    struct sr_convert_context ctx={
       .dst=&dst,
       .src=rom,
       .srcc=romc,

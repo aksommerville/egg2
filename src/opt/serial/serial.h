@@ -114,6 +114,7 @@ int sr_encode_intlelen(struct sr_encoder *encoder,const void *src,int srcc,int l
 int sr_encode_vlqlen(struct sr_encoder *encoder,const void *src,int srcc);
 
 int sr_encode_base64(struct sr_encoder *encoder,const void *src,int srcc);
+int sr_encode_urldecode(struct sr_encoder *encoder,const char *src,int srcc);
 
 /* JSON structures and helpers.
  * All JSON-related errors are sticky: Once something fails, no further JSON calls will succeed.
@@ -229,5 +230,52 @@ int sr_decode_json_double(double *dst,struct sr_decoder *decoder);
 /* Length of one JSON expression, including leading space.
  */
 int sr_json_measure(const char *src,int srcc);
+
+/* Generic conversion context.
+ * Any operation that consumes and produces serial data should consider using this.
+ * It allows a uniform interface for input, output, and logging.
+ * The context does not require cleanup; whoever created it is responsible for its buffers.
+ ********************************************************************************/
+ 
+struct sr_convert_context {
+  struct sr_encoder *dst; // WEAK.
+  const void *src; // WEAK.
+  int srcc;
+  const char *refname; // WEAK. Typically the input file's path. If null, no errors will be logged.
+  int lineno0; // Typically zero. If (src) is sliced from text, put the starting line number minus one here, so we can log correctly.
+  struct sr_encoder *errmsg; // WEAK. If not null, logging goes here instead of stderr. Irrelevant if (refname) null.
+  char **argv; // WEAK, the entire command line, for pulling options. We generally ignore [0].
+  int argc;
+  int error;
+};
+ 
+typedef int (*sr_convert_fn)(struct sr_convert_context *ctx);
+
+/* Log a message to either nowhere, stderr, or (ctx->errmsg).
+ * Do not include a terminal newline. But if you do, it's fine, we'll strip it.
+ * Error logs always return <0. -2 if logged, -1 otherwise.
+ * After the first error, no others will log.
+ * The "_at" versions take a reference pointer. If valid, we'll use that to determine the line number.
+ */
+int sr_convert_error(struct sr_convert_context *ctx,const char *fmt,...);
+void sr_convert_warning(struct sr_convert_context *ctx,const char *fmt,...);
+int sr_convert_error_at(struct sr_convert_context *ctx,const void *refp,const char *fmt,...);
+void sr_convert_warning_at(struct sr_convert_context *ctx,const void *refp,const char *fmt,...);
+
+// Just the line number, if you need it for something other than logging.
+int sr_convert_lineno(const struct sr_convert_context *ctx,const void *refp);
+
+/* Read an option from (argv).
+ * <0 if absent.
+ * Options with no value will be reported as "1" or "0".
+ */
+int sr_convert_arg(void *dstpp,const struct sr_convert_context *ctx,const char *k,int kc);
+int sr_convert_arg_int(int *dst,const struct sr_convert_context *ctx,const char *k,int kc);
+
+/* Rephrase an HTTP query string as argv.
+ * If you set it this way, you must clean up too.
+ */
+int sr_convert_argv_from_http_query(struct sr_convert_context *ctx,const char *src,int srcc);
+void sr_convert_free_argv(struct sr_convert_context *ctx);
 
 #endif

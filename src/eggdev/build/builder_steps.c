@@ -148,7 +148,7 @@ int build_separate(struct builder *builder,struct builder_file *file) {
   void *src=0;
   int srcc=file_read(&src,rom->path);
   if (srcc<0) return builder_error(builder,"%s: Failed to read file.\n",rom->path);
-  struct eggdev_convert_context ctx={
+  struct sr_convert_context ctx={
     .dst=&dst,
     .src=src,
     .srcc=srcc,

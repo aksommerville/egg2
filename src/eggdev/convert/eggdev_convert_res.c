@@ -23,7 +23,7 @@ static int eggdev_metadata_validate_value(const char *src,int srcc) {
 /* Metadata bin from text.
  */
 
-int eggdev_metadata_from_metatxt(struct eggdev_convert_context *ctx) {
+int eggdev_metadata_from_metatxt(struct sr_convert_context *ctx) {
   if (sr_encode_raw(ctx->dst,"\0EMD",4)<0) return -1;
   struct sr_decoder decoder={.v=ctx->src,.c=ctx->srcc};
   const char *line;
@@ -39,8 +39,8 @@ int eggdev_metadata_from_metatxt(struct eggdev_convert_context *ctx) {
     while ((linep<linec)&&((unsigned char)line[linep]<=0x20)) linep++;
     const char *v=line+linep;
     int vc=linec-linep;
-    if (!kc||(eggdev_metadata_validate_value(k,kc)<0)) return eggdev_convert_error_at(ctx,lineno,"Invalid key. Must be 1..255 of G0.");
-    if (eggdev_metadata_validate_value(v,vc)<0) return eggdev_convert_error_at(ctx,lineno,"Invalid value. Must be 0..255 of G0.");
+    if (!kc||(eggdev_metadata_validate_value(k,kc)<0)) return sr_convert_error_at(ctx,k,"Invalid key. Must be 1..255 of G0.");
+    if (eggdev_metadata_validate_value(v,vc)<0) return sr_convert_error_at(ctx,v,"Invalid value. Must be 0..255 of G0.");
     if (sr_encode_u8(ctx->dst,kc)<0) return -1;
     if (sr_encode_u8(ctx->dst,vc)<0) return -1;
     if (sr_encode_raw(ctx->dst,k,kc)<0) return -1;
@@ -53,17 +53,17 @@ int eggdev_metadata_from_metatxt(struct eggdev_convert_context *ctx) {
 /* Metadata text from bin.
  */
  
-int eggdev_metatxt_from_metadata(struct eggdev_convert_context *ctx) {
+int eggdev_metatxt_from_metadata(struct sr_convert_context *ctx) {
   if ((ctx->srcc<4)||memcmp(ctx->src,"\0EMD",4)) return -1;
   const uint8_t *SRC=ctx->src;
   int srcp=4;
   for (;;) {
-    if (srcp>=ctx->srcc) return eggdev_convert_error(ctx,"Metadata unterminated.");
+    if (srcp>=ctx->srcc) return sr_convert_error(ctx,"Metadata unterminated.");
     uint8_t kc=SRC[srcp++];
     if (!kc) return 0; // not kc, terminator.
-    if (srcp>=ctx->srcc) return eggdev_convert_error(ctx,"Metadata overrun.");
+    if (srcp>=ctx->srcc) return sr_convert_error(ctx,"Metadata overrun.");
     uint8_t vc=SRC[srcp++];
-    if (srcp>ctx->srcc-vc-kc) return eggdev_convert_error(ctx,"Metadata overrun.");
+    if (srcp>ctx->srcc-vc-kc) return sr_convert_error(ctx,"Metadata overrun.");
     const char *k=(char*)(SRC+srcp); srcp+=kc;
     const char *v=(char*)(SRC+srcp); srcp+=vc;
     if (sr_encode_fmt(ctx->dst,"%.*s=%.*s\n",kc,k,vc,v)<0) return -1;
@@ -89,7 +89,7 @@ static int eggdev_strings_requires_quote(const char *src,int srcc) {
 /* Strings bin from text.
  */
  
-int eggdev_strings_from_strtxt(struct eggdev_convert_context *ctx) {
+int eggdev_strings_from_strtxt(struct sr_convert_context *ctx) {
   if (sr_encode_raw(ctx->dst,"\0EST",4)<0) return -1;
   struct sr_decoder decoder={.v=ctx->src,.c=ctx->srcc};
   const char *line;
@@ -105,9 +105,9 @@ int eggdev_strings_from_strtxt(struct eggdev_convert_context *ctx) {
     while ((linep<linec)&&((unsigned char)line[linep++]>0x20)) tokenc++;
     while ((linep<linec)&&((unsigned char)line[linep]<=0x20)) linep++;
     int index;
-    if (sr_int_eval(&index,token,tokenc)<2) return eggdev_convert_error_at(ctx,lineno,"Expected string index, found '%.*s'.",tokenc,token);
-    if (index<=pvindex) return eggdev_convert_error_at(ctx,lineno,"Invalid string index %d, must be at least %d",index,pvindex);
-    if (index>1024) return eggdev_convert_error_at(ctx,lineno,"Limit 1024.");
+    if (sr_int_eval(&index,token,tokenc)<2) return sr_convert_error_at(ctx,token,"Expected string index, found '%.*s'.",tokenc,token);
+    if (index<=pvindex) return sr_convert_error_at(ctx,token,"Invalid string index %d, must be at least %d",index,pvindex);
+    if (index>1024) return sr_convert_error_at(ctx,token,"Limit 1024.");
     pvindex++;
     int zeroc=(index-pvindex)*2;
     if (zeroc&&(sr_encode_zero(ctx->dst,zeroc)<0)) return -1;
@@ -120,7 +120,7 @@ int eggdev_strings_from_strtxt(struct eggdev_convert_context *ctx) {
       if (sr_encode_zero(ctx->dst,2)<0) return -1;
       for (;;) {
         int err=sr_string_eval((char*)ctx->dst->v+ctx->dst->c,ctx->dst->a-ctx->dst->c,token,tokenc);
-        if (err<0) return eggdev_convert_error_at(ctx,lineno,"Malformed JSON string token.");
+        if (err<0) return sr_convert_error_at(ctx,token,"Malformed JSON string token.");
         if (ctx->dst->c<=ctx->dst->a-err) {
           ctx->dst->c+=err;
           break;
@@ -128,11 +128,11 @@ int eggdev_strings_from_strtxt(struct eggdev_convert_context *ctx) {
         if (sr_encoder_require(ctx->dst,err)<0) return -1;
       }
       int len=ctx->dst->c-lenp-2;
-      if ((len<0)||(len>0xffff)) return eggdev_convert_error_at(ctx,lineno,"String too long. %d, limit 65535.",len);
+      if ((len<0)||(len>0xffff)) return sr_convert_error_at(ctx,token,"String too long. %d, limit 65535.",len);
       ((uint8_t*)ctx->dst->v)[lenp]=len>>8;
       ((uint8_t*)ctx->dst->v)[lenp+1]=len;
     } else { // loose text
-      if (tokenc>0xffff) return eggdev_convert_error_at(ctx,lineno,"String too long. %d, limit 65535.",tokenc);
+      if (tokenc>0xffff) return sr_convert_error_at(ctx,token,"String too long. %d, limit 65535.",tokenc);
       if (sr_encode_intbe(ctx->dst,tokenc,2)<0) return -1;
       if (sr_encode_raw(ctx->dst,token,tokenc)<0) return -1;
     }
@@ -143,16 +143,16 @@ int eggdev_strings_from_strtxt(struct eggdev_convert_context *ctx) {
 /* Strings text from bin.
  */
  
-int eggdev_strtxt_from_strings(struct eggdev_convert_context *ctx) {
+int eggdev_strtxt_from_strings(struct sr_convert_context *ctx) {
   if (!ctx->src||(ctx->srcc<4)||memcmp(ctx->src,"\0EST",4)) return -1;
   const uint8_t *SRC=ctx->src;
   int srcp=4,index=1;
   for (;;) {
     if (srcp>=ctx->srcc) break;
-    if (srcp>ctx->srcc-2) return eggdev_convert_error(ctx,"Strings overrun.");
+    if (srcp>ctx->srcc-2) return sr_convert_error(ctx,"Strings overrun.");
     int len=(SRC[srcp]<<8)|SRC[srcp+1];
     srcp+=2;
-    if (srcp>ctx->srcc-len) return eggdev_convert_error(ctx,"Strings overrun.");
+    if (srcp>ctx->srcc-len) return sr_convert_error(ctx,"Strings overrun.");
     if (len) {
       const char *string=(char*)(SRC+srcp);
       srcp+=len;
@@ -209,7 +209,7 @@ static int eggdev_tilesheet_encode_table(struct sr_encoder *dst,int tableid,cons
 /* Tilesheet bin from text.
  */
  
-int eggdev_tilesheet_from_tstxt(struct eggdev_convert_context *ctx) {
+int eggdev_tilesheet_from_tstxt(struct sr_convert_context *ctx) {
   if (sr_encode_raw(ctx->dst,"\0ETS",4)<0) return -1;
   int tableid=-1; // >=0 if read in progress (and if zero, we're going to drop it)
   uint8_t tmp[256]; // Read each table into this buffer before encoding.
@@ -224,11 +224,11 @@ int eggdev_tilesheet_from_tstxt(struct eggdev_convert_context *ctx) {
     /* If a table is being read, comments and blanks are forbidden.
      */
     if (tableid>=0) {
-      if (linec!=32) return eggdev_convert_error_at(ctx,lineno,"Expected 32 hex digits.");
+      if (linec!=32) return sr_convert_error_at(ctx,line,"Expected 32 hex digits.");
       int linep=0; for (;linep<32;linep+=2,tmpp++) {
         int hi=sr_digit_eval(line[linep]);
         int lo=sr_digit_eval(line[linep+1]);
-        if ((hi<0)||(hi>15)||(lo<0)||(lo>15)) return eggdev_convert_error_at(ctx,lineno,"Invalid hex byte '%.2s'",line+linep);
+        if ((hi<0)||(hi>15)||(lo<0)||(lo>15)) return sr_convert_error_at(ctx,line+linep,"Invalid hex byte '%.2s'",line+linep);
         tmp[tmpp]=(hi<<4)|lo;
       }
       if (tmpp>=256) {
@@ -243,11 +243,11 @@ int eggdev_tilesheet_from_tstxt(struct eggdev_convert_context *ctx) {
     } else {
       if (!linec||(line[0]=='#')) continue;
       int err=eggdev_symbol_eval(&tableid,line,linec,EGGDEV_NSTYPE_NS,"tilesheet",9);
-      if ((err<0)||(tableid<0)||(tableid>0xff)) return eggdev_convert_error_at(ctx,lineno,"Expected 0..255 or a tilesheet name, found '%.*s'",linec,line);
+      if ((err<0)||(tableid<0)||(tableid>0xff)) return sr_convert_error_at(ctx,line,"Expected 0..255 or a tilesheet name, found '%.*s'",linec,line);
       tmpp=0;
     }
   }
-  if (tableid>=0) return eggdev_convert_error(ctx,"Incomplete table.");
+  if (tableid>=0) return sr_convert_error(ctx,"Incomplete table.");
   return 0;
 }
 
@@ -287,18 +287,18 @@ static struct eggdev_tilesheet_table *eggdev_tilesheet_get_table(struct eggdev_t
 /* Tilesheet text from bin.
  */
  
-static int eggdev_tstxt_from_tilesheet_inner(struct sr_encoder *dst,const uint8_t *src,int srcc,struct eggdev_tilesheet *ts,struct eggdev_convert_context *ctx) {
-  if (!src||(srcc<4)||memcmp(src,"\0ETS",4)) return eggdev_convert_error(ctx,"Tilesheet signature mismatch.");
+static int eggdev_tstxt_from_tilesheet_inner(struct sr_encoder *dst,const uint8_t *src,int srcc,struct eggdev_tilesheet *ts,struct sr_convert_context *ctx) {
+  if (!src||(srcc<4)||memcmp(src,"\0ETS",4)) return sr_convert_error(ctx,"Tilesheet signature mismatch.");
   int srcp=4;
   
   // Read all content into a temporary model containing every table.
   while (srcp<srcc) {
-    if (srcp>srcc-3) return eggdev_convert_error(ctx,"Tilesheet overrun.");
+    if (srcp>srcc-3) return sr_convert_error(ctx,"Tilesheet overrun.");
     uint8_t tableid=src[srcp++];
     uint8_t tileid=src[srcp++];
     int tilec=src[srcp++]+1;
-    if (tileid+tilec>256) return eggdev_convert_error(ctx,"Tilesheet addresses tiles above 0xff.");
-    if (srcp>srcc-tilec) return eggdev_convert_error(ctx,"Tilesheet overrun.");
+    if (tileid+tilec>256) return sr_convert_error(ctx,"Tilesheet addresses tiles above 0xff.");
+    if (srcp>srcc-tilec) return sr_convert_error(ctx,"Tilesheet overrun.");
     struct eggdev_tilesheet_table *table=eggdev_tilesheet_get_table(ts,tableid);
     if (!table) return -1;
     memcpy(table->v+tileid,src+srcp,tilec);
@@ -311,7 +311,7 @@ static int eggdev_tstxt_from_tilesheet_inner(struct sr_encoder *dst,const uint8_
   for (;i-->0;table++) {
     char name[32];
     int namec=eggdev_symbol_repr(name,sizeof(name),table->id,EGGDEV_NSTYPE_NS,"tilesheet",9);
-    if ((namec<1)||(namec>sizeof(name))) return eggdev_convert_error(ctx,"Invalid name for tilesheet table %d",table->id);
+    if ((namec<1)||(namec>sizeof(name))) return sr_convert_error(ctx,"Invalid name for tilesheet table %d",table->id);
     if (sr_encode_raw(dst,name,namec)<0) return -1;
     if (sr_encode_u8(dst,0x0a)<0) return -1;
     int rowp=0; for (;rowp<256;rowp+=16) {
@@ -329,7 +329,7 @@ static int eggdev_tstxt_from_tilesheet_inner(struct sr_encoder *dst,const uint8_
   return 0;
 }
  
-int eggdev_tstxt_from_tilesheet(struct eggdev_convert_context *ctx) {
+int eggdev_tstxt_from_tilesheet(struct sr_convert_context *ctx) {
   struct eggdev_tilesheet ts={0};
   int err=eggdev_tstxt_from_tilesheet_inner(ctx->dst,ctx->src,ctx->srcc,&ts,ctx);
   eggdev_tilesheet_cleanup(&ts);
@@ -405,7 +405,7 @@ static void eggdev_decalsheet_decode_comment(uint8_t *dst,int dstc,const char *s
   memset(dst+dstp,0,dstc-dstp);
 }
  
-static int eggdev_decalsheet_from_dstxt_inner(struct eggdev_convert_context *ctx,struct eggdev_decalsheet *ds) {
+static int eggdev_decalsheet_from_dstxt_inner(struct sr_convert_context *ctx,struct eggdev_decalsheet *ds) {
   
   /* Start by reading the entire sheet into the temporary model.
    * This is absolutely necessary, since the output must be sorted but the input need not.
@@ -427,7 +427,7 @@ static int eggdev_decalsheet_from_dstxt_inner(struct eggdev_convert_context *ctx
     tokenc=0;
     while ((linep<linec)&&((unsigned char)line[linep++]>0x20)) tokenc++;
     if ((eggdev_symbol_eval(&decalid,token,tokenc,EGGDEV_NSTYPE_NS,"decal",5)<0)||(decalid<1)||(decalid>0xff)) {
-      return eggdev_convert_error_at(ctx,lineno,"Expected 1..255 or decal name, found '%.*s'",tokenc,token);
+      return sr_convert_error_at(ctx,token,"Expected 1..255 or decal name, found '%.*s'",tokenc,token);
     }
     
     #define INTTOKEN(var) { \
@@ -436,7 +436,7 @@ static int eggdev_decalsheet_from_dstxt_inner(struct eggdev_convert_context *ctx
       tokenc=0; \
       while ((linep<linec)&&((unsigned char)line[linep++]>0x20)) tokenc++; \
       if ((sr_int_eval(&var,token,tokenc)<2)||(var<0)||(var>0xffff)) { \
-        return eggdev_convert_error_at(ctx,lineno,"Expected 0..65535, found '%.*s'",tokenc,token); \
+        return sr_convert_error_at(ctx,token,"Expected 0..65535, found '%.*s'",tokenc,token); \
       } \
     }
     INTTOKEN(x)
@@ -456,12 +456,12 @@ static int eggdev_decalsheet_from_dstxt_inner(struct eggdev_convert_context *ctx
         ((cmt[cmtp]>='a')&&(cmt[cmtp]<='f'))||
         ((cmt[cmtp]>='A')&&(cmt[cmtp]<='F'))
       ) digitc++;
-      else return eggdev_convert_error_at(ctx,lineno,"Unexpected character '%c' in hex dump.",cmt[cmtp]);
+      else return sr_convert_error_at(ctx,cmt+cmtp,"Unexpected character '%c' in hex dump.",cmt[cmtp]);
     }
-    if (digitc&1) return eggdev_convert_error_at(ctx,lineno,"Uneven hex dump length.");
+    if (digitc&1) return sr_convert_error_at(ctx,cmt,"Uneven hex dump length.");
     
     int p=eggdev_decalsheet_search(ds,decalid);
-    if (p>=0) return eggdev_convert_error_at(ctx,lineno,"Duplicate decal ID %d (previous at line %d)",decalid,ds->decalv[p].lineno+ctx->lineno0);
+    if (p>=0) return sr_convert_error_at(ctx,line,"Duplicate decal ID %d (previous at line %d)",decalid,ds->decalv[p].lineno+ctx->lineno0);
     struct eggdev_decal *decal=eggdev_decalsheet_insert(ds,-p-1,decalid);
     if (!decal) return -1;
     decal->x=x;
@@ -471,7 +471,7 @@ static int eggdev_decalsheet_from_dstxt_inner(struct eggdev_convert_context *ctx
     decal->cmt=cmt;
     decal->cmtc=cmtc;
     decal->cmtlen=digitc>>1;
-    if (decal->cmtlen>0xff) return eggdev_convert_error_at(ctx,lineno,"%d-byte comment exceeds 255-byte limit.",decal->cmtlen);
+    if (decal->cmtlen>0xff) return sr_convert_error_at(ctx,line,"%d-byte comment exceeds 255-byte limit.",decal->cmtlen);
   }
   
   /* Determine comment length.
@@ -501,7 +501,7 @@ static int eggdev_decalsheet_from_dstxt_inner(struct eggdev_convert_context *ctx
   return 0;
 }
  
-int eggdev_decalsheet_from_dstxt(struct eggdev_convert_context *ctx) {
+int eggdev_decalsheet_from_dstxt(struct sr_convert_context *ctx) {
   struct eggdev_decalsheet ds={0};
   int err=eggdev_decalsheet_from_dstxt_inner(ctx,&ds);
   eggdev_decalsheet_cleanup(&ds);
@@ -511,14 +511,14 @@ int eggdev_decalsheet_from_dstxt(struct eggdev_convert_context *ctx) {
 /* Decalsheet text from bin.
  */
  
-int eggdev_dstxt_from_decalsheet(struct eggdev_convert_context *ctx) {
-  if (!ctx->src||(ctx->srcc<5)||memcmp(ctx->src,"\0EDS",4)) return eggdev_convert_error(ctx,"Decalsheet signature mismatch.");
+int eggdev_dstxt_from_decalsheet(struct sr_convert_context *ctx) {
+  if (!ctx->src||(ctx->srcc<5)||memcmp(ctx->src,"\0EDS",4)) return sr_convert_error(ctx,"Decalsheet signature mismatch.");
   const uint8_t *src=ctx->src;
   int cmtlen=src[4];
   int reclen=9+cmtlen;
   int srcp=5;
   while (srcp<ctx->srcc) {
-    if (srcp>ctx->srcc-reclen) return eggdev_convert_error(ctx,"Decalsheet overrun.");
+    if (srcp>ctx->srcc-reclen) return sr_convert_error(ctx,"Decalsheet overrun.");
     int id=src[srcp++];
     int x=(src[srcp]<<8)|src[srcp+1]; srcp+=2;
     int y=(src[srcp]<<8)|src[srcp+1]; srcp+=2;
@@ -546,7 +546,7 @@ int eggdev_dstxt_from_decalsheet(struct eggdev_convert_context *ctx) {
 /* Map bin from text.
  */
  
-int eggdev_map_from_maptxt(struct eggdev_convert_context *ctx) {
+int eggdev_map_from_maptxt(struct sr_convert_context *ctx) {
   int dstc0=ctx->dst->c;
   if (sr_encode_raw(ctx->dst,"\0EMP\0\0",6)<0) return -1; // Placeholders for width and height.
   struct sr_decoder decoder={.v=ctx->src,.c=ctx->srcc};
@@ -560,14 +560,14 @@ int eggdev_map_from_maptxt(struct eggdev_convert_context *ctx) {
       if (w) break; // First empty line after the cells image separates cells and commands.
       continue; // Empty lines grudgingly permitted before the cells image.
     }
-    if (linec&1) return eggdev_convert_error_at(ctx,lineno,"Uneven count of hex digits.");
+    if (linec&1) return sr_convert_error_at(ctx,line,"Uneven count of hex digits.");
     int linew=linec>>1;
     
     // First line establishes the width, subsequent lines must match it.
     if (w) {
-      if (linew!=w) return eggdev_convert_error_at(ctx,lineno,"Expected %d cells, found %d.",w,linew);
+      if (linew!=w) return sr_convert_error_at(ctx,line,"Expected %d cells, found %d.",w,linew);
     } else {
-      if (linew>0xff) return eggdev_convert_error_at(ctx,lineno,"Width %d exceeds limit 255.",linew);
+      if (linew>0xff) return sr_convert_error_at(ctx,line,"Width %d exceeds limit 255.",linew);
       w=linew;
     }
     
@@ -576,40 +576,41 @@ int eggdev_map_from_maptxt(struct eggdev_convert_context *ctx) {
     while (linep<linec) {
       int hi=sr_digit_eval(line[linep++]);
       int lo=sr_digit_eval(line[linep++]);
-      if ((hi<0)||(hi>15)||(lo<0)||(lo>15)) return eggdev_convert_error_at(ctx,lineno,"Invalid hex byte '%.2s'.",line+linep-2);
+      if ((hi<0)||(hi>15)||(lo<0)||(lo>15)) return sr_convert_error_at(ctx,line,"Invalid hex byte '%.2s'.",line+linep-2);
       if (sr_encode_u8(ctx->dst,(hi<<4)|lo)<0) return -1;
     }
     h++;
-    if (h>0xff) return eggdev_convert_error_at(ctx,lineno,"Height exceeds limit 255.");
+    if (h>0xff) return sr_convert_error_at(ctx,line,"Height exceeds limit 255.");
   }
   
   // Validate dimensions and finish the header.
-  if (!w||!h) return eggdev_convert_error(ctx,"Cells image not found.");
-  if (ctx->dst->c-dstc0-6!=w*h) return eggdev_convert_error(ctx,"%s:%d: Oops. w=%d h=%d, cells len=%d",__FILE__,__LINE__,w,h,ctx->dst->c-dstc0-6);
+  if (!w||!h) return sr_convert_error(ctx,"Cells image not found.");
+  if (ctx->dst->c-dstc0-6!=w*h) return sr_convert_error(ctx,"%s:%d: Oops. w=%d h=%d, cells len=%d",__FILE__,__LINE__,w,h,ctx->dst->c-dstc0-6);
   ((uint8_t*)ctx->dst->v)[dstc0+4]=w;
   ((uint8_t*)ctx->dst->v)[dstc0+5]=h;
   
   // Remainder is a cmdlist.
-  struct eggdev_convert_context subctx=*ctx;
+  struct sr_convert_context subctx=*ctx;
   subctx.src=(char*)ctx->src+decoder.p;
   subctx.srcc=decoder.c-decoder.p;
   subctx.lineno0=lineno;
-  subctx.ns="map";
-  subctx.nsc=3;
+  char *argv[]={0,"--ns=map"};
+  subctx.argv=argv;
+  subctx.argc=2;
   return eggdev_cmdlist_from_cmdltxt(&subctx);
 }
 
 /* Map text from bin.
  */
  
-int eggdev_maptxt_from_map(struct eggdev_convert_context *ctx) {
+int eggdev_maptxt_from_map(struct sr_convert_context *ctx) {
   if (!ctx->src||(ctx->srcc<6)||memcmp(ctx->src,"\0EMP",4)) return -1;
   const uint8_t *src=ctx->src;
   int w=src[4];
   int h=src[5];
   int srcp=6;
-  if ((w<1)||(h<1)) return eggdev_convert_error(ctx,"Invalid map dimensions %d,%d",w,h);
-  if (srcp>ctx->srcc-w*h) return eggdev_convert_error(ctx,"Map cells overrun.");
+  if ((w<1)||(h<1)) return sr_convert_error(ctx,"Invalid map dimensions %d,%d",w,h);
+  if (srcp>ctx->srcc-w*h) return sr_convert_error(ctx,"Map cells overrun.");
   
   // Emit cells image.
   int yi=h;
@@ -624,11 +625,12 @@ int eggdev_maptxt_from_map(struct eggdev_convert_context *ctx) {
   if (sr_encode_u8(ctx->dst,0x0a)<0) return -1;
   
   // Remainder is a cmdlist.
-  struct eggdev_convert_context subctx=*ctx;
+  struct sr_convert_context subctx=*ctx;
   subctx.src=src+srcp;
   subctx.srcc=ctx->srcc-srcp;
-  subctx.ns="map";
-  subctx.nsc=3;
+  char *argv[]={0,"--ns=map"};
+  subctx.argv=argv;
+  subctx.argc=2;
   return eggdev_cmdltxt_from_cmdlist(&subctx);
 }
 
@@ -636,17 +638,17 @@ int eggdev_maptxt_from_map(struct eggdev_convert_context *ctx) {
  * "*" is an error here, since we don't have appropriate context to implement it.
  */
  
-static int eggdev_cmdlist_compile_arg(struct eggdev_convert_context *ctx,const char *src,int srcc,int lineno) {
+static int eggdev_cmdlist_compile_arg(struct sr_convert_context *ctx,const char *src,int srcc,int lineno) {
   if (srcc<1) return 0;
 
   /* "0x..." for a simple hex dump.
    */
   if ((srcc>=2)&&(src[0]=='0')&&((src[1]=='x')||(src[1]=='X'))) {
-    if (srcc&1) return eggdev_convert_error_at(ctx,lineno,"Uneven hex dump length.");
+    if (srcc&1) return sr_convert_error_at(ctx,src,"Uneven hex dump length.");
     int srcp=2; for (;srcp<srcc;) {
       int hi=sr_digit_eval(src[srcp++]);
       int lo=sr_digit_eval(src[srcp++]);
-      if ((hi<0)||(lo<0)||(hi>15)||(lo>15)) return eggdev_convert_error_at(ctx,lineno,"Invalid hex byte '%.2s'",src+srcp-2);
+      if ((hi<0)||(lo<0)||(hi>15)||(lo>15)) return sr_convert_error_at(ctx,src+srcp,"Invalid hex byte '%.2s'",src+srcp-2);
       if (sr_encode_u8(ctx->dst,(hi<<4)|lo)<0) return -1;
     }
     return 0;
@@ -663,7 +665,7 @@ static int eggdev_cmdlist_compile_arg(struct eggdev_convert_context *ctx,const c
       while ((srcp<srcc)&&(src[srcp++]!=',')) tokenc++;
       int v;
       if ((sr_int_eval(&v,token,tokenc)<2)||(v<0)||(v>255)) {
-        return eggdev_convert_error_at(ctx,lineno,"Expected integer in 0..255, found '%.*s'",tokenc,token);
+        return sr_convert_error_at(ctx,token,"Expected integer in 0..255, found '%.*s'",tokenc,token);
       }
       if (sr_encode_u8(ctx->dst,v)<0) return -1;
     }
@@ -675,7 +677,7 @@ static int eggdev_cmdlist_compile_arg(struct eggdev_convert_context *ctx,const c
   if ((src[0]>='0')&&(src[0]<='9')) {
     int v;
     if ((sr_int_eval(&v,src,srcc)<2)||(v<0)||(v>255)) {
-      return eggdev_convert_error_at(ctx,lineno,"Expected integer in 0..255, found '%.*s'",srcc,src);
+      return sr_convert_error_at(ctx,src,"Expected integer in 0..255, found '%.*s'",srcc,src);
     }
     return sr_encode_u8(ctx->dst,v);
   }
@@ -685,7 +687,7 @@ static int eggdev_cmdlist_compile_arg(struct eggdev_convert_context *ctx,const c
   if (src[0]=='"') {
     for (;;) {
       int err=sr_string_eval((char*)ctx->dst->v+ctx->dst->c,ctx->dst->a-ctx->dst->c,src,srcc);
-      if (err<0) return eggdev_convert_error_at(ctx,lineno,"Failed to evaluate string. (does it contain whitespace? it's not allowed to)");
+      if (err<0) return sr_convert_error_at(ctx,src,"Failed to evaluate string. (does it contain whitespace? it's not allowed to)");
       if (ctx->dst->c<=ctx->dst->a-err) {
         ctx->dst->c+=err;
         return 0;
@@ -699,16 +701,16 @@ static int eggdev_cmdlist_compile_arg(struct eggdev_convert_context *ctx,const c
    */
   if (src[0]=='(') {
     int srcp=1;
-    if (srcp>=srcc) return eggdev_convert_error_at(ctx,lineno,"Invalid token '%.*s'",srcc,src);
+    if (srcp>=srcc) return sr_convert_error_at(ctx,src,"Invalid token '%.*s'",srcc,src);
     char mode=src[srcp++];
-    if ((mode!='u')&&(mode!='b')) return eggdev_convert_error_at(ctx,lineno,"Expected 'u' or 'b', found '%c' ('%.*s')",mode,srcc,src);
+    if ((mode!='u')&&(mode!='b')) return sr_convert_error_at(ctx,src,"Expected 'u' or 'b', found '%c' ('%.*s')",mode,srcc,src);
     int size=0;
     while ((srcp<srcc)&&(src[srcp]>='0')&&(src[srcp]<='9')) {
       size*=10;
       size+=src[srcp++]-'0';
       if (size>256) break;
     }
-    if ((size<8)||(size>32)||(size&7)) return eggdev_convert_error_at(ctx,lineno,"Expected size 8, 16, 24, or 32. Found %d.",size);
+    if ((size<8)||(size>32)||(size&7)) return sr_convert_error_at(ctx,src,"Expected size 8, 16, 24, or 32. Found %d.",size);
     size>>=3; // Rephrase as bytes.
     const char *ns=0;
     int nsc=0;
@@ -717,11 +719,11 @@ static int eggdev_cmdlist_compile_arg(struct eggdev_convert_context *ctx,const c
       ns=src+srcp;
       while ((srcp<srcc)&&(src[srcp]!=')')) { srcp++; nsc++; }
     }
-    if ((srcp>=srcc)||(src[srcp++]!=')')) return eggdev_convert_error_at(ctx,lineno,"Expected ')'");
+    if ((srcp>=srcc)||(src[srcp++]!=')')) return sr_convert_error_at(ctx,src,"Expected ')'");
     int value=0;
     if (mode=='u') {
       if (eggdev_symbol_eval(&value,src+srcp,srcc-srcp,EGGDEV_NSTYPE_NS,ns,nsc)<0) {
-        return eggdev_convert_error_at(ctx,lineno,"Failed to resolve symbol '%.*s' in namespace '%.*s'",srcc-srcp,src+srcp,nsc,ns);
+        return sr_convert_error_at(ctx,src,"Failed to resolve symbol '%.*s' in namespace '%.*s'",srcc-srcp,src+srcp,nsc,ns);
       }
     } else if (mode=='b') {
       while (srcp<srcc) {
@@ -731,7 +733,7 @@ static int eggdev_cmdlist_compile_arg(struct eggdev_convert_context *ctx,const c
         while ((srcp<srcc)&&(src[srcp++]!=',')) tokenc++;
         int bit;
         if (eggdev_symbol_eval(&bit,token,tokenc,EGGDEV_NSTYPE_NS,ns,nsc)<0) {
-          return eggdev_convert_error_at(ctx,lineno,"Failed to resolve symbol '%.*s' in namespace '%.*s'",tokenc,token,nsc,ns);
+          return sr_convert_error_at(ctx,token,"Failed to resolve symbol '%.*s' in namespace '%.*s'",tokenc,token,nsc,ns);
         }
         value|=1<<bit;
       }
@@ -747,18 +749,21 @@ static int eggdev_cmdlist_compile_arg(struct eggdev_convert_context *ctx,const c
     const char *tname=src,*rname=src+sepp+1;
     int tnamec=sepp,rnamec=srcc-sepp-1,rid;
     if ((eggdev_symbol_eval(&rid,rname,rnamec,EGGDEV_NSTYPE_RES,tname,tnamec)<0)||(rid<0)||(rid>0xffff)) {
-      return eggdev_convert_error_at(ctx,lineno,"Failed to evaluate '%.*s' as resource ID.",srcc,src);
+      return sr_convert_error_at(ctx,rname,"Failed to evaluate '%.*s' as resource ID.",srcc,src);
     }
     return sr_encode_intbe(ctx->dst,rid,2);
   }
 
-  return eggdev_convert_error_at(ctx,lineno,"Unexpected token '%.*s' in command list.",srcc,src);
+  return sr_convert_error_at(ctx,src,"Unexpected token '%.*s' in command list.",srcc,src);
 }
 
 /* Command list bin from text.
  */
  
-int eggdev_cmdlist_from_cmdltxt(struct eggdev_convert_context *ctx) {
+int eggdev_cmdlist_from_cmdltxt(struct sr_convert_context *ctx) {
+  const char *ns=0;
+  int nsc=sr_convert_arg(&ns,ctx,"ns",2);
+  if (nsc<0) nsc=0;
   struct sr_decoder decoder={.v=ctx->src,.c=ctx->srcc};
   const char *line;
   int linec,lineno=1;
@@ -775,10 +780,10 @@ int eggdev_cmdlist_from_cmdltxt(struct eggdev_convert_context *ctx) {
     while ((linep<linec)&&((unsigned char)line[linep++]>0x20)) tokenc++;
     while ((linep<linec)&&((unsigned char)line[linep]<=0x20)) linep++;
     int opcode;
-    if ((eggdev_symbol_eval(&opcode,token,tokenc,EGGDEV_NSTYPE_CMD,ctx->ns,ctx->nsc))<0) {
-      return eggdev_convert_error_at(ctx,lineno,"Unknown opcode '%.*s'",tokenc,token);
+    if ((eggdev_symbol_eval(&opcode,token,tokenc,EGGDEV_NSTYPE_CMD,ns,nsc))<0) {
+      return sr_convert_error_at(ctx,token,"Unknown opcode '%.*s'",tokenc,token);
     }
-    if ((opcode<1)||(opcode>0xff)) return eggdev_convert_error_at(ctx,lineno,"'%.*s' yields invalid opcode %d, must be in 1..255.",tokenc,token,opcode);
+    if ((opcode<1)||(opcode>0xff)) return sr_convert_error_at(ctx,token,"'%.*s' yields invalid opcode %d, must be in 1..255.",tokenc,token,opcode);
     if (sr_encode_u8(ctx->dst,opcode)<0) return -1;
     
     // Track start of payload. For 0xe0..0xff, emit a placeholder payload length.
@@ -796,7 +801,7 @@ int eggdev_cmdlist_from_cmdltxt(struct eggdev_convert_context *ctx) {
       while ((linep<linec)&&((unsigned char)line[linep]<=0x20)) linep++;
       if ((tokenc==1)&&(token[0]=='*')) {
         pad=1;
-        if (linep<linec) return eggdev_convert_error_at(ctx,lineno,"'*' must be the final argument.");
+        if (linep<linec) return sr_convert_error_at(ctx,token,"'*' must be the final argument.");
         break;
       }
       int err=eggdev_cmdlist_compile_arg(ctx,token,tokenc,lineno);
@@ -815,7 +820,7 @@ int eggdev_cmdlist_from_cmdltxt(struct eggdev_convert_context *ctx) {
       case 0xc0: expectlen=20; break;
       case 0xe0: {
           expectlen=ctx->dst->c-payloadp;
-          if (expectlen>0xff) return eggdev_convert_error_at(ctx,lineno,"%d-byte payload exceeds limit 255.",expectlen);
+          if (expectlen>0xff) return sr_convert_error_at(ctx,line,"%d-byte payload exceeds limit 255.",expectlen);
           ((uint8_t*)ctx->dst->v)[payloadp-1]=expectlen;
         } break;
       default: return -1;
@@ -828,7 +833,7 @@ int eggdev_cmdlist_from_cmdltxt(struct eggdev_convert_context *ctx) {
       if (sr_encode_zero(ctx->dst,expectlen-havelen)<0) return -1;
       havelen=expectlen;
     }
-    if (havelen!=expectlen) return eggdev_convert_error_at(ctx,lineno,"Expected %d bytes payload, found %d. (opcode 0x%02x)",expectlen,havelen,opcode);
+    if (havelen!=expectlen) return sr_convert_error_at(ctx,line,"Expected %d bytes payload, found %d. (opcode 0x%02x)",expectlen,havelen,opcode);
   }
   return 0;
 }
@@ -836,12 +841,15 @@ int eggdev_cmdlist_from_cmdltxt(struct eggdev_convert_context *ctx) {
 /* Command list text from bin.
  */
  
-int eggdev_cmdltxt_from_cmdlist(struct eggdev_convert_context *ctx) {
+int eggdev_cmdltxt_from_cmdlist(struct sr_convert_context *ctx) {
+  const char *ns=0;
+  int nsc=sr_convert_arg(&ns,ctx,"ns",2);
+  if (nsc<0) nsc=0;
   const uint8_t *src=ctx->src;
   int srcp=0;
   while (srcp<ctx->srcc) {
     uint8_t opcode=src[srcp++];
-    if (!opcode) return eggdev_convert_error(ctx,"Illegal NUL in command list.");
+    if (!opcode) return sr_convert_error(ctx,"Illegal NUL in command list.");
     int paylen=0;
     switch (opcode&0xe0) {
       case 0x00: paylen=0; break;
@@ -852,14 +860,14 @@ int eggdev_cmdltxt_from_cmdlist(struct eggdev_convert_context *ctx) {
       case 0xa0: paylen=16; break;
       case 0xc0: paylen=20; break;
       case 0xe0: {
-          if (srcp>=ctx->srcc) return eggdev_convert_error(ctx,"Command list overrun.");
+          if (srcp>=ctx->srcc) return sr_convert_error(ctx,"Command list overrun.");
           paylen=src[srcp++];
         } break;
     }
-    if (srcp>ctx->srcc-paylen) return eggdev_convert_error(ctx,"Command list overrun.");
+    if (srcp>ctx->srcc-paylen) return sr_convert_error(ctx,"Command list overrun.");
     
     if (sr_encoder_require(ctx->dst,32)<0) return -1;
-    int err=eggdev_symbol_repr((char*)ctx->dst->v+ctx->dst->c,ctx->dst->a-ctx->dst->c,opcode,EGGDEV_NSTYPE_CMD,ctx->ns,ctx->nsc);
+    int err=eggdev_symbol_repr((char*)ctx->dst->v+ctx->dst->c,ctx->dst->a-ctx->dst->c,opcode,EGGDEV_NSTYPE_CMD,ns,nsc);
     if ((err<=0)||(ctx->dst->c>ctx->dst->a-err)) return -1;
     ctx->dst->c+=err;
     

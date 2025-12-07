@@ -37,7 +37,7 @@ static int eggdev_measure_rom(const uint8_t *src,int srcc) {
 /* ROM from executable, ie search and extract.
  */
  
-int eggdev_egg_from_exe(struct eggdev_convert_context *ctx) {
+int eggdev_egg_from_exe(struct sr_convert_context *ctx) {
   const uint8_t *src=ctx->src;
   int srcc=ctx->srcc;
   int srcp=0,stopp=srcc-4,gotempty=0;
@@ -58,28 +58,28 @@ int eggdev_egg_from_exe(struct eggdev_convert_context *ctx) {
     }
   }
   if (gotempty) return sr_encode_raw(ctx->dst,"\0ERM\0",5);
-  return eggdev_convert_error(ctx,"Egg ROM not found.");
+  return sr_convert_error(ctx,"Egg ROM not found.");
 }
 
 /* ROM from Zip. Must be "/game.bin".
  */
 
-int eggdev_egg_from_zip(struct eggdev_convert_context *ctx) {
+int eggdev_egg_from_zip(struct sr_convert_context *ctx) {
   struct zip_reader reader={0};
   if (zip_reader_init(&reader,ctx->src,ctx->srcc)<0) {
     zip_reader_cleanup(&reader);
-    return eggdev_convert_error(ctx,"Failed to initialize ZIP reader.");
+    return sr_convert_error(ctx,"Failed to initialize ZIP reader.");
   }
   for (;;) {
     struct zip_file file={0};
     int err=zip_reader_next(&file,&reader);
     if (err<0) {
       zip_reader_cleanup(&reader);
-      return eggdev_convert_error(ctx,"Error reading ZIP file.");
+      return sr_convert_error(ctx,"Error reading ZIP file.");
     }
     if (!err) {
       zip_reader_cleanup(&reader);
-      return eggdev_convert_error(ctx,"'game.bin' not found in ZIP file.");
+      return sr_convert_error(ctx,"'game.bin' not found in ZIP file.");
     }
     if ((file.namec==8)&&!memcmp(file.name,"game.bin",8)) {
       err=sr_encode_raw(ctx->dst,file.udata,file.usize);
@@ -187,7 +187,7 @@ static int eggdev_populate_separate_html(struct sr_encoder *dst,const char *src,
 /* Zip from ROM.
  */
  
-int eggdev_zip_from_egg(struct eggdev_convert_context *ctx) {
+int eggdev_zip_from_egg(struct sr_convert_context *ctx) {
   struct zip_writer writer={0};
   
   // Include the ROM file (provided in ctx).
@@ -211,13 +211,13 @@ int eggdev_zip_from_egg(struct eggdev_convert_context *ctx) {
   int tmc=eggdev_get_separate_html_template(&tm);
   if (tmc<0) {
     zip_writer_cleanup(&writer);
-    return eggdev_convert_error(ctx,"Failed to acquire Separate HTML template.");
+    return sr_convert_error(ctx,"Failed to acquire Separate HTML template.");
   }
   struct sr_encoder html={0};
   if (eggdev_populate_separate_html(&html,tm,tmc,ctx->src,ctx->srcc)<0) {
     sr_encoder_cleanup(&html);
     zip_writer_cleanup(&writer);
-    return eggdev_convert_error(ctx,"Failed to generate HTML bootstrap.");
+    return sr_convert_error(ctx,"Failed to generate HTML bootstrap.");
   }
   file.udata=html.v;
   file.usize=html.c;
@@ -241,7 +241,7 @@ int eggdev_zip_from_egg(struct eggdev_convert_context *ctx) {
   int synthsrcc=file_read(&synthsrc,synthpath);
   if (synthsrcc<0) {
     zip_writer_cleanup(&writer);
-    return eggdev_convert_error(ctx,"Failed to read synth.wasm from Egg SDK (%s)",synthpath);
+    return sr_convert_error(ctx,"Failed to read synth.wasm from Egg SDK (%s)",synthpath);
   }
   file.udata=synthsrc;
   file.usize=synthsrcc;

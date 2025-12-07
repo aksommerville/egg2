@@ -1,9 +1,14 @@
 #include "eggdev_internal.h"
+#include "opt/eau/eau.h"
 
 /* Main.
  */
  
 int main(int argc,char **argv) {
+
+  // Some ugly extra hookup, to allow the "eau" unit to read our standard instruments.
+  eau_get_chdr=eggdev_get_chdr;
+  
   int err=eggdev_configure(argc,argv);
   if (err<0) {
     if (err!=-2) fprintf(stderr,"%s: Unspecified error loading configuration.\n",g.exename);

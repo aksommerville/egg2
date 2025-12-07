@@ -35,10 +35,10 @@ static int eggdev_unpack_inner(const char *dstpath,struct eggdev_rom_reader *rea
       if (srcfmt) {
         int dstfmt=eggdev_fmt_portable(srcfmt);
         if (dstfmt&&(dstfmt!=srcfmt)) {
-          eggdev_convert_fn convert=eggdev_get_converter(dstfmt,srcfmt);
+          sr_convert_fn convert=eggdev_get_converter(dstfmt,srcfmt);
           if (convert&&(convert!=eggdev_convert_noop)) {
             scratch.c=0;
-            struct eggdev_convert_context ctx={
+            struct sr_convert_context ctx={
               .dst=&scratch,
               .src=serial,
               .srcc=serialc,
@@ -103,14 +103,14 @@ int eggdev_main_unpack() {
   if (!srcfmt) srcfmt=eggdev_fmt_by_path(srcpath,-1);
   if (!srcfmt) srcfmt=EGGDEV_FMT_exe; // "exe" for a generic search thru the file for embedded rom.
   if (srcfmt!=EGGDEV_FMT_egg) {
-    eggdev_convert_fn convert=eggdev_get_converter(EGGDEV_FMT_egg,srcfmt);
+    sr_convert_fn convert=eggdev_get_converter(EGGDEV_FMT_egg,srcfmt);
     if (!convert) {
       free(src);
       fprintf(stderr,"%s: Not an Egg ROM and no converter found.\n",srcpath);
       return -2;
     }
     struct sr_encoder dst={0};
-    struct eggdev_convert_context ctx={
+    struct sr_convert_context ctx={
       .dst=&dst,
       .src=src,
       .srcc=srcc,

@@ -75,22 +75,7 @@ Features we *do* support:
 
 ## TODO
 
-- [x] Permit command-line and query params to prepopulate the store, for keys specified via metadata.
-- - I'm picturing printing QR codes that embed a saved game from one machine, that the user can reopen in her browser.
-- - Check whether Itch passes query params down to the iframe.
-- - - iframes do not get their parent's query params naturally (duh).
-- - - Itch does not modify its iframe URL per query params (why would it).
-- - - `parent.location.search` is accessible if CORS allows it. Itch landing pages and iframes are different domains. Better test.
-- - - index.html:8 SecurityError: Failed to read a named property 'search' from 'Location': Blocked a frame with origin "https://html-classic.itch.zone" from accessing a cross-origin frame.
-- - - alas
-- - - There's some chatter about this on the Itch boards, mostly due to OAuth. Seems there is just no way to do it.
-- - - Nothing in their docs about it.
-- - Could also be super helpful during development: `./mygame --startAtLevel=13`
-- - Do require games to opt in to this behavior per field by naming the keys in metadata.
-- [x] Demo: Update re new synth. Remove "force", allow multiple songs, do a Yoshi track and danger track, ocarina, test all the things...
-- [x] Synth: Drum channels don't appear to respect song's pan.
-- [x] Synth: Odd behavior when adjusting song's pan live, it seemed to clamp unexpectedly? Dig in. ...needed a capture of the initial pan per channel, like trim.
-- [ ] Remove `eggdev_convert_context`. Make a similar thing in "serial", so we can share it around. Then share it around.
+- [x] Remove `eggdev_convert_context`. Make a similar thing in "serial", so we can share it around. Then share it around.
 - [ ] Would be nice if `eggdev convert` could change the pixel format of a PNG file, eg `eggdev convert -oout.png in.png --depth=1 --colortype=0`
 - [ ] `eggdev convert`: Saved games to/from JSON, for migrating your saves between native and web.
 - - [ ] That's such a simple conversion, and useful to players, maybe we should put it in `eggrun` too?

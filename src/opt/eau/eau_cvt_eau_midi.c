@@ -7,6 +7,8 @@
 #include <limits.h>
 #include <stdarg.h>
 
+eau_get_chdr_fn eau_get_chdr=0;
+
 /* Context.
  */
  
@@ -28,12 +30,9 @@ struct eau_from_midi_event {
 };
  
 struct eau_from_midi {
-  struct sr_encoder *dst;
-  const void *src;
-  int srcc;
-  const char *path;
+  struct sr_convert_context *cvtctx;
+  struct sr_encoder *dst; // Same as (cvtctx->dst), just repeating here because it was already written that way.
   eau_get_chdr_fn get_chdr;
-  struct sr_encoder *errmsg;
   int status;
   int strip_names;
   struct midi_file *midi;
@@ -57,32 +56,6 @@ static void eau_from_midi_cleanup(struct eau_from_midi *ctx) {
   midi_file_del(ctx->midi);
   if (ctx->namev) free(ctx->namev);
   if (ctx->eventv) free(ctx->eventv);
-}
-
-/* Logging.
- */
- 
-static int eau_from_midi_error(struct eau_from_midi *ctx,const char *fmt,...) {
-  if (ctx->status<0) return ctx->status; // Already logged.
-  if (ctx->errmsg||ctx->path) { // Logging enabled or captured.
-    va_list vargs;
-    va_start(vargs,fmt);
-    char msg[256];
-    int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
-    if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
-    while (msgc&&((unsigned char)msg[msgc-1]<=0x20)) msgc--; // eg trailing LF, I might include by accident.
-    if (ctx->errmsg) {
-      sr_encode_fmt(ctx->errmsg,"%s: %.*s\n",ctx->path?ctx->path:"eau_from_midi",msgc,msg);
-    } else if (ctx->path) {
-      fprintf(stderr,"%s: %.*s\n",ctx->path,msgc,msg);
-    } else { // Not currently reachable.
-      fprintf(stderr,"%.*s\n",msgc,msg);
-    }
-    ctx->status=-2;
-  } else { // No logging, just fail.
-    ctx->status=-1;
-  }
-  return ctx->status;
 }
 
 /* Names list primitives.
@@ -250,7 +223,7 @@ static int eau_from_midi_generate_default_drum(struct eau_from_midi *ctx,int not
   sr_encode_raw(ctx->dst,inner_events,sizeof(inner_events));
   
   int len=ctx->dst->c-lenp-2;
-  if ((len<0)||(len>0xffff)) return eau_from_midi_error(ctx,"Invalid length %d for drum %d.",len,noteid);
+  if ((len<0)||(len>0xffff)) return sr_convert_error(ctx->cvtctx,"Invalid length %d for drum %d.",len,noteid);
   ((uint8_t*)ctx->dst->v)[lenp]=len>>8;
   ((uint8_t*)ctx->dst->v)[lenp+1]=len;
   
@@ -280,7 +253,7 @@ static int eau_from_midi_generate_default_drums(struct eau_from_midi *ctx,int ch
     }
   }
   int modecfglen=ctx->dst->c-modecfglenp-2;
-  if ((modecfglen<0)||(modecfglen>0xffff)) return eau_from_midi_error(ctx,"Invalid length %d for drums modecfg.",modecfglen);
+  if ((modecfglen<0)||(modecfglen>0xffff)) return sr_convert_error(ctx->cvtctx,"Invalid length %d for drums modecfg.",modecfglen);
   ((uint8_t*)ctx->dst->v)[modecfglenp]=modecfglen>>8;
   ((uint8_t*)ctx->dst->v)[modecfglenp+1]=modecfglen;
   
@@ -306,7 +279,7 @@ static int eau_from_midi_generate_chdr_from_fqpid(struct eau_from_midi *ctx,int 
       sr_encode_raw(ctx->dst,src+3,srcc-3);
       return 0;
     } else if (srcc>0) {
-      return eau_from_midi_error(ctx,"Invalid length %d for fqpid 0x%08x returned from SDK.",srcc,channel->fqpid);
+      return sr_convert_error(ctx->cvtctx,"Invalid length %d for fqpid 0x%08x returned from SDK.",srcc,channel->fqpid);
     } else {
       // SDK lookup failed. No big deal, proceed with defaults.
     }
@@ -380,12 +353,12 @@ static int eau_from_midi_chdr(struct eau_from_midi *ctx) {
               ((uint8_t*)ctx->dst->v)[ctx->tempop+1]=msperqnote;
             } break;
           case 0x77: { // Egg Channel Headers.
-              if (ctx->chdr) return eau_from_midi_error(ctx,"Multiple Meta 0x77 Egg Channel Headers.");
+              if (ctx->chdr) return sr_convert_error(ctx->cvtctx,"Multiple Meta 0x77 Egg Channel Headers.");
               ctx->chdr=event.v;
               ctx->chdrc=event.c;
             } break;
           case 0x78: { // Egg Text.
-              if (ctx->text) return eau_from_midi_error(ctx,"Multiple Meta 0x78 Egg Text.");
+              if (ctx->text) return sr_convert_error(ctx->cvtctx,"Multiple Meta 0x78 Egg Text.");
               ctx->text=event.v;
               ctx->textc=event.c;
             } break;
@@ -491,7 +464,7 @@ static int eau_from_midi_events(struct eau_from_midi *ctx) {
     if (err<0) break;
     if (err>0) {
       now+=err;
-      if (midi_file_advance(ctx->midi,err)<0) return eau_from_midi_error(ctx,"Unknown error reading MIDI file.");
+      if (midi_file_advance(ctx->midi,err)<0) return sr_convert_error(ctx->cvtctx,"Unknown error reading MIDI file.");
       continue;
     }
     switch (event.opcode) {
@@ -541,7 +514,7 @@ static int eau_from_midi_events(struct eau_from_midi *ctx) {
       // Other events are perfectly legal, and ignored.
     }
   }
-  if (!midi_file_is_finished(ctx->midi)) return eau_from_midi_error(ctx,"Unknown error reading MIDI file.");
+  if (!midi_file_is_finished(ctx->midi)) return sr_convert_error(ctx->cvtctx,"Unknown error reading MIDI file.");
   
   /* Encode, inserting delays and forcing unpaired Note On to duration zero.
    */
@@ -640,8 +613,8 @@ static int eau_from_midi_inner(struct eau_from_midi *ctx) {
   int err;
 
   // Create the MIDI stream. "1000" means it will report timing in milliseconds, convenient for EAU.
-  if (!(ctx->midi=midi_file_new(ctx->src,ctx->srcc,1000))) {
-    return eau_from_midi_error(ctx,"Failed to decode MIDI file.");
+  if (!(ctx->midi=midi_file_new(ctx->cvtctx->src,ctx->cvtctx->srcc,1000))) {
+    return sr_convert_error(ctx->cvtctx,"Failed to decode MIDI file.");
   }
   
   // Output begins with signature and a default tempo. We may return here to update the tempo.
@@ -656,7 +629,7 @@ static int eau_from_midi_inner(struct eau_from_midi *ctx) {
   if (sr_encode_raw(ctx->dst,"\0\0\0\0",4)<0) return -1;
   if ((err=eau_from_midi_chdr(ctx))<0) return err;
   int chdrlen=ctx->dst->c-chdrlenp-4;
-  if (chdrlen<0) return eau_from_midi_error(ctx,"Impossible length %d for channel headers.",chdrlen);
+  if (chdrlen<0) return sr_convert_error(ctx->cvtctx,"Impossible length %d for channel headers.",chdrlen);
   ((uint8_t*)ctx->dst->v)[chdrlenp+0]=chdrlen>>24;
   ((uint8_t*)ctx->dst->v)[chdrlenp+1]=chdrlen>>16;
   ((uint8_t*)ctx->dst->v)[chdrlenp+2]=chdrlen>>8;
@@ -668,7 +641,7 @@ static int eau_from_midi_inner(struct eau_from_midi *ctx) {
   if (sr_encode_raw(ctx->dst,"\0\0\0\0",4)<0) return -1;
   if ((err=eau_from_midi_events(ctx))<0) return err;
   int evtlen=ctx->dst->c-evtlenp-4;
-  if (evtlen<0) return eau_from_midi_error(ctx,"Impossible length %d for events block.",chdrlen);
+  if (evtlen<0) return sr_convert_error(ctx->cvtctx,"Impossible length %d for events block.",chdrlen);
   ((uint8_t*)ctx->dst->v)[evtlenp+0]=evtlen>>24;
   ((uint8_t*)ctx->dst->v)[evtlenp+1]=evtlen>>16;
   ((uint8_t*)ctx->dst->v)[evtlenp+2]=evtlen>>8;
@@ -682,7 +655,7 @@ static int eau_from_midi_inner(struct eau_from_midi *ctx) {
   if (!ctx->strip_names) {
     if ((err=eau_from_midi_text(ctx))<0) return err;
     int textlen=ctx->dst->c-textlenp-4;
-    if (textlen<0) return eau_from_midi_error(ctx,"Impossible length %d for text block.",chdrlen);
+    if (textlen<0) return sr_convert_error(ctx->cvtctx,"Impossible length %d for text block.",chdrlen);
     ((uint8_t*)ctx->dst->v)[textlenp+0]=textlen>>24;
     ((uint8_t*)ctx->dst->v)[textlenp+1]=textlen>>16;
     ((uint8_t*)ctx->dst->v)[textlenp+2]=textlen>>8;
@@ -695,16 +668,13 @@ static int eau_from_midi_inner(struct eau_from_midi *ctx) {
 /* EAU from MIDI, main entry point.
  */
  
-int eau_cvt_eau_midi(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg) {
+int eau_cvt_eau_midi(struct sr_convert_context *cvtctx) {
   struct eau_from_midi ctx={
-    .dst=dst,
-    .src=src,
-    .srcc=srcc,
-    .path=path,
-    .get_chdr=get_chdr,
-    .strip_names=strip_names,
-    .errmsg=errmsg,
+    .cvtctx=cvtctx,
+    .dst=cvtctx->dst,
+    .get_chdr=eau_get_chdr,
   };
+  sr_convert_arg_int(&ctx.strip_names,cvtctx,"strip",5);
   int err=eau_from_midi_inner(&ctx);
   eau_from_midi_cleanup(&ctx);
   return err;

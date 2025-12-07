@@ -374,18 +374,16 @@ static int eggdev_cb_post_convert(struct http_xfer *req,struct http_xfer *rsp) {
   struct sr_encoder *src=http_xfer_get_body(req);
   struct sr_encoder *dst=http_xfer_get_body(rsp);
   int dstc0=dst->c;
-  char srcfmtstr[32],dstfmtstr[32],ns[32];
+  char srcfmtstr[32],dstfmtstr[32];
   int srcfmtc=http_xfer_get_param(srcfmtstr,sizeof(srcfmtstr),req,"srcfmt",6);
   int dstfmtc=http_xfer_get_param(dstfmtstr,sizeof(dstfmtstr),req,"dstfmt",6);
-  int nsc=http_xfer_get_param(ns,sizeof(ns),req,"ns",2);
   if ((srcfmtc<0)||(srcfmtc>sizeof(srcfmtstr))) srcfmtc=0;
   if ((dstfmtc<0)||(dstfmtc>sizeof(dstfmtstr))) dstfmtc=0;
-  if ((nsc<0)||(nsc>sizeof(ns))) nsc=0;
 
   int srcfmt=eggdev_fmt_eval(srcfmtstr,srcfmtc);
   int dstfmt=eggdev_fmt_eval(dstfmtstr,dstfmtc);
   if (srcfmt<1) srcfmt=eggdev_fmt_by_signature(src->v,src->c);
-  eggdev_convert_fn convert=eggdev_get_converter(dstfmt,srcfmt);
+  sr_convert_fn convert=eggdev_get_converter(dstfmt,srcfmt);
   if (!convert) return http_xfer_set_status(rsp,500,"No converter for formats %d=>%d",srcfmt,dstfmt);
   
   // Put the resolved formats in the response, whether pass or fail.
@@ -395,15 +393,17 @@ static int eggdev_cb_post_convert(struct http_xfer *req,struct http_xfer *rsp) {
   if ((dstfmtc>0)&&(dstfmtc<=sizeof(dstfmtstr))) http_xfer_set_header(rsp,"X-dstfmt",8,dstfmtstr,dstfmtc);
 
   struct sr_encoder errmsg={0};
-  struct eggdev_convert_context ctx={
+  struct sr_convert_context ctx={
     .dst=dst,
     .src=src->v,
     .srcc=src->c,
-    .ns=ns,
-    .nsc=nsc,
     .errmsg=&errmsg,
   };
+  const char *query=0;
+  int queryc=http_xfer_get_query(&query,req);
+  sr_convert_argv_from_http_query(&ctx,query,queryc);
   int err=convert(&ctx);
+  sr_convert_free_argv(&ctx);
   if (err>=0) {
     sr_encoder_cleanup(&errmsg);
     return http_xfer_set_status(rsp,200,"OK");

@@ -5,6 +5,8 @@
 #ifndef EGGDEV_CONVERT_H
 #define EGGDEV_CONVERT_H
 
+#include "opt/serial/serial.h"
+
 #define EGGDEV_FMT_egg         1
 #define EGGDEV_FMT_exe         2
 #define EGGDEV_FMT_zip         3
@@ -17,7 +19,6 @@
 #define EGGDEV_FMT_wav        10
 #define EGGDEV_FMT_mid        11
 #define EGGDEV_FMT_eau        12
-#define EGGDEV_FMT_eaut       13
 #define EGGDEV_FMT_wasm       14
 #define EGGDEV_FMT_metadata   15
 #define EGGDEV_FMT_metatxt    16
@@ -36,16 +37,11 @@
 #define EGGDEV_FMT_ico        29
 #define EGGDEV_FMT_FOR_EACH \
   _(egg) _(exe) _(zip) _(html) _(css) _(js) \
-  _(png) _(gif) _(jpeg) _(wav) _(mid) _(eau) _(eaut) \
+  _(png) _(gif) _(jpeg) _(wav) _(mid) _(eau) \
   _(wasm) _(metadata) _(metatxt) _(strings) _(strtxt) \
   _(tilesheet) _(tstxt) _(decalsheet) _(dstxt) \
   _(map) _(maptxt) _(sprite) _(sprtxt) _(cmdlist) _(cmdltxt) \
   _(ico)
-  
-/* Conversion flags.
- * These will take generic-ish names, and what a converter uses them for is up to it.
- */
-#define EGGDEV_CVTFLAG_STRIP 0x00000001 /* Generally: Remove commentary. Song: Remove names. */
 
 /* Format properties and detection.
  */
@@ -61,50 +57,34 @@ const char *eggdev_guess_mime_type(const void *src,int srcc,const char *path,int
 
 /* Primitive converters.
  */
-struct eggdev_convert_context {
-  struct sr_encoder *dst; // REQUIRED
-  const void *src; int srcc; // REQUIRED
-  const char *ns; int nsc; // "CMD" namespace identifier.
-  const char *refname;
-  int lineno0;
-  struct sr_encoder *errmsg; // OPTIONAL. If present, errors log here instead of stderr, and even if no (refname).
-  uint32_t flags;
-  int rate,chanc; // Only used when producing WAV. Until we find any other need for them.
-};
-int eggdev_convert_noop(struct eggdev_convert_context *ctx); // Just copy (src) to (dst), no conversion.
-int eggdev_egg_from_exe(struct eggdev_convert_context *ctx); // ie extract ROM.
-int eggdev_egg_from_zip(struct eggdev_convert_context *ctx); // Zip must contain "game.bin" at its root.
-int eggdev_zip_from_egg(struct eggdev_convert_context *ctx);
-int eggdev_png_from_png(struct eggdev_convert_context *ctx); // Same format, but some optimizations.
-int eggdev_wav_from_eau(struct eggdev_convert_context *ctx); // Stands a synthesizer and records it.
-int eggdev_wav_from_eaut(struct eggdev_convert_context *ctx);
-int eggdev_wav_from_mid(struct eggdev_convert_context *ctx);
-int eggdev_eau_from_eaut(struct eggdev_convert_context *ctx);
-int eggdev_eau_from_mid(struct eggdev_convert_context *ctx);
-int eggdev_eaut_from_eau(struct eggdev_convert_context *ctx);
-int eggdev_eaut_from_mid(struct eggdev_convert_context *ctx);
-int eggdev_mid_from_eau(struct eggdev_convert_context *ctx);
-int eggdev_mid_from_eaut(struct eggdev_convert_context *ctx);
-int eggdev_metadata_from_metatxt(struct eggdev_convert_context *ctx);
-int eggdev_metatxt_from_metadata(struct eggdev_convert_context *ctx);
-int eggdev_strings_from_strtxt(struct eggdev_convert_context *ctx);
-int eggdev_strtxt_from_strings(struct eggdev_convert_context *ctx);
-int eggdev_tilesheet_from_tstxt(struct eggdev_convert_context *ctx);
-int eggdev_tstxt_from_tilesheet(struct eggdev_convert_context *ctx);
-int eggdev_decalsheet_from_dstxt(struct eggdev_convert_context *ctx);
-int eggdev_dstxt_from_decalsheet(struct eggdev_convert_context *ctx);
-int eggdev_map_from_maptxt(struct eggdev_convert_context *ctx);
-int eggdev_maptxt_from_map(struct eggdev_convert_context *ctx);
-int eggdev_sprite_from_sprtxt(struct eggdev_convert_context *ctx);
-int eggdev_sprtxt_from_sprite(struct eggdev_convert_context *ctx);
-int eggdev_cmdlist_from_cmdltxt(struct eggdev_convert_context *ctx);
-int eggdev_cmdltxt_from_cmdlist(struct eggdev_convert_context *ctx);
+int eggdev_convert_noop(struct sr_convert_context *ctx); // Just copy (src) to (dst), no conversion.
+int eggdev_egg_from_exe(struct sr_convert_context *ctx); // ie extract ROM.
+int eggdev_egg_from_zip(struct sr_convert_context *ctx); // Zip must contain "game.bin" at its root.
+int eggdev_zip_from_egg(struct sr_convert_context *ctx);
+int eggdev_png_from_png(struct sr_convert_context *ctx); // Same format, but some optimizations.
+int eggdev_wav_from_eau(struct sr_convert_context *ctx); // Stands a synthesizer and records it.
+int eggdev_wav_from_mid(struct sr_convert_context *ctx);
+int eau_cvt_midi_eau(struct sr_convert_context *ctx); // Owned by the "eau" unit, not us.
+int eau_cvt_eau_midi(struct sr_convert_context *ctx); // ''
+int eggdev_metadata_from_metatxt(struct sr_convert_context *ctx);
+int eggdev_metatxt_from_metadata(struct sr_convert_context *ctx);
+int eggdev_strings_from_strtxt(struct sr_convert_context *ctx);
+int eggdev_strtxt_from_strings(struct sr_convert_context *ctx);
+int eggdev_tilesheet_from_tstxt(struct sr_convert_context *ctx);
+int eggdev_tstxt_from_tilesheet(struct sr_convert_context *ctx);
+int eggdev_decalsheet_from_dstxt(struct sr_convert_context *ctx);
+int eggdev_dstxt_from_decalsheet(struct sr_convert_context *ctx);
+int eggdev_map_from_maptxt(struct sr_convert_context *ctx);
+int eggdev_maptxt_from_map(struct sr_convert_context *ctx);
+int eggdev_sprite_from_sprtxt(struct sr_convert_context *ctx);
+int eggdev_sprtxt_from_sprite(struct sr_convert_context *ctx);
+int eggdev_cmdlist_from_cmdltxt(struct sr_convert_context *ctx);
+int eggdev_cmdltxt_from_cmdlist(struct sr_convert_context *ctx);
 
 /* Generic access to converters and conveniences for common use cases.
  * These may use extra parameters in (eggdev): strip,rate,chanc
  */
-typedef int (*eggdev_convert_fn)(struct eggdev_convert_context *ctx);
-eggdev_convert_fn eggdev_get_converter(int dstfmt,int srcfmt);
+sr_convert_fn eggdev_get_converter(int dstfmt,int srcfmt);
 int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,const char *path,struct sr_encoder *errmsg);
 int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,int tid,struct sr_encoder *errmsg);
 int eggdev_convert_auto(
@@ -115,11 +95,5 @@ int eggdev_convert_auto(
   const char *srcpath,
   int tid
 );
-
-/* error_at to print a line number.
- * You provide it relative to (ctx->src) and we add (lineno0).
- */
-int eggdev_convert_error(struct eggdev_convert_context *ctx,const char *fmt,...);
-int eggdev_convert_error_at(struct eggdev_convert_context *ctx,int lineno,const char *fmt,...);
 
 #endif

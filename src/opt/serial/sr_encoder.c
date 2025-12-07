@@ -184,6 +184,37 @@ int sr_encode_base64(struct sr_encoder *encoder,const void *src,int srcc) {
   }
 }
 
+/* URL-Decode into an encoder.
+ */
+ 
+int sr_encode_urldecode(struct sr_encoder *encoder,const char *src,int srcc) {
+  if (encoder->jsonctx<0) return -1;
+  if (!src) srcc=0; else if (srcc<0) { srcc=0; while (src[srcc]) srcc++; }
+  int srcp=0;
+  while (srcp<srcc) {
+    if (src[srcp]=='+') {
+      if (sr_encode_u8(encoder,' ')<0) return -1;
+      srcp++;
+      continue;
+    }
+    if ((src[srcp]=='%')&&(srcp<=srcc-3)) {
+      int hi=sr_digit_eval(src[srcp+1]);
+      int lo=sr_digit_eval(src[srcp+2]);
+      if ((hi>=0)&&(hi<0x10)&&(lo>=0)&&(lo<=0x10)) {
+        if (sr_encode_u8(encoder,(hi<<4)|lo)<0) return -1;
+        srcp+=3;
+        continue;
+      }
+    }
+    const char *raw=src+srcp;
+    int rawc=1;
+    srcp++;
+    while ((srcp<srcc)&&(src[srcp]!='+')&&(src[srcp]!='%')) { srcp++; rawc++; }
+    if (sr_encode_raw(encoder,raw,rawc)<0) return -1;
+  }
+  return 0;
+}
+
 /* JSON assert completion.
  */
  

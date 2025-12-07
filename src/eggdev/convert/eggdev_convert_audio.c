@@ -10,7 +10,7 @@
 /* Get channel header.
  */
  
-static int eggdev_get_chdr(void *dstpp,int fqpid) {
+int eggdev_get_chdr(void *dstpp,int fqpid) {
   if ((fqpid<0)||(fqpid>0xff)) return 0;
   const void *eau=0;
   int eauc=eggdev_config_get_instruments(&eau);
@@ -28,26 +28,13 @@ static int eggdev_get_chdr(void *dstpp,int fqpid) {
   return 0;
 }
 
-/* Eau-to-eggdev adapter.
- */
- 
-static int eggdev_cvt_eau(
-  struct eggdev_convert_context *ctx,
-  int (*eaufn)(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg)
-) {
-  const char *refname=ctx->refname;
-  if (ctx->errmsg&&!refname) refname="<EAU>"; // EAU won't log at all without a refname.
-  int err=eaufn(ctx->dst,ctx->src,ctx->srcc,refname,eggdev_get_chdr,ctx->flags&EGGDEV_CVTFLAG_STRIP,ctx->errmsg);
-  return err;
-}
-
 /* Eggdev-style conversion with intermediary.
  */
  
 static int eggdev_cvt_intermediary(
-  struct eggdev_convert_context *ctx,
-  int (*first)(struct eggdev_convert_context *ctx),
-  int (*second)(struct eggdev_convert_context *ctx)
+  struct sr_convert_context *ctx,
+  int (*first)(struct sr_convert_context *ctx),
+  int (*second)(struct sr_convert_context *ctx)
 ) {
   struct sr_encoder tmp={0};
   struct sr_encoder *pvdst=ctx->dst;
@@ -70,42 +57,11 @@ static int eggdev_cvt_intermediary(
   return err;
 }
 
-/* Conversions provided directly by eau unit.
- */
-
-int eggdev_eau_from_eaut(struct eggdev_convert_context *ctx) {
-  return eggdev_cvt_eau(ctx,eau_cvt_eau_eaut);
-}
-
-int eggdev_eau_from_mid(struct eggdev_convert_context *ctx) {
-  return eggdev_cvt_eau(ctx,eau_cvt_eau_midi);
-}
-
-int eggdev_eaut_from_eau(struct eggdev_convert_context *ctx) {
-  return eggdev_cvt_eau(ctx,eau_cvt_eaut_eau);
-}
-
-int eggdev_mid_from_eau(struct eggdev_convert_context *ctx) {
-  return eggdev_cvt_eau(ctx,eau_cvt_midi_eau);
-}
-
 /* Other conversions, use EAU as an intermediary.
  */
 
-int eggdev_mid_from_eaut(struct eggdev_convert_context *ctx) {
-  return eggdev_cvt_intermediary(ctx,eggdev_eau_from_eaut,eggdev_mid_from_eau);
-}
-
-int eggdev_eaut_from_mid(struct eggdev_convert_context *ctx) {
-  return eggdev_cvt_intermediary(ctx,eggdev_eau_from_mid,eggdev_eaut_from_eau);
-}
-
-int eggdev_wav_from_mid(struct eggdev_convert_context *ctx) {
-  return eggdev_cvt_intermediary(ctx,eggdev_eau_from_mid,eggdev_wav_from_eau);
-}
-
-int eggdev_wav_from_eaut(struct eggdev_convert_context *ctx) {
-  return eggdev_cvt_intermediary(ctx,eggdev_eau_from_eaut,eggdev_wav_from_eau);
+int eggdev_wav_from_mid(struct sr_convert_context *ctx) {
+  return eggdev_cvt_intermediary(ctx,eau_cvt_eau_midi,eggdev_wav_from_eau);
 }
 
 /* Wrap this EAU song in a fake ROM and install in the synthesizer.
@@ -152,10 +108,11 @@ static int eggdev_synth_emit_stereo(struct sr_encoder *dst,const float *l,const 
 /* WAV from EAU, stand a synthesizer and yoink its output.
  */
 
-int eggdev_wav_from_eau(struct eggdev_convert_context *ctx) {
+int eggdev_wav_from_eau(struct sr_convert_context *ctx) {
 
-  int rate=ctx->rate;
-  int chanc=ctx->chanc;
+  int rate,chanc;
+  if (sr_convert_arg_int(&rate,ctx,"rate",4)<0) rate=44100;
+  if (sr_convert_arg_int(&chanc,ctx,"chanc",5)<0) chanc=2;
   if ((rate<1)||(chanc<1)) {
     rate=44100;
     chanc=2;
@@ -168,22 +125,22 @@ int eggdev_wav_from_eau(struct eggdev_convert_context *ctx) {
   // Stand the synthesizer and load our song.
   int err=0;
   if (synth_init(rate,chanc,buffer_frames)<0) {
-    return eggdev_convert_error(ctx,"Failed to create synthesizer, rate=%d, chanc=%d.",rate,chanc);
+    return sr_convert_error(ctx,"Failed to create synthesizer, rate=%d, chanc=%d.",rate,chanc);
   }
   float *bufl=synth_get_buffer(0);
   float *bufr=synth_get_buffer(1);
   if (!bufl||((chanc>=2)&&!bufr)) {
     synth_quit();
-    return eggdev_convert_error(ctx,"Failed to acquire synth buffers.");
+    return sr_convert_error(ctx,"Failed to acquire synth buffers.");
   }
   if (eggdev_synth_install_song(ctx->src,ctx->srcc)<0) {
     synth_quit();
-    return eggdev_convert_error(ctx,"Failed to install song in temporary synthesizer.");
+    return sr_convert_error(ctx,"Failed to install song in temporary synthesizer.");
   }
   synth_play_song(1,1,0,1.0f,0.0f);
   if (synth_get(1,0xff,SYNTH_PROP_EXISTENCE)<1.0f) {
     synth_quit();
-    return eggdev_convert_error(ctx,"Failed to start song. Likely misencoded.\n");
+    return sr_convert_error(ctx,"Failed to start song. Likely misencoded.");
   }
   
   // Emit WAV header.
@@ -216,7 +173,7 @@ int eggdev_wav_from_eau(struct eggdev_convert_context *ctx) {
     framec_total+=buffer_frames;
     if (framec_total>framec_panic) {
       synth_quit();
-      return eggdev_convert_error(ctx,"Panic! Song has not completed after %d frames.",framec_total);
+      return sr_convert_error(ctx,"Panic! Song has not completed after %d frames.",framec_total);
     }
   }
   synth_quit();
@@ -236,7 +193,7 @@ int eggdev_wav_from_eau(struct eggdev_convert_context *ctx) {
   // Fill in the two lengths.
   int flen=ctx->dst->c-flenp-4;
   int dlen=ctx->dst->c-dlenp-4;
-  if ((flen<1)||(dlen<1)) return eggdev_convert_error(ctx,"Invalid file lengths after truncation.");
+  if ((flen<1)||(dlen<1)) return sr_convert_error(ctx,"Invalid file lengths after truncation.");
   ((uint8_t*)ctx->dst->v)[flenp+0]=flen;
   ((uint8_t*)ctx->dst->v)[flenp+1]=flen>>8;
   ((uint8_t*)ctx->dst->v)[flenp+2]=flen>>16;

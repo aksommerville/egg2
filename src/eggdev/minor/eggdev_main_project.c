@@ -229,6 +229,7 @@ static int gen_metadata(struct eggdev_project_context *ctx) {
   if (sr_encode_fmt(&ctx->scratch,"#source=\n")<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,"#persistKey=\n")<0) return -1;
   if (sr_encode_fmt(&ctx->scratch,"#menu=none\n")<0) return -1;
+  if (sr_encode_fmt(&ctx->scratch,"#params=\n")<0) return -1;
   return eggdev_project_write(ctx,"src/data/metadata",ctx->scratch.v,ctx->scratch.c);
 }
 

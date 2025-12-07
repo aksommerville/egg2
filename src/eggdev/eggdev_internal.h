@@ -34,6 +34,8 @@ extern struct g {
   char *format;
   int verbatim;
   int terminate;
+  char **argv; // WEAK, entire original command line preserved here for converters' reference.
+  int argc;
   
 // Populated the first time you ask for eggdev_config_key_by_index() or eggdev_config_get():
   struct eggdev_bcfg {
@@ -151,5 +153,7 @@ int eggdev_res_ids_from_path(int *tid,int *rid,const char *path);
 
 // The meat and potatoes of `eggdev dump`, also available programmatically.
 void eggdev_dump_serial(const uint8_t *src,int srcc);
+
+int eggdev_get_chdr(void *dstpp,int fqpid);
 
 #endif

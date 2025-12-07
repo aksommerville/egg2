@@ -11,12 +11,11 @@
  */
  
 struct midi_from_eau {
+  struct sr_convert_context *cvtctx;
   struct sr_encoder *dst; // WEAK
   const uint8_t *src;
   int srcc;
-  const char *path;
   int strip_names;
-  struct sr_encoder *errmsg;
   int status;
   struct midi_from_eau_hold {
     uint8_t chid,noteid;
@@ -27,32 +26,6 @@ struct midi_from_eau {
 
 static void midi_from_eau_cleanup(struct midi_from_eau *ctx) {
   if (ctx->holdv) free(ctx->holdv);
-}
-
-/* Logging.
- */
- 
-static int midi_from_eau_error(struct midi_from_eau *ctx,const char *fmt,...) {
-  if (ctx->status<0) return ctx->status; // Already logged.
-  if (ctx->errmsg||ctx->path) { // Logging enabled or captured.
-    va_list vargs;
-    va_start(vargs,fmt);
-    char msg[256];
-    int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
-    if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
-    while (msgc&&((unsigned char)msg[msgc-1]<=0x20)) msgc--; // eg trailing LF, I might include by accident.
-    if (ctx->errmsg) {
-      sr_encode_fmt(ctx->errmsg,"%s: %.*s\n",ctx->path?ctx->path:"midi_from_eau",msgc,msg);
-    } else if (ctx->path) {
-      fprintf(stderr,"%s: %.*s\n",ctx->path,msgc,msg);
-    } else { // Not currently reachable.
-      fprintf(stderr,"%.*s\n",msgc,msg);
-    }
-    ctx->status=-2;
-  } else { // No logging, just fail.
-    ctx->status=-1;
-  }
-  return ctx->status;
 }
 
 /* Add hold.
@@ -136,7 +109,7 @@ static int midi_from_eau_events(struct midi_from_eau *ctx,const uint8_t *src,int
       // Note Off, Note On, and Wheel can pass straight thru; MIDI and EAU are identical.
       // We're not emitting Running Status. If we ever want to, to reduce file sizes, would need some more involved logic here.
       case 0x80: case 0x90: case 0xe0: {
-          if (srcp>srcc-2) return midi_from_eau_error(ctx,"Unexpected EOF reading MIDI event");
+          if (srcp>srcc-2) return sr_convert_error(ctx->cvtctx,"Unexpected EOF reading MIDI event");
           uint8_t a=src[srcp++];
           uint8_t b=src[srcp++];
           FLUSH_DELAY
@@ -146,7 +119,7 @@ static int midi_from_eau_events(struct midi_from_eau *ctx,const uint8_t *src,int
         } break;
         
       case 0xa0: { // Note Once
-          if (srcp>srcc-3) return midi_from_eau_error(ctx,"Unexpected EOF reading Note Once event");
+          if (srcp>srcc-3) return sr_convert_error(ctx->cvtctx,"Unexpected EOF reading Note Once event");
           uint8_t a=src[srcp++];
           uint8_t b=src[srcp++];
           uint8_t c=src[srcp++];
@@ -171,7 +144,7 @@ static int midi_from_eau_events(struct midi_from_eau *ctx,const uint8_t *src,int
           }
         } break;
         
-      default: return midi_from_eau_error(ctx,"Unexpected lead 0x%02x around %d/%d in events.",lead,srcp-1,srcc);
+      default: return sr_convert_error(ctx->cvtctx,"Unexpected lead 0x%02x around %d/%d in events.",lead,srcp-1,srcc);
     }
   }
   
@@ -200,7 +173,7 @@ static int midi_from_eau_events(struct midi_from_eau *ctx,const uint8_t *src,int
  */
  
 static int midi_from_eau_internal(struct midi_from_eau *ctx) {
-  if ((ctx->srcc<6)||memcmp(ctx->src,"\0EAU",4)) return midi_from_eau_error(ctx,"Malformed EAU");
+  if ((ctx->srcc<6)||memcmp(ctx->src,"\0EAU",4)) return sr_convert_error(ctx->cvtctx,"Malformed EAU");
   int tempo=(ctx->src[4]<<8)|ctx->src[5];
   int srcp=6;
   
@@ -212,7 +185,7 @@ static int midi_from_eau_internal(struct midi_from_eau *ctx) {
       name##_len=(ctx->src[srcp]<<24)|(ctx->src[srcp+1]<<16)|(ctx->src[srcp+2]<<8)|ctx->src[srcp+3]; \
       srcp+=4; \
       if ((name##_len<0)||(srcp>ctx->srcc-name##_len)) { \
-        return midi_from_eau_error(ctx,"%s chunk overruns EOF",#name); \
+        return sr_convert_error(ctx->cvtctx,"%s chunk overruns EOF",#name); \
       } \
       name=ctx->src+srcp; \
       srcp+=name##_len; \
@@ -226,7 +199,7 @@ static int midi_from_eau_internal(struct midi_from_eau *ctx) {
    * Since EAU times everything in ms, we'll keep things simple and arrange timing such that a tick is one millisecond.
    * That's fast but not unusual for a MIDI file.
    */
-  if ((tempo<1)||(tempo>0x7fff)) return midi_from_eau_error(ctx,"Tempo %s yields an invalid MIDI division. Please keep in 1..32767.",tempo);
+  if ((tempo<1)||(tempo>0x7fff)) return sr_convert_error(ctx->cvtctx,"Tempo %s yields an invalid MIDI division. Please keep in 1..32767.",tempo);
   sr_encode_raw(ctx->dst,"MThd\0\0\0\6",8);
   sr_encode_intbe(ctx->dst,1,2); // Format
   sr_encode_intbe(ctx->dst,1,2); // Track Count
@@ -272,7 +245,7 @@ static int midi_from_eau_internal(struct midi_from_eau *ctx) {
   /* Fill in MTrk length.
    */
   int mtrklen=ctx->dst->c-mtrklenp-4;
-  if (mtrklen<0) return midi_from_eau_error(ctx,"Ended up with invalid length %d for MTrk",mtrklen);
+  if (mtrklen<0) return sr_convert_error(ctx->cvtctx,"Ended up with invalid length %d for MTrk",mtrklen);
   ((uint8_t*)ctx->dst->v)[mtrklenp+0]=mtrklen>>24;
   ((uint8_t*)ctx->dst->v)[mtrklenp+1]=mtrklen>>16;
   ((uint8_t*)ctx->dst->v)[mtrklenp+2]=mtrklen>>8;
@@ -284,13 +257,13 @@ static int midi_from_eau_internal(struct midi_from_eau *ctx) {
 /* MIDI from EAU, main entry point.
  */
 
-int eau_cvt_midi_eau(struct sr_encoder *dst,const void *src,int srcc,const char *path,eau_get_chdr_fn get_chdr,int strip_names,struct sr_encoder *errmsg) {
+int eau_cvt_midi_eau(struct sr_convert_context *cvtctx) {
   struct midi_from_eau ctx={
-    .dst=dst,
-    .src=src,
-    .srcc=srcc,
-    .strip_names=strip_names,
-    .errmsg=errmsg,
+    .cvtctx=cvtctx,
+    .dst=cvtctx->dst,
+    .src=cvtctx->src,
+    .srcc=cvtctx->srcc,
+    //.strip_names=strip_names,//TODO
   };
   int err=midi_from_eau_internal(&ctx);
   midi_from_eau_cleanup(&ctx);

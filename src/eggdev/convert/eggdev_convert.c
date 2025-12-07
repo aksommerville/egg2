@@ -170,7 +170,6 @@ int eggdev_tid_by_path_or_fmt(const char *path,int pathc,int fmt) {
     case EGGDEV_FMT_wav:
     case EGGDEV_FMT_mid:
     case EGGDEV_FMT_eau:
-    case EGGDEV_FMT_eaut:
       return EGG_TID_sound;
     case EGGDEV_FMT_wasm:
       return EGG_TID_code;
@@ -259,7 +258,6 @@ const char *eggdev_mime_type_by_fmt(int fmt) {
     case EGGDEV_FMT_wav: return "audio/wav"; // not standard
     case EGGDEV_FMT_mid: return "audio/midi";
     case EGGDEV_FMT_eau: return "application/x-egg-eau";
-    case EGGDEV_FMT_eaut: return "text/x-egg-eau";
     case EGGDEV_FMT_wasm: return "application/wasm";
     case EGGDEV_FMT_metadata: return "application/x-egg-metadata";
     case EGGDEV_FMT_metatxt: return "text/x-egg-metadata";
@@ -305,7 +303,7 @@ const char *eggdev_guess_mime_type(const void *src,int srcc,const char *path,int
 /* Get converter.
  */
  
-eggdev_convert_fn eggdev_get_converter(int dstfmt,int srcfmt) {
+sr_convert_fn eggdev_get_converter(int dstfmt,int srcfmt) {
 
   /* Certain same-to-same conversions do have a "converter" for optimization or what-have-you.
    */
@@ -328,20 +326,13 @@ eggdev_convert_fn eggdev_get_converter(int dstfmt,int srcfmt) {
       } break;
     case EGGDEV_FMT_wav: switch (srcfmt) {
         case EGGDEV_FMT_eau: return eggdev_wav_from_eau;
-        case EGGDEV_FMT_eaut: return eggdev_wav_from_eaut;
         case EGGDEV_FMT_mid: return eggdev_wav_from_mid;
       } break;
     case EGGDEV_FMT_mid: switch (srcfmt) {
-        case EGGDEV_FMT_eau: return eggdev_mid_from_eau;
-        case EGGDEV_FMT_eaut: return eggdev_mid_from_eaut;
+        case EGGDEV_FMT_eau: return eau_cvt_midi_eau;
       } break;
     case EGGDEV_FMT_eau: switch (srcfmt) {
-        case EGGDEV_FMT_eaut: return eggdev_eau_from_eaut;
-        case EGGDEV_FMT_mid: return eggdev_eau_from_mid;
-      } break;
-    case EGGDEV_FMT_eaut: switch (srcfmt) {
-        case EGGDEV_FMT_eau: return eggdev_eaut_from_eau;
-        case EGGDEV_FMT_mid: return eggdev_eaut_from_mid;
+        case EGGDEV_FMT_mid: return eau_cvt_eau_midi;
       } break;
     case EGGDEV_FMT_metadata: switch (srcfmt) {
         case EGGDEV_FMT_metatxt: return eggdev_metadata_from_metatxt;
@@ -401,29 +392,18 @@ int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,int s
   }
   int tid=eggdev_tid_by_path_or_fmt(path,-1,srcfmt);
   int dstfmt=eggdev_fmt_by_tid(tid);
-  eggdev_convert_fn cvt=eggdev_get_converter(dstfmt,srcfmt);
+  sr_convert_fn cvt=eggdev_get_converter(dstfmt,srcfmt);
   if (!cvt) {
     if (!path) return -1;
     fprintf(stderr,"%s: Failed to select data conversion.\n",path);
     return -2;
   }
-  char tname[32];
-  int tnamec=eggdev_tid_repr(tname,sizeof(tname),tid);
-  if ((tnamec<0)||(tnamec>sizeof(tname))) tnamec=0;
-  struct eggdev_convert_context ctx={
+  struct sr_convert_context ctx={
     .dst=dst,
     .src=src,
     .srcc=srcc,
-    .ns=tname,
-    .nsc=tnamec,
     .refname=path,
-    .lineno0=0,
     .errmsg=errmsg,
-    .flags=
-      EGGDEV_CVTFLAG_STRIP|
-    0,
-    .rate=g.rate,
-    .chanc=g.chanc,
   };
   return cvt(&ctx);
 }
@@ -439,24 +419,15 @@ int eggdev_convert_for_extraction(struct sr_encoder *dst,const void *src,int src
     }
   }
   int dstfmt=eggdev_fmt_portable(srcfmt);
-  eggdev_convert_fn cvt=eggdev_get_converter(dstfmt,srcfmt);
+  sr_convert_fn cvt=eggdev_get_converter(dstfmt,srcfmt);
   if (!cvt) return -1;
-  char tname[32];
-  int tnamec=eggdev_tid_repr(tname,sizeof(tname),tid);
-  if ((tnamec<0)||(tnamec>sizeof(tname))) tnamec=0;
-  struct eggdev_convert_context ctx={
+  struct sr_convert_context ctx={
     .dst=dst,
     .src=src,
     .srcc=srcc,
-    .ns=tname,
-    .nsc=tnamec,
     .refname=0,
     .lineno0=0,
     .errmsg=errmsg,
-    .flags=
-    0,
-    .rate=g.rate,
-    .chanc=g.chanc,
   };
   return cvt(&ctx);
 }
@@ -481,71 +452,17 @@ int eggdev_convert_auto(
   if (dstfmt<1) {
     dstfmt=eggdev_fmt_by_path(dstpath,-1);
   }
-  eggdev_convert_fn cvt=eggdev_get_converter(dstfmt,srcfmt);
+  sr_convert_fn cvt=eggdev_get_converter(dstfmt,srcfmt);
   if (!cvt) {
     if (!srcpath) return -1;
     fprintf(stderr,"%s: Failed to determine data conversion.\n",srcpath);
     return -2;
   }
-  if (tid<1) {
-    tid=eggdev_tid_by_path_or_fmt(srcpath,-1,srcfmt);
-    if (tid<1) {
-      tid=eggdev_tid_by_path_or_fmt(dstpath,-1,dstfmt);
-    }
-  }
-  char tname[32];
-  int tnamec=eggdev_tid_repr(tname,sizeof(tname),tid);
-  if ((tnamec<0)||(tnamec>sizeof(tname))) tnamec=0;
-  struct eggdev_convert_context ctx={
+  struct sr_convert_context ctx={
     .dst=dst,
     .src=src,
     .srcc=srcc,
-    .ns=tname,
-    .nsc=tnamec,
     .refname=srcpath,
-    .lineno0=0,
-    .flags=
-      (g.strip?EGGDEV_CVTFLAG_STRIP:0)|
-    0,
-    .rate=g.rate,
-    .chanc=g.chanc,
   };
   return cvt(&ctx);
-}
-
-/* Log error in context.
- */
- 
-static int eggdev_convert_error_inner(struct eggdev_convert_context *ctx,int lineno,const char *fmt,va_list vargs) {
-  if (!fmt) fmt="";
-  char msg[256];
-  int msgc=vsnprintf(msg,sizeof(msg),fmt,vargs);
-  if ((msgc<0)||(msgc>=sizeof(msg))) msgc=0;
-  while (msgc&&((unsigned char)msg[msgc-1]<=0x20)) msgc--;
-  const char *refname=ctx->refname;
-  if (!refname) refname="<input>";
-  else if ((refname[0]=='-')&&!refname[1]) refname="<stdin>";
-  if (ctx->errmsg) {
-    if (lineno) sr_encode_fmt(ctx->errmsg,"%s:%d: %.*s\n",refname,lineno,msgc,msg);
-    else sr_encode_fmt(ctx->errmsg,"%s: %.*s\n",refname,msgc,msg);
-  } else {
-    if (lineno) fprintf(stderr,"%s:%d: %.*s\n",refname,lineno,msgc,msg);
-    else fprintf(stderr,"%s: %.*s\n",refname,msgc,msg);
-  }
-  return -2;
-}
- 
-int eggdev_convert_error(struct eggdev_convert_context *ctx,const char *fmt,...) {
-  if (!ctx||(!ctx->errmsg&&!ctx->refname)) return -1;
-  va_list vargs;
-  va_start(vargs,fmt);
-  return eggdev_convert_error_inner(ctx,0,fmt,vargs);
-}
-
-int eggdev_convert_error_at(struct eggdev_convert_context *ctx,int lineno,const char *fmt,...) {
-  if (!ctx||(!ctx->errmsg&&!ctx->refname)) return -1;
-  lineno+=ctx->lineno0;
-  va_list vargs;
-  va_start(vargs,fmt);
-  return eggdev_convert_error_inner(ctx,lineno,fmt,vargs);
 }

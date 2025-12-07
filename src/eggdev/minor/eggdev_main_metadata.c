@@ -214,14 +214,14 @@ int eggdev_main_metadata() {
   if (!srcfmt) srcfmt=eggdev_fmt_by_path(g.srcpathv[0],-1);
   if (!srcfmt) srcfmt=EGGDEV_FMT_exe; // "exe" for a generic search thru the file for embedded rom.
   if (srcfmt!=EGGDEV_FMT_egg) {
-    eggdev_convert_fn convert=eggdev_get_converter(EGGDEV_FMT_egg,srcfmt);
+    sr_convert_fn convert=eggdev_get_converter(EGGDEV_FMT_egg,srcfmt);
     if (!convert) {
       free(src);
       fprintf(stderr,"%s: Not an Egg ROM and no converter found.\n",g.srcpathv[0]);
       return -2;
     }
     struct sr_encoder dst={0};
-    struct eggdev_convert_context ctx={
+    struct sr_convert_context ctx={
       .dst=&dst,
       .src=src,
       .srcc=srcc,
