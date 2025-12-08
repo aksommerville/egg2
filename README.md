@@ -80,7 +80,10 @@ Features we *do* support:
 - - Seems like after any edit to opcode or params, deleting existing steps will not work. Add a new step after, you can delete that one.
 - - Yep. WaveModal.validate() returns a new object every time, but we'd been searching for commands by identity. Add a per-step id.
 - [ ] SongEditor: Pitch wheel disabled at MidiService.readEvent() because my device is noisy. Find a long-term solution.
-- [ ] Wave modal: Per-stage UI. Esp for harmonics, I want a clickable bar chart.
+- [x] Wave modal: Per-stage UI. Esp for harmonics, I want a clickable bar chart.
+- - Only Harmonics warrants unique UI, but it really really does.
+- - Also add default params for when you change opcode.
+- - Also up/down movement buttons per step.
 - [ ] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".
 - [ ] MapEditor: New map in "neighbors" regime created an incorrect (zeroes) command in the new one, and didn't create in the old one.
 - - ...might only happen to the first map in a layer, or maybe the first in a project. Wishbone got it on the first neighbor creation, and not after.

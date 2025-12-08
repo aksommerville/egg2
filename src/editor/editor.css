@@ -1101,3 +1101,12 @@ input.toggle:checked + label.toggle.light {
   padding-top: 1em;
   padding-bottom: 1em;
 }
+
+.HarmonicsModal {
+  display: flex;
+  flex-direction: column;
+  width: 90vw;
+}
+.HarmonicsModal > input { /* both coefc and submit */
+  width: 100px;
+}

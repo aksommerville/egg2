@@ -5,6 +5,7 @@ import { Audio } from "../Audio.js";
 import { Dom } from "../Dom.js";
 import { Encoder } from "../Encoder.js";
 import { encodeWave } from "./EauDecoder.js";
+import { HarmonicsModal } from "./HarmonicsModal.js";
 
 export class WaveUi {
   static getDependencies() {
@@ -145,12 +146,18 @@ export class WaveModal {
     row.innerHTML = "";
     row.setAttribute("data-command-id", command.id);
     this.dom.spawn(row, "INPUT", { type: "button", value: "X", "on-click": () => this.onDeleteCommand(command, row) });
-    const opcodeSelect = this.dom.spawn(row, "SELECT");
+    this.dom.spawn(row, "INPUT", { type: "button", value: "^", "on-click": () => this.onMoveCommand(command, row, -1) });
+    this.dom.spawn(row, "INPUT", { type: "button", value: "v", "on-click": () => this.onMoveCommand(command, row, 1) });
+    const opcodeSelect = this.dom.spawn(row, "SELECT", { name: "opcode" });
     for (let opcode=0; opcode<256; opcode++) {
       const opcodek = opcode;
       this.dom.spawn(opcodeSelect, "OPTION", { value: opcodek }, opcodek + " " + (COMMANDS[opcodek]?.name || ""));
     }
     opcodeSelect.value = command.opcode;
+    this.dom.spawn(row, "INPUT",
+      COMMANDS[command.opcode]?.modal ? ["editbtn"] : ["editbtn", "hidden"],
+      { type: "button", value: "...", "on-click": () => this.onEditInModal(command, row) }
+    );
     this.dom.spawn(row, "INPUT", { type: "text", name: "param", value: this.reprHex(command.param) });
   }
   
@@ -263,7 +270,62 @@ export class WaveModal {
     this.onInput(null);
   }
   
+  onMoveCommand(command, row, d) {
+    const cmdp = this.wave.findIndex(c => c.id === command.id);
+    if (cmdp < 0) return;
+    const cmdnp = cmdp + d;
+    if ((cmdnp < 0) || (cmdnp >= this.wave.length)) return;
+    if (d < 0) {
+      const otherRow = row.parentNode.querySelector(`.command:nth-child(${cmdnp+1})`);
+      if (!otherRow) return;
+      row.parentNode.insertBefore(row, otherRow);
+    } else {
+      const otherRow = row.parentNode.querySelector(`.command:nth-child(${cmdnp+1})`);
+      if (!otherRow) return; // This actually does happen because sometimes there's a dummy EOF at the end, which doesn't have UI yet. No worries.
+      row.parentNode.insertBefore(otherRow, row);
+    }
+    const cmd = this.wave[cmdp];
+    this.wave[cmdp] = this.wave[cmdnp];
+    this.wave[cmdnp] = cmd;
+    this.onInput(null);
+  }
+  
+  onEditInModal(command, row) {
+    if (!(command = this.wave.find(c => c.id === command.id))) return; // Incoming (command) is not necessarily resident anymore.
+    const meta = COMMANDS[command?.opcode];
+    if (!meta?.modal) return;
+    const param = row.querySelector("input[name='param']");
+    if (!param) return;
+    const modal = this.dom.spawnModal(meta.modal);
+    modal.setup(param.value);
+    modal.result.then(rsp => {
+      if (!rsp) return;
+      param.value = rsp;
+      this.onInput(null);
+    });
+  }
+  
+  // (event) may be null, for simple "dirty" signals.
   onInput(event) {
+    
+    // If it's the opcode changing, replace the corresponding param from our metadata. Do this before validate().
+    // Also on opcode changes, show or hide the "..." button to edit in an opcode-specific modal.
+    if (event?.target?.name === "opcode") {
+      const opcode = +event.target.value;
+      const meta = COMMANDS[opcode];
+      if (meta) {
+        const param = event.target.parentNode?.querySelector("input[name='param']");
+        if (param) {
+          param.value = meta.begin || "";
+        }
+      }
+      const editbtn = event.target.parentNode?.querySelector("input.editbtn");
+      if (editbtn) {
+        if (meta?.modal) editbtn.classList.remove("hidden");
+        else editbtn.classList.add("hidden");
+      }
+    }
+    
     const result = this.validate();
     const messageElement = this.element.querySelector(".message");
     if (result instanceof Array) { // Valid.
@@ -279,17 +341,17 @@ export class WaveModal {
 /* Indexed by opcode.
  */
 const COMMANDS = [
-  /*00*/ { name: "EOF",       paramlen: 0,      initial: false },
-  /*01*/ { name: "SINE",      paramlen: 0,      initial: true },
-  /*02*/ { name: "SQUARE",    paramlen: 1,      initial: true },
-  /*03*/ { name: "SAW",       paramlen: 1,      initial: true },
-  /*04*/ { name: "TRIANGLE",  paramlen: 1,      initial: true },
-  /*05*/ { name: "NOISE",     paramlen: 0,      initial: true },
-  /*06*/ { name: "ROTATE",    paramlen: 1,      initial: false },
-  /*07*/ { name: "GAIN",      paramlen: 2,      initial: false },
-  /*08*/ { name: "CLIP",      paramlen: 1,      initial: false },
-  /*09*/ { name: "NORM",      paramlen: 1,      initial: false },
-  /*0a*/ { name: "HARMONICS", paramlen: "b0x2", initial: false },
-  /*0b*/ { name: "HARMFM",    paramlen: 1,      initial: false },
-  /*0c*/ { name: "MAVG",      paramlen: 1,      initial: false },
+  /*00*/ { name: "EOF",       paramlen: 0,      initial: false, begin: "" },
+  /*01*/ { name: "SINE",      paramlen: 0,      initial: true,  begin: "" },
+  /*02*/ { name: "SQUARE",    paramlen: 1,      initial: true,  begin: "00" },
+  /*03*/ { name: "SAW",       paramlen: 1,      initial: true,  begin: "00" },
+  /*04*/ { name: "TRIANGLE",  paramlen: 1,      initial: true,  begin: "00" },
+  /*05*/ { name: "NOISE",     paramlen: 0,      initial: true,  begin: "" },
+  /*06*/ { name: "ROTATE",    paramlen: 1,      initial: false, begin: "80" },
+  /*07*/ { name: "GAIN",      paramlen: 2,      initial: false, begin: "0200" },
+  /*08*/ { name: "CLIP",      paramlen: 1,      initial: false, begin: "ff" },
+  /*09*/ { name: "NORM",      paramlen: 1,      initial: false, begin: "ff" },
+  /*0a*/ { name: "HARMONICS", paramlen: "b0x2", initial: false, begin: "02 c000 4000", modal: HarmonicsModal },
+  /*0b*/ { name: "HARMFM",    paramlen: 1,      initial: false, begin: "11" },
+  /*0c*/ { name: "MAVG",      paramlen: 1,      initial: false, begin: "20" },
 ];
