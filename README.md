@@ -85,7 +85,7 @@ Features we *do* support:
 - [ ] native incfg: Timeout. See incfg_update().
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
-- [ ] Native build didn't detect a change to libfont.
+- [x] Native build didn't detect a change to libfont.
 - - Easily reproducible. Change any `util` unit and rerun the demo via `make run`. Ought to rebuild but doesn't.
 - [ ] native: Input config without umenu produces a black screen. (check web too)
 - [ ] Launch from within map editor didn't rebuild.

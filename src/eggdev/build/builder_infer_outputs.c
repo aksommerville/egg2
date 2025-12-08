@@ -155,6 +155,33 @@ static int builder_add_separate_html_source(struct builder *builder,struct build
   return 0;
 }
 
+/* Determine list of util imports and add the static libraries as prereqs to executable (or wasm module).
+ */
+ 
+static int builder_add_utils(struct builder *builder,struct builder_target *target,struct builder_file *exefile) {
+  const char *utillist=0;
+  int utillistc=eggdev_client_get_string(&utillist,"importUtil",10);
+  if (utillistc<1) return 0;
+  int ulp=0;
+  while (ulp<utillistc) {
+    const char *token=utillist+ulp;
+    int tokenc=0;
+    while ((ulp<utillistc)&&(utillist[ulp++]!=',')) tokenc++;
+    // We're guessing the library's path. Target-specific Makefiles are the authority for it, and they might do something different.
+    // Worry about that if it ever comes up. For now, I'll assume libraries are always "libfoo.a".
+    char path[1024];
+    int pathc=snprintf(path,sizeof(path),"%s/out/%.*s/lib%.*s.a",g.sdkpath,target->namec,target->name,tokenc,token);
+    if ((pathc<1)||(pathc>=sizeof(path))) return -1;
+    struct builder_file *libfile=builder_add_file(builder,path,pathc);
+    if (!libfile) return -1;
+    libfile->target=target;
+    libfile->hint=0;
+    libfile->ready=1;
+    if (builder_file_add_req(exefile,libfile)<0) return -1;
+  }
+  return 0;
+}
+
 /* Singleton outputs for "web" packaging.
  */
  
@@ -185,6 +212,9 @@ static int builder_infer_target_outputs_web(struct builder *builder,struct build
   libfile->hint=0;
   libfile->ready=1;
   if (builder_file_add_req(wasmfile,libfile)<0) return -1;
+  
+  // Add imported util units.
+  if (builder_add_utils(builder,target,wasmfile)<0) return -1;
   
   // A proper Egg ROM. This is portable and everything, so I'm putting under out instead of mid.
   pathc=snprintf(path,sizeof(path),"%.*s/out/%.*s-%.*s.egg",builder->rootc,builder->root,builder->projnamec,builder->projname,target->namec,target->name);
@@ -257,6 +287,9 @@ static int builder_infer_target_outputs_exe(struct builder *builder,struct build
   libfile->hint=0; // "external; don't build", we don't have or need a hint for that.
   libfile->ready=1;
   if (builder_file_add_req(exefile,libfile)<0) return -1;
+  
+  // Add imported util units.
+  if (builder_add_utils(builder,target,exefile)<0) return -1;
   
   return 0;
 }

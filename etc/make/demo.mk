@@ -14,10 +14,11 @@ $(demo_EXE):$(eggdev_EXE) $(demo_EGGRT) $(demo_SRCFILES);$(eggdev_EXE) build $(d
 
 # Don't use `eggdev run` for demo-run. Since we're part of eggdev's build, we would want to wipe demo/out first.
 # And since we're not using eggdev for this, we need to be MacOS-savvy.
+# "all" as a prereq here is a bit overkill, but without it, we miss changes to util libs. And possibly other things.
 ifeq (macos,$($(EGG_NATIVE_TARGET)_PACKAGING))
-  demo-run:$(demo_EXE);open -W $(demo_SRCDIR)/out/demo-$(EGG_NATIVE_TARGET).app --args --reopen-tty=$(shell tty)
+  demo-run:all;open -W $(demo_SRCDIR)/out/demo-$(EGG_NATIVE_TARGET).app --args --reopen-tty=$(shell tty)
 else
-  demo-run:$(demo_EXE);$(demo_EXE)
+  demo-run:all;$(demo_EXE)
 endif
 
 # http://localhost:8080/api/buildfirst/index.html
