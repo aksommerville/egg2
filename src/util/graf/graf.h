@@ -93,6 +93,7 @@ void graf_triangle_tex(struct graf *graf,
 /* Queue a set of connected triangles.
  * The "begin" call takes three points, so it starts with a valid set.
  * Each "more" adds one more triangle, using the last two points we saw, plus the new one.
+ * WARNING: If we run out of buffer during a line or triangle strip batch, some units will be lost.
  */
 void graf_triangle_strip_begin(struct graf *graf,
   int16_t ax,int16_t ay,uint32_t argba,
@@ -102,6 +103,7 @@ void graf_triangle_strip_begin(struct graf *graf,
 void graf_triangle_strip_more(struct graf *graf,int16_t x,int16_t y,uint32_t rgba);
 
 /* Connected triangles, with tex coords instead of colors.
+ * WARNING: If we run out of buffer during a line or triangle strip batch, some units will be lost.
  */
 void graf_triangle_strip_tex_begin(struct graf *graf,
   int16_t ax,int16_t ay,int16_t atx,int16_t aty,

@@ -92,12 +92,15 @@ void graf_set_filter(struct graf *graf,uint8_t filter) {
 /* Add a vertex, and flush first if we're out of room.
  */
  
-static void *graf_add_vertex(struct graf *graf) {
-  if (graf->vtxc>sizeof(graf->vtxv)-graf->vtxsize) {
+static void *graf_add_vertex(struct graf *graf,int addc) {
+  if (addc<1) return 0;
+  int addsize=graf->vtxsize*addc;
+  if (addsize>sizeof(graf->vtxv)) return 0;
+  if (graf->vtxc>sizeof(graf->vtxv)-addsize) {
     graf_flush(graf);
   }
   void *vtx=graf->vtxv+graf->vtxc;
-  graf->vtxc+=graf->vtxsize;
+  graf->vtxc+=addsize;
   return vtx;
 }
 
@@ -108,7 +111,8 @@ void graf_point(struct graf *graf,int16_t x,int16_t y,uint32_t rgba) {
   if (graf->vtxc&&(graf->un.mode!=EGG_RENDER_POINTS)) graf_flush(graf);
   graf->un.mode=EGG_RENDER_POINTS;
   graf->vtxsize=sizeof(struct egg_render_raw);
-  struct egg_render_raw *vtx=graf_add_vertex(graf);
+  struct egg_render_raw *vtx=graf_add_vertex(graf,1);
+  if (!vtx) return;
   vtx->x=x;
   vtx->y=y;
   vtx->r=rgba>>24;
@@ -124,27 +128,28 @@ void graf_line(struct graf *graf,
   if (graf->vtxc&&(graf->un.mode!=EGG_RENDER_LINES)) graf_flush(graf);
   graf->un.mode=EGG_RENDER_LINES;
   graf->vtxsize=sizeof(struct egg_render_raw);
-  struct egg_render_raw *vtx=graf_add_vertex(graf);
-  vtx->x=ax;
-  vtx->y=ay;
-  vtx->r=argba>>24;
-  vtx->g=argba>>16;
-  vtx->b=argba>>8;
-  vtx->a=argba;
-  vtx=graf_add_vertex(graf);
-  vtx->x=bx;
-  vtx->y=by;
-  vtx->r=brgba>>24;
-  vtx->g=brgba>>16;
-  vtx->b=brgba>>8;
-  vtx->a=brgba;
+  struct egg_render_raw *vtx=graf_add_vertex(graf,2);
+  if (!vtx) return;
+  vtx[0].x=ax;
+  vtx[0].y=ay;
+  vtx[0].r=argba>>24;
+  vtx[0].g=argba>>16;
+  vtx[0].b=argba>>8;
+  vtx[0].a=argba;
+  vtx[1].x=bx;
+  vtx[1].y=by;
+  vtx[1].r=brgba>>24;
+  vtx[1].g=brgba>>16;
+  vtx[1].b=brgba>>8;
+  vtx[1].a=brgba;
 }
 
 void graf_line_strip_begin(struct graf *graf,int16_t x,int16_t y,uint32_t rgba) {
   graf_flush(graf);
   graf->un.mode=EGG_RENDER_LINE_STRIP;
   graf->vtxsize=sizeof(struct egg_render_raw);
-  struct egg_render_raw *vtx=graf_add_vertex(graf);
+  struct egg_render_raw *vtx=graf_add_vertex(graf,1);
+  if (!vtx) return;
   vtx->x=x;
   vtx->y=y;
   vtx->r=rgba>>24;
@@ -155,7 +160,8 @@ void graf_line_strip_begin(struct graf *graf,int16_t x,int16_t y,uint32_t rgba) 
 
 void graf_line_strip_more(struct graf *graf,int16_t x,int16_t y,uint32_t rgba) {
   if (graf->un.mode!=EGG_RENDER_LINE_STRIP) return;
-  struct egg_render_raw *vtx=graf_add_vertex(graf);
+  struct egg_render_raw *vtx=graf_add_vertex(graf,1);
+  if (!vtx) return;
   vtx->x=x;
   vtx->y=y;
   vtx->r=rgba>>24;
@@ -175,27 +181,26 @@ void graf_triangle(struct graf *graf,
   if (graf->vtxc&&(graf->un.mode!=EGG_RENDER_TRIANGLES)) graf_flush(graf);
   graf->un.mode=EGG_RENDER_TRIANGLES;
   graf->vtxsize=sizeof(struct egg_render_raw);
-  struct egg_render_raw *vtx=graf_add_vertex(graf);
-  vtx->x=ax;
-  vtx->y=ay;
-  vtx->r=argba>>24;
-  vtx->g=argba>>16;
-  vtx->b=argba>>8;
-  vtx->a=argba;
-  vtx=graf_add_vertex(graf);
-  vtx->x=bx;
-  vtx->y=by;
-  vtx->r=brgba>>24;
-  vtx->g=brgba>>16;
-  vtx->b=brgba>>8;
-  vtx->a=brgba;
-  vtx=graf_add_vertex(graf);
-  vtx->x=cx;
-  vtx->y=cy;
-  vtx->r=crgba>>24;
-  vtx->g=crgba>>16;
-  vtx->b=crgba>>8;
-  vtx->a=crgba;
+  struct egg_render_raw *vtx=graf_add_vertex(graf,3);
+  if (!vtx) return;
+  vtx[0].x=ax;
+  vtx[0].y=ay;
+  vtx[0].r=argba>>24;
+  vtx[0].g=argba>>16;
+  vtx[0].b=argba>>8;
+  vtx[0].a=argba;
+  vtx[1].x=bx;
+  vtx[1].y=by;
+  vtx[1].r=brgba>>24;
+  vtx[1].g=brgba>>16;
+  vtx[1].b=brgba>>8;
+  vtx[1].a=brgba;
+  vtx[2].x=cx;
+  vtx[2].y=cy;
+  vtx[2].r=crgba>>24;
+  vtx[2].g=crgba>>16;
+  vtx[2].b=crgba>>8;
+  vtx[2].a=crgba;
 }
 
 void graf_triangle_tex(struct graf *graf,
@@ -206,24 +211,23 @@ void graf_triangle_tex(struct graf *graf,
   if (graf->vtxc&&(graf->un.mode!=EGG_RENDER_TRIANGLES)) graf_flush(graf);
   graf->un.mode=EGG_RENDER_TRIANGLES;
   graf->vtxsize=sizeof(struct egg_render_raw);
-  struct egg_render_raw *vtx=graf_add_vertex(graf);
-  vtx->x=ax;
-  vtx->y=ay;
-  vtx->tx=atx;
-  vtx->ty=aty;
-  vtx->r=vtx->g=vtx->b=vtx->a=0;
-  vtx=graf_add_vertex(graf);
-  vtx->x=bx;
-  vtx->y=by;
-  vtx->tx=btx;
-  vtx->ty=bty;
-  vtx->r=vtx->g=vtx->b=vtx->a=0;
-  vtx=graf_add_vertex(graf);
-  vtx->x=cx;
-  vtx->y=cy;
-  vtx->tx=ctx;
-  vtx->ty=cty;
-  vtx->r=vtx->g=vtx->b=vtx->a=0;
+  struct egg_render_raw *vtx=graf_add_vertex(graf,3);
+  if (!vtx) return;
+  vtx[0].x=ax;
+  vtx[0].y=ay;
+  vtx[0].tx=atx;
+  vtx[0].ty=aty;
+  vtx[0].r=vtx->g=vtx->b=vtx->a=0;
+  vtx[1].x=bx;
+  vtx[1].y=by;
+  vtx[1].tx=btx;
+  vtx[1].ty=bty;
+  vtx[1].r=vtx->g=vtx->b=vtx->a=0;
+  vtx[2].x=cx;
+  vtx[2].y=cy;
+  vtx[2].tx=ctx;
+  vtx[2].ty=cty;
+  vtx[2].r=vtx->g=vtx->b=vtx->a=0;
 }
 
 void graf_triangle_strip_begin(struct graf *graf,
@@ -234,32 +238,32 @@ void graf_triangle_strip_begin(struct graf *graf,
   graf_flush(graf);
   graf->un.mode=EGG_RENDER_TRIANGLE_STRIP;
   graf->vtxsize=sizeof(struct egg_render_raw);
-  struct egg_render_raw *vtx=graf_add_vertex(graf);
-  vtx->x=ax;
-  vtx->y=ay;
-  vtx->r=argba>>24;
-  vtx->g=argba>>16;
-  vtx->b=argba>>8;
-  vtx->a=argba;
-  vtx=graf_add_vertex(graf);
-  vtx->x=bx;
-  vtx->y=by;
-  vtx->r=brgba>>24;
-  vtx->g=brgba>>16;
-  vtx->b=brgba>>8;
-  vtx->a=brgba;
-  vtx=graf_add_vertex(graf);
-  vtx->x=cx;
-  vtx->y=cy;
-  vtx->r=crgba>>24;
-  vtx->g=crgba>>16;
-  vtx->b=crgba>>8;
-  vtx->a=crgba;
+  struct egg_render_raw *vtx=graf_add_vertex(graf,3);
+  if (!vtx) return;
+  vtx[0].x=ax;
+  vtx[0].y=ay;
+  vtx[0].r=argba>>24;
+  vtx[0].g=argba>>16;
+  vtx[0].b=argba>>8;
+  vtx[0].a=argba;
+  vtx[1].x=bx;
+  vtx[1].y=by;
+  vtx[1].r=brgba>>24;
+  vtx[1].g=brgba>>16;
+  vtx[1].b=brgba>>8;
+  vtx[1].a=brgba;
+  vtx[2].x=cx;
+  vtx[2].y=cy;
+  vtx[2].r=crgba>>24;
+  vtx[2].g=crgba>>16;
+  vtx[2].b=crgba>>8;
+  vtx[2].a=crgba;
 }
 
 void graf_triangle_strip_more(struct graf *graf,int16_t x,int16_t y,uint32_t rgba) {
   if (graf->un.mode!=EGG_RENDER_TRIANGLE_STRIP) return;
-  struct egg_render_raw *vtx=graf_add_vertex(graf);
+  struct egg_render_raw *vtx=graf_add_vertex(graf,1);
+  if (!vtx) return;
   vtx->x=x;
   vtx->y=y;
   vtx->r=rgba>>24;
@@ -276,29 +280,29 @@ void graf_triangle_strip_tex_begin(struct graf *graf,
   graf_flush(graf);
   graf->un.mode=EGG_RENDER_TRIANGLE_STRIP;
   graf->vtxsize=sizeof(struct egg_render_raw);
-  struct egg_render_raw *vtx=graf_add_vertex(graf);
-  vtx->x=ax;
-  vtx->y=ay;
-  vtx->tx=atx;
-  vtx->ty=aty;
-  vtx->r=vtx->g=vtx->b=vtx->a=0;
-  vtx=graf_add_vertex(graf);
-  vtx->x=bx;
-  vtx->y=by;
-  vtx->tx=btx;
-  vtx->ty=bty;
-  vtx->r=vtx->g=vtx->b=vtx->a=0;
-  vtx=graf_add_vertex(graf);
-  vtx->x=cx;
-  vtx->y=cy;
-  vtx->tx=ctx;
-  vtx->ty=cty;
-  vtx->r=vtx->g=vtx->b=vtx->a=0;
+  struct egg_render_raw *vtx=graf_add_vertex(graf,3);
+  if (!vtx) return;
+  vtx[0].x=ax;
+  vtx[0].y=ay;
+  vtx[0].tx=atx;
+  vtx[0].ty=aty;
+  vtx[0].r=vtx[0].g=vtx[0].b=vtx[0].a=0;
+  vtx[1].x=bx;
+  vtx[1].y=by;
+  vtx[1].tx=btx;
+  vtx[1].ty=bty;
+  vtx[1].r=vtx[1].g=vtx[1].b=vtx[1].a=0;
+  vtx[2].x=cx;
+  vtx[2].y=cy;
+  vtx[2].tx=ctx;
+  vtx[2].ty=cty;
+  vtx[2].r=vtx[2].g=vtx[2].b=vtx[2].a=0;
 }
 
 void graf_triangle_strip_tex_more(struct graf *graf,int16_t x,int16_t y,int16_t tx,int16_t ty) {
   if (graf->un.mode!=EGG_RENDER_TRIANGLE_STRIP) return;
-  struct egg_render_raw *vtx=graf_add_vertex(graf);
+  struct egg_render_raw *vtx=graf_add_vertex(graf,1);
+  if (!vtx) return;
   vtx->x=x;
   vtx->y=y;
   vtx->tx=tx;
@@ -354,7 +358,8 @@ void graf_tile(struct graf *graf,int16_t x,int16_t y,uint8_t tileid,uint8_t xfor
   if (graf->vtxc&&(graf->un.mode!=EGG_RENDER_TILE)) graf_flush(graf);
   graf->un.mode=EGG_RENDER_TILE;
   graf->vtxsize=sizeof(struct egg_render_tile);
-  struct egg_render_tile *vtx=graf_add_vertex(graf);
+  struct egg_render_tile *vtx=graf_add_vertex(graf,1);
+  if (!vtx) return;
   vtx->x=x;
   vtx->y=y;
   vtx->tileid=tileid;
@@ -372,7 +377,8 @@ void graf_fancy(struct graf *graf,
   if (graf->vtxc&&(graf->un.mode!=EGG_RENDER_FANCY)) graf_flush(graf);
   graf->un.mode=EGG_RENDER_FANCY;
   graf->vtxsize=sizeof(struct egg_render_fancy);
-  struct egg_render_fancy *vtx=graf_add_vertex(graf);
+  struct egg_render_fancy *vtx=graf_add_vertex(graf,1);
+  if (!vtx) return;
   vtx->x=x;
   vtx->y=y;
   vtx->tileid=tileid;

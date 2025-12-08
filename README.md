@@ -78,22 +78,20 @@ Features we *do* support:
 - [ ] SongEditor: Sometimes deleting a post step doesn't work.
 - [ ] SongEditor: Pitch wheel disabled at MidiService.readEvent() because my device is noisy. Find a long-term solution.
 - [ ] Wave modal: Per-stage UI. Esp for harmonics, I want a clickable bar chart.
-- [x] EnvUi: Is it enforcing a minimum 1 s or something? These typically run around 300 ms. Aim for the existing chart to fill like 3/4 of the available width.
-- [x] SpriteEditor: Setting image or tile from the conveniences should fill a blank row if there is one, rather than adding.
 - [ ] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".
-- [x] DecalsheetEditor: After using one of the clicky macros, sidebar scrolls to the top again. Can we keep it where it was? So annoying.
 - [ ] MapEditor: New map in "neighbors" regime created an incorrect (zeroes) command in the new one, and didn't create in the old one.
 - - ...might only happen to the first map in a layer, or maybe the first in a project. Wishbone got it on the first neighbor creation, and not after.
 - - ...no, it did happen later in wishbone too.
-- [x] editor: Sprite in the edit-poi modal are sorted as strings; prefer to sort numerically by rid.
-- [x] editor: Creating new tilesheet or decalsheet, somehow prompt existing images.
-- [ ] graf: Can flush due to full buffer in the middle of raw geometry, breaking sets. eg try a bunch of `EGG_RENDER_LINES`.
+- [x] graf: Can flush due to full buffer in the middle of raw geometry, breaking sets. eg try a bunch of `EGG_RENDER_LINES`.
 - - Confirm that all impacted cases are single calls into graf. If so, the fix will be easy, just start allocating multiple vertices at once internally.
+- - ...did that. Line strip and triangle strip are still susceptible to this. I kind of think it won't come up, realistically.
 - [ ] eggrun: Saving to "EGG_SDK/out/linux/eggrun.save" for every game. Should be "{{ROM}}.save".
 - [ ] native incfg: Timeout. See incfg_update().
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
 - [ ] Native build didn't detect a change to libfont.
+- - Easily reproducible. Change any `util` unit and rerun the demo via `make run`. Ought to rebuild but doesn't.
+- [ ] native: Input config without umenu produces a black screen. (check web too)
 - [ ] Launch from within map editor didn't rebuild.
 - [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols.
 - [ ] `eggdev build` generates an Egg file qualified with "-web". That's correct, since there might be multiple web targets. But I dunno, should we drop the "-web" if there's just one target?

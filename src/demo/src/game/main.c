@@ -158,7 +158,8 @@ void egg_client_render() {
   struct modal *modal=g.modalv[g.modalc-1];
   graf_reset(&g.graf);
   if (!modal->opaque) {
-    graf_gradient_rect(&g.graf,0,0,FBW,FBH,0x100808ff,0x302020ff,0x302020ff,0x100808ff);
+    //graf_gradient_rect(&g.graf,0,0,FBW,FBH,0x100808ff,0x302020ff,0x302020ff,0x100808ff);
+    graf_fill_rect(&g.graf,0,0,FBW,FBH,0x204030ff);
   }
   if (modal->render) modal->render(modal);
   

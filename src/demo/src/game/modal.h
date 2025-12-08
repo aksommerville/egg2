@@ -70,4 +70,13 @@ VIDEO_FOR_EACH_TEST
 AUDIO_FOR_EACH_TEST
 #undef _
 
+/* Regression sub-menu.
+ */
+#define REGRESSION_TEST_20251207_graf_sequence_break 1
+#define REGRESSION_FOR_EACH_TEST \
+  _(20251207_graf_sequence_break)
+#define _(tag) struct modal *modal_new_regression_##tag();
+REGRESSION_FOR_EACH_TEST
+#undef _
+
 #endif
