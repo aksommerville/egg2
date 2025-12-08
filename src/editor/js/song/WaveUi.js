@@ -102,10 +102,12 @@ export class WaveModal {
     this.wave = [];
     this.name = "";
     this.cb = v => {};
+    
+    if (!WaveModal.nextId) WaveModal.nextId = 1;
   }
   
   setup(wave, name, cb) {
-    this.wave = wave;
+    this.wave = wave.map(step => ({ ...step, id: WaveModal.nextId++ }));
     this.name = name;
     this.cb = cb;
     this.buildUi();
@@ -141,6 +143,7 @@ export class WaveModal {
   
   rebuildRow(row, command) {
     row.innerHTML = "";
+    row.setAttribute("data-command-id", command.id);
     this.dom.spawn(row, "INPUT", { type: "button", value: "X", "on-click": () => this.onDeleteCommand(command, row) });
     const opcodeSelect = this.dom.spawn(row, "SELECT");
     for (let opcode=0; opcode<256; opcode++) {
@@ -210,7 +213,7 @@ export class WaveModal {
           default: return `Unknown param mode ${JSON.stringify(meta.paramlen)}`; // my fault, not yours
         }
       }
-      wave.push({ opcode, param });
+      wave.push({ opcode, param, id: +row.getAttribute("data-command-id") });
     }
     
     // Empty is ok, and don't append an EOF.
@@ -218,7 +221,7 @@ export class WaveModal {
 
     // If it doesn't end with EOF, insert one.
     if (wave[wave.length - 1].opcode !== 0x00) {
-      wave.push({ opcode: 0, param: new Uint8Array(0) });
+      wave.push({ opcode: 0, param: new Uint8Array(0), id: WaveModal.nextId++ });
     }
     
     // If it contains an EOF before the final position, fail.
@@ -243,7 +246,7 @@ export class WaveModal {
    ***********************************************************************/
    
   onAddCommand() {
-    const command = { opcode: 0, param: new Uint8Array(0) };
+    const command = { opcode: 0, param: new Uint8Array(0), id: WaveModal.nextId++ };
     this.wave.push(command);
     const scroller = this.element.querySelector(".scroller");
     const row = this.dom.spawn(scroller, "DIV", ["command"]);
@@ -252,7 +255,8 @@ export class WaveModal {
   }
   
   onDeleteCommand(command, row) {
-    const p = this.wave.indexOf(command);
+    // (command) is not necessarily resident in (this.wave) anymore, but its id should be. Same id, same command, even if they're different.
+    const p = this.wave.findIndex(c => c.id === command.id);
     if (p < 0) return;
     this.wave.splice(p, 1);
     row.remove();
