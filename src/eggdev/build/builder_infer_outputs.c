@@ -217,7 +217,21 @@ static int builder_infer_target_outputs_web(struct builder *builder,struct build
   if (builder_add_utils(builder,target,wasmfile)<0) return -1;
   
   // A proper Egg ROM. This is portable and everything, so I'm putting under out instead of mid.
-  pathc=snprintf(path,sizeof(path),"%.*s/out/%.*s-%.*s.egg",builder->rootc,builder->root,builder->projnamec,builder->projname,target->namec,target->name);
+  // In the very likely case that we're the only target with "web" packaging, omit the target suffix.
+  int have_other_web=0;
+  const struct builder_target *otarget=builder->targetv;
+  for (i=builder->targetc;i-->0;otarget++) {
+    if (otarget==target) continue;
+    if (otarget->pkgc!=3) continue;
+    if (memcmp(otarget->pkg,"web",3)) continue;
+    have_other_web=1;
+    break;
+  }
+  if (have_other_web) { // We'll be building multiple ROMs here. Qualify with the target name.
+    pathc=snprintf(path,sizeof(path),"%.*s/out/%.*s-%.*s.egg",builder->rootc,builder->root,builder->projnamec,builder->projname,target->namec,target->name);
+  } else { // Likely: We're the only target building a proper ROM. Just call it "TheGame.egg", no target qualifier.
+    pathc=snprintf(path,sizeof(path),"%.*s/out/%.*s.egg",builder->rootc,builder->root,builder->projnamec,builder->projname);
+  }
   if ((pathc<1)||(pathc>=sizeof(path))) return -1;
   struct builder_file *romfile=builder_add_file(builder,path,pathc);
   if (!romfile) return -1;
