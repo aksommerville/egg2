@@ -39,6 +39,7 @@ extern struct eggrt {
     int kc,vc;
   } paramv[PARAM_LIMIT];
   int paramc;
+  const char *rompath; // Null except in eggrun, with an external ROM. Only eggrun sets this.
   
   int terminate;
   int status;

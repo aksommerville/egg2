@@ -219,7 +219,23 @@ static char *eggrt_store_append_suffix(const char *a,int ac,const char *b,int bc
  
 static char *eggrt_store_generate_path() {
 
-  // If we ever do external loading of Wasm ROMs, the preferred path will be adjacent to the ROM.
+  /* If (eggrt.rompath) is set, we must go adjacent to that, not (exename).
+   */
+  if (eggrt.rompath) {
+    const char *src=eggrt.rompath;
+    int srcc=0,slashp=-1,dotp=-1;
+    while (src[srcc]) {
+      if (src[srcc]=='/') {
+        slashp=srcc;
+        dotp=-1;
+      } else if (src[srcc]=='.') {
+        dotp=srcc;
+      }
+      srcc++;
+    }
+    if (dotp>slashp) srcc=dotp;
+    return eggrt_store_append_suffix(src,srcc,".save",5);
+  }
   
   /* Measure the executable's path length and position of first slash.
    * Note that this is the name launched by. If we're on the PATH, it should be just the basename.

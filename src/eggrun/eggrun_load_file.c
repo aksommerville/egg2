@@ -250,6 +250,7 @@ int eggrun_load_file(void *dstpp,int argc,char **argv) {
     return -2;
   }
   
+  eggrt.rompath=path;
   if (rom!=serial) free(serial);
   *(void**)dstpp=rom;
   return romc;
