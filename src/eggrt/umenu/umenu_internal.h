@@ -41,6 +41,7 @@ struct umenu {
   int inlistener;
   int incx,incy,incw,inch; // Output bounds of the gamepad pic. 32x16 naturally but could be scaled up.
   int incscale;
+  double incclock;
   // All 15 buttons are defined always. Order depends on the ROM's preference, and some may be marked unused.
   struct incfg_button {
     int dstbtnid;

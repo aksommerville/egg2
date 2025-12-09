@@ -88,7 +88,7 @@ Features we *do* support:
 - [ ] MapEditor: New map in "neighbors" regime created an incorrect (zeroes) command in the new one, and didn't create in the old one.
 - - ...might only happen to the first map in a layer, or maybe the first in a project. Wishbone got it on the first neighbor creation, and not after.
 - - ...no, it did happen later in wishbone too.
-- [ ] native incfg: Timeout. See incfg_update().
+- [x] native incfg: Timeout. See incfg_update().
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
 - [x] Native build didn't detect a change to libfont.

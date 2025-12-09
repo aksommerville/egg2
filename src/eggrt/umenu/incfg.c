@@ -6,6 +6,9 @@
 #define LABEL_POSITION_BELOW 2
 #define LABEL_POSITION_BELOWER 3
 
+#define TIMEOUT_DEVICE 10.0
+#define TIMEOUT_BUTTON 10.0
+
 /* Enable or disable all devices in inmgr.
  */
  
@@ -262,6 +265,7 @@ static void incfg_advance(struct umenu *umenu) {
   const char *name=0;
   int namec=eggrt_string_get(&name,1,button->strix);
   incfg_add_label(umenu,LABEL_POSITION_BELOW,name,namec,0xffffffff);
+  umenu->incclock=TIMEOUT_BUTTON;
 }
 
 /* Mark done any button matching this mask.
@@ -435,6 +439,7 @@ static void incfg_populate_buttonv(struct umenu *umenu) {
   }
   
   uint16_t gotbits=0;
+  memset(umenu->buttonv,0,sizeof(umenu->buttonv));
   struct incfg_button *button=umenu->buttonv;
   umenu->buttonc=0;
   umenu->buttonp=-1;
@@ -499,6 +504,7 @@ void incfg_begin(struct umenu *umenu) {
   umenu->incfg=1;
   umenu->inlistener=inmgr_listen(incfg_on_event,umenu);
   incfg_enable_all(umenu,0); // A bit heavy-handed. If a device was deliberately disabled before, we'll accidentally reenable it on quit.
+  umenu->incclock=TIMEOUT_DEVICE;
   
   while (umenu->labelc>0) {
     umenu->labelc--;
@@ -528,7 +534,14 @@ void incfg_update(struct umenu *umenu,double elapsed) {
   if ((umenu->incblink-=elapsed)<0.0) {
     umenu->incblink+=BLINK_PERIOD;
   }
-  //TODO If waiting for a button too long, time out and move along.
+  if ((umenu->incclock-=elapsed)<0.0) {
+    if (umenu->incdevid) {
+      incfg_advance(umenu);
+    } else {
+      incfg_finish(umenu);
+      return;
+    }
+  }
 }
 
 /* Render.
@@ -592,5 +605,31 @@ void incfg_render(struct umenu *umenu) {
       };
       egg_render(&un,vtxv,sizeof(vtxv));
     }
+  }
+  
+  // If our clock is under 5, show it (ceiling; single digit).
+  if (umenu->incclock<5.0) {
+    const int glyphw=3;
+    const int glyphh=5;
+    int digit=(int)(umenu->incclock+1.0);
+    if (digit<1) digit=1; else if (digit>5) digit=5;
+    int dstx=(umenu->fbw>>1)-1;
+    int dsty=umenu->fbh-15;
+    int srcx=192+digit*glyphw;
+    int srcy=149;
+    struct egg_render_raw vtxv[]={
+      {dstx,dsty,srcx,srcy},
+      {dstx,dsty+glyphh,srcx,srcy+glyphh},
+      {dstx+glyphw,dsty,srcx+glyphw,srcy},
+      {dstx+glyphw,dsty+glyphh,srcx+glyphw,srcy+glyphh},
+    };
+    struct egg_render_uniform un={
+      .mode=EGG_RENDER_TRIANGLE_STRIP,
+      .dsttexid=1,
+      .srctexid=umenu->texid_tiles,
+      .alpha=0xff,
+      .tint=0xff0000ff,
+    };
+    render_render(eggrt.render,&un,vtxv,sizeof(vtxv));
   }
 }
