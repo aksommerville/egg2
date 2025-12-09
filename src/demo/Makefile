@@ -5,10 +5,10 @@
 all:
 .SILENT:
 
-ifeq (,$(EGG2_SDK))
-  EGG2_SDK:=../egg2
+ifeq (,$(EGG_SDK))
+  EGG_SDK:=../egg2
 endif
-EGGDEV:=$(EGG2_SDK)/out/eggdev
+EGGDEV:=$(EGG_SDK)/out/eggdev
 
 all:;$(EGGDEV) build
 clean:;rm -rf mid out

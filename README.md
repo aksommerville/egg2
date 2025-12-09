@@ -75,21 +75,15 @@ Features we *do* support:
 
 ## TODO
 
-- [x] SongEditor: Pitch wheel disabled at MidiService.readEvent() because my device is noisy. Find a long-term solution. ...SOLUTION: fuck it, we don't need the wheel.
 - [ ] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".
 - [ ] MapEditor: New map in "neighbors" regime created an incorrect (zeroes) command in the new one, and didn't create in the old one.
 - - ...might only happen to the first map in a layer, or maybe the first in a project. Wishbone got it on the first neighbor creation, and not after.
 - - ...no, it did happen later in wishbone too.
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
-- [x] native: Input config without umenu produces a black screen. (check web too)
-- - Web is fine. After adding timeouts, now native just blinks and comes back.
 - [ ] Launch from within map editor didn't rebuild.
 - [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols.
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
-- [ ] eggstra play: Show CPU consumption.
-- [ ] eggstra play: Read from stdin.
-- [ ] eggstra play: Play WAV files.
 - [ ] windows: System language
 - [ ] macos: System language
 - [ ] macos: eggrun
