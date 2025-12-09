@@ -96,6 +96,8 @@ export class Runtime {
       cancelAnimationFrame(this.pendingFrame);
       this.pendingFrame = null;
     }
+    // Our editor expects this message, when it launches games in a modal. Other wrappers could do the same.
+    window.parent?.postMessage?.({ event: "eggGameTerminated" });
   }
   
   reportError(error) {

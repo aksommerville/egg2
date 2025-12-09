@@ -89,7 +89,7 @@ Features we *do* support:
 - [ ] macos: eggrun
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
 - [ ] Change malloc in egg-stdlib to use Wasm intrinsics, like synth. Then it won't produce a 16 MB ofile.
-- [ ] Editor Launch: Is it possible to dismiss the iframe when game ends? Or allow Esc after it terminates? Having trouble capturing key events for it.
+- [x] Editor Launch: Is it possible to dismiss the iframe when game ends? Or allow Esc after it terminates? Having trouble capturing key events for it.
 - [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
 - [ ] Web incfg could bear some prettying-up.
 - [ ] Review all "TODO" in source, there's a ton of them.
