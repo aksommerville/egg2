@@ -139,10 +139,6 @@ struct umenu *umenu_new(int incfg_only) {
   umenu->input_mode0=eggrt.input_mode;
   eggrt.input_mode=EGG_INPUT_MODE_GAMEPAD;
   
-  if (umenu->incfg_only=incfg_only) {
-    umenu->incfg=1;
-    incfg_begin(umenu);
-  }
   umenu->fbw=eggrt.metadata.fbw;
   umenu->fbh=eggrt.metadata.fbh;
   
@@ -154,6 +150,11 @@ struct umenu *umenu_new(int incfg_only) {
   if (umenu_load_textures(umenu)<0) {
     umenu_del(umenu);
     return 0;
+  }
+  
+  if (umenu->incfg_only=incfg_only) {
+    incfg_begin(umenu);
+    return umenu;
   }
   
   /* Determine tile size. One of 4,8,16,32.

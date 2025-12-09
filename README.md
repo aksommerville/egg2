@@ -75,29 +75,17 @@ Features we *do* support:
 
 ## TODO
 
-- [x] SongEditor: Sometimes deleting a post step doesn't work.
-- - [x] Wave steps too. ...can't repro for post. I must have meant "wave" the first time.
-- - Seems like after any edit to opcode or params, deleting existing steps will not work. Add a new step after, you can delete that one.
-- - Yep. WaveModal.validate() returns a new object every time, but we'd been searching for commands by identity. Add a per-step id.
-- [ ] SongEditor: Pitch wheel disabled at MidiService.readEvent() because my device is noisy. Find a long-term solution.
-- [x] Wave modal: Per-stage UI. Esp for harmonics, I want a clickable bar chart.
-- - Only Harmonics warrants unique UI, but it really really does.
-- - Also add default params for when you change opcode.
-- - Also up/down movement buttons per step.
+- [x] SongEditor: Pitch wheel disabled at MidiService.readEvent() because my device is noisy. Find a long-term solution. ...SOLUTION: fuck it, we don't need the wheel.
 - [ ] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".
 - [ ] MapEditor: New map in "neighbors" regime created an incorrect (zeroes) command in the new one, and didn't create in the old one.
 - - ...might only happen to the first map in a layer, or maybe the first in a project. Wishbone got it on the first neighbor creation, and not after.
 - - ...no, it did happen later in wishbone too.
-- [x] native incfg: Timeout. See incfg_update().
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
-- [x] Native build didn't detect a change to libfont.
-- - Easily reproducible. Change any `util` unit and rerun the demo via `make run`. Ought to rebuild but doesn't.
-- [ ] native: Input config without umenu produces a black screen. (check web too)
+- [x] native: Input config without umenu produces a black screen. (check web too)
+- - Web is fine. After adding timeouts, now native just blinks and comes back.
 - [ ] Launch from within map editor didn't rebuild.
 - [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols.
-- [x] `eggdev build` generates an Egg file qualified with "-web". That's correct, since there might be multiple web targets. But I dunno, should we drop the "-web" if there's just one target?
-- - (if that sounds super pointless, consider: Egg ROMs are universal. It was built as part of the Web process, but it can run anywhere, it's not really a "web" artifact)
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
 - [ ] eggstra play: Show CPU consumption.
 - [ ] eggstra play: Read from stdin.
