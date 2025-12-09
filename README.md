@@ -81,7 +81,7 @@ Features we *do* support:
 - - ...no, it did happen later in wishbone too.
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
-- [ ] Launch from within map editor didn't rebuild.
+- [x] Launch from within map editor didn't rebuild. ...forgot `/api/buildfirst`, easy.
 - [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols.
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
 - [ ] windows: System language

@@ -15,7 +15,7 @@ export class LaunchService {
   }
   
   launch() {
-    const url = `/build/index.html`;
+    const url = `/api/buildfirst/build/index.html`;
     const modal = this.dom.spawnModal(LaunchModal);
     modal.iframe.src = url;
   }
