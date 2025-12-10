@@ -14,7 +14,7 @@ static void _drmgx_del(struct hostio_video *driver) {
 
 static int _drmgx_init(struct hostio_video *driver,const struct hostio_video_setup *config) {
 
-  if (drmgx_init(config->device)<0) return -1;
+  if (drmgx_init(config->device,config->fbw,config->fbh)<0) return -1;
   
   driver->w=drmgx.w;
   driver->h=drmgx.h;

@@ -29,6 +29,7 @@ struct drmgx_fb {
 extern struct drmgx_driver {
   int fd;
   
+  int fbw,fbh; // Client's recommended size, advisory only. Or a canned default of 640x360.
   int mmw,mmh; // monitor's physical size
   int w,h; // monitor's logical size in pixels
   int rate; // monitor's refresh rate in hertz
@@ -57,7 +58,7 @@ int drmgx_init_gx();
 /* Public API.
  */
 void drmgx_quit();
-int drmgx_init(const char *path);
+int drmgx_init(const char *path,int fbw,int fbh);
 int drmgx_swap();
 
 #endif

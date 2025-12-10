@@ -372,7 +372,7 @@ static int gen_main(struct eggdev_project_context *ctx) {
     "\n"
     "  srand_auto();\n"
     "\n"
-    "  //TODO\n" // TODO Initialize other standard client-side utilities?
+    "  //TODO\n"
     "\n"
     "  return 0;\n"
     "}\n"

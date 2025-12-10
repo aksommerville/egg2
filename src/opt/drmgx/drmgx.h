@@ -11,7 +11,10 @@
 #define DRMGX_H
 
 void drmgx_quit();
-int drmgx_init(const char *path);
+
+// (fbw,fbh) are weak advice to guide resolution selection.
+int drmgx_init(const char *path,int fbw,int fbh);
+
 int drmgx_swap();
 
 void drmgx_get_size(int *w,int *h);

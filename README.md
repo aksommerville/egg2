@@ -77,13 +77,12 @@ Features we *do* support:
 
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
-- [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols.
+- [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols. Need a generalization of inotify. Not trivial.
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
 - [ ] windows: System language
 - [ ] macos: System language
 - [ ] macos: eggrun
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
-- [x] Change malloc in egg-stdlib to use Wasm intrinsics, like synth. Then it won't produce a 16 MB ofile.
 - [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
 - [ ] Web incfg could bear some prettying-up.
 - [ ] Add a fullscreen toggle in the universal menu.

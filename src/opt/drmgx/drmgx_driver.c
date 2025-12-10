@@ -49,10 +49,16 @@ void drmgx_quit() {
 /* Init.
  */
  
-int drmgx_init(const char *device) {
+int drmgx_init(const char *device,int fbw,int fbh) {
 
   drmgx.fd=-1;
   drmgx.crtcunset=1;
+  drmgx.fbw=fbw;
+  drmgx.fbh=fbh;
+  if ((drmgx.fbw<1)||(drmgx.fbh<1)) {
+    drmgx.fbw=640;
+    drmgx.fbh=360;
+  }
 
   if (!drmAvailable()) {
     fprintf(stderr,"DRM not available.\n");

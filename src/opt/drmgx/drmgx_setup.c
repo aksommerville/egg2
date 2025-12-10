@@ -33,8 +33,8 @@ static int drmgx_pick_mode(
   // If we don't have something yet, anything is better than nothing.
   if (!aconn) return 1;
   
-  int reqw=768;//TODO do we have an opinion on ideal framebuffer size?
-  int reqh=432;
+  int reqw=drmgx.fbw;
+  int reqh=drmgx.fbh;
   int reqr=60;
   
   // Refresh rates that don't match the request are a real pain.

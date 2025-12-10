@@ -263,7 +263,6 @@ int eau_cvt_midi_eau(struct sr_convert_context *cvtctx) {
     .dst=cvtctx->dst,
     .src=cvtctx->src,
     .srcc=cvtctx->srcc,
-    //.strip_names=strip_names,//TODO
   };
   int err=midi_from_eau_internal(&ctx);
   midi_from_eau_cleanup(&ctx);
