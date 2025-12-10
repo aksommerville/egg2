@@ -29,6 +29,7 @@ export class MapService {
     if (this.sharedSymbols.getValue("CMD", "map", "neighbors")) this.neighborStrategy = "neighbors";
     else if (this.sharedSymbols.getValue("CMD", "map", "position")) this.neighborStrategy = "position";
     
+    this.serialListener = this.data.listenSerial(res => this.onSerialChanged(res));
     this.tocListener = this.data.listenToc(() => this.onTocChanged());
     this.onTocChanged();
   }
@@ -72,6 +73,16 @@ export class MapService {
         old.map = this.generateNewMap(res.serial, res.rid);
       }
     }
+    this.requireLayout();
+  }
+  
+  onSerialChanged(res) {
+    if (res.type !== "map") return;
+    const myres = this.resv.find(r => r.path === res.path);
+    if (!myres) return; // ?
+    if (myres.serial === res.serial) return; // OK somehow we already know about it. Could be a change we initiated ourselves.
+    myres.serial = res.serial;
+    myres.map = this.generateNewMap(res.serial, res.rid);
     this.requireLayout();
   }
   
@@ -176,7 +187,7 @@ export class MapService {
       }
       
       layer.growTo(nx, ny);
-      const np = (ny - layer.y) * layer.w + nx + layer.x;
+      const np = (ny - layer.y) * layer.w + nx - layer.x;
       if (layer.v[np]) return Promise.reject("Position already in use.");
       if (!rid) rid = this.data.unusedId("map");
       const path = "/data/map/" + rid + (name ? ("-" + name) : "");
@@ -189,10 +200,10 @@ export class MapService {
       let cmd = map.cmd.getFirstArgArray("image");
       if (cmd) nmap.cmd.commands.push([...cmd]);
       if (this.neighborStrategy === "neighbors") {
-        const w = nx ? layer.v[np - 1] : null;
-        const e = (nx < layer.w - 1) ? layer.v[np + 1] : null;
-        const n = ny ? layer.v[np - layer.w] : null;
-        const s = (ny < layer.h - 1) ? layer.v[np + layer.w] : null;
+        const w = (nx > layer.x) ? layer.v[np - 1] : null;
+        const e = (nx < layer.x + layer.w - 1) ? layer.v[np + 1] : null;
+        const n = (ny > layer.y) ? layer.v[np - layer.w] : null;
+        const s = (ny < layer.y + layer.h - 1) ? layer.v[np + layer.w] : null;
         nmap.cmd.commands.push([
           "neighbors",
           w ? `map:${w.name || w.rid}` : "0x0000",
@@ -222,7 +233,12 @@ export class MapService {
       map.cmd.commands.push(cmd);
     }
     cmd[argp] = `map:${v}`;
-    this.data.dirtyRid("map", map.rid, () => map.encode());
+    const serial = map.encode();
+    const myres = this.resv.find(r => r.map === map);
+    if (myres) {
+      myres.serial = serial;
+    }
+    this.data.dirtyRid("map", map.rid, () => serial);
   }
   
   /* Search the entire store for "door" commands pointing to this map.

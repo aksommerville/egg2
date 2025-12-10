@@ -17,8 +17,9 @@ export class Data {
     this.defaultLanguage = "en"; // TODO Replace after we acquire metadata.
     this.textDecoder = new TextDecoder("utf8");
     this.resv = []; // {path,type,lang,rid:number,name,comment,format,serial:Uint8Array}
-    this.tocListeners = [];
-    this.dirtyListeners = [];
+    this.tocListeners = []; // Notified when resources are added or removed.
+    this.dirtyListeners = []; // Notified when resources are dirty, saving begins, and saving ends.
+    this.serialListeners = []; // Notified when any (res.serial) changes. Before save is committed.
     this.nextListenerId = 1;
     this.dirtyState = "pending"; // "clean" | "dirty" | "pending" | "error"
     this.dirties = []; // {path,cb}
@@ -289,6 +290,12 @@ export class Data {
     return id;
   }
   
+  listenSerial(cb) {
+    const id = this.nextListenerId++;
+    this.serialListeners.push({ id, cb });
+    return id;
+  }
+  
   unlistenToc(id) {
     const p = this.tocListeners.findIndex(l => l.id === id);
     if (p >= 0) this.tocListeners.splice(p, 1);
@@ -299,6 +306,11 @@ export class Data {
     if (p >= 0) this.dirtyListeners.splice(p, 1);
   }
   
+  unlistenSerial(id) {
+    const p = this.serialListeners.findIndex(l => l.id === id);
+    if (p >= 0) this.serialListeners.splice(p, 1);
+  }
+  
   broadcastToc() {
     for (const { cb } of this.tocListeners) cb(this.resv);
   }
@@ -307,6 +319,10 @@ export class Data {
     if (state === this.dirtyState) return;
     this.dirtyState = state;
     for (const { cb } of this.dirtyListeners) cb(state);
+  }
+  
+  broadcastSerial(res) {
+    for (const { cb } of this.serialListeners) cb(res);
   }
   
   /* Private.
@@ -354,10 +370,12 @@ export class Data {
       if (serial instanceof Promise) {
         promises.push(serial.then(realSerial => {
           res.serial = realSerial;
+          this.broadcastSerial(res);
           return this.comm.http("PUT", res.path, null, null, realSerial);
         }));
       } else {
         res.serial = serial;
+        this.broadcastSerial(res);
         promises.push(this.comm.http("PUT", res.path, null, null, serial));
       }
     }
