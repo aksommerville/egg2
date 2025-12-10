@@ -223,7 +223,7 @@ export class Video {
   egg_texture_get_size(wp, hp, texid) {
     wp >>= 2;
     hp >>= 2;
-    const m32 = this.rt.exec.mem32;
+    const m32 = this.rt.exec.getMem32();
     if ((wp < 0) || (wp >= m32.length) || (hp < 0) || (hp >= m32.length)) return;
     const tex = this.texv[texid];
     if (!tex) return;

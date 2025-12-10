@@ -549,7 +549,7 @@ export class Input {
   egg_input_get_all(dstp, dsta) {
     if ((dstp < 1) || (dsta < 1)) return;
     dstp >>= 2;
-    const m32 = this.rt.exec.mem32;
+    const m32 = this.rt.exec.getMem32();
     if (dstp > m32.length - dsta) return;
     const dstp0 = dstp;
     for (let i=0; dsta-->0; i++, dstp++) m32[dstp] = this.statev[i] || 0;
@@ -584,8 +584,9 @@ export class Input {
   egg_input_get_mouse(xp, yp) {
     switch (this.mode) {
       case MODE_MOUSE: {
-          if (xp) this.rt.exec.mem32[xp >> 2] = this.mousex;
-          if (yp) this.rt.exec.mem32[yp >> 2] = this.mousey;
+          const mem32 = this.rt.exec.getMem32();
+          if (xp) mem32[xp >> 2] = this.mousex;
+          if (yp) mem32[yp >> 2] = this.mousey;
         } return 1;
     }
     return 0;

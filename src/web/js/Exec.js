@@ -6,14 +6,15 @@
 export class Exec {
   constructor(rt) {
     this.rt = rt;
-    this.mem8 = this.mem32 = this.memf64 = [];
     this.fntab = [];
     this.textDecoder = new TextDecoder("utf8");
     this.textEncoder = new TextEncoder("utf8");
   }
   
   load(serial) {
+    this.memory = new WebAssembly.Memory({ initial: 300, maximum: 2000 });
     const options = { env: {
+      memory: this.memory,
 
       egg_terminate: (status) => this.rt.egg_terminate(status),
       egg_log: msgp => this.rt.egg_log(msgp),
@@ -58,21 +59,21 @@ export class Exec {
         }
         this[name] = result.instance.exports[name];
       };
-      yoink("memory");
       yoink("egg_client_quit");
       yoink("egg_client_init");
       yoink("egg_client_notify");
       yoink("egg_client_update");
       yoink("egg_client_render");
-      this.mem8 = new Uint8Array(this.memory.buffer);
-      this.mem32 = new Uint32Array(this.memory.buffer);
-      this.memf64 = new Float64Array(this.memory.buffer);
       this.fntab = result.instance.exports.__indirect_function_table;
     });
   }
   
   /* Memory access.
    *******************************************************************/
+   
+  getMem8() { return new Uint8Array(this.memory.buffer); }
+  getMem32() { return new Uint32Array(this.memory.buffer); }
+  getMemf64() { return new Float64Array(this.memory.buffer); }
   
   /* Uint8Array view of some portion of memory, or null if OOB.
    * Zero length is legal but not useful.
@@ -80,10 +81,10 @@ export class Exec {
    */
   getMemory(p, c) {
     if (p < 0) return null;
-    if (p > this.mem8.length) return null;
-    if (c < 0) c = this.mem8.length - p;
-    if (p > this.mem8.length - c) return null;
-    return new Uint8Array(this.mem8.buffer, this.mem8.byteOffset + p, c);
+    if (p > this.memory.buffer.byteLength) return null;
+    if (c < 0) c = this.memory.buffer.byteLength - p;
+    if (p > this.memory.buffer.byteLength - c) return null;
+    return new Uint8Array(this.memory.buffer, p, c);
   }
   
   /* UTF-8 string from (p) to the first NUL, but never longer than (limit).
@@ -92,11 +93,12 @@ export class Exec {
    */
   getString(p, limit) {
     if (p < 0) return "";
+    const mem8 = new Uint8Array(this.memory.buffer);
     let c = 0;
     if (typeof(limit) === "number") {
-      while ((c < limit) && this.mem8[p + c]) c++;
+      while ((c < limit) && mem8[p + c]) c++;
     } else {
-      while (this.mem8[p + c]) c++;
+      while (mem8[p + c]) c++;
     }
     try {
       return this.textDecoder.decode(this.getMemory(p, c));

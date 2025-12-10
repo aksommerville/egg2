@@ -4,126 +4,201 @@
 
 #include "egg-stdlib.h"
 
-/* Globals.
- * Trying to keep it as simple as possible.
- * Our heap is typed int, so all allocated blocks are rounded up to 4 bytes and align on 4 bytes.
- * It's organized into blocks, each with a one-word header:
- *   <0: Available. (-n) distance to next block including this header.
- *    0: End of used heap. From here to (HEAP_SIZE>>2) can be initialized as needed.
- *   >0: In use. (n) distance to next block including this header.
+/* Copied from synth.
+ * We're exporting the real stdlib symbols ("malloc" et al) so we can't fake it for native builds, the way synth does.
  */
  
-static struct {
-  int heapc; // Extent to first untouched block in words. Either (heapc==HEAP_SIZE>>2) or (heap[heapc]==0).
-  int deadp; // Position of header of lowest possibly available block.
-  int heap[HEAP_SIZE>>2];
-} gmalloc={0};
+struct mem {
+  int32_t *v;
+  int c;
+};
 
-/*--------------------- Public entry points. ---------------------------------*/
+/* Convert between the length-word (p) we prefer and payload addresses you should expose to the public.
+ * I'm trying to trap as much of the "+1" "-1" in one place as possible.
+ */
+static int mem_index_from_pointer(const struct mem *mem,const void *ptr) {
+  if (!ptr) return -1;
+  int p=((int32_t*)ptr-mem->v)-1;
+  if ((p<0)||(p>=mem->c)) return -1;
+  return p;
+}
+static void *mem_pointer_from_index(const struct mem *mem,int p) {
+  if ((p<0)||(p>=mem->c)) return 0;
+  return mem->v+p+1;
+}
 
-void *malloc(long unsigned int c) {
-  if (c>=HEAP_SIZE) return 0;
-  c=(c+3)>>2;
-  
-  /* Look for a dead block we can reuse.
-   * If desired, we could skip this and only look for dead blocks when we run out of head space.
-   * (in other words, move this block to below the "Append" block).
-   * I think filling in first will yield better defense against fragmentation, at some performance cost.
-   */
-  if (1) {
-    int p=gmalloc.deadp;
-    while (p<gmalloc.heapc) {
-      if (!gmalloc.heap[p]) break; // Error! There shouldn't be a zero header below gmalloc.heapc.
-      if (gmalloc.heap[p]>0) { // In use, skip it.
-        p+=gmalloc.heap[p];
-        continue;
-      }
-      int available=-gmalloc.heap[p];
-      for (;;) {
-        if (available>c) { // sic > not >=
-          gmalloc.heap[p]=available;
-          gmalloc.deadp=p+available;
-          return gmalloc.heap+p+1;
+static void mem_free(struct mem *mem,int p) {
+  if ((p<0)||(p>=mem->c)) return;
+  if (mem->v[p]<0) return; // Double free!
+  mem->v[p]=-mem->v[p];
+}
+
+// Size of an allocated block in words.
+static int mem_get_block_size(const struct mem *mem,int p) {
+  if ((p<0)||(p>=mem->c)) return -1;
+  return mem->v[p];
+}
+
+// Size of contiguous unallocated blocks. <0 if allocated.
+static int mem_get_free_size(const struct mem *mem,int p) {
+  if ((p<0)||(p>=mem->c)) return -1;
+  if (mem->v[p]>=0) return -1;
+  int len=-mem->v[p];
+  int nextp=p+1+len;
+  while (nextp<mem->c) {
+    int nextlen=mem->v[nextp];
+    if (nextlen>=0) break; // Next block is allocated.
+    nextlen=-nextlen;
+    len+=1+nextlen; // Include the length word.
+    nextp+=1+nextlen;
+  }
+  return len;
+}
+
+// Grow a block in-place to at least (na) or fail.
+// Returns total size on success. Can be greater than (na).
+static int mem_grow_block(struct mem *mem,int p,int na) {
+  if ((p<0)||(p>=mem->c)) return -1;
+  int len=mem->v[p];
+  if (len>=na) return len; // Already big enough.
+  int nextp=p+1+len;
+  int available=mem_get_free_size(mem,nextp);
+  if (available<0) return -1; // Next block is allocated, or we're at the end.
+  if (len+1+available<na) return -1; // Not enough room here.
+  // Consume blocks until we're big enough, not necessarily all of (available).
+  int p0=p;
+  while (len<na) {
+    p=nextp;
+    int nextlen=mem->v[p];
+    if (nextlen>=0) return -1; // oops
+    nextlen=-nextlen;
+    len+=1+nextlen;
+    nextp=p+1+nextlen;
+  }
+  // If we consumed more than needed, mark the excess free. "8" here is entirely arbitrary, "0" would be technically valid.
+  if (len>na+8) {
+    int freeafter=len-na-1;
+    mem->v[p0+1+na]=-freeafter;
+    len=na;
+  }
+  mem->v[p0]=len;
+  return len;
+}
+
+// Shrink a block in place to exactly the given word count. Not sure we'll want this, just providing for symmetry's sake.
+static int mem_shrink_block(struct mem *mem,int p,int na) {
+  if ((p<0)||(p>=mem->c)) return -1;
+  int len=mem->v[p];
+  if (len<0) return -1; // Not an allocated block.
+  if (len<na) return -1; // That's not what "shrink" means.
+  mem->v[p]=na;
+  mem->v[p+1+na]=-(len-na-1);
+  return na;
+}
+
+// Allocate a block of at least (c) words and return its "p".
+static int mem_allocate(struct mem *mem,int c) {
+  if (c<0) return -1;
+  int p=0;
+  while (p<mem->c) {
+    if (mem->v[p]<0) {
+      int available=mem_get_free_size(mem,p);
+      if (available>=c) {
+        //if ((mem->v[p]<0)&&(p+1-mem->v[p]>=mem->c)) logint(p+1+c); // XXX TEMP Log the high-water mark.
+        mem->v[p]=c;
+        if (c<available) { // Mark the remainder free.
+          mem->v[p+1+c]=-(available-c)+1;
         }
-        if (gmalloc.heap[p+available]<0) { // Combine adjacent unused blocks and try again.
-          available-=gmalloc.heap[p+available];
-        } else break;
-      }
-      p+=available;
-    }
-  }
-  
-  // Append.
-  if (gmalloc.heapc>=HEAP_SIZE>>2) return 0; // Memory full.
-  int available=(HEAP_SIZE>>2)-gmalloc.heapc; // Including the header word.
-  if (available<=c) return 0; // sic <= not <
-  gmalloc.heap[gmalloc.heapc]=1+c;
-  void *result=gmalloc.heap+gmalloc.heapc+1;
-  gmalloc.heapc+=1+c;
-  if (gmalloc.heapc<HEAP_SIZE>>2) gmalloc.heap[gmalloc.heapc]=0;
-  return result;
-}
-
-void free(void *p) {
-  int ix=(int*)p-gmalloc.heap;
-  if ((ix<1)||(ix>=HEAP_SIZE>>2)) return; // OOB pointer (eg null)
-  int hdrp=ix-1;
-  if (gmalloc.heap[hdrp]<=0) return; // Error! Not an allocated block.
-  gmalloc.heap[hdrp]=-gmalloc.heap[hdrp];
-  if (hdrp<gmalloc.deadp) gmalloc.deadp=hdrp;
-}
-
-void *realloc(void *p,long unsigned int c) {
-  if (!p) return malloc(c);
-  if (c>=HEAP_SIZE) return 0;
-  c=(c+3)>>2;
-  int ix=(int*)p-gmalloc.heap;
-  if ((ix<1)||(ix>=HEAP_SIZE>>2)) return 0; // OOB pointer (eg null)
-  int hdrp=ix-1;
-  if (gmalloc.heap[hdrp]<=0) return 0; // Error! Not an allocated block.
-  
-  // If it's already big enough, declare victory without changing anything.
-  if (c<gmalloc.heap[hdrp]) return p;
-  
-  // Try to combine subsequent available blocks.
-  for (;;) {
-    int nextp=hdrp+gmalloc.heap[hdrp];
-    if (nextp>=HEAP_SIZE>>2) break;
-    if (gmalloc.heap[nextp]>0) break;
-    int available_next=-gmalloc.heap[nextp];
-    if (available_next) {
-      gmalloc.heap[hdrp]+=available_next;
-      if (c<gmalloc.heap[hdrp]) {
         return p;
       }
-    } else { // Reached end of heap, can we grow right here?
-      available_next=(HEAP_SIZE>>2)-hdrp;
-      if (available_next>c) {
-        gmalloc.heap[hdrp]=1+c;
-        gmalloc.heapc=hdrp+1+c;
-        if (gmalloc.heapc<HEAP_SIZE>>2) gmalloc.heap[gmalloc.heapc]=0;
-        return p;
-      }
-      break;
+      p+=1+available;
+    } else {
+      p+=1+mem->v[p];
     }
   }
-  
-  // Allocate a new block, copy content, and free the old one.
-  void *nv=malloc(c<<2);
-  if (!nv) return 0;
-  memcpy(nv,p,(gmalloc.heap[hdrp]-1)<<2);
-  gmalloc.heap[hdrp]=-gmalloc.heap[hdrp];
-  if (hdrp<gmalloc.deadp) gmalloc.deadp=hdrp;
-  return nv;
+  return -1;
 }
 
-void *calloc(long unsigned int c,long unsigned int size) {
-  if (!c||!size) return malloc(0); // Unlike libc, we always do allow malloc(0).
-  if (c>HEAP_SIZE/size) return 0;
-  void *v=malloc(c*size);
-  if (!v) return 0;
-  memset(v,0,c*size);
+// Notify that you've reallocated (mem->v) to now allow (nc) words. (mem->c) must be the old count, and we'll update it.
+static int mem_master_grown(struct mem *mem,int nc) {
+  int addc=nc-mem->c;
+  if (addc<0) return -1;
+  if (!addc) return 0;
+  int freelen=addc-1;
+  mem->v[mem->c]=-freelen;
+  mem->c=nc;
+  return 0;
+}
+
+extern uint32_t __heap_base;
+static int pagec0=0;
+static int pagea=0;
+  
+static struct mem mem={0};
+
+static void malloc_quit() {
+  __builtin_memset(&mem,0,sizeof(struct mem));
+}
+  
+static int malloc_init() {
+  if (mem.c) return -1;
+  if (!pagec0) {
+    pagec0=__builtin_wasm_memory_size(0);
+    int na=pagec0+1000;
+    __builtin_wasm_memory_grow(0,na);
+    int pagecz=__builtin_wasm_memory_size(0);
+    pagea=na;
+  }
+  mem.v=(int32_t*)(((uint8_t*)&__heap_base)+(pagec0*0x10000));
+  mem.c=(pagea-pagec0)*(0x10000>>2); // words from pages
+  mem.v[0]=-(mem.c-1);
+  return 0;
+}
+  
+void free(void *addr) {
+  int p=mem_index_from_pointer(&mem,addr);
+  if (p<0) return; // Would terminate a real program, and maybe we should do that.
+  mem_free(&mem,p);
+}
+  
+void *malloc(long unsigned int len) {
+  if (!mem.c&&(malloc_init()<0)) return 0;
+  if (len<1) return 0;
+  if (len>INT_MAX-3) return 0;
+  int wordc=(len+3)>>2;
+  int p=mem_allocate(&mem,wordc);
+  if (p<0) return 0;
+  return mem_pointer_from_index(&mem,p);
+}
+  
+void *calloc(long unsigned int a,long unsigned int b) {
+  if (!mem.c&&(malloc_init()<0)) return 0;
+  if ((a<1)||(b<1)) return 0;
+  if (a>INT_MAX/b) return 0;
+  int bytec=a*b;
+  int wordc=(bytec+3)>>2;
+  int p=mem_allocate(&mem,wordc);
+  if (p<0) return 0;
+  void *v=mem_pointer_from_index(&mem,p);
+  __builtin_memset(v,0,bytec);
   return v;
+}
+  
+void *realloc(void *addr,long unsigned int len) {
+  if (!mem.c&&(malloc_init()<0)) return 0;
+  if (!addr) return malloc(len);
+  if (len<1) return 0;
+  if (len>INT_MAX-3) return 0;
+  int wordc=(len+3)>>2;
+  int p=mem_index_from_pointer(&mem,addr);
+  if (p<0) return 0;
+  if (mem_grow_block(&mem,p,wordc)>=0) return addr; // OK, grew in place.
+  int np=mem_allocate(&mem,wordc);
+  if (np<0) return 0; // Failed to allocate a new block.
+  void *nv=mem_pointer_from_index(&mem,np);
+  __builtin_memcpy(nv,addr,mem_get_block_size(&mem,p)<<2);
+  mem_free(&mem,p);
+  return nv;
 }
 
 #endif

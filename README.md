@@ -75,26 +75,15 @@ Features we *do* support:
 
 ## TODO
 
-- [x] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".
-- - Looks like due to MapService.generateNeighbor(), some confusion about layer origin. Fixed but hard to be certain.
-- [x] MapEditor: New map in "neighbors" regime created an incorrect (zeroes) command in the new one, and didn't create in the old one.
-- - ...might only happen to the first map in a layer, or maybe the first in a project. Wishbone got it on the first neighbor creation, and not after.
-- - ...no, it did happen later in wishbone too.
-- - This is hairy! I think it's due to MapService maintaining its own set of resources but not getting notified of all changes.
-- [x] Data didn't fire a TOC change when deleting via SidebarUi.
-- - ...it did. Just MapService is not updating the dangling links, and MapCanvas doesn't update re missing neighbor.
-- - I don't think this matters. Deleting things is always going to be a little rough.
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
-- [x] Launch from within map editor didn't rebuild. ...forgot `/api/buildfirst`, easy.
 - [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols.
 - [ ] pulse: Fudged the estimated buffer length up 4x to avoid negative time-remaining. Can we fix it for real?
 - [ ] windows: System language
 - [ ] macos: System language
 - [ ] macos: eggrun
 - [ ] EGG_GLSL_VERSION. Currently pretty hacky.
-- [ ] Change malloc in egg-stdlib to use Wasm intrinsics, like synth. Then it won't produce a 16 MB ofile.
-- [x] Editor Launch: Is it possible to dismiss the iframe when game ends? Or allow Esc after it terminates? Having trouble capturing key events for it.
+- [x] Change malloc in egg-stdlib to use Wasm intrinsics, like synth. Then it won't produce a 16 MB ofile.
 - [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
 - [ ] Web incfg could bear some prettying-up.
 - [ ] Add a fullscreen toggle in the universal menu.

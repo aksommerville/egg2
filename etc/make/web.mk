@@ -17,13 +17,12 @@ web_OFILES_HEADLESS:=$(filter-out $(web_MIDDIR)/util/%,$(web_OFILES))
 $(web_LIB_HEADLESS):$(web_OFILES_HEADLESS);$(PRECMD) $(web_AR) rc $@ $^
 
 # "synth" is an opt unit but it's delivered separately, so we build it separately.
-web_LDEXTRA_SYNTH:=--import-memory
 web_SYNTH_WASM:=$(web_OUTDIR)/synth.wasm
 web-all:$(web_SYNTH_WASM)
 web_SYNTH_CFILES:=$(filter src/opt/synth/%.c,$(SRCFILES))
 web_SYNTH_OFILES:=$(patsubst src/%.c,$(web_MIDDIR)/%.o,$(web_SYNTH_CFILES))
 -include $(web_SYNTH_OFILES:.o=.d)
-$(web_SYNTH_WASM):$(web_SYNTH_OFILES);$(PRECMD) $(web_LD) $(web_LDEXTRA_SYNTH) -o$@ $^ $(web_LDPOST)
+$(web_SYNTH_WASM):$(web_SYNTH_OFILES);$(PRECMD) $(web_LD) -o$@ $^ $(web_LDPOST)
 
 define web_UTIL_RULES
   web_UTIL_$1_LIB:=$(web_OUTDIR)/lib$1.a

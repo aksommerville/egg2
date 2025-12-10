@@ -319,7 +319,7 @@ export class Runtime {
   egg_time_local(dstp, dsta) {
     if (dsta < 1) return;
     dstp >>= 2;
-    const m32 = this.exec.mem32;
+    const m32 = this.exec.getMem32();
     if ((dstp < 0) || (dstp > m32.length - dsta)) return;
     const d = new Date();
     m32[dstp++] = d.getFullYear(); if (dsta < 2) return;
