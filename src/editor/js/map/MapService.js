@@ -23,9 +23,11 @@ export class MapService {
     this.focusx = -1;
     this.focusy = -1;
     
+    /* (neighborStrategy) is either "none" or the command describing relationships: "neighbors" or "position".
+     */
     this.neighborStrategy = "none";
-    if (this.sharedSymbols.getValue("CMD", "map", "neighbors")) this.neighborStrategy = "pointer";
-    else if (this.sharedSymbols.getValue("CMD", "map", "position")) this.neighborStrategy = "coords";
+    if (this.sharedSymbols.getValue("CMD", "map", "neighbors")) this.neighborStrategy = "neighbors";
+    else if (this.sharedSymbols.getValue("CMD", "map", "position")) this.neighborStrategy = "position";
     
     this.tocListener = this.data.listenToc(() => this.onTocChanged());
     this.onTocChanged();
@@ -142,14 +144,14 @@ export class MapService {
    */
   canGenerateNeighbor(map, dx, dy) {
     switch (this.neighborStrategy) {
-      case "pointer": {
+      case "neighbors": {
           // If it's a cardinal step, yes.
           if (!dx || !dy) return true;
           // Diagonals are only valid if one of the intervening cardinals exists.
           if (this.getNeighborResource(map, dx, 0) || this.getNeighborResource(map, 0, dy)) return true;
           return false;
         }
-      case "coords": return true;
+      case "position": return true;
     }
     return false;
   }
@@ -159,14 +161,14 @@ export class MapService {
     for (const layer of this.layout) {
 
       let nx, ny;
-      if (this.neighborStrategy === "pointer") {
+      if (this.neighborStrategy === "neighbors") {
         const p = layer.v.findIndex(r => r?.map === map);
         if (p < 0) continue;
         const y = Math.floor(p / layer.w);
         const x = p % layer.w;
-        nx = x + dx;
-        ny = y + dy;
-      } else if (this.neighborStrategy === "coords") {
+        nx = layer.x + x + dx;
+        ny = layer.y + y + dy;
+      } else if (this.neighborStrategy === "position") {
         const position = map.cmd.getFirstArgArray("position");
         if (!position || (position.length < 3)) return Promise.reject("Invalid map position");
         nx = +position[1] + dx;
@@ -174,7 +176,7 @@ export class MapService {
       }
       
       layer.growTo(nx, ny);
-      const np = ny * layer.w + nx;
+      const np = (ny - layer.y) * layer.w + nx + layer.x;
       if (layer.v[np]) return Promise.reject("Position already in use.");
       if (!rid) rid = this.data.unusedId("map");
       const path = "/data/map/" + rid + (name ? ("-" + name) : "");
@@ -186,7 +188,7 @@ export class MapService {
       );
       let cmd = map.cmd.getFirstArgArray("image");
       if (cmd) nmap.cmd.commands.push([...cmd]);
-      if (this.neighborStrategy === "pointer") {
+      if (this.neighborStrategy === "neighbors") {
         const w = nx ? layer.v[np - 1] : null;
         const e = (nx < layer.w - 1) ? layer.v[np + 1] : null;
         const n = ny ? layer.v[np - layer.w] : null;
@@ -202,8 +204,8 @@ export class MapService {
         this.replaceNeighborCommand(e?.map, 1, name || rid);
         this.replaceNeighborCommand(n?.map, 4, name || rid);
         this.replaceNeighborCommand(s?.map, 3, name || rid);
-      } else if (this.neighborStrategy === "coords") {
-        nmap.cmd.commands.push(["position", nx.toString(), ny.toString()]); // , layer.z.toString()]); // "position" commands can't have 3 args. What to do?
+      } else if (this.neighborStrategy === "position") {
+        nmap.cmd.commands.push(["position", nx.toString(), ny.toString(), layer.z.toString(), "*"]);
       }
       // Don't install it in (layer.v). Once we add the resource in Data, it cascades back.
       const serial = nmap.encode();
@@ -280,8 +282,8 @@ export class MapService {
   rebuildLayout() {
     this.layout = [];
     switch (this.neighborStrategy) {
-      case "pointer": this.rebuildLayoutPointer(); break;
-      case "coords": this.rebuildLayoutCoords(); break;
+      case "neighbors": this.rebuildLayoutPointer(); break;
+      case "position": this.rebuildLayoutCoords(); break;
       default: return false;
     }
     return true;
@@ -453,14 +455,14 @@ export class MapLayer {
         const res = this.v[p];
         if (!res) continue;
         
-        if (strat === "pointer") {
+        if (strat === "neighbors") {
           const cmd = res.map.cmd.getFirstArgArray("neighbors");
           if (!this.validatePointerNeighbor(res, x, y, p, -1,  0, cmd[1])) return false;
           if (!this.validatePointerNeighbor(res, x, y, p,  1,  0, cmd[2])) return false;
           if (!this.validatePointerNeighbor(res, x, y, p,  0, -1, cmd[3])) return false;
           if (!this.validatePointerNeighbor(res, x, y, p,  0,  1, cmd[4])) return false;
         
-        } else if (strat === "coords") {
+        } else if (strat === "position") {
           const cmd = res.map.cmd.getFirstArgArray("position");
           if (!cmd) return false;
           const mapx = +cmd[1];

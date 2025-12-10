@@ -281,7 +281,7 @@ static int gen_shared_symbols(struct eggdev_project_context *ctx) {
     "\n"
     "#define CMD_map_image     0x20 /* u16:imageid */\n"
     "// 'position' or 'neighbors' (or neither). Not both.\n"
-    "//#define CMD_map_position  0x21 /* u8:horz, u8:vert */\n"
+    "//#define CMD_map_position  0x40 /* u8:long, u8:lat, u8:plane, u8:unused */\n"
     "//#define CMD_map_neighbors 0x60 /* u16:west, u16:east, u16:north, u16:south */\n"
     "#define CMD_map_sprite    0x61 /* u16:position, u16:spriteid, u32:arg */\n"
     "#define CMD_map_door      0x62 /* u16:position, u16:mapid, u16:dstposition, u16:arg */\n"

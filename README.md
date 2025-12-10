@@ -75,7 +75,8 @@ Features we *do* support:
 
 ## TODO
 
-- [ ] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".
+- [x] MapEditor: Creating new map with position regime, I occasionally incorrectly get "position in use".
+- - Looks like due to MapService.generateNeighbor(), some confusion about layer origin. Fixed but hard to be certain.
 - [ ] MapEditor: New map in "neighbors" regime created an incorrect (zeroes) command in the new one, and didn't create in the old one.
 - - ...might only happen to the first map in a layer, or maybe the first in a project. Wishbone got it on the first neighbor creation, and not after.
 - - ...no, it did happen later in wishbone too.
@@ -92,9 +93,11 @@ Features we *do* support:
 - [x] Editor Launch: Is it possible to dismiss the iframe when game ends? Or allow Esc after it terminates? Having trouble capturing key events for it.
 - [ ] Web Video: Determine whether border is necessary. For now we are applying always. That's wasteful, but should be safe at least.
 - [ ] Web incfg could bear some prettying-up.
+- [ ] Add a fullscreen toggle in the universal menu.
 - [ ] Review all "TODO" in source, there's a ton of them.
 - With the above complete, we can start migrating games:
 - [ ] Rewrite or migrate eggsamples for v2.
+- - [ ] Bring back "Hard Boiled" from a couple Eggs ago. Nice game, and now that we have mouse support, we can do it for real.
 - [ ] Migrate existing v1 projects to v2.
 - - [ ] Season of Penance
 - - [ ] Spelling Bee
