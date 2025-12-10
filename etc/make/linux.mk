@@ -11,12 +11,12 @@ $(linux_MIDDIR)/%.o:src/%.c;$(PRECMD) $(linux_CC) -o$@ $< $(foreach U,$(linux_OP
 
 linux_LIB_FULL:=$(linux_OUTDIR)/libeggrt.a
 linux-all:$(linux_LIB_FULL)
-linux_OFILES_FULL:=$(filter-out $(linux_MIDDIR)/util/%,$(linux_OFILES))
+linux_OFILES_FULL:=$(filter-out $(linux_MIDDIR)/util/%,$(linux_OFILES)) $(filter $(linux_MIDDIR)/util/res/%,$(linux_OFILES))
 $(linux_LIB_FULL):$(linux_OFILES_FULL);$(PRECMD) $(linux_AR) rc $@ $^
 
 linux_LIB_HEADLESS:=$(linux_OUTDIR)/libeggrt-headless.a
 linux-all:$(linux_LIB_HEADLESS)
-linux_OFILES_HEADLESS:=$(filter-out $(linux_MIDDIR)/util/% $(linux_MIDDIR)/eggrt/eggrt_main.o,$(linux_OFILES))
+linux_OFILES_HEADLESS:=$(filter-out $(linux_MIDDIR)/util/% $(linux_MIDDIR)/eggrt/eggrt_main.o,$(linux_OFILES)) $(filter $(linux_MIDDIR)/util/res/%,$(linux_OFILES))
 $(linux_LIB_HEADLESS):$(linux_OFILES_HEADLESS);$(PRECMD) $(linux_AR) rc $@ $^
 
 ifneq (,$(strip $(linux_WAMR_SDK)))

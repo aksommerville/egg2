@@ -11,12 +11,12 @@ $(macos_MIDDIR)/%.o:src/%.m;$(PRECMD) $(macos_OBJC) -o$@ $< $(foreach U,$(macos_
 
 macos_LIB_FULL:=$(macos_OUTDIR)/libeggrt.a
 macos-all:$(macos_LIB_FULL)
-macos_OFILES_FULL:=$(filter-out $(macos_MIDDIR)/util/%,$(macos_OFILES))
+macos_OFILES_FULL:=$(filter-out $(macos_MIDDIR)/util/%,$(macos_OFILES)) $(filter $(macos_MIDDIR)/util/res/%,$(macos_OFILES))
 $(macos_LIB_FULL):$(macos_OFILES_FULL);$(PRECMD) $(macos_AR) rc $@ $^
 
 macos_LIB_HEADLESS:=$(macos_OUTDIR)/libeggrt-headless.a
 macos-all:$(macos_LIB_HEADLESS)
-macos_OFILES_HEADLESS:=$(filter-out $(macos_MIDDIR)/util/% $(macos_MIDDIR)/eggrt/eggrt_main.o,$(macos_OFILES))
+macos_OFILES_HEADLESS:=$(filter-out $(macos_MIDDIR)/util/% $(macos_MIDDIR)/eggrt/eggrt_main.o,$(macos_OFILES))  $(filter $(macos_MIDDIR)/util/res/%,$(macos_OFILES))
 $(macos_LIB_HEADLESS):$(macos_OFILES_HEADLESS);$(PRECMD) $(macos_AR) rc $@ $^
 
 define macos_UTIL_RULES
