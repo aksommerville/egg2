@@ -60,6 +60,23 @@ int font_render(
   return result;
 }
 
+/* font_render, but the form used in Egg v1.
+ */
+
+int font_render_string(
+  void *dst,int dstw,int dsth,int dststride,
+  int x,int y,
+  const struct font *font,
+  const char *src,int srcc,
+  uint32_t rgba
+) {
+  if ((x<0)||(x>=dstw)||(y<0)||(y>=dsth)) return 0;
+  return font_render(
+    (uint8_t*)dst+y*dststride+(x<<2),
+    dstw,dsth,dststride,font,src,srcc,rgba
+  );
+}
+
 /* Any nonzero pixels in this column?
  */
  

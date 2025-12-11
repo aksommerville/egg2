@@ -61,6 +61,18 @@ int font_render(
   uint32_t rgba
 );
 
+/* Equivalent to font_render, but you may supply a full RGBA image and we manage the cropping.
+ * We can't crop left or top.
+ * Provided only for compatibility with Egg v1's font unit.
+ */
+int font_render_string(
+  void *dst,int dstw,int dsth,int dststride,
+  int x,int y,
+  const struct font *font,
+  const char *src,int srcc,
+  uint32_t rgba
+);
+
 /* Rewrite (texid) with the given text after breaking lines.
  * Height is always a multiple of the font's line height.
  * Width is trimmed such that the right column is never blank.
