@@ -119,6 +119,7 @@ int eggdev_fmt_by_tid(int tid) {
     case EGG_TID_map: return EGGDEV_FMT_map;
     case EGG_TID_sprite: return EGGDEV_FMT_sprite;
   }
+  if (eggdev_tid_is_cmdlist(tid)) return EGGDEV_FMT_cmdlist;
   return 0;
 }
 

@@ -304,6 +304,7 @@ static int eggdev_client_load_symbols() {
 int eggdev_client_require() {
   if (g.client.ready) return 0;
   if (g.client.rootc) {
+    g.client.ready=1;
     eggdev_client_load_restoc();
     eggdev_client_load_symbols();
   }

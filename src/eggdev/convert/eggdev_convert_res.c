@@ -757,12 +757,44 @@ static int eggdev_cmdlist_compile_arg(struct sr_convert_context *ctx,const char 
   return sr_convert_error_at(ctx,src,"Unexpected token '%.*s' in command list.",srcc,src);
 }
 
+/* Get command list namespace from conversion context.
+ */
+ 
+static int eggdev_cmdlist_get_ns(void *dstpp,const struct sr_convert_context *ctx) {
+  // First the easy way: If "--ns=ABC" was provided, that's the answer.
+  int argc=sr_convert_arg(dstpp,ctx,"ns",2);
+  if (argc>0) return argc;
+  // Otherwise, use the last directory of the input path.
+  if (ctx->refname) {
+    const char *src=ctx->refname;
+    int srcp=0;
+    const char *dir=0,*base=src;
+    int dirc=0,basec=0;
+    for (;src[srcp];srcp++) {
+      if (src[srcp]=='/') {
+        dir=base;
+        dirc=basec;
+        base=src+srcp+1;
+        basec=0;
+      } else {
+        basec++;
+      }
+    }
+    if (dirc>0) {
+      *(const void**)dstpp=dir;
+      return dirc;
+    }
+  }
+  // And finally, i dunno. cmdlist are possible without a namespace (tho inconvenient), maybe that's what they want.
+  return 0;
+}
+
 /* Command list bin from text.
  */
  
 int eggdev_cmdlist_from_cmdltxt(struct sr_convert_context *ctx) {
   const char *ns=0;
-  int nsc=sr_convert_arg(&ns,ctx,"ns",2);
+  int nsc=eggdev_cmdlist_get_ns(&ns,ctx);
   if (nsc<0) nsc=0;
   struct sr_decoder decoder={.v=ctx->src,.c=ctx->srcc};
   const char *line;
@@ -843,7 +875,7 @@ int eggdev_cmdlist_from_cmdltxt(struct sr_convert_context *ctx) {
  
 int eggdev_cmdltxt_from_cmdlist(struct sr_convert_context *ctx) {
   const char *ns=0;
-  int nsc=sr_convert_arg(&ns,ctx,"ns",2);
+  int nsc=eggdev_cmdlist_get_ns(&ns,ctx);
   if (nsc<0) nsc=0;
   const uint8_t *src=ctx->src;
   int srcp=0;

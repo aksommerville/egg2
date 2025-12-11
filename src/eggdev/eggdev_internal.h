@@ -128,6 +128,7 @@ int eggdev_client_set_root(const char *path,int pathc);
 int eggdev_tid_eval(const char *src,int srcc);
 int eggdev_tid_eval_standard(const char *src,int srcc); // Standard types only. No integers, no custom.
 int eggdev_tid_repr(char *dst,int dsta,int tid);
+int eggdev_tid_is_cmdlist(int tid);
 int eggdev_symbol_eval(int *dst,const char *src,int srcc,int nstype,const char *ns,int nsc);
 int eggdev_symbol_repr(char *dst,int dsta,int src,int nstype,const char *ns,int nsc);
 #define EGGDEV_NSTYPE_CMD 1

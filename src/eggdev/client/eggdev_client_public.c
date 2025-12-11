@@ -197,6 +197,27 @@ int eggdev_tid_repr(char *dst,int dsta,int tid) {
   return sr_decsint_repr(dst,dsta,tid);
 }
 
+/* Check whether a tid has any "CMD_" symbols in this project.
+ * If so, we interpret them as cmdlist.
+ */
+ 
+int eggdev_tid_is_cmdlist(int tid) {
+  if (eggdev_client_require()<0) return 0;
+  char name[32];
+  int namec=eggdev_tid_repr(name,sizeof(name),tid);
+  if ((namec>0)&&(namec<=sizeof(name))) {
+    const struct eggdev_ns *ns=g.client.nsv;
+    int nsi=g.client.nsc;
+    for (;nsi-->0;ns++) {
+      if (ns->nstype!=EGGDEV_NSTYPE_CMD) continue;
+      if (ns->namec!=namec) continue;
+      if (memcmp(ns->name,name,namec)) continue;
+      return 1;
+    }
+  }
+  return 0;
+}
+
 /* Evaluate or represent general symbol, public forms.
  */
  
