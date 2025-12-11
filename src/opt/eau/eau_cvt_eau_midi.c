@@ -669,6 +669,16 @@ static int eau_from_midi_inner(struct eau_from_midi *ctx) {
  */
  
 int eau_cvt_eau_midi(struct sr_convert_context *cvtctx) {
+
+  // Empty is not valid MIDI but the intent is clear enough.
+  if (!cvtctx->srcc) {
+    return sr_encode_raw(cvtctx->dst,
+      "\0EAU""\1\0" // Signature and tempo = 256 ms/qnote.
+      "\0\0\0\0" // Empty Channel Headers.
+      "\0\0\0\1""\x7f" // ~4s delay.
+    ,15);
+  }
+    
   struct eau_from_midi ctx={
     .cvtctx=cvtctx,
     .dst=cvtctx->dst,

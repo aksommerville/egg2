@@ -87,6 +87,7 @@ Features we *do* support:
 - [ ] Web incfg could bear some prettying-up.
 - [ ] Add a fullscreen toggle in the universal menu.
 - [ ] Review all "TODO" in source, there's a ton of them.
+- [ ] We should have a text-processing util. In v1 there was eg `strings_format()`, very helpful.
 - With the above complete, we can start migrating games:
 - [ ] Rewrite or migrate eggsamples for v2.
 - - [ ] Bring back "Hard Boiled" from a couple Eggs ago. Nice game, and now that we have mouse support, we can do it for real.
