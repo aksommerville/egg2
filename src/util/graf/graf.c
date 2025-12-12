@@ -325,6 +325,49 @@ void graf_decal(struct graf *graf,int dstx,int dsty,int srcx,int srcy,int w,int 
   graf_flush(graf);
 }
 
+void graf_decal_xform(struct graf *graf,int dstx,int dsty,int srcx,int srcy,int w,int h,uint8_t xform) {
+  int dstw=w,dsth=h;
+  if (xform&EGG_XFORM_SWAP) {
+    int tmp=dstw;
+    dstw=dsth;
+    dsth=tmp;
+    if (xform&EGG_XFORM_XREV) {
+      dsty+=dsth;
+      dsth=-dsth;
+    }
+    if (xform&EGG_XFORM_YREV) {
+      dstx+=dstw;
+      dstw=-dstw;
+    }
+    graf_triangle_strip_tex_begin(graf,
+      dstx     ,dsty     ,srcx  ,srcy  ,
+      dstx     ,dsty+dsth,srcx+w,srcy  ,
+      dstx+dstw,dsty     ,srcx  ,srcy+h
+    );
+    graf_triangle_strip_tex_more(graf,
+      dstx+dstw,dsty+dsth,srcx+w,srcy+h
+    );
+  } else {
+    if (xform&EGG_XFORM_XREV) {
+      dstx+=dstw;
+      dstw=-dstw;
+    }
+    if (xform&EGG_XFORM_YREV) {
+      dsty+=dsth;
+      dsth=-dsth;
+    }
+    graf_triangle_strip_tex_begin(graf,
+      dstx     ,dsty     ,srcx  ,srcy  ,
+      dstx+dstw,dsty     ,srcx+w,srcy  ,
+      dstx     ,dsty+dsth,srcx  ,srcy+h
+    );
+    graf_triangle_strip_tex_more(graf,
+      dstx+dstw,dsty+dsth,srcx+w,srcy+h
+    );
+  }
+  graf_flush(graf);
+}
+
 void graf_fill_rect(struct graf *graf,int x,int y,int w,int h,uint32_t rgba) {
   graf_set_input(graf,0);
   graf_triangle_strip_begin(graf,

@@ -24,14 +24,17 @@ static void _video_Transforms_update(struct modal *modal,double elapsed,int inpu
  
 static void _video_Transforms_render(struct modal *modal) {
   const int colc=8; // One per xform.
-  const int rowc=3; // Ref,Tile,Fancy.
+  const int rowc=4; // Ref,Tile,Fancy,Decal.
   const int colstride=20;
   const int rowstride=20;
   const int fullw=colstride*colc;
   const int fullh=rowstride*rowc;
-  const int x0=(FBW>>1)-(fullw>>1)+(colstride>>1);
-  const int y0=(FBH>>1)-(fullh>>1)+(rowstride>>1);
-  #define POS(col,row) x0+(col)*colstride,y0+(row)*rowstride
+  const int x0=(FBW>>1)-(fullw>>1);
+  const int y0=(FBH>>1)-(fullh>>1);
+  const int xa=x0+(colstride>>1);
+  const int ya=y0+(rowstride>>1);
+  #define POS(col,row) xa+(col)*colstride,ya+(row)*rowstride /* center */
+  #define POS0(col,row) xa+(col)*colstride-8,ya+(row)*rowstride-8 /* top-left */
   
   graf_set_image(&g.graf,RID_image_tiles);
   
@@ -69,6 +72,17 @@ static void _video_Transforms_render(struct modal *modal) {
   graf_fancy(&g.graf,POS(6,2),0x00,6 TILEISH_FANCY);
   graf_fancy(&g.graf,POS(7,2),0x00,7 TILEISH_FANCY);
   #undef TILEISH_FANCY
+  
+  /* graf_decal_xform().
+   */
+  graf_decal_xform(&g.graf,POS0(0,3),0,0,16,16,0);
+  graf_decal_xform(&g.graf,POS0(1,3),0,0,16,16,1);
+  graf_decal_xform(&g.graf,POS0(2,3),0,0,16,16,2);
+  graf_decal_xform(&g.graf,POS0(3,3),0,0,16,16,3);
+  graf_decal_xform(&g.graf,POS0(4,3),0,0,16,16,4);
+  graf_decal_xform(&g.graf,POS0(5,3),0,0,16,16,5);
+  graf_decal_xform(&g.graf,POS0(6,3),0,0,16,16,6);
+  graf_decal_xform(&g.graf,POS0(7,3),0,0,16,16,7);
   
   #undef POS
 }

@@ -66,6 +66,8 @@ Features we *do* support:
 
 ## Games
 
+A few simple example projects can be found at [eggsamples](https://github.com/aksommerville/eggsamples).
+
 - [Zen Garden](https://github.com/aksommerville/zennoniwa)
 - [Humm Fu](https://github.com/aksommerville/hummfu)
 - [Mysteries of the Crypt](https://github.com/aksommerville/myscrypt)
@@ -91,6 +93,7 @@ Features we *do* support:
 - With the above complete, we can start migrating games:
 - [x] Rewrite or migrate eggsamples for v2.
 - - [ ] Bring back "Hard Boiled" from a couple Eggs ago. Nice game, and now that we have mouse support, we can do it for real.
+- - - egg-202408 is so different from v2, I think a full rewrite would be easier. It's not complicated. The irreplaceable bit is the graphics.
 - [ ] Migrate existing v1 projects to v2.
 - - [ ] Season of Penance
 - - [ ] Spelling Bee
