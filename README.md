@@ -75,6 +75,8 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [Queen of Clocks](https://github.com/aksommerville/queenofclocks)
 - [Vexularg](https://github.com/aksommerville/vexularg)
 
+- [Sam-Sam](https://github.com/aksommerville/samsam)
+
 ## TODO
 
 - [ ] native: Record and playback session.
@@ -90,6 +92,8 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [ ] Add a fullscreen toggle in the universal menu.
 - [ ] Review all "TODO" in source, there's a ton of them.
 - [x] We should have a text-processing util. In v1 there was eg `strings_format()`, very helpful.
+- [ ] Migration is kind of annoying because we have a nondeterministic compilation order. Fix a line in File A, rebuild, get an error for File B even though File A isn't done yet.
+- - During `eggdev build` can we sort files alphabetically, where prereq conditions permit?
 - With the above complete, we can start migrating games:
 - [x] Rewrite or migrate eggsamples for v2.
 - - [ ] Bring back "Hard Boiled" from a couple Eggs ago. Nice game, and now that we have mouse support, we can do it for real.
@@ -103,8 +107,8 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - - [ ] Dot's Wicked Garden
 - - [ ] Gobblin Kabobblin'
 - - [ ] Dead Weight
-- - [ ] Cherteau
-- - [ ] Sam-Sam
+- - [x] Cherteau
+- - [x] Sam-Sam
 - [ ] Enormous effort, but how do you feel about migrating or rewriting old non-Egg games? Could make provisioning new kiosks a lot smoother.
 - - [ ] Upsy-Downsy -- least difficult and most beneficial of these. We could then retire `pebble`
 - - [ ] Tag Team Adventure Quest

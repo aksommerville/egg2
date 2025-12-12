@@ -49,6 +49,7 @@ PROJECT/
     editor/
       override.css
       override.js
+    tool/: Explicitly ignored by eggdev build. For your own use at build time.
   etc/
 ```
 

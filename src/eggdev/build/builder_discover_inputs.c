@@ -1,13 +1,42 @@
 #include "eggdev/eggdev_internal.h"
 #include "builder.h"
 
+/* Ignore some known directories.
+ */
+ 
+static int builder_should_ignore_directory(struct builder *builder,const char *path,int pathc) {
+
+  // First off, we only care about "ROOT/src/". Nothing else should land here, but be sure of it.
+  if (!path) return 1;
+  if (pathc<0) { pathc=0; while (path[pathc]) pathc++; }
+  if (pathc<builder->rootc) return 1;
+  if (memcmp(builder->root,path,builder->rootc)) return 1;
+  path+=builder->rootc;
+  pathc-=builder->rootc;
+  if ((pathc<5)||memcmp(path,"/src/",5)) return 1;
+  path+=5;
+  pathc-=5;
+  
+  // For now I'm only looking at directories immediately under src.
+  const char *tld=path;
+  int tldc=0;
+  while ((tldc<pathc)&&(tld[tldc]!='/')) tldc++;
+  if ((tldc==4)&&!memcmp(tld,"tool",4)) return 1;
+  
+  // Something else? Assume it's interesting.
+  return 0;
+}
+
 /* Found a file.
  */
  
 static int builder_discover_inputs_cb(const char *path,const char *base,char ftype,void *userdata) {
   struct builder *builder=userdata;
   if (!ftype) ftype=file_get_type(path);
-  if (ftype=='d') return dir_read(path,builder_discover_inputs_cb,builder);
+  if (ftype=='d') {
+    if (builder_should_ignore_directory(builder,path,-1)) return 0;
+    return dir_read(path,builder_discover_inputs_cb,builder);
+  }
   if (ftype!='f') {
     fprintf(stderr,"%s: Ignoring unexpected source file due to unexpected type '%c'\n",path,ftype);
     return 0;
