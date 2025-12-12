@@ -90,7 +90,7 @@ int font_render_to_texture(
   uint32_t rgba
 );
 
-/* A little overkilly, but to ensure we manage defaulting of misencoding text uniformly,
+/* A little overkilly, but to ensure we manage defaulting of misencoded text uniformly,
  * we will always read text via this reader.
  */
 struct font_string_reader {
