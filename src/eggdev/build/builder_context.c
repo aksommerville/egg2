@@ -34,20 +34,11 @@ void builder_cleanup(struct builder *builder) {
   if (builder->metadata) free(builder->metadata);
 }
 
-/* Set projname as the last component of this path.
+/* Set project name.
  */
  
-static int builder_auto_projname(struct builder *builder,const char *path) {
-  const char *src=path;
-  int srcc=0,pathp=0;
-  for (;path[pathp];pathp++) {
-    if (path[pathp]=='/') {
-      src=path+pathp+1;
-      srcc=0;
-    } else {
-      srcc++;
-    }
-  }
+static int builder_set_projname(struct builder *builder,const char *src,int srcc) {
+  if (!src) srcc=0; else if (srcc<0) { srcc=0; while (src[srcc]) srcc++; }
   char *nv=malloc(srcc+1);
   if (!nv) return -1;
   memcpy(nv,src,srcc);
@@ -56,6 +47,49 @@ static int builder_auto_projname(struct builder *builder,const char *path) {
   builder->projname=nv;
   builder->projnamec=srcc;
   return 0;
+}
+ 
+static int builder_set_projname_path(struct builder *builder,const char *path,int pathc) {
+  if (!path) pathc=0; else if (pathc<0) { pathc=0; while (path[pathc]) pathc++; }
+  while (pathc&&(path[pathc-1]=='/')) pathc--;
+  const char *src=path;
+  int srcc=0,pathp=0;
+  for (;pathp<pathc;pathp++) {
+    if (path[pathp]=='/') {
+      src=path+pathp+1;
+      srcc=0;
+    } else {
+      srcc++;
+    }
+  }
+  return builder_set_projname(builder,src,srcc);
+}
+
+static int builder_auto_projname(struct builder *builder) {
+
+  // First, if the project declares its name in shared_symbols.h, that's the right answer.
+  const char *exp=0;
+  int expc=eggdev_client_get_string(&exp,"projname",8);
+  if (expc>0) return builder_set_projname(builder,exp,expc);
+  
+  // If our root directory is unset or ".", try the basename of the working directory.
+  // This is the likeliest case, normally you run with `--project=.`
+  if ((builder->rootc<2)||((builder->rootc==1)&&(builder->root[0]=='.'))) {
+    char *cwd=getcwd(0,0);
+    if (cwd) {
+      int err=builder_set_projname_path(builder,cwd,-1);
+      free(cwd);
+      return err;
+    }
+  }
+  
+  // If we have a root directory, use its basename.
+  if (builder->rootc) {
+    return builder_set_projname_path(builder,builder->root,builder->rootc);
+  }
+  
+  // And in the absence of anything else call it "game".
+  return builder_set_projname(builder,"game",4);
 }
 
 /* Set root.
@@ -71,17 +105,7 @@ int builder_set_root(struct builder *builder,const char *path,int pathc) {
   memcpy(builder->root,path,pathc);
   builder->root[pathc]=0;
   builder->rootc=pathc;
-  
-  if ((pathc<2)||((pathc==1)&&(path[0]=='.'))) {
-    char *cwd=getcwd(0,0);
-    if (cwd) {
-      builder_auto_projname(builder,cwd);
-      free(cwd);
-    }
-  } else {
-    builder_auto_projname(builder,builder->root);
-  }
-  
+  builder_auto_projname(builder);
   return 0;
 }
 

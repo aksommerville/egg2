@@ -107,7 +107,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - - [ ] Presto Changeo
 - - [ ] Reddin Iggle
 - - [ ] Dot's Wicked Garden
-- - [ ] Gobblin Kabobblin'
+- - [x] Gobblin Kabobblin'
 - - [x] Dead Weight
 - - [x] Cherteau
 - - [x] Sam-Sam
