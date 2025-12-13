@@ -96,6 +96,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [x] We should have a text-processing util. In v1 there was eg `strings_format()`, very helpful.
 - [x] Migration is kind of annoying because we have a nondeterministic compilation order. Fix a line in File A, rebuild, get an error for File B even though File A isn't done yet.
 - - During `eggdev build` can we sort files alphabetically, where prereq conditions permit?
+- [x] SongEditor: new Action to copy an existing sound or drum and overwrite editor content.
 - With the above complete, we can start migrating games:
 - [x] Rewrite or migrate eggsamples for v2.
 - - [ ] Bring back "Hard Boiled" from a couple Eggs ago. Nice game, and now that we have mouse support, we can do it for real.
@@ -106,7 +107,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - - [ ] Thirty Seconds Apothecary
 - - [ ] Presto Changeo
 - - [ ] Reddin Iggle
-- - [ ] Dot's Wicked Garden
+- - [x] Dot's Wicked Garden
 - - [x] Gobblin Kabobblin'
 - - [x] Dead Weight
 - - [x] Cherteau

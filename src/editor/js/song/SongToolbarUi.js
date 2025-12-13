@@ -7,6 +7,7 @@ import { SongService } from "./SongService.js";
 import { SongChannel } from "./Song.js";
 import { EventModal } from "./EventModal.js";
 import { EventFilterModal } from "./EventFilterModal.js";
+import { PickSoundModal } from "./PickSoundModal.js";
 
 export class SongToolbarUi {
   static getDependencies() {
@@ -49,6 +50,7 @@ export class SongToolbarUi {
     
     const actionsMenu = this.dom.spawn(this.element, "SELECT", { name: "actions", "on-change": () => this.onActionsChange() },
       this.dom.spawn(null, "OPTION", { value: "", disabled: "disabled" }, "Actions..."),
+      this.dom.spawn(null, "OPTION", { value: "copyFrom" }, "Copy from..."),
       this.dom.spawn(null, "OPTION", { value: "tempo" }, "Tempo..."),
       this.dom.spawn(null, "OPTION", { value: "dropUnusedNames" }, "Drop Unused Names"),
       this.dom.spawn(null, "OPTION", { value: "dropAllNames" }, "Drop All Names"),
@@ -257,6 +259,21 @@ export class SongToolbarUi {
   
   /* Actions.
    ***********************************************************************************/
+   
+  action_copyFrom() {
+    if (!this.songService.song) return;
+    const modal = this.dom.spawnModal(PickSoundModal);
+    modal.setupForSound();
+    modal.result.then(serial => {
+      if (!serial) return;
+      this.songService.song.reinit(serial);
+      this.songService.broadcast("dirty");
+      this.songService.broadcast("channelSetChanged");
+      this.songService.broadcast("eventsChanged");
+    }).catch(e => {
+      this.dom.modalError(e);
+    });
+  }
    
   action_tempo() {
     if (!this.songService.song) return;

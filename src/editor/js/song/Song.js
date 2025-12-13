@@ -16,11 +16,7 @@ export class Song {
    ********************************************************************************/
    
   constructor(src) {
-    this._init();
-    if (!src) ;
-    else if (src instanceof Song) this._copy(src);
-    else if (src instanceof Uint8Array) this._decode(src, false);
-    else throw new Error(`Unexpected input to Song`);
+    this.reinit(src);
   }
   
   /* Sometimes a caller only wants channels and text.
@@ -42,6 +38,14 @@ export class Song {
     if (eggs.chdr) song._decodeChdr(eggs.chdr);
     if (eggs.text) song._decodeText(eggs.text);
     return song;
+  }
+  
+  reinit(src) {
+    this._init();
+    if (!src) ;
+    else if (src instanceof Song) this._copy(src);
+    else if (src instanceof Uint8Array) this._decode(src, false);
+    else throw new Error(`Unexpected input to Song`);
   }
   
   _init() {
