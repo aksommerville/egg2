@@ -228,6 +228,9 @@ static int eggrt_init_input() {
     if (err!=-2) fprintf(stderr,"%s: Error initializing input manager.\n",eggrt.exename);
     return -2;
   }
+  if (eggrt.metadata.playerchi>1) {
+    inmgr_set_player_count(eggrt.metadata.playerchi);
+  }
   inmgr_set_signal(INMGR_BTN_QUIT,eggrt_cb_quit);
   inmgr_set_signal(INMGR_BTN_MENU,eggrt_cb_quit);
   if (eggrt.hostio->video&&eggrt.hostio->video->type->provides_input) {

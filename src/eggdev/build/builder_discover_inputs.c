@@ -27,6 +27,25 @@ static int builder_should_ignore_directory(struct builder *builder,const char *p
   return 0;
 }
 
+/* Ignore individual files if they match a project-defined glob.
+ */
+ 
+static int builder_should_ignore_file(struct builder *builder,const char *path,int pathc) {
+  const char *src;
+  int srcc=eggdev_client_get_string(&src,"ignoreData",10);
+  if (srcc<1) return 0;
+  if (!path) return 1;
+  if (pathc<0) { pathc=0; while (path[pathc]) pathc++; }
+  int srcp=0;
+  while (srcp<srcc) {
+    const char *pat=src+srcp;
+    int patc=0;
+    while ((srcp<srcc)&&(src[srcp++]!=',')) patc++;
+    if (sr_pattern_match(pat,patc,path,pathc)) return 1;
+  }
+  return 0;
+}
+
 /* Found a file.
  */
  
@@ -41,6 +60,7 @@ static int builder_discover_inputs_cb(const char *path,const char *base,char fty
     fprintf(stderr,"%s: Ignoring unexpected source file due to unexpected type '%c'\n",path,ftype);
     return 0;
   }
+  if (builder_should_ignore_file(builder,path,-1)) return 0;
   struct builder_file *file=builder_add_file(builder,path,-1);
   if (!file) return -1;
   

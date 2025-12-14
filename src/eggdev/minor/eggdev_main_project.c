@@ -271,7 +271,7 @@ static int gen_shared_symbols(struct eggdev_project_context *ctx) {
     "#define SHARED_SYMBOLS_H\n"
     "\n"
     "#define EGGDEV_importUtil \"res,font,text,graf,stdlib\" /* Comma-delimited list of Egg 'util' units to include in the build. */\n"
-    "#define EGGDEV_ignoreData \"\" /* Comma-delimited glob patterns for editor to ignore under src/data/ */\n"
+    "#define EGGDEV_ignoreData \"\" /* Comma-delimited glob patterns for editor and builder to ignore under src/data/ */\n"
     "\n"
     "#define NS_sys_tilesize 16\n"
     "// Define (mapw,maph) if you're using fixed-size maps.\n"

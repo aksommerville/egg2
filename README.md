@@ -103,8 +103,8 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - - - egg-202408 is so different from v2, I think a full rewrite would be easier. It's not complicated. The irreplaceable bit is the graphics.
 - [ ] Migrate existing v1 projects to v2.
 - - [ ] Season of Penance
-- - [ ] Spelling Bee
-- - [ ] Thirty Seconds Apothecary
+- - [x] Spelling Bee
+- - [x] Thirty Seconds Apothecary
 - - [x] Presto Changeo
 - - [x] Reddin Iggle
 - - [x] Dot's Wicked Garden
