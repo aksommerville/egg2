@@ -105,8 +105,8 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - - [ ] Season of Penance
 - - [ ] Spelling Bee
 - - [ ] Thirty Seconds Apothecary
-- - [ ] Presto Changeo
-- - [ ] Reddin Iggle
+- - [x] Presto Changeo
+- - [x] Reddin Iggle
 - - [x] Dot's Wicked Garden
 - - [x] Gobblin Kabobblin'
 - - [x] Dead Weight

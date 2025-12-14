@@ -11,6 +11,13 @@
  */
 void text_set_rom(const void *src,int srcc);
 
+/* Calls (cb) for each nonzero language that has at least one strings resource.
+ * Stops when you return nonzero, and returns the same.
+ * Owing to the way ROMs are laid out, these will naturally be in alphabetical order (by ISO 639 code).
+ * Language zero is reported like any other, if there's a strings with rid<64. Beware that those rid are hard to reach!
+ */
+int text_for_each_language(int (*cb)(int lang,void *userdata),void *userdata);
+
 /* Get one member of a strings resource.
  * For (rid) 1..63, we'll query EGG_PREF_LANG and adjust accordingly.
  * Anything >=64 is the exact rid as encoded in the ROM.

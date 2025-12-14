@@ -30,6 +30,26 @@ void text_set_rom(const void *src,int srcc) {
   }
 }
 
+/* Scan ROM for languages.
+ * Language lives in the high bits of (rid) which means they are naturally sorted by language.
+ * That permits this loop to be super simple.
+ */
+ 
+int text_for_each_language(int (*cb)(int lang,void *userdata),void *userdata) {
+  int pvlang=-1;
+  struct rom_reader reader=gtext.rom;
+  struct rom_entry res;
+  while (rom_reader_next(&res,&reader)>0) {
+    if (res.tid>EGG_TID_strings) break;
+    int lang=res.rid>>6;
+    if (lang==pvlang) continue;
+    pvlang=lang;
+    int err=cb(lang,userdata);
+    if (err) return err;
+  }
+  return 0;
+}
+
 /* Get strings resource from our partial ROM.
  */
  
