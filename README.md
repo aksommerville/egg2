@@ -68,6 +68,15 @@ Features we *do* support:
 
 A few simple example projects can be found at [eggsamples](https://github.com/aksommerville/eggsamples).
 
+- [The Season of Penance](https://github.com/aksommerville/penance)
+- [Spelling Bee](https://github.com/aksommerville/spellingbee)
+- [Thirty Seconds Apothecary](https://github.com/aksommerville/apothecary)
+- [Presto Changeo](https://github.com/aksommerville/presto)
+- [Reddin Iggle](https://github.com/aksommerville/iggle)
+- [Dot's Wicked Garden](https://github.com/aksommerville/zerosigma)
+- [Dead Weight](https://github.com/aksommerville/deadweight)
+- [Cherteau](https://github.com/aksommerville/cherteau)
+- [Sam-Sam](https://github.com/aksommerville/samsam)
 - [Zen Garden](https://github.com/aksommerville/zennoniwa)
 - [Humm Fu](https://github.com/aksommerville/hummfu)
 - [Mysteries of the Crypt](https://github.com/aksommerville/myscrypt)
@@ -75,9 +84,6 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [Queen of Clocks](https://github.com/aksommerville/queenofclocks)
 - [Vexularg](https://github.com/aksommerville/vexularg)
 
-- [Dead Weight](https://github.com/aksommerville/deadweight)
-- [Cherteau](https://github.com/aksommerville/cherteau)
-- [Sam-Sam](https://github.com/aksommerville/samsam)
 
 ## TODO
 
@@ -101,8 +107,8 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [x] Rewrite or migrate eggsamples for v2.
 - - [ ] Bring back "Hard Boiled" from a couple Eggs ago. Nice game, and now that we have mouse support, we can do it for real.
 - - - egg-202408 is so different from v2, I think a full rewrite would be easier. It's not complicated. The irreplaceable bit is the graphics.
-- [ ] Migrate existing v1 projects to v2.
-- - [ ] Season of Penance
+- [x] Migrate existing v1 projects to v2.
+- - [x] Season of Penance
 - - [x] Spelling Bee
 - - [x] Thirty Seconds Apothecary
 - - [x] Presto Changeo
