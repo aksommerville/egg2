@@ -674,9 +674,12 @@ static int eggdev_cmdlist_compile_arg(struct sr_convert_context *ctx,const char 
   
   /* Naked integers are u8.
    */
-  if ((src[0]>='0')&&(src[0]<='9')) {
+  if (
+    ((src[0]>='0')&&(src[0]<='9'))||
+    ((srcc>=2)&&(src[0]=='-')&&(src[1]>='0')&&(src[1]<='9'))
+  ) {
     int v;
-    if ((sr_int_eval(&v,src,srcc)<2)||(v<0)||(v>255)) {
+    if ((sr_int_eval(&v,src,srcc)<2)||(v<-128)||(v>255)) {
       return sr_convert_error_at(ctx,src,"Expected integer in 0..255, found '%.*s'",srcc,src);
     }
     return sr_encode_u8(ctx->dst,v);

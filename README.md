@@ -3,20 +3,6 @@
 Engine for web and native games, retro style.
 Most documentation is under [./etc/doc](./etc/doc/).
 
-Differences from [Egg v1](https://github.com/aksommerville/egg):
-- Custom build tool, similar to berry. Arbitrary targets selected at eggdev's build time, and web is not special.
-- Direct access to data conversion a la carte via eggdev.
-- Synth: Post pipes, LFOs, and stereo output.
-- Synth: Single implementation for both native and web. Web runs Wasm in an AudioWorkletNode.
-- ~More input options: Keyboard, mouse, touch. Maybe accelerometer?~ Decided against this, after getting partway in.
-- Single render call taking a struct of uniforms and a GPU-ready vertex buffer.
-- No image decoder at runtime (egg 1 used to do this; it's actually been removed already).
-- Rich built-in menu. Quit, input config, toggle music, toggle sound, language.
-- Web apps pack to a Zip file with boilerplate HTML and the binary ROM. Same as berry.
-- Standalone HTML is no longer an option, due to synth.
-- eggdev --help reads from etc/doc/eggdev-cli.md directly.
-- Default instruments live somewhere in the SDK.
-
 ## Should I use Egg?
 
 Target use case is low-resolution 2d sprite graphics with beepy sound and local multiplayer.
@@ -25,17 +11,17 @@ Think SNES.
 Some common game features that Egg *does not* support:
  - Analogue joysticks.
  - Text from the keyboard. (keyboard masquerades as a gamepad).
- - Mouse, touch, accelerometer.
+ - Touch, accelerometer. Mouse is supported in a limited fashion.
  - Networking.
  - Recorded sound.
  - Arbitrary FS access.
  - 3d graphics.
- - Script languages. Our API is geared for C. C++, Rust, and the like should be possible. Lua, JS, Python, and the like will never work.
+ - Script languages.
  
 Features we *do* support:
  - 2d sprite graphics.
  - Beepy music and sound.
- - Local multiplayer. Most hosts can go up to at least 8.
+ - Local multiplayer, if the user has multiple gamepads.
  - Multiple languages. Easy for strings, but you're on your own for text written in images.
  - Universal input config. Individual games never need to worry about it.
  - Highly portable.
@@ -43,6 +29,7 @@ Features we *do* support:
  - No unnecessary branding. For the most part, users don't know that you're using Egg, why should they care.
  - Small builds. <1MB is typical.
  - Fast builds. Egg itself might take a minute once, and games usually <10s from scratch.
+ - Fast startup. As in, instantaneous, usually.
  - Built-in generic metadata for indexing a collection of games.
 
 ## Prereqs
@@ -62,7 +49,7 @@ Features we *do* support:
 - - [WebAssembly Micro Runtime](https://github.com/bytecodealliance/wasm-micro-runtime)
 - Editor: (anything?)
 - MacOS: (anything?)
-- Windows: (not supported)
+- Windows: (not supported yet)
 
 ## Games
 
@@ -99,25 +86,8 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [ ] Web incfg could bear some prettying-up.
 - [ ] Add a fullscreen toggle in the universal menu.
 - [ ] Review all "TODO" in source, there's a ton of them.
-- [x] We should have a text-processing util. In v1 there was eg `strings_format()`, very helpful.
-- [x] Migration is kind of annoying because we have a nondeterministic compilation order. Fix a line in File A, rebuild, get an error for File B even though File A isn't done yet.
-- - During `eggdev build` can we sort files alphabetically, where prereq conditions permit?
-- [x] SongEditor: new Action to copy an existing sound or drum and overwrite editor content.
-- With the above complete, we can start migrating games:
-- [x] Rewrite or migrate eggsamples for v2.
-- - [ ] Bring back "Hard Boiled" from a couple Eggs ago. Nice game, and now that we have mouse support, we can do it for real.
-- - - egg-202408 is so different from v2, I think a full rewrite would be easier. It's not complicated. The irreplaceable bit is the graphics.
-- [x] Migrate existing v1 projects to v2.
-- - [x] Season of Penance
-- - [x] Spelling Bee
-- - [x] Thirty Seconds Apothecary
-- - [x] Presto Changeo
-- - [x] Reddin Iggle
-- - [x] Dot's Wicked Garden
-- - [x] Gobblin Kabobblin'
-- - [x] Dead Weight
-- - [x] Cherteau
-- - [x] Sam-Sam
+- [ ] eggsamples: Bring back "Hard Boiled" from a couple Eggs ago. Nice game, and now that we have mouse support, we can do it for real.
+- - egg-202408 is so different from v2, I think a full rewrite would be easier. It's not complicated. The irreplaceable bit is the graphics.
 - [ ] Enormous effort, but how do you feel about migrating or rewriting old non-Egg games? Could make provisioning new kiosks a lot smoother.
 - - [ ] Upsy-Downsy -- least difficult and most beneficial of these. We could then retire `pebble`
 - - [ ] Tag Team Adventure Quest

@@ -5,6 +5,8 @@
 #ifndef GRAF_H
 #define GRAF_H
 
+#include "egg/egg.h"
+
 #define GRAF_VERTEX_BUFFER_SIZE 4096 /* bytes */
 #define GRAF_TEX_LIMIT 8 /* textures */
 
