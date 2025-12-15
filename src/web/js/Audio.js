@@ -161,7 +161,7 @@ export class Audio {
     this.nextWaveCookie = 1;
     this.musicTrim = 99; // 0..99 exactly as in Egg prefs (those read from here blindly).
     this.soundTrim = 99;
-    this.songsBySongid = []; // Sparse, indexed by songid. {rid,startTime,duration}
+    this.songsBySongid = []; // Sparse, indexed by songid. {rid,startTime,duration,repeat}
     this.durationsByRid = []; // Sparse, indexed by rid. Number, seconds.
     this.initPromise = this.init()
       .then(() => { this.initStatus = 1; })
@@ -310,7 +310,12 @@ export class Audio {
     }
     this.node.port.postMessage({ cmd: "reinit", rom });
     this.node.port.postMessage({ cmd: "playSong", songid: 1, rid: 1, repeat, trim: 1, pan: 0 });
-    this.songsBySongid[1] = { rid: 1, startTime: this.ctx.currentTime, duration: serial ? this.calculateSongDuration(serial) : 0 };
+    this.songsBySongid[1] = {
+      rid: 1,
+      startTime: this.ctx.currentTime,
+      duration: serial ? this.calculateSongDuration(serial) : 0,
+      repeat,
+    };
   }
   
   /* For editor.
@@ -398,7 +403,11 @@ export class Audio {
     if (!this.ctx) return 0.0;
     const song = this.songsBySongid[1];
     if (song?.duration) {
-      return ((this.ctx.currentTime - song.startTime) % song.duration) / song.duration;
+      let elapsed = this.ctx.currentTime - song.startTime;
+      if (song.repeat) elapsed %= song.duration;
+      else if (elapsed >= song.duration) return 0.0;
+      if (elapsed <= 0.0) return 0.001;
+      return elapsed / song.duration;
     }
     return 0.0;
   }
@@ -445,7 +454,7 @@ export class Audio {
       return;
     }
     this.node.port.postMessage({ cmd: "playSong", songid, rid, repeat, trim, pan });
-    this.songsBySongid[songid] = { rid, startTime: this.ctx.currentTime };
+    this.songsBySongid[songid] = { rid, startTime: this.ctx.currentTime, repeat };
   }
   
   egg_song_set(songid, chid, prop, v) {
@@ -483,7 +492,11 @@ export class Audio {
     const song = this.songsBySongid[songid];
     if (song) {
       if (!song.duration) song.duration = this.durationByRid(song.rid);
-      return Math.max(0.001, (this.ctx.currentTime - song.startTime) % song.duration);
+      let elapsed = this.ctx.currentTime - song.startTime;
+      if (song.repeat) elapsed %= song.duration;
+      else if (elapsed >= song.duration) return 0.0;
+      if (elapsed <= 0.0) return 0.001;
+      return elapsed;
     }
     return 0.0;
   }

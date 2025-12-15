@@ -55,6 +55,7 @@ Features we *do* support:
 
 A few simple example projects can be found at [eggsamples](https://github.com/aksommerville/eggsamples).
 
+- [Upsy-Downsy](https://github.com/aksommerville/upsy-downsy)
 - [The Season of Penance](https://github.com/aksommerville/penance)
 - [Spelling Bee](https://github.com/aksommerville/spellingbee)
 - [Thirty Seconds Apothecary](https://github.com/aksommerville/apothecary)
@@ -74,6 +75,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
+- [x] Web: Playhead keeps reporting after song ends (without repeat). Game-breaking in Cherteau, the dance-off.
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
 - [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols. Need a generalization of inotify. Not trivial.
@@ -89,7 +91,9 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [ ] eggsamples: Bring back "Hard Boiled" from a couple Eggs ago. Nice game, and now that we have mouse support, we can do it for real.
 - - egg-202408 is so different from v2, I think a full rewrite would be easier. It's not complicated. The irreplaceable bit is the graphics.
 - [ ] Enormous effort, but how do you feel about migrating or rewriting old non-Egg games? Could make provisioning new kiosks a lot smoother.
-- - [ ] Upsy-Downsy -- least difficult and most beneficial of these. We could then retire `pebble`
+- - [x] Upsy-Downsy -- least difficult and most beneficial of these. We could then retire `pebble`
+- - - ...surprisingly easy to convert.
+- - For the rest of these, it's kind of hard to picture a lift-n-shift like Upsy-Downsy and the Egg1s. I think they'd all be full rewrites.
 - - [ ] Tag Team Adventure Quest
 - - [ ] Campaign Trail of the Mummy
 - - [ ] Plunder Squad
