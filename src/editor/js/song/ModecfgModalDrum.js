@@ -8,15 +8,20 @@ import { GM_DRUM_NAMES } from "./MidiConstants.js";
 import { SongService } from "./SongService.js";
 import { SongEditor } from "./SongEditor.js";
 import { PickSoundModal } from "./PickSoundModal.js";
+import { MidiService } from "./MidiService.js";
+import { Audio } from "../Audio.js";
+import { Encoder } from "../Encoder.js";
 
 export class ModecfgModalDrum {
   static getDependencies() {
-    return [HTMLDialogElement, Dom, SongService];
+    return [HTMLDialogElement, Dom, SongService, MidiService, Audio];
   }
-  constructor(element, dom, songService) {
+  constructor(element, dom, songService, midiService, audio) {
     this.element = element;
     this.dom = dom;
     this.songService = songService;
+    this.midiService = midiService;
+    this.audio = audio;
     
     // All "Modecfg" modals must implement, and resolve with Uint8Array or null.
     this.result = new Promise((resolve, reject) => {
@@ -26,14 +31,13 @@ export class ModecfgModalDrum {
     
     this.cbSave = null; // (Uint8Array) => void ; Set manually to enable save-without-submit.
     
-    // We deliberately do not subscribe to MidiService.
-    // We open child SongEditor modals, and one assumes they will be talking to MidiService.
-    // Avoid the conflict by declining to participate at all.
-    // User can play our drums by clicking the buttons.
+    this.midiServiceListener = this.midiService.listen(e => this.onMidiEvent(e));
+    this.playbackDirty = true;
   }
   
   onRemoveFromDom() {
     this.resolve(null);
+    this.midiService.unlisten(this.midiServiceListener);
   }
   
   /* All "Modecfg" modals must implement.
@@ -53,6 +57,7 @@ export class ModecfgModalDrum {
    
   buildUi() {
     this.element.innerHTML = "";
+    this.element.oninput = () => { this.playbackDirty = true; };
     const scroller = this.dom.spawn(this.element, "DIV", ["scroller"]);
     for (const drum of this.model.drums) {
       const row = this.dom.spawn(scroller, "DIV", ["row"]);
@@ -98,6 +103,47 @@ export class ModecfgModalDrum {
     return row;
   }
   
+  /* Communication with MIDI bus and synthesizer.
+   ********************************************************************/
+  
+  onMidiEvent(event) {
+    switch (event.opcode) {
+      case 0x80:
+      case 0x90:
+      case 0xe0: {
+          this.requirePlaybackSerial();
+          event.chid = 0; // Don't care about input channel, we've registered on channel zero.
+          this.audio.sendEvent(event);
+        } break;
+    }
+  }
+  
+  requirePlaybackSerial() {
+    if (this.playbackDirty) {
+      this.playbackDirty = false;
+      const modecfg = this.encode();
+      const encoder = new Encoder();
+      encoder.raw("\0EAU");
+      encoder.u16be(500); // tempo, whatever
+      encoder.u32be(modecfg.length + 8 + (this.channel.post?.length || 0)); // Channel Headers length
+      encoder.u8(0); // Channel zero.
+      encoder.u8(0xff); // Trim, full.
+      encoder.u8(0x80); // Pan, center.
+      encoder.u8(this.mode);
+      encoder.u16be(modecfg.length);
+      encoder.raw(modecfg);
+      if (this.channel.post) {
+        encoder.u16be(this.channel.post.length);
+        encoder.raw(this.channel.post);
+      } else {
+        encoder.u16be(0);
+      }
+      encoder.u32be(1); // Events length
+      encoder.u8(0x7f); // Long delay
+      this.audio.playEauSong(encoder.finish(), true);
+    }
+  }
+  
   /* Events.
    ********************************************************************/
    
@@ -111,7 +157,7 @@ export class ModecfgModalDrum {
   }
   
   onPlay(drum) {
-    this.songService.playSong(drum.serial, 0);
+    this.songService.playSong(drum.serial, 0, drum.trimhi / 255, (drum.pan - 0x80) / 0x80);
   }
   
   onEdit(drum) {

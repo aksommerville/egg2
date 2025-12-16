@@ -296,7 +296,9 @@ export class Audio {
   
   /* For editor.
    */
-  playEauSong(serial, repeat) {
+  playEauSong(serial, repeat, trim, pan) {
+    if (!trim) trim = 1;
+    if (!pan) pan = 0;
     if (serial instanceof ArrayBuffer) serial = new Uint8Array(serial);
     if (serial && (serial.length > 0x3fffff)) return;
     if (!this.ready) return;
@@ -309,7 +311,7 @@ export class Audio {
       new Uint8Array(rom.buffer, rom.byteOffset + 3, serial.length).set(serial);
     }
     this.node.port.postMessage({ cmd: "reinit", rom });
-    this.node.port.postMessage({ cmd: "playSong", songid: 1, rid: 1, repeat, trim: 1, pan: 0 });
+    this.node.port.postMessage({ cmd: "playSong", songid: 1, rid: 1, repeat, trim, pan });
     this.songsBySongid[1] = {
       rid: 1,
       startTime: this.ctx.currentTime,

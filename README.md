@@ -75,6 +75,9 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
+- [ ] Revise SDK instruments, after some playing around.
+- [x] ModecfgModalDrum: Use peak trim and pan during individual sound playback.
+- [x] ModecfgModalDrum: Can we demo the kit more broadly? I need to carefully compare eg hihat vs kick.
 - [x] Web: Playhead keeps reporting after song ends (without repeat). Game-breaking in Cherteau, the dance-off.
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.

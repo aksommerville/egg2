@@ -61,7 +61,7 @@ export class SongService {
     this.playing = false;
   }
   
-  playSong(song, rid) {
+  playSong(song, rid, trim, pan) {
     try {
       if (typeof(rid) !== "number") rid = this.rid;
       let serial = null, duration = 0;
@@ -71,7 +71,7 @@ export class SongService {
       } else if (song instanceof Uint8Array) serial = song;
       else if (!song) ;
       else throw new Error(`Unexpected input to playSong()`);
-      this.audio.playEauSong(serial, duration >= 5);
+      this.audio.playEauSong(serial, duration >= 5, trim, pan);
       this.playing = !!serial;
     } catch (e) {
       this.dom.modalError(e);
