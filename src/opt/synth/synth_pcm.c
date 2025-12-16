@@ -33,9 +33,19 @@ int synth_ring_resize(struct synth_ring *ring,int framec) {
  
 static float synth_cos(float t) {
   t+=M_PI*0.5f;
+  /**
   int p=(int)((t*SYNTH_WAVE_SIZE_SAMPLES)/(M_PI*2.0f));
   p&=SYNTH_WAVE_SIZE_SAMPLES-1;
   return synth.sine.v[p];
+  /**/
+  /* Interpolate between adjacent samples. This ought to be more correct but I don't hear much difference. */
+  uint32_t norm=(uint32_t)((t*4294967296.0f)/(M_PI*2.0f));
+  int p=norm>>SYNTH_WAVE_SHIFT;
+  int np=(p+1)&(SYNTH_WAVE_SIZE_SAMPLES-1);
+  float hi=(float)(norm&((1<<SYNTH_WAVE_SHIFT)-1))/(float)(1<<SYNTH_WAVE_SHIFT);
+  float lo=1.0f-hi;
+  return synth.sine.v[p]*lo+synth.sine.v[np]*hi;
+  /**/
 }
 
 /* Single stage IIR.
