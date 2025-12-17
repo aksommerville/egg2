@@ -191,7 +191,8 @@ export class MapPaint {
    * Otherwise a Promise resolving to null or something passable to CanvasRenderingContext2D.drawImage().
    */
   generatePoiIcon(poi) {
-    const overfn = this.override.poiIconGenerators[poi.kw];
+    // poiIconGenerators was added rather late. Some projects have Overrides without it.
+    const overfn = this.override.poiIconGenerators?.[poi.kw];
     if (overfn) return overfn(poi);
     switch (poi.kw) {
       case "sprite": {
