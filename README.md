@@ -75,6 +75,9 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
+- [x] In bellacopia, I keep getting prompted to create a new neighbor map when one does exist, visible in canvas and everything.
+- - Happens reliably on a fresh load, after the first change. Watch the map editor's tattle as the save processes.
+- - ...due to MapService searching by MapRes identity. Use rid instead.
 - [ ] Revise SDK instruments, after some playing around.
 - [x] ModecfgModalDrum: Use peak trim and pan during individual sound playback.
 - [x] ModecfgModalDrum: Can we demo the kit more broadly? I need to carefully compare eg hihat vs kick.

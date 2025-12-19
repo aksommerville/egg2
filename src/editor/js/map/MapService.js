@@ -113,7 +113,7 @@ export class MapService {
    */
   forMapNeighbors(map, cb) {
     for (const layer of this.layout) {
-      const p = layer.v.findIndex(r => r?.map === map);
+      const p = layer.v.findIndex(r => r?.map?.rid === map?.rid);
       if (p < 0) continue;
       const y = Math.floor(p / layer.w); // relative to layer
       const x = p % layer.w;
@@ -139,12 +139,15 @@ export class MapService {
   }
   
   getNeighborResource(map, dx, dy) {
+    const rid = map?.rid;
     for (const layer of this.layout) {
-      const p = layer.v.findIndex(r => r?.map === map);
+      const p = layer.v.findIndex(r => r?.map?.rid === rid);
       if (p < 0) continue;
       const y = Math.floor(p / layer.w) + dy;
       const x = p % layer.w + dx;
-      if ((y < 0) || (x < 0) || (y >= layer.h) || (x >= layer.w)) return null;
+      if ((y < 0) || (x < 0) || (y >= layer.h) || (x >= layer.w)) {
+        return null;
+      }
       return layer.v[y * layer.w + x];
     }
     return null;
@@ -173,7 +176,7 @@ export class MapService {
 
       let nx, ny;
       if (this.neighborStrategy === "neighbors") {
-        const p = layer.v.findIndex(r => r?.map === map);
+        const p = layer.v.findIndex(r => r?.map?.rid === map.rid);
         if (p < 0) continue;
         const y = Math.floor(p / layer.w);
         const x = p % layer.w;
@@ -234,7 +237,7 @@ export class MapService {
     }
     cmd[argp] = `map:${v}`;
     const serial = map.encode();
-    const myres = this.resv.find(r => r.map === map);
+    const myres = this.resv.find(r => r.map?.rid === map.rid);
     if (myres) {
       myres.serial = serial;
     }
