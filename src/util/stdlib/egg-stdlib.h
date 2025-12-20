@@ -133,7 +133,7 @@ static inline int isnan(double a) { return (fpclassify(a)==FP_NAN); }
 static inline int isinf(double a) { return (fpclassify(a)==FP_INFINITE); }
 
 static inline float sqrtf(float a) { return (float)sqrt((double)a); }
-static inline long int lround(double a) { return (int)(a+0.5); }
+static inline long int lround(double a) { int i=(int)(a+0.5); if (a<0.0) i--; return i; }
 static inline float powf(float a,float b) { return (float)pow((double)a,(double)b); }
 static inline float sinf(float a) { return (float)sin((double)a); }
 static inline float cosf(float a) { return (float)cos((double)a); }

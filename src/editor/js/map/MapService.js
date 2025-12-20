@@ -185,6 +185,8 @@ export class MapService {
       } else if (this.neighborStrategy === "position") {
         const position = map.cmd.getFirstArgArray("position");
         if (!position || (position.length < 3)) return Promise.reject("Invalid map position");
+        const z = +position[3] || 0;
+        if (layer.z !== z) continue;
         nx = +position[1] + dx;
         ny = +position[2] + dy;
       }
