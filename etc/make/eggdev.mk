@@ -6,7 +6,7 @@ eggdev_EXE:=out/eggdev
 eggdev_CFILES:=$(filter src/eggdev/%.c src/util/%.c $(addprefix src/opt/,$(addsuffix /%.c,$(eggdev_OPT_ENABLE))),$(SRCFILES))
 eggdev_OFILES:=$(patsubst src/%.c,$(eggdev_MIDDIR)/%.o,$(eggdev_CFILES))
 -include $(eggdev_OFILES:.o=.d)
-$(eggdev_MIDDIR)/%.o:src/%.c;$(PRECMD) $(eggdev_CC) -o$@ $<
+$(eggdev_MIDDIR)/%.o:src/%.c;$(PRECMD) $(eggdev_CC) -o$@ $< $(foreach U,$(eggdev_OPT_ENABLE),-DUSE_$U=1)
 $(eggdev_MIDDIR)/eggdev/eggdev_configure.o:src/eggdev/eggdev_configure.c;$(PRECMD) $(eggdev_CC) -o$@ $< -DEGG_SDK="\"$(EGG_SDK)\""
 
 eggdev-all:$(eggdev_EXE)
@@ -30,8 +30,8 @@ eggdev_EGGSTRA_OPT_ENABLE:=$(sort $(eggdev_OPT_ENABLE) $($(EGG_NATIVE_TARGET)_OP
 eggdev_EGGSTRA_CFILES:=$(filter %.c %.m,$(filter src/eggstra/% src/util/% $(addprefix src/opt/,$(addsuffix /%,$(eggdev_EGGSTRA_OPT_ENABLE))),$(SRCFILES)))
 eggdev_EGGSTRA_OFILES:=$(patsubst src/%,mid/eggstra/%.o,$(basename $(eggdev_EGGSTRA_CFILES)))
 -include $(eggdev_EGGSTRA_OFILES:.o=.d)
-mid/eggstra/%.o:src/%.c;$(PRECMD) $($(EGG_NATIVE_TARGET)_CC) -o$@ $<
-mid/eggstra/%.o:src/%.m;$(PRECMD) $($(EGG_NATIVE_TARGET)_OBJC) -o$@ $<
+mid/eggstra/%.o:src/%.c;$(PRECMD) $($(EGG_NATIVE_TARGET)_CC) -o$@ $< $(foreach U,$(eggdev_EGGSTRA_OPT_ENABLE),-DUSE_$U=1)
+mid/eggstra/%.o:src/%.m;$(PRECMD) $($(EGG_NATIVE_TARGET)_OBJC) -o$@ $< $(foreach U,$(eggdev_EGGSTRA_OPT_ENABLE),-DUSE_$U=1)
 eggdev-all:$(eggdev_EGGSTRA_EXE)
 $(eggdev_EGGSTRA_EXE):$(eggdev_EGGSTRA_OFILES);$(PRECMD) $($(EGG_NATIVE_TARGET)_LD) -o$@ $^ $($(EGG_NATIVE_TARGET)_LDPOST)
 

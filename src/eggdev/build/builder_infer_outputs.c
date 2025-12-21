@@ -354,6 +354,9 @@ static int builder_infer_target_outputs_macos(struct builder *builder,struct bui
   libfile->hint=0;
   libfile->ready=1;
   if (builder_file_add_req(exefile,libfile)<0) return -1;
+  
+  // Add imported util units.
+  if (builder_add_utils(builder,target,exefile)<0) return -1;
 
   /* BUNDLE/Contents/Resources/appicon.icns
    * The input image files should be a prereq, but they're complicated to determine and not expected to change much.

@@ -84,8 +84,8 @@ static int eggdev_synth_install_song(const void *src,int srcc) {
  * Appends directly to (dst).
  */
  
-static int eggdev_synth_emit_mono(struct sr_encoder *dst,const float *l,int framec) {
-  if (sr_encoder_require(dst,framec*2)<0) return -1;
+static void eggdev_synth_emit_mono(struct sr_encoder *dst,const float *l,int framec) {
+  if (sr_encoder_require(dst,framec*2)<0) return;
   for (;framec-->0;l++) {
     int sample=(*l<=-1.0f)?-32768:(*l>=1.0f)?32767:(int)((*l)*32767.0f);
     ((uint8_t*)dst->v)[dst->c++]=sample;
@@ -93,8 +93,8 @@ static int eggdev_synth_emit_mono(struct sr_encoder *dst,const float *l,int fram
   }
 }
  
-static int eggdev_synth_emit_stereo(struct sr_encoder *dst,const float *l,const float *r,int framec) {
-  if (sr_encoder_require(dst,framec*4)<0) return -1;
+static void eggdev_synth_emit_stereo(struct sr_encoder *dst,const float *l,const float *r,int framec) {
+  if (sr_encoder_require(dst,framec*4)<0) return;
   for (;framec-->0;l++,r++) {
     int sample=(*l<=-1.0f)?-32768:(*l>=1.0f)?32767:(int)((*l)*32767.0f);
     ((uint8_t*)dst->v)[dst->c++]=sample;
