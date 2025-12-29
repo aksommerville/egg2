@@ -40,6 +40,7 @@ void graf_reset(struct graf *graf) {
   graf->un.tint=0;
   graf->un.alpha=0xff;
   graf->un.filter=0;
+  graf->imageid=0;
 }
 
 /* Flush.
