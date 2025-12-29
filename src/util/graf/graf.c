@@ -65,10 +65,13 @@ void graf_set_input(struct graf *graf,int texid) {
   if (graf->un.srctexid==texid) return;
   graf_flush(graf);
   graf->un.srctexid=texid;
+  graf->imageid=0;
 }
 
 void graf_set_image(struct graf *graf,int imageid) {
+  if (imageid==graf->imageid) return;
   graf_set_input(graf,graf_tex(graf,imageid));
+  graf->imageid=imageid;
 }
 
 void graf_set_tint(struct graf *graf,uint32_t rgba) {

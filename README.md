@@ -62,6 +62,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [Presto Changeo](https://github.com/aksommerville/presto)
 - [Reddin Iggle](https://github.com/aksommerville/iggle)
 - [Dot's Wicked Garden](https://github.com/aksommerville/zerosigma)
+- [Goblin Kabobblin](https://github.com/aksommerville/kabobblin)
 - [Dead Weight](https://github.com/aksommerville/deadweight)
 - [Cherteau](https://github.com/aksommerville/cherteau)
 - [Sam-Sam](https://github.com/aksommerville/samsam)

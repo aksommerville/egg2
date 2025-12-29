@@ -22,6 +22,7 @@ struct graf {
   } texv[GRAF_TEX_LIMIT];
   int texc;
   int texseqnext;
+  int imageid; // Redundant graf_set_image() should quickly noop.
   
   /* Incremented every time we evict a texture from the cache.
    * It's wise to monitor this during development.
