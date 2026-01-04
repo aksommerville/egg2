@@ -36,6 +36,8 @@ Followed by space-delimited arguments:
 - `@N,N[,N,N,...]` emits each `N` as u8. This format is a marker for our map editor.
 - `*`, final argument only, pads with zeroes to the opcode's expected length.
 
+You can use unknown namespaces with a numeric value, if it's helpful to use as a comment or whatever. eg `(u16:period_ms)1234 (u8:phase)0x80`.
+
 ## Map
 
 Binary has a preamble:

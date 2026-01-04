@@ -18,22 +18,27 @@ const wsrc =
       "this.memory = new WebAssembly.Memory({ initial: 100, maximum: 2000 });" + /* TODO Maximum memory size, can we get smarter about it? */
       "this.buffers = [];" + /* Float32Array */
       "this.bufferSize = 128;" + /* frames */
-      "this.deferredSongs = [];" + /* m.data */
+      "this.deferredCommands = [];" + /* m.data */
       "this.port.onmessage = m => {" +
-        "switch (m.data.cmd) {" +
-          "case 'init': this.init(m.data); break;" +
-          "case 'reinit': this.reinit(m.data); break;" +
-          "case 'playSong': this.playSong(m.data, true); break;" +
-          "case 'playSound': this.playSound(m.data); break;" +
-          "case 'setPlayhead': this.setPlayhead(m.data); break;" +
-          "case 'printWave': this.printWave(m.data); break;" +
-          "case 'set': this.setProp(m.data); break;" +
-          "case 'noteOn': this.noteOn(m.data); break;" +
-          "case 'noteOff': this.noteOff(m.data); break;" +
-          "case 'noteOnce': this.noteOnce(m.data); break;" +
-          "case 'wheel': this.wheel(m.data); break;" +
-        "}" +
+        "if (!this.instance&&(m.data.cmd!=='init')) this.deferredCommands.push(m.data);" +
+        "else this.cmdNow(m.data);" +
       "};" +
+    "}" +
+    
+    "cmdNow(data) {" +
+      "switch (data.cmd) {" +
+        "case 'init': this.init(data); break;" +
+        "case 'reinit': this.reinit(data); break;" +
+        "case 'playSong': this.playSong(data); break;" +
+        "case 'playSound': this.playSound(data); break;" +
+        "case 'setPlayhead': this.setPlayhead(data); break;" +
+        "case 'printWave': this.printWave(data); break;" +
+        "case 'set': this.setProp(data); break;" +
+        "case 'noteOn': this.noteOn(data); break;" +
+        "case 'noteOff': this.noteOff(data); break;" +
+        "case 'noteOnce': this.noteOnce(data); break;" +
+        "case 'wheel': this.wheel(data); break;" +
+      "}" +
     "}" +
     
     "init(m) {" +
@@ -52,8 +57,8 @@ const wsrc =
         "}" +
         "this.transferRom(m.rom);" +
         "this.acquireBuffers();" +
-        "for (const req of this.deferredSongs) this.playSong(req, false);" +
-        "this.deferredSongs = [];" +
+        "for (const cmd of this.deferredCommands) this.cmdNow(cmd);" +
+        "this.deferredCommands = [];" +
       "}).catch(e => {" +
         "console.error(e);" +
       "});" +
@@ -83,11 +88,8 @@ const wsrc =
       "}" +
     "}" +
     
-    "playSong(m, deferrable) {" +
-      "if (!this.instance) {" +
-        "if (deferrable) this.deferredSongs.push(m);" +
-        "return;" +
-      "}" +
+    "playSong(m) {" +
+      "if (!this.instance) return;" +
       "this.instance.exports.synth_play_song(m.songid, m.rid, m.repeat, m.trim, m.pan);" +
     "}" +
     
@@ -448,7 +450,7 @@ export class Audio {
   }
   
   egg_play_song(songid, rid, repeat, trim, pan) {
-    if (songid < 1)return;
+    if (songid < 1) return;
     if (!this.ready) {
       this.initPromise.then(() => {
         if (this.ready) this.egg_play_song(songid, rid, repeat, trim, pan);
@@ -460,7 +462,12 @@ export class Audio {
   }
   
   egg_song_set(songid, chid, prop, v) {
-    if (!this.ready) return;
+    if (!this.ready) {
+      this.initPromise.then(() => {
+        if (this.ready) this.egg_song_set(songid, chid, prop, v);
+      });
+      return;
+    }
     this.node.port.postMessage({ cmd: "set", songid, chid, prop, v });
     if (prop === 3) { // PLAYHEAD
       const song = this.songsBySongid[songid];
