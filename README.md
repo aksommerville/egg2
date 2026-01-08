@@ -77,7 +77,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 ## TODO
 
 - [ ] alsafd, pi 4, hdmi audio: Long lead time lost, and playhead is way off. (Cherteau is unplayable, and all games, the lead loss is noticeable)
-- [ ] Map editor: New door should offer to make a new map too.
+- [x] Map editor: New door should offer to make a new map too.
 - [x] In bellacopia, I keep getting prompted to create a new neighbor map when one does exist, visible in canvas and everything.
 - - Happens reliably on a fresh load, after the first change. Watch the map editor's tattle as the save processes.
 - - ...due to MapService searching by MapRes identity. Use rid instead.

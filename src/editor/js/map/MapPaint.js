@@ -859,19 +859,30 @@ export class MapPaint {
         if (!rsp) return;
         const srcres = this.data.findResource(this.map.rid, "map");
         if (!srcres) return;
-        let dstres = this.data.findResource(rsp.dstmapid, "map");
-        const dstmap = this.mapService.getByPath(dstres?.path);
-        if (!dstmap) return this.dom.modalError(`Map '${rsp.dstmapid}' not found`);
-        if (rsp.dstx < 0) rsp.dstx = 0; else if (rsp.dstx >= dstmap.w) rsp.dstx = dstmap.w - 1;
-        if (rsp.dsty < 0) rsp.dsty = 0; else if (rsp.dsty >= dstmap.h) rsp.dsty = dstmap.h - 1;
-        this.map.cmd.commands.push(["door", `@${x},${y}`, `map:${dstres.name || dstres.rid}`, `@${rsp.dstx},${rsp.dsty}`, "0x0000"]);
-        this.data.dirty(srcres.path, () => this.map.encode());
-        if (rsp.roundtrip) {
-          dstmap.cmd.commands.push(["door", `@${rsp.dstx},${rsp.dsty}`, `map:${srcres.name || srcres.rid}`, `@${x},${y}`, "0x0000"]);
-          this.data.dirty(dstres.path, () => dstmap.encode());
+        let dstresPromise, dstmap;
+        if (rsp.dstmapid) {
+          const dstres = this.data.findResource(rsp.dstmapid, "map");
+          dstmap = this.mapService.getByPath(dstres?.path);
+          dstresPromise = Promise.resolve(dstres);
+        } else {
+          dstmap = this.mapService.generateNewMap();
+          const dstrid = this.data.unusedId("map");
+          const dstpath = `/data/map/${dstrid}`;
+          dstresPromise = this.data.createResource(dstpath, dstmap.encode());
         }
-        this.composePoiv();
-        this.broadcast({ type: "commands" });
+        if (!dstmap) return this.dom.modalError(`Map '${rsp.dstmapid}' not found`);
+        dstresPromise.then(dstres => {
+          if (rsp.dstx < 0) rsp.dstx = 0; else if (rsp.dstx >= dstmap.w) rsp.dstx = dstmap.w - 1;
+          if (rsp.dsty < 0) rsp.dsty = 0; else if (rsp.dsty >= dstmap.h) rsp.dsty = dstmap.h - 1;
+          this.map.cmd.commands.push(["door", `@${x},${y}`, `map:${dstres.name || dstres.rid}`, `@${rsp.dstx},${rsp.dsty}`, "0x0000"]);
+          this.data.dirty(srcres.path, () => this.map.encode());
+          if (rsp.roundtrip) {
+            dstmap.cmd.commands.push(["door", `@${rsp.dstx},${rsp.dsty}`, `map:${srcres.name || srcres.rid}`, `@${x},${y}`, "0x0000"]);
+            this.data.dirty(dstres.path, () => dstmap.encode());
+          }
+          this.composePoiv();
+          this.broadcast({ type: "commands" });
+        });
       });
     }
     return false;

@@ -23,7 +23,6 @@ export class NewDoorModal {
   }
   
   setup(map, x, y) {
-    console.log(`NewDoorModal.setup`, { map, x, y });
     this.element.innerHTML = "";
     this.dom.spawn(this.element, "DIV", `New door from map:${map.rid} at ${x},${y}...`);
     const form = this.dom.spawn(this.element, "FORM", { "on-submit": e => {
@@ -34,6 +33,9 @@ export class NewDoorModal {
     const table = this.dom.spawn(form, "TABLE");
     let dstmapid;
     let tr;
+    if (tr = this.dom.spawn(table, "TR")) {
+      this.dom.spawn(tr, "TD", ["advice"], { colspan: "2" }, "Blank map ID for new.");
+    }
     if (tr = this.dom.spawn(table, "TR")) {
       this.dom.spawn(tr, "TD", "To map");
       this.dom.spawn(tr, "TD",
