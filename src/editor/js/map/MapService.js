@@ -17,7 +17,7 @@ export class MapService {
     this.actions = actions;
     
     this.resv = []; // {path,rid,serial,map}. We assume (serial) are immutable and compare them by identity.
-    this.layerv = []; // MapLayer (see below)
+    this.layout = []; // MapLayer (see below)
     
     // If valid, MapEditor should focus this cell at load, and then reset to (-1,-1).
     this.focusx = -1;
@@ -286,7 +286,7 @@ export class MapService {
       return false;
     }
     for (const res of this.resv) res.present = false;
-    for (const layer of this.layerv) {
+    for (const layer of this.layout) {
       if (!layer.neighborsConsistent(this.neighborStrategy)) return this.rebuildLayout(); // Some relationship changed.
       for (const lres of layer.v) {
         if (!lres) continue;
@@ -362,14 +362,14 @@ export class MapService {
     const layerByElevation = []; // sparse, indexed by z
     const readPosition = (res) => {
       const cmd = res.map.cmd.getFirstArgArray("position");
-      if (!cmd) return [0, 0, 0];
+      if (!cmd) return [0, 0, -1];
       const x = +cmd[1] || 0;
       const y = +cmd[2] || 0;
       const z = +cmd[3] || 0;
       return [x, y, z];
     };
     for (const res of this.resv) {
-      const [x, y, z] = readPosition(res);
+      let [x, y, z] = readPosition(res);
       let layer = layerByElevation[z];
       if (!layer) {
         layer = layerByElevation[z] = new MapLayer(1, 1);
@@ -377,6 +377,10 @@ export class MapService {
         layer.y = y;
         layer.z = z;
         this.layout.push(layer);
+      } else if (z < 0) {
+        const [nx, ny] = layer.unoccupiedCell(true);
+        x = nx;
+        y = ny;
       }
       layer.growTo(x, y);
       const p = (y - layer.y) * layer.w + x - layer.x;
@@ -537,5 +541,28 @@ export class MapLayer {
       }
     }
     return dst;
+  }
+  
+  /* Returns [x,y] for the absolute coordinates of a space not currently in use.
+   * If there are no such cells, (force) comes into play:
+   *  - If (force), grow my bounds and report one of the new unoccupied cells.
+   *  - If (!force), return null.
+   */
+  unoccupiedCell(force) {
+    for (let ry=0, vp=0; ry<this.h; ry++) {
+      for (let rx=0; rx<this.w; rx++, vp++) {
+        if (!this.v[vp]) return [this.x + rx, this.y + ry];
+      }
+    }
+    if (!force) return null;
+    if (this.w <= this.h) {
+      const result = [this.x + this.w, this.y];
+      this.growForce(1, 0);
+      return result;
+    } else {
+      const result = [this.x, this.y + this.h];
+      this.growForce(0, 1);
+      return result;
+    }
   }
 }

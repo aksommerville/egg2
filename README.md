@@ -72,11 +72,14 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [When You Wish Upon A Bone](https://github.com/aksommerville/wishbone)
 - [Queen of Clocks](https://github.com/aksommerville/queenofclocks)
 - [Vexularg](https://github.com/aksommerville/vexularg)
+- [Inversion](https://github.com/aksommerville/inversion)
 
 
 ## TODO
 
 - [ ] alsafd, pi 4, hdmi audio: Long lead time lost, and playhead is way off. (Cherteau is unplayable, and all games, the lead loss is noticeable)
+- [ ] Editor: Global action to reorder maps, eg for a game like zennoniwa or inversion.
+- [x] MapService: Incorrectly handling planeless solo maps, it creates a 1x1 plane containing whichever map showed up last at (0,0,0). Evident in bellacopia.
 - [x] Map editor: New door should offer to make a new map too.
 - [x] In bellacopia, I keep getting prompted to create a new neighbor map when one does exist, visible in canvas and everything.
 - - Happens reliably on a fresh load, after the first change. Watch the map editor's tattle as the save processes.
