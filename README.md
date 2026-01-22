@@ -79,6 +79,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 - [ ] alsafd, pi 4, hdmi audio: Long lead time lost, and playhead is way off. (Cherteau is unplayable, and all games, the lead loss is noticeable)
 - [ ] Editor: Global action to reorder maps, eg for a game like zennoniwa or inversion.
+- [ ] Song Editor "Copy From..." what is up with the order of sound resources? There should be some kind of order...
 - [x] MapService: Incorrectly handling planeless solo maps, it creates a 1x1 plane containing whichever map showed up last at (0,0,0). Evident in bellacopia.
 - [x] Map editor: New door should offer to make a new map too.
 - [x] In bellacopia, I keep getting prompted to create a new neighbor map when one does exist, visible in canvas and everything.

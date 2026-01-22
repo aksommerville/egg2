@@ -39,6 +39,7 @@ static int font_measure_line(const struct font *font,const char *src,int srcc,in
     else if ((codepoint>='A')&&(codepoint<='Z')) ;
     else if ((codepoint>='0')&&(codepoint<='9')) ;
     else if (codepoint=='_') ;
+    else if (codepoint=='\'') ;
     else breakp=reader.p;
   }
   return reader.p;

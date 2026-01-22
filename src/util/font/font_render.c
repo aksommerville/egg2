@@ -108,7 +108,10 @@ int font_render_to_texture(
   int linec=font_break_lines(startv,LINE_LIMIT,font,src,srcc,wlimit);
   #undef LINE_LIMIT
   int vislinec=(hlimit+font->lineh-1)/font->lineh;
-  if (linec>vislinec) linec=vislinec;
+  if (linec>vislinec) {
+    linec=vislinec;
+    srcc=startv[linec];
+  }
   if (linec<1) return -1;
   
   // Allocate the RGBA buffer generously; we will trim its right edge after rendering.

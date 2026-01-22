@@ -17,7 +17,7 @@ The tilesheet rid should be the same as the image rid it describes.
 It is an error if any (Tile ID + Tile count) exceeds 256.
 Any unspecified tiles are zero.
 
-No order, overlap, or adjacency constraints on runs.
+Runs are allowed to overlap. The last one wins.
 
 ## Text
 
