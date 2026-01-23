@@ -31,6 +31,8 @@
 #define INT_MIN (int)(0x80000000)
 #define INT_MAX (int)(0x7fffffff)
 
+typedef int size_t;
+
 /* Malloc will take so many bytes statically and that's all you ever get.
  * We do not support dynamic resizing of the heap. (but WebAssembly does; you can implement on your own).
  * It's safe to change this value, just be sure malloc.c recompiles after.
@@ -78,6 +80,11 @@ extern void *stdout;
 int fprintf(void *unused,const char *fmt,...);
 int snprintf(char *dst,unsigned long int dsta,const char *fmt,...);
 int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs);
+
+/* Quicksort.
+ * Unlike POSIX, our qsort is stable. I think. TODO verify.
+ */
+void qsort(void *p,size_t c,size_t size,int (*cmp)(const void *a,const void *b));
 
 /* Yoinked from newlib.
  */
