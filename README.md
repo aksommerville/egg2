@@ -77,6 +77,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
+- [x] strings compiler: `./src/data/strings/en-3-dialogue:82:ERROR: Invalid string index 79, must be at least 79`. It meant "at least 80".
 - [ ] alsafd, pi 4, hdmi audio: Long lead time lost, and playhead is way off. (Cherteau is unplayable, and all games, the lead loss is noticeable)
 - [ ] Editor: Global action to reorder maps, eg for a game like zennoniwa or inversion.
 - [ ] Song Editor "Copy From..." what is up with the order of sound resources? There should be some kind of order...

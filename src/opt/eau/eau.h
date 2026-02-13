@@ -5,6 +5,8 @@
 #ifndef EAU_H
 #define EAU_H
 
+#include <stdint.h>
+
 struct sr_encoder;
 struct sr_convert_context;
 
@@ -30,6 +32,10 @@ const char *eau_validate(const void *src,int srcc);
 int eau_cvt_eau_midi(struct sr_convert_context *ctx);
 int eau_cvt_midi_eau(struct sr_convert_context *ctx);
 
+/* Sum of delays, in milliseconds.
+ */
+int eau_estimate_duration(const void *src,int srcc);
+
 /* Helpers for EAU file dissection.
  ******************************************************************/
  
@@ -54,6 +60,27 @@ struct eau_chdr_entry {
 };
 int eau_chdr_reader_next(struct eau_chdr_entry *entry,struct eau_chdr_reader *reader);
 
-//TODO event and text reader, are we going to need them?
+struct eau_event_reader {
+  const void *v;
+  int p,c;
+};
+struct eau_event {
+  uint8_t opcode; // Zero for delay, and we coalesce them.
+  uint8_t chid;
+  uint8_t v[3]; // Per-opcode payload, as encoded. For opcode 0xf0 Marker, v[0] is the low 4 bits.
+  int c;
+  int delay; // ms, delay events only.
+};
+int eau_event_reader_next(struct eau_event *event,struct eau_event_reader *reader);
+
+struct eau_text_reader {
+  const void *v;
+  int p,c;
+};
+struct eau_text_entry {
+  uint8_t chid,noteid,length;
+  const char *v;
+};
+int eau_text_reader_next(struct eau_text_entry *entry,struct eau_text_reader *reader);
 
 #endif

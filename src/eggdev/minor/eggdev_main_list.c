@@ -1,5 +1,7 @@
 #include "eggdev/eggdev_internal.h"
 #include "util/res/res.h"
+#include "opt/image/image.h"
+#include "opt/eau/eau.h"
 
 /* List, default format.
  */
@@ -89,6 +91,68 @@ static int eggdev_list_summary(struct rom_reader *reader,const char *path) {
   return 0;
 }
 
+/* "size" format, showing opinionated data-savvy stats on one line.
+ */
+ 
+static int eggdev_list_size(struct rom_reader *reader,const char *path) {
+  struct {
+    int code; // Raw sum of serialc. (NB zero for native executables; we're just talking about Wasm "code" resources).
+    int images; // Pixels.
+    int imagec;
+    int songs; // Milliseconds.
+    int songc;
+    int sounds; // Milliseconds.
+    int soundc;
+    int maps; // Square meters.
+    int mapc;
+  } report={0};
+  struct rom_entry res;
+  int err;
+  while ((err=rom_reader_next(&res,reader))>0) {
+    switch (res.tid) {
+      case EGG_TID_code: report.code+=res.c; break;
+      case EGG_TID_image: {
+          report.imagec++;
+          int w=0,h=0;
+          if (image_measure(&w,&h,res.v,res.c)>=0) {
+            report.images+=w*h;
+          }
+        } break;
+      case EGG_TID_song: {
+          report.songc++;
+          report.songs+=eau_estimate_duration(res.v,res.c);
+        } break;
+      case EGG_TID_sound: {
+          report.soundc++;
+          report.sounds+=eau_estimate_duration(res.v,res.c);
+        } break;
+      case EGG_TID_map: {
+          report.mapc++;
+          struct map_res map={0};
+          if (map_res_decode(&map,res.v,res.c)>=0) {
+            report.maps+=map.w*map.h;
+          }
+        } break;
+    }
+  }
+  int songms=report.songs%1000;
+  int songs=report.songs/1000;
+  int songm=songs/60;
+  songs%=60;
+  int soundms=report.sounds%1000;
+  int sounds=report.sounds/1000;
+  int soundm=sounds/60;
+  sounds%=60;
+  fprintf(stderr,
+    "%s: rom=%d code=%d image=%dpx*%d song=%d:%02d.%03d*%d sound=%d:%02d.%03d*%d map=%dm*%d\n",
+    path,reader->c,report.code,report.images,report.imagec,
+    songm,songs,songms,report.songc,
+    soundm,sounds,soundms,report.soundc,
+    report.maps,report.mapc
+  );
+  return 0;
+}
+
 /* List ROM, main entry point.
  */
  
@@ -142,9 +206,10 @@ int eggdev_main_list() {
   if (!g.format) err=eggdev_list_default(&reader,srcpath);
   else if (!strcmp(g.format,"default")) err=eggdev_list_default(&reader,srcpath);
   else if (!strcmp(g.format,"summary")) err=eggdev_list_summary(&reader,srcpath);
+  else if (!strcmp(g.format,"size")) err=eggdev_list_size(&reader,srcpath);
   else if (!strcmp(g.format,"raw")) err=eggdev_list_raw(&reader,srcpath);
   else {
-    fprintf(stderr,"%s: Unknown list format '%s'. Expected one of: default summary raw.\n",g.exename,g.format);
+    fprintf(stderr,"%s: Unknown list format '%s'. Expected one of: default summary size raw.\n",g.exename,g.format);
     err=-2;
   }
   free(rom);

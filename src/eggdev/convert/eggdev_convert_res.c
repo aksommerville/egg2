@@ -106,7 +106,7 @@ int eggdev_strings_from_strtxt(struct sr_convert_context *ctx) {
     while ((linep<linec)&&((unsigned char)line[linep]<=0x20)) linep++;
     int index;
     if (sr_int_eval(&index,token,tokenc)<2) return sr_convert_error_at(ctx,token,"Expected string index, found '%.*s'.",tokenc,token);
-    if (index<=pvindex) return sr_convert_error_at(ctx,token,"Invalid string index %d, must be at least %d",index,pvindex);
+    if (index<=pvindex) return sr_convert_error_at(ctx,token,"Invalid string index %d, must be at least %d",index,pvindex+1);
     if (index>1024) return sr_convert_error_at(ctx,token,"Limit 1024.");
     pvindex++;
     int zeroc=(index-pvindex)*2;

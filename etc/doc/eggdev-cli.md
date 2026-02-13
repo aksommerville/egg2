@@ -96,11 +96,12 @@ Use `--verbatim` to suppress that and copy resources exactly as they are.
 
 ## list
 
-Usage: `eggdev list ROM [--format=default|summary|raw]`
+Usage: `eggdev list ROM [--format=default|summary|size|raw]`
 
 List the ROM's resources.
 With `--format=default` or none, prints one line per resource: `TYPE ID SIZE`.
 With `--format=summary`, prints one line per type: `TYPE COUNT TOTAL_SIZE`.
+With `--format=size`, prints one line describing high-level things like songs run time and maps area.
 `raw` is basically the same as `default` but type and id will always be numeric.
 
 ## dump
