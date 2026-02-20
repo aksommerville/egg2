@@ -77,6 +77,8 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
+- [ ] Consider a spec change re multiple `code` resources: Concatenate all, rather than just using id 1.
+- - Finish Bellacopia Maleficia, it will have a ridiculous amount of code. If its code:1 is over 2 MB, make the change.
 - [x] strings compiler: `./src/data/strings/en-3-dialogue:82:ERROR: Invalid string index 79, must be at least 79`. It meant "at least 80".
 - [ ] alsafd, pi 4, hdmi audio: Long lead time lost, and playhead is way off. (Cherteau is unplayable, and all games, the lead loss is noticeable)
 - [ ] Editor: Global action to reorder maps, eg for a game like zennoniwa or inversion.

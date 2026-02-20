@@ -320,7 +320,7 @@ struct egg_render_fancy {
   int16_t x,y;
   uint8_t tileid;
   uint8_t xform;
-  uint8_t rotation;
+  uint8_t rotation; // 1/256 of turn clockwise. Beware if you're casting from a float, cast to `int8_t`, not `uint8_t`, it matters in wasm.
   uint8_t size;
   uint8_t tr,tg,tb,ta; // Tint.
   uint8_t pr,pg,pb; // Primary color replacement, straight 0x80 is noop.

@@ -117,11 +117,13 @@ void graf_triangle_strip_tex_more(struct graf *graf,int16_t x,int16_t y,int16_t 
 
 /* Quad conveniences, each is its own triangle strip batch.
  * graf_decal_xform() always emits its top-left corner of output at (dstx,dsty), and (w,h) might reverse in output. (w,h) constant for source side.
+ * graf_decal_rotate(), (dst) is the center, not the corner. You provide sine and cosine of the angle, since we don't have libm.
  */
 void graf_decal(struct graf *graf,int dstx,int dsty,int srcx,int srcy,int w,int h);
 void graf_decal_xform(struct graf *graf,int dstx,int dsty,int srcx,int srcy,int w,int h,uint8_t xform);
 void graf_fill_rect(struct graf *graf,int x,int y,int w,int h,uint32_t rgba);
 void graf_gradient_rect(struct graf *graf,int x,int y,int w,int h,uint32_t nw,uint32_t ne,uint32_t sw,uint32_t se);
+void graf_decal_rotate(struct graf *graf,int dstx,int dsty,int srcx,int srcy,int w_and_h,double sint,double cost,double scale);
 
 /* Queue a tile for render.
  * This is the performance workhorse of Egg Render.

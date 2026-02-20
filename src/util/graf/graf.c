@@ -398,6 +398,23 @@ void graf_gradient_rect(struct graf *graf,int x,int y,int w,int h,uint32_t nw,ui
   graf_flush(graf);
 }
 
+/* Rotated textured quad.
+ */
+ 
+void graf_decal_rotate(struct graf *graf,int dstx,int dsty,int srcx,int srcy,int w_and_h,double sint,double cost,double scale) {
+  double r=w_and_h*0.5*scale;
+  double b=sint*r+cost*r;
+  double a=cost*r-sint*r;
+  graf_triangle_strip_tex_begin(graf,
+    dstx-a,dsty-b,srcx        ,srcy,
+    dstx+b,dsty-a,srcx+w_and_h,srcy,
+    dstx-b,dsty+a,srcx        ,srcy+w_and_h
+  );
+  graf_triangle_strip_tex_more(graf,
+    dstx+a,dsty+b,srcx+w_and_h,srcy+w_and_h
+  );
+}
+
 /* Point sprites.
  */
 

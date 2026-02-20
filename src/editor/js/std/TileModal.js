@@ -363,7 +363,7 @@ export class TileModal {
     if (!this.tilesheet) return;
     const x = this.tileid & 15;
     const y = this.tileid >> 4;
-    if ((x + macro.w > 16) || (y + macro.h > 15)) {
+    if ((x + macro.w > 16) || (y + macro.h > 16)) {
       return this.dom.modalError(`Can't use ${JSON.stringify(macro.name)}, it exceeds the right or bottom edge.`);
     }
     for (const tname of Object.keys(this.tilesheet.tables)) {
