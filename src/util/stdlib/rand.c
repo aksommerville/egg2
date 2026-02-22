@@ -46,3 +46,7 @@ void srand_auto() {
     mixer+=65521;
   }
 }
+
+uint32_t get_rand_seed() {
+  return grand.state;
+}

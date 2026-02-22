@@ -24,6 +24,7 @@
   int egg_rand();
   void egg_srand(int seed);
   void srand_auto();
+  uint32_t get_rand_seed();
   #define rand egg_rand
   #define srand egg_srand
 #else
@@ -59,10 +60,12 @@ void *memset(void *dst,int src,long unsigned int c);
 /* Beware: A seed of zero causes rand() to only return zeroes, and that's where it is by default.
  * rand() returns values 0 thru 0x7fffffff, never negative.
  * srand_auto() is my addition, it pulls current time as a source and ensures that the state is nonzero.
+ * get_rand_seed() is also nonstandard. Returns something you could pass to srand() at that point, to get the same results after.
  */
 int rand();
 void srand(int seed);
 void srand_auto();
+uint32_t get_rand_seed();
 
 /* Our fprintf and snprintf do not work exactly like standard ones.
  * Some key inconsistencies:
