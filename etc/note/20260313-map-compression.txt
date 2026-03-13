@@ -1,0 +1,106 @@
+2026-03-13
+
+The size of maps and the waste involved still bugs me.
+Also, there's a lot of friction in making them.
+Let's think outside the box a little, can we be smarter about maps overall?
+
+Whatever we do, we can keep the existing resource type.
+I've already made like 20 games with it, would be a pain to change all of them.
+Not a big deal to just use a new type for whatever we add.
+
+DECISION: Don't change.
+There would be a nice side effect, that we'd get a standardized neighbor-join algorithm available at runtime.
+We could compress substantially. At a rough guess, I bet we could consistently reduce maps to 50%, maybe 25%.
+The most ROM space maps have taken yet is Bellacopia Maleficia, currently just under 100 kB.
+We would add memory usage at runtime, more time to load, more decoding code, and possible failures at load.
+I just can't see the extra complexity being worthwhile.
+
+- Don't store maps verbatim.
+- - Require a decode pass. Loading will look more like tilesheets.
+- Standardize commands for point and range. We're already pretty much doing this, just make it official.
+- Can we store them without neighbor joining, and perform that at runtime? Could increase compressability.
+- - The editor's exact neighbor-joining algorithm is not suitable, it involves randomness.
+- - I guess with a private PRNG we could get away with that?
+- At 20250509, I was thinking just of linear storage. I bet if we did it more like "fill this range", like tilesheets, we could do better.
+- - That would exploit dead space by ignoring it.
+- - But it would tend to require a lot of per-run header. Not sure we'd get much value.
+- Preserve the 255 dimension limit. We refer to cells all over the place in commands; it would bloat commands size to require 2 bytes.
+- What if there are two passes? One with family, then automatic neighbor-joining happens, then a pass of overrides?
+
+Start with a stream of tile families:
+  0nnnnnnn ... : (n+1) verbatim cells
+  10nnnnnn     : Repeat the last emitted cell (n+1) times. Zero if it's the first command.
+  11nnnnnn     : Single cell, value (n). So we don't need to waste a byte on single-cell chunks, if the value is below 64.
+Values are zero if it terminates early. Fail if it overruns.
+- Should apply a vertical filter too.
+
+Then apply neighbor-join rules based on the family map, select real tiles.
+This means we need two map-sized buffers. Might be a problem?
+- I really don't like the requirement of a scratch buffer.
+- We could first transform the families into any cell within that family, and then look everything up at each step during neighbor-join.
+- ^ That's how the editor does it today; it never has a scratch buffer of families.
+- ^ yes
+
+Then a stream of overrides.
+Start with cursor at (0,0), proceed LRTB.
+  0nnnnnnnn     : Skip (n+1) cells.
+  10nnnnnnn ... : (n+1) verbatim cells, and advance cursor.
+  11nnnnnnn     : One verbatim cell, top two bits are preserved from the family pass. Advance cursor.
+
+/* What would its API look like?
+ */
+ 
+struct map {
+  uint8_t w,h;
+  const uint8_t *cmd;
+  int cmdc;
+  uint8_t *v;
+};
+
+struct tilesheet {
+  uint8_t *family; // 256, required
+  uint8_t *neighbors; // 256, required
+  uint8_t *weight; // 256, required
+};
+
+/* Populates (w,h,cmd,cmdc). (v) is not touched.
+ */
+int map_decode_header(struct map *map,const void *src,int srcc);
+
+/* Give us the entire resource again.
+ * This time, (w,h,cmd,cmdc) must be populated initially.
+ * (v) must point to at least (w*h) bytes -- caller allocates it.
+ * Initial content of (v) is undefined, we'll clear it.
+ * If (tilesheet) null, we treat families as tileid. This is perfectly valid, but it can't compress as aggressively.
+ * You must provide the same tilesheet here that was used during encoding.
+ */
+int map_decode_cells(struct map *map,const void *src,int srcc,const struct tilesheet *tilesheet);
+
+/* And then, in the client's loader.
+ */
+ 
+int load_my_game(struct rom_reader *rom_reader) {
+  struct rom_entry res;
+  while (rom_reader_next(&res,rom_reader)>0) {
+    switch (res.tid) {
+      case EGG_TID_tilesheet: {
+          if (store_my_tilesheet(res.rid,res.v,res.c)<0) return -1;
+        } break;
+      case EGG_TID_map: {
+          struct map map={0}; // Realistically, you'll have your own type which contains a 'struct map'.
+          if (map_decode_header(&map,res.v,res.c)<0) return -1;
+          if (!(map.v=malloc(map.w*map.h))) return -1;
+          struct tilesheet *tilesheet=get_my_tilesheet_for_map(&map);
+          if (map_decode_cells(&map,res.v,res.c,tilesheet)<0) {
+            free(map.v);
+            return -1;
+          }
+          if (store_my_map(res.rid,&map)<0) {
+            free(map.v);
+            return -1;
+          }
+        } break;
+    }
+  }
+  return 0;
+}

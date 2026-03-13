@@ -66,6 +66,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [Dead Weight](https://github.com/aksommerville/deadweight)
 - [Cherteau](https://github.com/aksommerville/cherteau)
 - [Sam-Sam](https://github.com/aksommerville/samsam)
+- Below this point were written first in Egg v2. Above were written for something else, mostly Egg v1, and migrated later.
 - [Zen Garden](https://github.com/aksommerville/zennoniwa)
 - [Humm Fu](https://github.com/aksommerville/hummfu)
 - [Mysteries of the Crypt](https://github.com/aksommerville/myscrypt)
@@ -73,10 +74,14 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [Queen of Clocks](https://github.com/aksommerville/queenofclocks)
 - [Vexularg](https://github.com/aksommerville/vexularg)
 - [Inversion](https://github.com/aksommerville/inversion)
-
+- [Licence to Illuse](https://github.com/aksommerville/licensetoilluse)
 
 ## TODO
 
+- [ ] SongEditor: When opening modecfg for the first time, default to no velocity-sensitivity for sound effects.
+- [ ] SongEditor: Consider removing the action "Auto end time" and just do it every time without asking.
+- [ ] `eggdev build`, allow explicit target selection. Important during dev, maybe you have temporary debug scaffolding that can only build native.
+- [ ] Editor sidebar: Group resources when too many in a type. Maybe a limit of 100 per bucket? Bellacopia's maps and sprites are getting ridiculous.
 - [ ] Consider a spec change re multiple `code` resources: Concatenate all, rather than just using id 1.
 - - Finish Bellacopia Maleficia, it will have a ridiculous amount of code. If its code:1 is over 2 MB, make the change.
 - [x] strings compiler: `./src/data/strings/en-3-dialogue:82:ERROR: Invalid string index 79, must be at least 79`. It meant "at least 80".
