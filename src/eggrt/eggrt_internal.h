@@ -53,6 +53,7 @@ extern struct eggrt {
   struct umenu *umenu; // Null normally. If not, the Universal Menu is open.
   int input_mode; // EGG_INPUT_MODE_GAMEPAD by default.
   int mousex,mousey; // In framebuffer coords as reported to client. Updates only when in MOUSE mode.
+  int mouse_motionc; // Counts frames while moving.
   
 // eggrt_rom.c:
   void *rom;

@@ -383,6 +383,7 @@ int eggrt_update() {
     if (input&(EGG_BTN_LEFT|EGG_BTN_RIGHT|EGG_BTN_UP|EGG_BTN_DOWN)) {
       int mouse_speed=eggrt.metadata.fbw/150;
       if (mouse_speed<1) mouse_speed=1;
+      if (eggrt.mouse_motionc<8) mouse_speed=1;
       switch (input&(EGG_BTN_LEFT|EGG_BTN_RIGHT)) {
         case EGG_BTN_LEFT: if ((eggrt.mousex-=mouse_speed)<0) eggrt.mousex=-1; break;
         case EGG_BTN_RIGHT: if ((eggrt.mousex+=mouse_speed)>=eggrt.metadata.fbw) eggrt.mousex=eggrt.metadata.fbw; break;
@@ -391,7 +392,12 @@ int eggrt_update() {
         case EGG_BTN_UP: if ((eggrt.mousey-=mouse_speed)<0) eggrt.mousey=-1; break;
         case EGG_BTN_DOWN: if ((eggrt.mousey+=mouse_speed)>=eggrt.metadata.fbh) eggrt.mousey=eggrt.metadata.fbh; break;
       }
+      eggrt.mouse_motionc++;
+    } else {
+      eggrt.mouse_motionc=0;
     }
+  } else {
+    eggrt.mouse_motionc=0;
   }
   
   // Update client.

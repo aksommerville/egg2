@@ -9,6 +9,7 @@
 #define OPT_STORAGE 6
 #define OPT_MISC 7
 #define OPT_INPUT_CONFIG 8
+#define OPT_MOUSE 9
 
 struct modal_home {
   struct modal hdr;
@@ -52,6 +53,7 @@ static void modal_home_cb_activate(struct gui_list *list,int optionid) {
     case OPT_STORAGE: modal_new_storage(); break;
     case OPT_MISC: modal_new_misc(); break;
     case OPT_INPUT_CONFIG: egg_input_configure(); break;
+    case OPT_MOUSE: modal_new_mouse(); break;
   }
 }
 
@@ -70,6 +72,7 @@ static int _home_init(struct modal *modal) {
   gui_list_insert(MODAL->list,-1,OPT_AUDIO,"Audio",-1,1);
   gui_list_insert(MODAL->list,-1,OPT_INPUT,"Input",-1,1);
   gui_list_insert(MODAL->list,-1,OPT_INPUT_CONFIG,"Input Config",-1,1);
+  gui_list_insert(MODAL->list,-1,OPT_MOUSE,"Mouse",-1,1);
   gui_list_insert(MODAL->list,-1,OPT_STORAGE,"Storage",-1,1);
   gui_list_insert(MODAL->list,-1,OPT_MISC,"Miscellaneous",-1,1);
   gui_list_insert(MODAL->list,-1,OPT_REGRESSION,"Regression",-1,1);

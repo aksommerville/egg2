@@ -78,6 +78,8 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
+- [ ] !!! minify is currently broken. Some confusion over "gamepad" vs "gamepads" when abbreviating symbols at Input.js.
+- [x] When gamepad masquerades as mouse, apply a velocity curve. A single-frame tap should always move by 1 pixel.
 - [ ] SongEditor: When opening modecfg for the first time, default to no velocity-sensitivity for sound effects.
 - [ ] SongEditor: Consider removing the action "Auto end time" and just do it every time without asking.
 - [ ] `eggdev build`, allow explicit target selection. Important during dev, maybe you have temporary debug scaffolding that can only build native.

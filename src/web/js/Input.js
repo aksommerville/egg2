@@ -39,6 +39,7 @@ export class Input {
     this.mode = MODE_GAMEPAD;
     this.mousex = this.rt.video.fbw >> 1;
     this.mousey = this.rt.video.fbh >> 1;
+    this.mouse_motionc = 0;
     this.mouseListener = null;
     this.rawCb = null; // (devid,btnid,value) => {}
     this.touch = null; // null or TouchInput. Only when running, and only if we deem it appropriate.
@@ -187,7 +188,8 @@ export class Input {
     
     if (this.mode === MODE_MOUSE) {
       if (this.statev[0] & 0x000f) {
-        const speed = Math.max(1, Math.floor(this.rt.video.fbw / 150));
+        let speed = Math.max(1, Math.floor(this.rt.video.fbw / 150));
+        if (this.mouse_motionc < 8) speed = 1;
         switch (this.statev[0] & (BTN_LEFT | BTN_RIGHT)) {
           case BTN_LEFT: if ((this.mousex -= speed) < 0) this.mousex = -1; break;
           case BTN_RIGHT: if ((this.mousex += speed) >= this.rt.video.fbw) this.mousex = this.rt.video.fbw; break;
@@ -196,7 +198,12 @@ export class Input {
           case BTN_UP: if ((this.mousey -= speed) < 0) this.mousey = -1; break;
           case BTN_DOWN: if ((this.mousey += speed) >= this.rt.video.fbh) this.mousey = this.rt.video.fbh; break;
         }
+        this.mouse_motionc++;
+      } else {
+        this.mouse_motionc = 0;
       }
+    } else {
+      this.mouse_motionc = 0;
     }
   }
   
