@@ -1,3 +1,7 @@
+#if USE_real_stdlib
+  int egg_stdlib_qsort_dummy=0;
+#else
+
 #include "egg-stdlib.h"
 
 static char *qsort_scratch=0;
@@ -38,9 +42,10 @@ void qsort(void *p,size_t c,size_t size,int (*cmp)(const void *a,const void *b))
     int q=cmp(AT(i),AT(rp));
     if (q<0) {
       memcpy(qsort_scratch,AT(i),size);
-      memmove(AT(rp+1),AT(rp),size*(i-rp));
-      memcpy(AT(rp),qsort_scratch,size);
+      memmove(AT(lp+1),AT(lp),size*(i-lp));
+      memcpy(AT(lp),qsort_scratch,size);
       rp++;
+      lp++;
     } else if (q==0) {
       rp++;
       memcpy(qsort_scratch,AT(i),size);
@@ -53,3 +58,5 @@ void qsort(void *p,size_t c,size_t size,int (*cmp)(const void *a,const void *b))
   qsort(AT(pivot+1),c-pivot-1,size,cmp);
   #undef AT
 }
+
+#endif

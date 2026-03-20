@@ -78,7 +78,10 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
-- [ ] !!! minify is currently broken. Some confusion over "gamepad" vs "gamepads" when abbreviating symbols at Input.js.
+- [x] !!! minify is currently broken. Some confusion over "gamepad" vs "gamepads" when abbreviating symbols at Input.js.
+- - We're producing duplicate abbreviated symbols. That's definitely a problem, but is it *this* problem?
+- - Three problems: (1) had a "+1" where I meant "+c" in `mf_reduce_member_names`, (2) we were using fake `qsort` even with `USE_real_stdlib` set, and (3) `qsort` is behaving incorrectly.
+- - 1 and 2 are trivial. 3 was due to incorrect handling of the Right Less case in qsort. I had it swapping with (rp) but it should be (lp).
 - [x] When gamepad masquerades as mouse, apply a velocity curve. A single-frame tap should always move by 1 pixel.
 - [ ] SongEditor: When opening modecfg for the first time, default to no velocity-sensitivity for sound effects.
 - [ ] SongEditor: Consider removing the action "Auto end time" and just do it every time without asking.

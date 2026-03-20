@@ -85,7 +85,7 @@ int snprintf(char *dst,unsigned long int dsta,const char *fmt,...);
 int vsnprintf(char *dst,unsigned long int dsta,const char *fmt,va_list vargs);
 
 /* Quicksort.
- * Unlike POSIX, our qsort is stable. I think. TODO verify.
+ * Unlike POSIX, our qsort is stable.
  */
 void qsort(void *p,size_t c,size_t size,int (*cmp)(const void *a,const void *b));
 

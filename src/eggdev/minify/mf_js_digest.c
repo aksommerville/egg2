@@ -187,7 +187,7 @@ static int mf_reduce_member_names(struct eggdev_minify_js *ctx) {
   int p=0;
   while (p<nl->c) {
     int c=1;
-    while ((p+c<nl->c)&&(nl->v[p]->token.c==nl->v[p+1]->token.c)&&!memcmp(nl->v[p]->token.v,nl->v[p+c]->token.v,nl->v[p]->token.c)) c++;
+    while ((p+c<nl->c)&&(nl->v[p]->token.c==nl->v[p+c]->token.c)&&!memcmp(nl->v[p]->token.v,nl->v[p+c]->token.v,nl->v[p]->token.c)) c++;
     if (c>1) { // It's not worth moving one symbol. But at 2 or more, we may benefit from moving. (not worth figuring out the exact formula).
       int namec=0;
       char *nname=mf_next_identifier(ctx,&namec);
