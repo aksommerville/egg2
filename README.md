@@ -78,30 +78,17 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
-- [x] !!! minify is currently broken. Some confusion over "gamepad" vs "gamepads" when abbreviating symbols at Input.js.
-- - We're producing duplicate abbreviated symbols. That's definitely a problem, but is it *this* problem?
-- - Three problems: (1) had a "+1" where I meant "+c" in `mf_reduce_member_names`, (2) we were using fake `qsort` even with `USE_real_stdlib` set, and (3) `qsort` is behaving incorrectly.
-- - 1 and 2 are trivial. 3 was due to incorrect handling of the Right Less case in qsort. I had it swapping with (rp) but it should be (lp).
-- [x] When gamepad masquerades as mouse, apply a velocity curve. A single-frame tap should always move by 1 pixel.
 - [ ] SongEditor: When opening modecfg for the first time, default to no velocity-sensitivity for sound effects.
 - [ ] SongEditor: Consider removing the action "Auto end time" and just do it every time without asking.
 - [ ] `eggdev build`, allow explicit target selection. Important during dev, maybe you have temporary debug scaffolding that can only build native.
 - [ ] Editor sidebar: Group resources when too many in a type. Maybe a limit of 100 per bucket? Bellacopia's maps and sprites are getting ridiculous.
+- [ ] ^ Similar bucketting in the Sprites dropdown at new POI.
 - [ ] Consider a spec change re multiple `code` resources: Concatenate all, rather than just using id 1.
 - - Finish Bellacopia Maleficia, it will have a ridiculous amount of code. If its code:1 is over 2 MB, make the change.
-- [x] strings compiler: `./src/data/strings/en-3-dialogue:82:ERROR: Invalid string index 79, must be at least 79`. It meant "at least 80".
 - [ ] alsafd, pi 4, hdmi audio: Long lead time lost, and playhead is way off. (Cherteau is unplayable, and all games, the lead loss is noticeable)
 - [ ] Editor: Global action to reorder maps, eg for a game like zennoniwa or inversion.
 - [ ] Song Editor "Copy From..." what is up with the order of sound resources? There should be some kind of order...
-- [x] MapService: Incorrectly handling planeless solo maps, it creates a 1x1 plane containing whichever map showed up last at (0,0,0). Evident in bellacopia.
-- [x] Map editor: New door should offer to make a new map too.
-- [x] In bellacopia, I keep getting prompted to create a new neighbor map when one does exist, visible in canvas and everything.
-- - Happens reliably on a fresh load, after the first change. Watch the map editor's tattle as the save processes.
-- - ...due to MapService searching by MapRes identity. Use rid instead.
 - [ ] Revise SDK instruments, after some playing around.
-- [x] ModecfgModalDrum: Use peak trim and pan during individual sound playback.
-- [x] ModecfgModalDrum: Can we demo the kit more broadly? I need to carefully compare eg hihat vs kick.
-- [x] Web: Playhead keeps reporting after song ends (without repeat). Game-breaking in Cherteau, the dance-off.
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
 - [ ] eggdev client: Detect changes to shared_symbols.h and rebuild symbols when changed. Currently you have to restart the server if you change symbols. Need a generalization of inotify. Not trivial.

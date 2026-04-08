@@ -4,6 +4,9 @@ The `eggdev` tool can build Egg projects in one shot, just `eggdev build` from t
 
 This will produce an executable for every target you configured when building Egg.
 
+Typical Egg projects ship with a Makefile which just calls `eggdev build`.
+You should prefer to call `make`, `make run`, `make edit`, and `make web-run` rather than calling eggdev directly.
+
 ## Targets
 
 A typical Egg installation has two targets: `web`, and whatever's appropriate to the host (`linux`, `macos`, `mswin`, ...).
@@ -26,10 +29,34 @@ Normally games link against `libeggrt.a`, which contains the Egg Runtime and als
 There's an alternative `libeggrt-headless.a`, which is the same thing but no `main()`.
 If you link against headless, you must supply `main()`, and call:
 - `eggrt_configure(argc,argv)` as early as possible.
-- `eggrt_init()` begin configure and the first update.
+- `eggrt_init()` between configure and the first update.
 - `eggrt_update()` repeatedly. It may block.
 - `eggrt_quit(status)` before terminating.
 
 I'm not sure whether there's any point to headless.
 It's easy to build so we do.
 Might be cases where you want to embedded an Egg runtime alongside other runtimes?
+
+## Project Layout
+
+This is also discussed in `rom-format.md`.
+
+`eggdev build` expects this structure:
+```
+MY_PROJECT/
+  out/ : Final artifacts go here. Created automatically. Should be gitignored.
+  mid/ : Intermediate artifacts go here. Created automatically. Should be gitignored.
+  Makefile
+  README.md
+  etc/ : Your commentary, notes, whatever. Egg ignores.
+  src/ : All inputs to the build process should live in here.
+    game/: All game code.
+      shared_symbols.h : A special header that eggdev uses during resource compilation.
+      ...
+    data/: Structured resource file inputs. See rom-format.md.
+    editor/: Extensions for the web-based resource editor.
+    tool/: Explicitly ignored.
+```
+
+Perfectly sensible to build your own tools, under `src/tool/`.
+Orchestrate the build yourself in your Makefile.
