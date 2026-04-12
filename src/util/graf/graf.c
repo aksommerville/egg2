@@ -458,3 +458,18 @@ void graf_fancy(struct graf *graf,
   vtx->pb=primary>>8;
   vtx->a=primary;
 }
+
+/* Point sprites with a full caller-supplied batch.
+ */
+ 
+void graf_tile_batch(struct graf *graf,const struct egg_render_tile *vtxv,int vtxc) {
+  graf_flush(graf);
+  graf->un.mode=EGG_RENDER_TILE;
+  egg_render(&graf->un,vtxv,vtxc*sizeof(struct egg_render_tile));
+}
+
+void graf_fancy_batch(struct graf *graf,const struct egg_render_fancy *vtxv,int vtxc) {
+  graf_flush(graf);
+  graf->un.mode=EGG_RENDER_FANCY;
+  egg_render(&graf->un,vtxv,vtxc*sizeof(struct egg_render_fancy));
+}

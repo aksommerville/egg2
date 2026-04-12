@@ -78,6 +78,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
+- [ ] editor: New resource modal for "Match image", clicking left should wrap around to the end -- usually you're looking for the end of the list, not the start.
 - [ ] SongEditor: When opening modecfg for the first time, default to no velocity-sensitivity for sound effects.
 - [ ] SongEditor: Consider removing the action "Auto end time" and just do it every time without asking.
 - [ ] `eggdev build`, allow explicit target selection. Important during dev, maybe you have temporary debug scaffolding that can only build native.

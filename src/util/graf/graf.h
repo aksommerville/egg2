@@ -144,4 +144,13 @@ void graf_fancy(struct graf *graf,
   uint32_t primary // RGBA. A is the master alpha, and RGB is substituted for all pure-gray pixels.
 );
 
+/* Send multiple tiles or fancies in a single batch.
+ * It's usually better to use the single-vertex functions above.
+ * Using these batch functions forces it to be a single batch.
+ * This might be convenient if you have a bunch of prepared reusable vertices.
+ * NB: (vtxc) is is the count of vertices, not bytes. That's the usual thing globally, but it's unlike egg_render().
+ */
+void graf_tile_batch(struct graf *graf,const struct egg_render_tile *vtxv,int vtxc);
+void graf_fancy_batch(struct graf *graf,const struct egg_render_fancy *vtxv,int vtxc);
+
 #endif
