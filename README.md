@@ -78,6 +78,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
+- [x] !!! Native only, sounds will not play if there are no song resources. See `jetcharger`. Also no sound when using `eggrun`, not just the full-native build.
 - [ ] editor: New resource modal for "Match image", clicking left should wrap around to the end -- usually you're looking for the end of the list, not the start.
 - [ ] SongEditor: When opening modecfg for the first time, default to no velocity-sensitivity for sound effects.
 - [ ] SongEditor: Consider removing the action "Auto end time" and just do it every time without asking.

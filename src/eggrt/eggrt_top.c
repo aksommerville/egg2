@@ -117,7 +117,7 @@ static int eggrt_slice_rom(void *dstpp) {
   if (eggrt.rom&&(eggrt.romc>=4)&&!memcmp(eggrt.rom,"\0ERM",4)) {
     const uint8_t *src=eggrt.rom;
     int srcc=eggrt.romc,srcp=4,tid=1;
-    int startp=0,stopp=srcc;
+    int songp=0,soundp=0,hip=srcc; // Start of type 5, type 6, and the next higher type.
     while (srcp<srcc) {
       int cmdp=srcp;
       uint8_t lead=src[srcp++];
@@ -125,14 +125,12 @@ static int eggrt_slice_rom(void *dstpp) {
       switch (lead&0xc0) {
         case 0x00: { // TID
             int next_tid=tid+lead;
-            if (!startp) {
-              if (next_tid==5) {
-                startp=srcp; // Start reading right after the advancement to tid 5.
-              } else if (next_tid==6) {
-                srcp=srcc; // No songs. We'd have to generate a new rom starting with a (tid+1). Not worth the trouble.
-              }
-            } else if (next_tid>7) {
-              stopp=cmdp;
+            if (next_tid==5) {
+              songp=srcp;
+            } else if (next_tid==6) {
+              soundp=srcp;
+            } else if (next_tid>=7) {
+              hip=cmdp;
               srcp=srcc;
             }
             tid=next_tid;
@@ -146,16 +144,20 @@ static int eggrt_slice_rom(void *dstpp) {
             len++;
             srcp+=len;
           } break;
-        case 0xc0: startp=0; srcp=srcc; break; // Illegal, default.
+        case 0xc0: srcp=srcc; break; // Illegal. Stop here, but do give synth a crack at it if we found something.
       }
     }
-    if (startp) { // Got something.
-      *(const void**)dstpp=src+startp;
-      return stopp-startp;
+    if (songp) {
+      *(const void**)dstpp=src+songp;
+      return hip-songp;
+    } else if (soundp) {
+      // We can't return just the sounds. Synth expects either a full ROM or songs *and* sounds. So give them all of it.
+      *(const void**)dstpp=src;
+      return srcc;
     }
     return 0; // Invalid or no songs in a valid rom, return empty.
   }
-  // Anything goes wrong, hand them all of whatever we have.
+  // If the signature didn't match, let synth try it anyway.
   *(const void**)dstpp=eggrt.rom;
   return eggrt.romc;
 }
