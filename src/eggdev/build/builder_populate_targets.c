@@ -44,7 +44,7 @@ static int builder_add_target(struct builder *builder,const char *name,int namec
  
 int builder_populate_targets(struct builder *builder) {
   const char *src=0;
-  int srcc=eggdev_config_get(&src,"EGG_TARGETS",11);
+  int srcc=eggdev_config_get_envfirst(&src,"EGG_TARGETS");
   if (srcc>0) {
     int srcp=0;
     while (srcp<srcc) {

@@ -22,6 +22,9 @@ Each of those must define a few fields:
 - - `web`: Zipped HTML and ROM.
 - - `macos`: Same as `exe`, but also some ancillary MacOS app bundle bits.
 
+`EGG_TARGETS` is normally acquired from the SDK config. If present in the environment, we'll use that instead.
+eg `EGG_TARGETS=linux eggdev build` if you want to skip the web build temporarily.
+
 ## Runtime Libraries
 
 Normally games link against `libeggrt.a`, which contains the Egg Runtime and also `main()`.

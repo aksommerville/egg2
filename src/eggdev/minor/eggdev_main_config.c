@@ -107,6 +107,21 @@ int eggdev_config_get(void *dstpp,const char *k,int kc) {
   return 0;
 }
 
+/* Value by key, checking environment first.
+ */
+ 
+int eggdev_config_get_envfirst(void *dstpp,const char *k) {
+  if (!k) return 0;
+  const char *fromenv=getenv(k);
+  if (fromenv&&fromenv[0]) {
+    *(const char**)dstpp=fromenv;
+    int c=0;
+    while (fromenv[c]) c++;
+    return c;
+  }
+  return eggdev_config_get(dstpp,k,-1);
+}
+
 /* Value by key, under a given target.
  */
  

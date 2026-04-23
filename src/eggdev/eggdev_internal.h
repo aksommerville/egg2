@@ -116,6 +116,7 @@ int eggdev_configure(int argc,char **argv);
 
 int eggdev_config_key_by_index(void *dstpp,int p);
 int eggdev_config_get(void *dstpp,const char *k,int kc);
+int eggdev_config_get_envfirst(void *dstpp,const char *k); // If present in env, use that. Otherwise same as eggdev_config_get.
 int eggdev_config_get_sub(void *dstpp,const char *target,int targetc,const char *k,int kc);
 int eggdev_config_get_instruments(void *dstpp); // EAU file or empty.
 int eggdev_config_get_instruments_raw(void *dstpp); // Reads source file from scratch, usually not what you want. Caller frees.

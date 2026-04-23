@@ -88,7 +88,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [x] SongEditor: When opening modecfg for the first time, default to no velocity-sensitivity for sound effects.
 - - Complicated. The defaulting happens at `EauDecoder.js:decodeFmModecfg()` et al. Hard to distinguish "new modecfg for a sound resource".
 - [ ] SongEditor: Consider removing the action "Auto end time" and just do it every time without asking.
-- [ ] `eggdev build`, allow explicit target selection. Important during dev, maybe you have temporary debug scaffolding that can only build native.
+- [x] `eggdev build`, allow explicit target selection. Important during dev, maybe you have temporary debug scaffolding that can only build native.
 - [ ] Editor sidebar: Group resources when too many in a type. Maybe a limit of 100 per bucket? Bellacopia's maps and sprites are getting ridiculous.
 - [ ] ^ Similar bucketting in the Sprites dropdown at new POI.
 - [ ] Consider a spec change re multiple `code` resources: Concatenate all, rather than just using id 1.
