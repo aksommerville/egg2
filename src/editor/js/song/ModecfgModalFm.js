@@ -10,16 +10,18 @@ import { WaveUi } from "./WaveUi.js";
 import { MidiService } from "./MidiService.js";
 import { Encoder } from "../Encoder.js";
 import { Audio } from "../Audio.js";
+import { SongService } from "./SongService.js";
 
 export class ModecfgModalFm {
   static getDependencies() {
-    return [HTMLDialogElement, Dom, MidiService, Audio];
+    return [HTMLDialogElement, Dom, MidiService, Audio, SongService];
   }
-  constructor(element, dom, midiService, audio) {
+  constructor(element, dom, midiService, audio, songService) {
     this.element = element;
     this.dom = dom;
     this.midiService = midiService;
     this.audio = audio;
+    this.songService = songService;
     
     // All "Modecfg" modals must implement, and resolve with Uint8Array or null.
     this.result = new Promise((resolve, reject) => {
@@ -43,7 +45,7 @@ export class ModecfgModalFm {
     this.modecfg = channel.modecfg;
     this.chid = channel.chid;
     this.channel = channel;
-    this.model = decodeModecfg(this.mode, this.modecfg);
+    this.model = decodeModecfg(this.mode, this.modecfg, this.songService.resType);
     this.buildUi();
   }
   

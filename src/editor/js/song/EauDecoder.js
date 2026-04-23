@@ -132,14 +132,15 @@ export class EauDecoder {
    *   isDefault: boolean ; if false we encode explicitly even if it happens to match the default.
    * }
    * If we're at EOF, or we have the special value [0], we return a per-usage default instead.
+   * Use (simple) true for sound resources, as opposed to song. It only matters when defaulting; we'll pick a no-velocity no-sustain default.
    */
-  env(usage) {
+  env(usage, simple) {
     if (this.srcp >= this.src.length) {
-      return this.defaultEnv(usage);
+      return this.defaultEnv(usage, simple);
     }
     if (!this.src[this.srcp]) {
       this.srcp += 1;
-      return this.defaultEnv(usage);
+      return this.defaultEnv(usage, simple);
     }
     const env = {
       usage,
@@ -177,7 +178,7 @@ export class EauDecoder {
     const ptlen = env.hi ? 8 : 4;
     if (this.srcp > this.src.length - ptlen * ptc) {
       this.srcp = this.src.length;
-      return this.defaultEnv(usage);
+      return this.defaultEnv(usage, simple);
     }
     if (flags & 0x04) { // Sustain
       env.susp = (susp_ptc >> 4) + 1;
@@ -201,9 +202,20 @@ export class EauDecoder {
     return env;
   }
   
-  defaultEnv(usage) {
+  defaultEnv(usage, simple) {
     switch (usage) {
-      case "level": return {
+      case "level": if (simple) return {
+          // Default level for sound effects: No velocity or sustain.
+          usage: "level",
+          susp: 0,
+          lo: [
+            { t:   0, v: 0x0000 },
+            { t:  25, v: 0xffff },
+            { t:  50, v: 0x4000 },
+            { t: 250, v: 0x0000 },
+          ],
+          isDefault: true,
+        }; else return {
           // Try to match src/opt/synth/synth_env.c:synth_env_fallback(). Mind that our (t) are absolute.
           usage: "level",
           susp: 2,
@@ -351,7 +363,7 @@ export function encodeWave(dst, wave, defaultIfEquivalent) {
  *   rlstime: u16
  * }
  */
-export function decodeTrivialModecfg(dst, src) {
+export function decodeTrivialModecfg(dst, src, resType) {
   dst.wheelrange = src.u16(200);
   dst.minlevel = src.u16(0x2000);
   dst.maxlevel = src.u16(0xffff);
@@ -392,16 +404,17 @@ export function encodeTrivialModecfg(dst, src) {
  *   mixlfowave: wave
  * }
  */
-export function decodeFmModecfg(dst, src) {
-  dst.levelenv = src.env("level");
+export function decodeFmModecfg(dst, src, resType) {
+  const simpleEnvelopes = (resType === "sound");
+  dst.levelenv = src.env("level", simpleEnvelopes);
   dst.wheelrange = src.u16(200);
   dst.wavea = src.wave();
   dst.waveb = src.wave(dst.wavea);
   dst.mixenv = src.env("mix");
   dst.modrate = src.u16(0);
   dst.modrange = src.u16(0x0100);
-  dst.rangeenv = src.env("range");
-  dst.pitchenv = src.env("pitch");
+  dst.rangeenv = src.env("range", simpleEnvelopes);
+  dst.pitchenv = src.env("pitch", simpleEnvelopes);
   dst.modulator = src.wave();
   dst.rangelforate = src.u8_8(0);
   dst.rangelfodepth = src.u8(0xff);
@@ -455,8 +468,9 @@ export function encodeFmModecfg(dst, src) {
  *   gain: u8.8
  * }
  */
-export function decodeSubModecfg(dst, src) {
-  dst.levelenv = src.env("level");
+export function decodeSubModecfg(dst, src, resType) {
+  const simpleEnvelopes = (resType === "sound");
+  dst.levelenv = src.env("level", simpleEnvelopes);
   dst.widthlo = src.u16(200);
   dst.widthhi = src.u16(dst.widthlo);
   dst.stagec = src.u8(1);
@@ -526,15 +540,16 @@ export function encodeDrumModecfg(dst, src) {
  * }
  * And typically a bunch of other fields, see above.
  * By convention, every field for the given mode will be created, even if it was absent from the input.
+ * (resType) is optional. May be "song" or "sound" to influence the defaults.
  */
-export function decodeModecfg(mode, modecfg) {
+export function decodeModecfg(mode, modecfg, resType) {
   const model = { mode };
   const decoder = new EauDecoder(modecfg || new Uint8Array(0));
   switch (mode) {
     case 0: break; // NOOP
-    case 1: decodeTrivialModecfg(model, decoder); break;
-    case 2: decodeFmModecfg(model, decoder); break;
-    case 3: decodeSubModecfg(model, decoder); break;
+    case 1: decodeTrivialModecfg(model, decoder, resType); break;
+    case 2: decodeFmModecfg(model, decoder, resType); break;
+    case 3: decodeSubModecfg(model, decoder, resType); break;
     case 4: model.drums = decodeDrumModecfg(modecfg); model.extra = new Uint8Array(0); return model;
   }
   model.extra = decoder.remainder();

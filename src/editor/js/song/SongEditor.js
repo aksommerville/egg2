@@ -42,7 +42,7 @@ export class SongEditor {
   
   setup(res) {
     this.songService.getSong(res.path).then(song => {
-      this.songService.reset(song, res.rid);
+      this.songService.reset(song, res.rid, res.type);
       this.res = res;
       this.song = song;
       this.buildUi();
@@ -57,7 +57,7 @@ export class SongEditor {
     this.element.classList.add("shorter");
     this.cbDirty = cbDirty;
     const song = new Song(serial);
-    this.songService.reset(song, 0);
+    this.songService.reset(song, 0, "song");
     this.res = null;
     this.song = song;
     this.buildUi();

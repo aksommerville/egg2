@@ -102,8 +102,9 @@ export class PickImageModal {
   }
   
   onNextPage(d) {
-    const np = this.pagep + d * PAGE_SIZE;
-    if ((np < 0) || (np >= this.images.length)) return;
+    let np = this.pagep + d * PAGE_SIZE;
+    if (np < 0) np = Math.floor((this.images.length - 1) / PAGE_SIZE) * PAGE_SIZE;
+    else if (np >= this.images.length) np = 0;
     this.pagep = np;
     this.populateUi();
   }

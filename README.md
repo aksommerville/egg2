@@ -84,8 +84,9 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [ ] Does MapEditor not show region commands? I'm using them in `xrm`.
 - [ ] ^ Even worse: Region commands drop their width and height when copying with Shift+MovePoi.
 - [x] !!! Native only, sounds will not play if there are no song resources. See `jetcharger`. Also no sound when using `eggrun`, not just the full-native build.
-- [ ] editor: New resource modal for "Match image", clicking left should wrap around to the end -- usually you're looking for the end of the list, not the start.
-- [ ] SongEditor: When opening modecfg for the first time, default to no velocity-sensitivity for sound effects.
+- [x] editor: New resource modal for "Match image", clicking left should wrap around to the end -- usually you're looking for the end of the list, not the start.
+- [x] SongEditor: When opening modecfg for the first time, default to no velocity-sensitivity for sound effects.
+- - Complicated. The defaulting happens at `EauDecoder.js:decodeFmModecfg()` et al. Hard to distinguish "new modecfg for a sound resource".
 - [ ] SongEditor: Consider removing the action "Auto end time" and just do it every time without asking.
 - [ ] `eggdev build`, allow explicit target selection. Important during dev, maybe you have temporary debug scaffolding that can only build native.
 - [ ] Editor sidebar: Group resources when too many in a type. Maybe a limit of 100 per bucket? Bellacopia's maps and sprites are getting ridiculous.

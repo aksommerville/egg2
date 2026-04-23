@@ -48,7 +48,7 @@ export class ModecfgModalDrum {
     this.modecfg = channel.modecfg;
     this.chid = channel.chid;
     this.channel = channel;
-    this.model = decodeModecfg(this.mode, this.modecfg);
+    this.model = decodeModecfg(this.mode, this.modecfg, this.songService.resType);
     this.buildUi();
   }
   

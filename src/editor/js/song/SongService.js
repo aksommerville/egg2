@@ -24,6 +24,7 @@ export class SongService {
     
     this.song = null; // Set by SongEditor when it's alive.
     this.rid = 0;
+    this.resType = "";
     this.visChid = null; // null or chid, visibility filter.
     this.playing = false;
     this.muteChids = []; // Per-channel switches, set by SongChannelsUi and influencing playSong().
@@ -38,15 +39,12 @@ export class SongService {
     }, 1000);
   }
   
-  /* We're a singleton, but we're also pretty context-sensitive.
-   * SongEditor should call reset() as it loads so we can clear any transient state.
-   * XXX This shouldn't be necessary anymore; we're not a singleton now.
-   */
-  reset(song, rid) {
+  reset(song, rid, resType) {
     this.audio.playEauSong(null, false);
     this.playing = false;
     this.song = song;
     this.rid = rid;
+    this.resType = resType;
     this.visChid = null;
     this.muteChids = [];
     this.soloChids = [];
