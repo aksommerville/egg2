@@ -23,7 +23,7 @@ export class PickSoundModal {
     
     this.noteid = null; // null if we're not asking for it
     this.name = ""; // We put the chosen sound's name here before resolving.
-    this.sources = []; // {name,sounds:{name,serial}[]} ready for presentation.
+    this.sources = []; // {name,sounds:{name,serial,id}[]} ready for presentation. (sounds[].id) is used during gather, probly not useful after.
     
     this.result = new Promise((resolve, reject) => {
       this.resolve = resolve;
@@ -119,7 +119,7 @@ export class PickSoundModal {
     return this.sdkInstrumentsService.getInstruments().catch(e => {
       return null;
     }).then(sdkSong => {
-      const sources = []; // {name,sounds:{name,serial}[]}
+      const sources = []; // {name,sounds:{name,serial,id}[]}
       let soundsSource = null;
       
       // If the SDK Instruments exist, they're a container just like a song resource.
@@ -147,6 +147,7 @@ export class PickSoundModal {
           soundsSource.sounds.push({
             name: res.path.replace(/^.*\//, ""),
             serial: res.serial,
+            id: res.rid,
           });
           continue;
         }
@@ -171,6 +172,7 @@ export class PickSoundModal {
             soundsSource.sounds.push({
               name,
               serial: song.encode(),
+              id: res.rid,
             });
           }
         } catch (e) {
@@ -178,6 +180,9 @@ export class PickSoundModal {
         }
       }
       
+      for (const source of sources) {
+        source.sounds.sort((a, b) => a.id - b.id);
+      }
       return sources;
     });
   }
@@ -195,6 +200,7 @@ export class PickSoundModal {
         source.sounds.push({
           name: song.getName(channel.chid, drum.noteid) || drum.noteid.toString(), // Don't use force, it adds a prefix to extant names.
           serial: drum.serial,
+          id: drum.noteid,
         });
       }
       if (source.sounds.length) {
