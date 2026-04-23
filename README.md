@@ -75,9 +75,14 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [Vexularg](https://github.com/aksommerville/vexularg)
 - [Inversion](https://github.com/aksommerville/inversion)
 - [Licence to Illuse](https://github.com/aksommerville/licensetoilluse)
+- [XRM: Extreme Racing Machines](https://github.com/aksommerville/xrm)
 
 ## TODO
 
+- [x] Source songs are allowed to be EAU but we only accept if they are named "*.eau", otherwise we think they're MIDI. The hell? There's an unambiguous signature for both formats.
+- [ ] MapEditor: Cell position tattle gave incorrect position after resizing the window.
+- [ ] Does MapEditor not show region commands? I'm using them in `xrm`.
+- [ ] ^ Even worse: Region commands drop their width and height when copying with Shift+MovePoi.
 - [x] !!! Native only, sounds will not play if there are no song resources. See `jetcharger`. Also no sound when using `eggrun`, not just the full-native build.
 - [ ] editor: New resource modal for "Match image", clicking left should wrap around to the end -- usually you're looking for the end of the list, not the start.
 - [ ] SongEditor: When opening modecfg for the first time, default to no velocity-sensitivity for sound effects.

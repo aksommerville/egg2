@@ -392,9 +392,9 @@ sr_convert_fn eggdev_get_converter(int dstfmt,int srcfmt) {
  
 int eggdev_convert_for_rom(struct sr_encoder *dst,const void *src,int srcc,int srcfmt,const char *path,struct sr_encoder *errmsg) {
   if (srcfmt<1) {
-    srcfmt=eggdev_fmt_by_path(path,-1);
+    if (srcc>0) srcfmt=eggdev_fmt_by_signature(src,srcc);
     if (srcfmt<1) {
-      srcfmt=eggdev_fmt_by_signature(src,srcc);
+      srcfmt=eggdev_fmt_by_path(path,-1);
     }
   }
   int tid=eggdev_tid_by_path_or_fmt(path,-1,srcfmt);
@@ -451,9 +451,9 @@ int eggdev_convert_auto(
   int tid
 ) {
   if (srcfmt<1) {
-    srcfmt=eggdev_fmt_by_path(srcpath,-1);
+    if (srcc>0) srcfmt=eggdev_fmt_by_signature(src,srcc);
     if (srcfmt<1) {
-      srcfmt=eggdev_fmt_by_signature(src,srcc);
+      srcfmt=eggdev_fmt_by_path(srcpath,-1);
     }
   }
   if (dstfmt<1) {
