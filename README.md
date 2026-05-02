@@ -79,23 +79,20 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
-- [x] Source songs are allowed to be EAU but we only accept if they are named "*.eau", otherwise we think they're MIDI. The hell? There's an unambiguous signature for both formats.
+- [ ] `eggdev list -fsize` can we operate on loose data files too? This might be handy for assessing size of a batch of MIDI or PNG files, outside an Egg project.
+- - Actually yeah, even within an Egg project, there's no straightforward way to list the duration of all the songs. "Which songs are too short?" becomes a burden.
 - [ ] MapEditor: Cell position tattle gave incorrect position after resizing the window.
+- [ ] TilesheetEditor: Getting undesirable default mouse actions when dragging in the neighbor mask UI. (tries to drag the preview tile, or select text)
 - [ ] Does MapEditor not show region commands? I'm using them in `xrm`.
 - [ ] ^ Even worse: Region commands drop their width and height when copying with Shift+MovePoi.
-- [x] !!! Native only, sounds will not play if there are no song resources. See `jetcharger`. Also no sound when using `eggrun`, not just the full-native build.
-- [x] editor: New resource modal for "Match image", clicking left should wrap around to the end -- usually you're looking for the end of the list, not the start.
-- [x] SongEditor: When opening modecfg for the first time, default to no velocity-sensitivity for sound effects.
 - - Complicated. The defaulting happens at `EauDecoder.js:decodeFmModecfg()` et al. Hard to distinguish "new modecfg for a sound resource".
 - [ ] SongEditor: Consider removing the action "Auto end time" and just do it every time without asking.
-- [x] `eggdev build`, allow explicit target selection. Important during dev, maybe you have temporary debug scaffolding that can only build native.
 - [ ] Editor sidebar: Group resources when too many in a type. Maybe a limit of 100 per bucket? Bellacopia's maps and sprites are getting ridiculous.
 - [ ] ^ Similar bucketting in the Sprites dropdown at new POI.
 - [ ] Consider a spec change re multiple `code` resources: Concatenate all, rather than just using id 1.
 - - Finish Bellacopia Maleficia, it will have a ridiculous amount of code. If its code:1 is over 2 MB, make the change.
 - [ ] alsafd, pi 4, hdmi audio: Long lead time lost, and playhead is way off. (Cherteau is unplayable, and all games, the lead loss is noticeable)
 - [ ] Editor: Global action to reorder maps, eg for a game like zennoniwa or inversion.
-- [x] Song Editor "Copy From..." what is up with the order of sound resources? There should be some kind of order...
 - [ ] Revise SDK instruments, after some playing around.
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.
