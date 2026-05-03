@@ -104,6 +104,9 @@ With `--format=summary`, prints one line per type: `TYPE COUNT TOTAL_SIZE`.
 With `--format=size`, prints one line describing high-level things like songs run time and maps area.
 `raw` is basically the same as `default` but type and id will always be numeric.
 
+ROM may be MIDI or PNG files with `--format=size`, or a directory to scan recursively.
+We'll dump the dimensions or running time.
+
 ## dump
 
 Usage: `eggdev dump ROM TYPE:ID`

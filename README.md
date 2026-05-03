@@ -79,7 +79,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
-- [ ] `eggdev list -fsize` can we operate on loose data files too? This might be handy for assessing size of a batch of MIDI or PNG files, outside an Egg project.
+- [x] `eggdev list -fsize` can we operate on loose data files too? This might be handy for assessing size of a batch of MIDI or PNG files, outside an Egg project.
 - - Actually yeah, even within an Egg project, there's no straightforward way to list the duration of all the songs. "Which songs are too short?" becomes a burden.
 - [ ] MapEditor: Cell position tattle gave incorrect position after resizing the window.
 - [ ] TilesheetEditor: Getting undesirable default mouse actions when dragging in the neighbor mask UI. (tries to drag the preview tile, or select text)

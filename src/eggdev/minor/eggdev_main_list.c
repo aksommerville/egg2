@@ -153,6 +153,122 @@ static int eggdev_list_size(struct rom_reader *reader,const char *path) {
   return 0;
 }
 
+/* List a regular file that isn't a ROM.
+ * Optionally return the logical size for caller's aggregation.
+ */
+ 
+struct sizerpt {
+  int runtime; // ms; for songs
+  int pixelc; // for images
+  int filec; // Only used by aggregator; total count of files examined.
+  int usedc; // 0..filec, how many participated in the count.
+};
+ 
+static int eggdev_main_list_non_rom(struct sizerpt *sizerpt,const void *src,int srcc,const char *path,int fmt) {
+  switch (fmt) {
+    
+    case EGGDEV_FMT_png: {
+        int w=0,h=0;
+        if (image_measure(&w,&h,src,srcc)>=0) {
+          if (sizerpt) {
+            sizerpt->pixelc=w*h;
+            sizerpt->usedc=1;
+          }
+          fprintf(stderr,"%s: PNG, %dx%d\n",path,w,h);
+        }
+      } break;
+      
+    case EGGDEV_FMT_mid: {
+        struct sr_encoder eau={0};
+        struct sr_convert_context ctx={
+          .dst=&eau,
+          .src=src,
+          .srcc=srcc,
+          .refname=path,
+        };
+        int err=eau_cvt_eau_midi(&ctx);
+        if (err<0) {
+          sr_encoder_cleanup(&eau);
+          return err;
+        }
+        int ms=eau_estimate_duration(eau.v,eau.c);
+        sr_encoder_cleanup(&eau);
+        if (ms<0) break;
+        if (sizerpt) {
+          sizerpt->runtime=ms;
+          sizerpt->usedc=1;
+        }
+        int s=ms/1000; ms%=1000;
+        int m=s/60; s%=60;
+        int h=m/60; m%=60;
+        fprintf(stderr,"%s: MIDI, %d:%02d:%02d.%03d\n",path,h,m,s,ms);
+      } break;
+      
+    case EGGDEV_FMT_eau: {
+        int ms=eau_estimate_duration(src,srcc);
+        if (ms<0) break;
+        if (sizerpt) {
+          sizerpt->runtime=ms;
+          sizerpt->usedc=1;
+        }
+        int s=ms/1000; ms%=1000;
+        int m=s/60; s%=60;
+        int h=m/60; m%=60;
+        fprintf(stderr,"%s: EAU, %d:%02d:%02d.%03d\n",path,h,m,s,ms);
+      } break;
+      
+  }
+  return 0;
+}
+
+/* List a path that isn't a regular file.
+ * It can only be a directory, and only with `--format=size`.
+ */
+ 
+static int cb_irregular(const char *path,const char *base,char ftype,void *userdata) {
+  struct sizerpt *sizerpt=userdata;
+  if (!ftype) ftype=file_get_type(path);
+  if (ftype=='d') return dir_read(path,cb_irregular,sizerpt);
+  if (ftype=='f') {
+    sizerpt->filec++;
+    void *src=0;
+    int srcc=file_read(&src,path);
+    if (srcc<0) {
+      fprintf(stderr,"%s: Failed to read file.\n",path);
+      return -2;
+    }
+    struct sizerpt tmprpt={0};
+    int fmt=eggdev_fmt_by_signature(src,srcc);
+    int err=eggdev_main_list_non_rom(&tmprpt,src,srcc,path,fmt);
+    free(src);
+    if ((err<0)||!tmprpt.usedc) return 0;
+    sizerpt->usedc++;
+    sizerpt->runtime+=tmprpt.runtime;
+    sizerpt->pixelc+=tmprpt.pixelc;
+    return 0;
+  }
+  return 0;
+}
+ 
+static int eggdev_main_list_irregular(const char *path) {
+  if (!g.format||strcmp(g.format,"size")) return -1;
+  struct sizerpt sizerpt={0};
+  int err=dir_read(path,cb_irregular,&sizerpt);
+  if (err<0) return err;
+  int ms=sizerpt.runtime;
+  if (ms<0) ms=0;
+  int second=ms/1000; ms%=1000;
+  int minute=second/60; second%=60;
+  int hour=minute/60; minute%=60;
+  fprintf(stderr,
+    "%s: Totals from %d/%d files: songs=%d:%02d:%02d.%03d pixels=%d\n",
+    path,sizerpt.usedc,sizerpt.filec,
+    hour,minute,second,ms,
+    sizerpt.pixelc
+  );
+  return 0;
+}
+
 /* List ROM, main entry point.
  */
  
@@ -171,16 +287,28 @@ int eggdev_main_list() {
   int romc=eggdev_read_input(&rom,srcpath);
   if (!strcmp(srcpath,"-")) srcpath="<stdin>";
   if (romc<0) {
-    if (romc!=-2) fprintf(stderr,"%s: Failed to read file.\n",srcpath);
-    return -2;
+    err=eggdev_main_list_irregular(srcpath);
+    if (err<0) {
+      if (err!=-2) fprintf(stderr,"%s: Failed to read file.\n",srcpath);
+      return -2;
+    }
+    return 0;
   }
   int srcfmt=eggdev_fmt_by_signature(rom,romc);
   if (srcfmt!=EGGDEV_FMT_egg) {
     sr_convert_fn convert=eggdev_get_converter(EGGDEV_FMT_egg,srcfmt);
     if (!convert) {
-      fprintf(stderr,"%s: Invalid ROM, no converter found.\n",srcpath);
+      if (g.format&&!strcmp(g.format,"size")) {
+        err=eggdev_main_list_non_rom(0,rom,romc,srcpath,srcfmt);
+      } else {
+        err=-1;
+      }
       free(rom);
-      return -2;
+      if (err<0) {
+        if (err!=-2) fprintf(stderr,"%s: Invalid ROM, no converter found.\n",srcpath);
+        return -2;
+      }
+      return 0;
     }
     struct sr_encoder dst={0};
     struct sr_convert_context ctx={
