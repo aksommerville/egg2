@@ -14,6 +14,7 @@ genre=Technical
 contact=aksommerville@gmail.com
 source=https://github.com/aksommerville/egg2
 incfgMask=dsw1
+#incfgMask=dswenlrLR123
 incfgNames=3
 #menu=none
 params=helloMessage

@@ -119,7 +119,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - - [ ] Too Heavy (JS; would be a full rewrite)
 - - [ ] Economy of Motion (JS; full rewrite)
 - - [ ] Sitter 2009 (a full rewrite is warranted)
-- - Definitely not in scope: Chetyorska (MIDI-In), Pico Sitter (who cares)
+- - Definitely not in scope: Chetyorska (MIDI-In), Pico Sitter (who cares), Bandit and earlier (source lost)
 - [ ] "eggzotics": Sample games that build for something weird, and also Egg.
 - - Anything with a virtual runtime is definitely out. So no Pico-8, and nothing using Java, JS, Lua, etc.
 - - [ ] Shovel. That's my other games framework, specifically to build web apps under 13 kB. I bet we can arrange a way to build for both Egg and Shovel, with Shovel's constraints.
