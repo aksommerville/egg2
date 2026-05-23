@@ -88,6 +88,7 @@ export class Input {
       Comma: BTN_WEST,
       Period: BTN_EAST,
       Slash: BTN_NORTH,
+      ShiftLeft: BTN_WEST,
       
       ArrowLeft: BTN_LEFT,
       ArrowRight: BTN_RIGHT,
@@ -336,7 +337,8 @@ export class Input {
   onKey(event) {
   
     // If a modifier key is down, ignore it and do not consume.
-    if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) return;
+    // Except the Shift key: Left shift is a typical user input (we map to WEST by default).
+    if (event.ctrlKey || event.altKey || event.metaKey) return;
     
     // In raw mode, consume and report everything.
     if (this.mode === MODE_RAW) {
