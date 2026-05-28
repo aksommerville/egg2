@@ -79,6 +79,22 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
+- [x] 2026-05-27: Bug report from Kuro re Kleptomania. Tried in Chrome, Firefox, and Opera under Linux and no repro.
+Cannot read properties of null (reading 'createTexture')
+  bB.requireTexture (Video; this.gl)
+  bB.egg_texture_load_raw
+Cannot read properties of null (reading 'bindFramebuffer')
+  bB.stop (Video)
+  jV.stop
+  jV.reportError
+NotSupportedError: screen.orientation.lock() is not available on this device.
+  - TouchInput.js:17, but it's commented out. ???
+  - The exception shows source `kleptomania:1`, not `index.html`. Maybe this is some Itch insertion?
+  - Nope, game launches fine in all three browsers via Itch too. (with some other warnings; not worried there).
+Video.gl gets assigned at `start()` and we don't check for null.
+>>> Adding a null check and more sensible exception.
+Kuro's exception is consistent with `Canvas.getContext("webgl")` returning null.
+
 - [x] `eggdev list -fsize` can we operate on loose data files too? This might be handy for assessing size of a batch of MIDI or PNG files, outside an Egg project.
 - - Actually yeah, even within an Egg project, there's no straightforward way to list the duration of all the songs. "Which songs are too short?" becomes a burden.
 - [ ] MapEditor: Cell position tattle gave incorrect position after resizing the window.

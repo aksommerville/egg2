@@ -34,7 +34,7 @@ export class Video {
     this.canvas.width = this.fbw;
     this.canvas.height = this.fbh;
     this.onResize(null); // Force canvas element size.
-    this.gl = this.canvas.getContext("webgl");
+    if (!(this.gl = this.canvas.getContext("webgl"))) throw new Error(`Failed to acquire WebGL context.`);
     this.texv[1] = {
       gltexid: 0,
       border: 0,
@@ -50,10 +50,12 @@ export class Video {
   }
   
   stop() {
-    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    if (this.gl) {
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+      this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+      this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    }
   }
   
   onResize(event) {
