@@ -253,7 +253,9 @@ export class MapCanvas {
     }
     
     // We have icons for a few specific standard types.
-    switch (poi.kw) {
+    let effkw = poi.kw;
+    if (effkw.endsWith("door")) effkw = "door";
+    switch (effkw) {
       case "sprite": ctx.drawImage(this.icons, 16, 16, 16, 16, x, y, 16, 16); return;
       case "door": { // Different icons for exit vs entrance.
           if (poi.mapid === this.mapPaint.map.rid) {

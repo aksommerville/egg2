@@ -253,7 +253,7 @@ export class MapService {
     const doors = [];
     for (const { map } of this.resv) {
       for (const cmd of map.cmd.commands) {
-        if (cmd[0] !== "door") continue;
+        if (!cmd[0].endsWith("door")) continue;
         // cmd[2] is the destination map id. But of course it can take various shapes.
         // We'll let Data do the work for it. Some legal constructions like "(u16)123" will not work here. But I expect "map:NAME" to be the norm.
         const res = this.data.findResource(cmd[2], "map");

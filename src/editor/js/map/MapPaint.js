@@ -834,7 +834,7 @@ export class MapPaint {
    
   doorBegin(x, y) {
     let poi = this.getFocusPoi();
-    if (poi && (poi.kw === "door")) {
+    if (poi && poi.kw.endsWith("door")) {
       let nameOrId=null, loc=null;
       if (poi.mapid === this.map.rid) {
         // Traverse EXIT door, ie to poi's destination.

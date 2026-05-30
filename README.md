@@ -76,6 +76,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [Inversion](https://github.com/aksommerville/inversion)
 - [Licence to Illuse](https://github.com/aksommerville/licensetoilluse)
 - [XRM: Extreme Racing Machines](https://github.com/aksommerville/xrm)
+- [Kleptomania](https://github.com/aksommerville/kleptomania)
 
 ## TODO
 
@@ -101,7 +102,6 @@ Kuro's exception is consistent with `Canvas.getContext("webgl")` returning null.
 - [ ] TilesheetEditor: Getting undesirable default mouse actions when dragging in the neighbor mask UI. (tries to drag the preview tile, or select text)
 - [ ] Does MapEditor not show region commands? I'm using them in `xrm`.
 - [ ] ^ Even worse: Region commands drop their width and height when copying with Shift+MovePoi.
-- - Complicated. The defaulting happens at `EauDecoder.js:decodeFmModecfg()` et al. Hard to distinguish "new modecfg for a sound resource".
 - [ ] SongEditor: Consider removing the action "Auto end time" and just do it every time without asking.
 - [ ] Editor sidebar: Group resources when too many in a type. Maybe a limit of 100 per bucket? Bellacopia's maps and sprites are getting ridiculous.
 - [ ] ^ Similar bucketting in the Sprites dropdown at new POI.

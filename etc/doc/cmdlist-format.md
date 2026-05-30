@@ -57,6 +57,7 @@ If present, the editor will use:
 - `image`: imageid (tilesheet)
 - `sprite`: position, spriteid
 - `door`: position, mapid, dstposition
+- - In addition, any command ending "door" will behave the same way.
 - `neighbors`: west, east, north, south: 4 neighbor maps.
 - `position`: longitude, latitude, elevation: Absolute position in the world.
 
