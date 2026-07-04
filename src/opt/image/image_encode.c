@@ -224,7 +224,7 @@ static int image_encode_png(
  
 struct image_stats {
   uint32_t colorv[256];
-  int colorc; // Only the first 256 get recorded, so this stops counting at 257. Different chroma with alpha zero count only once.
+  int colorc; // Only the first 256 get recorded, so this stops counting at 257. Different chroma with alpha zero do count as different colors.
   int transparentc; // How many alpha==0 pixels.
   int opaquec; // How many alpha==1 pixels.
   int intermediatec; // How many pixels with alpha not zero or one. Pixels differing only by alpha *do* count as different colors too.
@@ -246,16 +246,11 @@ static int image_stats_colorv_search(const struct image_stats *stats,uint32_t co
 static void image_stats_gather(struct image_stats *stats,const uint8_t *src,int srcc/* pixels, not bytes */) {
   for (;srcc-->0;src+=4) {
   
-    uint32_t color;
-    if (!src[3]) {
-      color=0;
-      stats->transparentc++;
-    } else {
-      if (src[3]==0xff) stats->opaquec++;
-      else stats->intermediatec++;
-      color=(src[0]<<24)|(src[1]<<16)|(src[2]<<8)|src[3];
-      if ((src[0]!=src[1])||(src[1]!=src[2])) stats->chromac++;
-    }
+    uint32_t color=(src[0]<<24)|(src[1]<<16)|(src[2]<<8)|src[3];
+    if (!src[3]) stats->transparentc++;
+    else if (src[3]==0xff) stats->opaquec++;
+    else stats->intermediatec++;
+    if ((src[0]!=src[1])||(src[1]!=src[2])) stats->chromac++;
     
     int p=image_stats_colorv_search(stats,color);
     if (p<0) {

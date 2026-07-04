@@ -96,6 +96,13 @@ Video.gl gets assigned at `start()` and we don't check for null.
 >>> Adding a null check and more sensible exception.
 Kuro's exception is consistent with `Canvas.getContext("webgl")` returning null.
 
+- [x] !!! Our automatic PNG optimization is making mistakes when producing i4 with transparency. Made a 15-byte tRNS with nothing but 0x00 and 0xff in it.
+- [ ] Editor: New resource modal should check whether the name is already in use -- duplicates are not allowed!
+- [ ] Why does `eggdev run` build for web? It only needs the native executable. A project the size of bellacopia, it does matter.
+- [ ] Consider adding an alignment option in font. Left,center,right.
+- [ ] MapEditor: Clicking neighbors repeatedly puts you in the wrong place. Maybe only if the mouse doesn't move between clicks?
+- [ ] web: If an input state is nonzero at launch, wait for it to clear. This is a problem when launching via ra4 web; the button that starts the game gets picked up as a keystroke in-game too.
+- [ ] Would it make sense to generate `FOR_EACH_` macros in the res toc for all NS symbols? It's mildly annoying to declare them manually.
 - [x] `eggdev list -fsize` can we operate on loose data files too? This might be handy for assessing size of a batch of MIDI or PNG files, outside an Egg project.
 - - Actually yeah, even within an Egg project, there's no straightforward way to list the duration of all the songs. "Which songs are too short?" becomes a burden.
 - [ ] MapEditor: Cell position tattle gave incorrect position after resizing the window.
