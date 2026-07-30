@@ -229,6 +229,7 @@ struct image_stats {
   int opaquec; // How many alpha==1 pixels.
   int intermediatec; // How many pixels with alpha not zero or one. Pixels differing only by alpha *do* count as different colors too.
   int chromac; // How many non-exact-gray pixels.
+  int nztrc; // How many nonzero transparent pixels?
 };
 
 static int image_stats_colorv_search(const struct image_stats *stats,uint32_t color) {
@@ -251,6 +252,7 @@ static void image_stats_gather(struct image_stats *stats,const uint8_t *src,int 
     else if (src[3]==0xff) stats->opaquec++;
     else stats->intermediatec++;
     if ((src[0]!=src[1])||(src[1]!=src[2])) stats->chromac++;
+    if (!src[3]&&(src[0]||src[1]||src[2])) stats->nztrc++;
     
     int p=image_stats_colorv_search(stats,color);
     if (p<0) {
@@ -404,7 +406,8 @@ int image_encode(struct sr_encoder *dst,const void *rgba,int rgbac,int w,int h) 
   uint8_t depth,colortype;
   // If there's more than 256 colors, we can only use RGB or RGBA.
   // Our decoder only allows tRNS for Indexed color, so that simplifies things.
-  if (stats.colorc>256) {
+  // Also force RGBA if there's nonzero but transparent pixels -- we want to preserve those.
+  if ((stats.colorc>256)||stats.nztrc) {
     depth=8;
     colortype=(stats.transparentc||stats.intermediatec)?6:2;
   // If there's anything non-gray, we must use Indexed.

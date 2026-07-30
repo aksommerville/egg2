@@ -96,6 +96,16 @@ Video.gl gets assigned at `start()` and we don't check for null.
 >>> Adding a null check and more sensible exception.
 Kuro's exception is consistent with `Canvas.getContext("webgl")` returning null.
 
+- [ ] Rendering filtered decals into an offscreen texture, it seems they are not blending; looked like alpha was copying like a color. Worked around it but this does need fixed.
+- [ ] editor: Copying a sprite resource created the new one but didn't copy anything. (copy via right-click in sidebar)
+- [ ] `eggdev build`: Can we ignore changes to shared_symbols.h for purposes of dirty detection? Rebuilding the whole project when I add something is getting old.
+- - Most games it just doesn't matter, but at the size of bellacopia, it is a thing.
+- - Anything that engages the `FOR_EACH_` macros should rebuild. What if we shlep those off into a separate file? One we build automatically?
+- [ ] MacBook: Touchpad doesn't work right. Two fingers makes a left click, and right click doesn't seem to be possible.
+- [ ] MacBook: Crashed with no detail after plugging in the Genesis knockoff gamepad. And won't start while it's plugged in.
+- - Same behavior with El Cheapo. Tried the 8bitdo SNES and there was just no reaction at all. I guess Gen and ElC are working, and our HID driver is crashing on them somewhere.
+- - It's a damn shame, because in most other ways, Bellacopia runs great on the Macbook.
+- [ ] Badly need both a fullscreen toggle and some command-line option to select a screen. I can't run fullscreen on the big TV :(
 - [x] !!! Our automatic PNG optimization is making mistakes when producing i4 with transparency. Made a 15-byte tRNS with nothing but 0x00 and 0xff in it.
 - [ ] Editor: New resource modal should check whether the name is already in use -- duplicates are not allowed!
 - [ ] Why does `eggdev run` build for web? It only needs the native executable. A project the size of bellacopia, it does matter.
@@ -114,6 +124,7 @@ Kuro's exception is consistent with `Canvas.getContext("webgl")` returning null.
 - [ ] ^ Similar bucketting in the Sprites dropdown at new POI.
 - [ ] Consider a spec change re multiple `code` resources: Concatenate all, rather than just using id 1.
 - - Finish Bellacopia Maleficia, it will have a ridiculous amount of code. If its code:1 is over 2 MB, make the change.
+- - Actually, make the change regardless. One can imagine projects embedding their data instead of using resources, and 4 MB could be too small.
 - [ ] alsafd, pi 4, hdmi audio: Long lead time lost, and playhead is way off. (Cherteau is unplayable, and all games, the lead loss is noticeable)
 - [ ] Editor: Global action to reorder maps, eg for a game like zennoniwa or inversion.
 - [ ] Revise SDK instruments, after some playing around.
