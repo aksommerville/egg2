@@ -81,32 +81,11 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
-- [x] 2026-08-13: Minifier error in justbelow:
-- - `this.frame = requestAnimationFrame((t) => this.update(t));` became `this[aU]=requestAnimationFrame(aJ=>this[a4](aH))`
-- - There's another `t` at higher scope which became `aH`, I bet that's what confused it.
-- - [x] Can we work around by keeping variable names unique across scopes? ...YES
-- - Fixed at `mg_js_digest.c:mf_rename_all_within()` by stopping descent at functions and lambdas that redeclare this symbol.
-
-- [x] 2026-05-27: Bug report from Kuro re Kleptomania. Tried in Chrome, Firefox, and Opera under Linux and no repro.
-Cannot read properties of null (reading 'createTexture')
-  bB.requireTexture (Video; this.gl)
-  bB.egg_texture_load_raw
-Cannot read properties of null (reading 'bindFramebuffer')
-  bB.stop (Video)
-  jV.stop
-  jV.reportError
-NotSupportedError: screen.orientation.lock() is not available on this device.
-  - TouchInput.js:17, but it's commented out. ???
-  - The exception shows source `kleptomania:1`, not `index.html`. Maybe this is some Itch insertion?
-  - Nope, game launches fine in all three browsers via Itch too. (with some other warnings; not worried there).
-Video.gl gets assigned at `start()` and we don't check for null.
->>> Adding a null check and more sensible exception.
-Kuro's exception is consistent with `Canvas.getContext("webgl")` returning null.
-
-- [ ] eggdev minify: "Unspecified error" when importing a nonexistent file. Let's specify.
-- [ ] HexEditor incorrectly shows page count of 1 for a 512-byte resource. Should be 2 exactly.
+- [ ] I feel we've outgrown `image_decode` and `image_encode`. There's often need for more detailed analysis at the caller's scope.
+- [x] eggdev minify: "Unspecified error" when importing a nonexistent file. Let's specify.
+- [x] HexEditor incorrectly shows page count of 1 for a 512-byte resource. Should be 2 exactly. ...duhhhh was assigning to `value` instead of `innerText`, page count never worked!
 - [ ] Rendering filtered decals into an offscreen texture, it seems they are not blending; looked like alpha was copying like a color. Worked around it but this does need fixed.
-- [ ] editor: Copying a sprite resource created the new one but didn't copy anything. (copy via right-click in sidebar)
+- [x] editor: Copying a sprite resource created the new one but didn't copy anything. (copy via right-click in sidebar) ...yep, all copies, we had just forgotten to provide `res.serial`.
 - [ ] `eggdev build`: Can we ignore changes to shared_symbols.h for purposes of dirty detection? Rebuilding the whole project when I add something is getting old.
 - - Most games it just doesn't matter, but at the size of bellacopia, it is a thing.
 - - Anything that engages the `FOR_EACH_` macros should rebuild. What if we shlep those off into a separate file? One we build automatically?
@@ -115,15 +94,14 @@ Kuro's exception is consistent with `Canvas.getContext("webgl")` returning null.
 - - Same behavior with El Cheapo. Tried the 8bitdo SNES and there was just no reaction at all. I guess Gen and ElC are working, and our HID driver is crashing on them somewhere.
 - - It's a damn shame, because in most other ways, Bellacopia runs great on the Macbook.
 - [ ] Badly need both a fullscreen toggle and some command-line option to select a screen. I can't run fullscreen on the big TV :(
-- [x] !!! Our automatic PNG optimization is making mistakes when producing i4 with transparency. Made a 15-byte tRNS with nothing but 0x00 and 0xff in it.
-- [ ] Editor: New resource modal should check whether the name is already in use -- duplicates are not allowed!
+- [x] Editor: New resource modal should check whether the name is already in use -- duplicates are not allowed!
 - [ ] Why does `eggdev run` build for web? It only needs the native executable. A project the size of bellacopia, it does matter.
 - [ ] Consider adding an alignment option in font. Left,center,right.
-- [ ] MapEditor: Clicking neighbors repeatedly puts you in the wrong place. Maybe only if the mouse doesn't move between clicks?
+- [x] MapEditor: Clicking neighbors repeatedly puts you in the wrong place. Maybe only if the mouse doesn't move between clicks?
+- - This is trickier than it sounds! Clicking neighbor creates a whole new `MapEditor`. We need to set `MapPaint.majorFocus` and possibly trigger `refreshDetailTattle`, but we don't have a mouse event to work from.
+- - No, actually, MapCanvas does get a pointerenter event. Just it discards that event because `canvasBounds` hasn't been set yet.
 - [ ] web: If an input state is nonzero at launch, wait for it to clear. This is a problem when launching via ra4 web; the button that starts the game gets picked up as a keystroke in-game too.
 - [ ] Would it make sense to generate `FOR_EACH_` macros in the res toc for all NS symbols? It's mildly annoying to declare them manually.
-- [x] `eggdev list -fsize` can we operate on loose data files too? This might be handy for assessing size of a batch of MIDI or PNG files, outside an Egg project.
-- - Actually yeah, even within an Egg project, there's no straightforward way to list the duration of all the songs. "Which songs are too short?" becomes a burden.
 - [ ] MapEditor: Cell position tattle gave incorrect position after resizing the window.
 - [ ] TilesheetEditor: Getting undesirable default mouse actions when dragging in the neighbor mask UI. (tries to drag the preview tile, or select text)
 - [ ] Does MapEditor not show region commands? I'm using them in `xrm`.
@@ -149,6 +127,7 @@ Kuro's exception is consistent with `Canvas.getContext("webgl")` returning null.
 - [ ] Web incfg could bear some prettying-up.
 - [ ] Add a fullscreen toggle in the universal menu.
 - [ ] Review all "TODO" in source, there's a ton of them.
+
 - [ ] eggsamples: Bring back "Hard Boiled" from a couple Eggs ago. Nice game, and now that we have mouse support, we can do it for real.
 - - egg-202408 is so different from v2, I think a full rewrite would be easier. It's not complicated. The irreplaceable bit is the graphics.
 - [ ] Enormous effort, but how do you feel about migrating or rewriting old non-Egg games? Could make provisioning new kiosks a lot smoother.

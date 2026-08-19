@@ -59,8 +59,10 @@ export class NewResourceModal {
       this.dom.spawn(null, "INPUT", { type: "submit", value: "OK", "on-click": event => {
         event.stopPropagation();
         event.preventDefault();
-        this.resolve(this.element.querySelector("input[name='path']").value);
-        this.element.remove();
+        if (this.validate()) {
+          this.resolve(this.element.querySelector("input[name='path']").value);
+          this.element.remove();
+        }
       }})
     );
   }
@@ -128,5 +130,23 @@ export class NewResourceModal {
       this.element.querySelector("input[name='name']").value = rsp.name;
       this.populatePathFromSplit();
     }).catch( e => this.dom.modalError(e));
+  }
+  
+  // True if it looks ok to proceed. Otherwise spawn a modal explaining why not, and return false.
+  validate() {
+    const type = this.element.querySelector("input[name='type']").value || "";
+    const name = this.element.querySelector("input[name='name']").value || "";
+    const rid = this.element.querySelector("input[name='rid']").value || "";
+    if (!type) { this.dom.modalError("type required"); return false; }
+    if (!+rid) { this.dom.modalError("rid required"); return false; }
+    // And more importantly: Confirm the name is not yet in use for this type.
+    // The empty string of course is allowed to be duplicated.
+    if (name) {
+      if (this.data.resv.find(r => ((r.type === type) && (r.name === name)))) {
+        this.dom.modalError(`name ${JSON.stringify(name)} already in use for type ${JSON.stringify(type)}`);
+        return false;
+      }
+    }
+    return true;
   }
 }

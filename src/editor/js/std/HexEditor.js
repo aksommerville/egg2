@@ -68,7 +68,7 @@ export class HexEditor {
     const resSize = this.serial.length;
     const rowLength = 16;
     this.element.querySelector("input[name='page']").value = this.page;
-    this.element.querySelector(".pageCount").value = Math.ceil(resSize / this.pageSize);
+    this.element.querySelector(".pageCount").innerText = Math.max(1, Math.ceil(resSize / this.pageSize));
     const startp = (this.page - 1) * this.pageSize;
     const rowCount = Math.ceil(this.pageSize / rowLength);
     

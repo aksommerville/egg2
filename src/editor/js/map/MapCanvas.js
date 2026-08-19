@@ -446,6 +446,12 @@ export class MapCanvas {
       this.mapPaint.setMouse(-1, -1);
       return;
     }
+    if (event.type === "pointerenter") {
+      if (!this.canvasBounds) {
+        const bounds = event.target.getBoundingClientRect();
+        this.canvasBounds = bounds;
+      }
+    }
     if (!this.canvasBounds) return;
     const mp = this.coordsMapFromElement(event.x - this.canvasBounds.x, event.y - this.canvasBounds.y);
     if (!this.mapPaint.setMouse(mp[0], mp[1])) return;

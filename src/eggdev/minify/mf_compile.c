@@ -46,7 +46,7 @@ static int mf_js_compile_import(struct mf_node *parent,struct eggdev_minify_js *
   if ((pathc<1)||(pathc>=sizeof(path))) return -1;
   struct mf_file *innerfile=mf_js_get_file_by_path(ctx,path);
   if (!innerfile) { // Haven't imported this one yet.
-    if (!(innerfile=mf_js_add_file(ctx,path,0,0))) return -1;
+    if (!(innerfile=mf_js_add_file(ctx,path,0,0))) return mf_jserr(ctx,&token,"Import '%.*s' failed. Does the file exist?",pathc,path);
     if ((err=mf_js_gather_statements(parent,ctx,innerfile))<0) return err;
   }
   

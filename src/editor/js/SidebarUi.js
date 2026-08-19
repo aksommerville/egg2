@@ -193,7 +193,7 @@ export class SidebarUi {
     modal.setup(defaults);
     modal.result.then(path => {
       if (!path) return;
-      return this.data.createResource(path).then(nres => {
+      return this.data.createResource(path, res.serial).then(nres => {
         this.actions.editResource(path);
       });
     }).catch(e => this.dom.modalError(e));
