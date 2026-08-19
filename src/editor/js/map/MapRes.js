@@ -157,12 +157,12 @@ export class Poi {
     if (typeof(posp) !== "number") {
       posp = cmd.findIndex(t => t.startsWith("@"));
     }
-    const match = cmd[posp]?.match(/@(\d+),(\d+)/);
+    const match = cmd[posp]?.match(/@(\d+),(\d+)(,(\d+),(\d+))?/);
     if (!match) return null;
-    return new Poi(cmd, +match[1], +match[2], mapid, posp);
+    return new Poi(cmd, +match[1], +match[2], mapid, posp, +match[4], +match[5]);
   }
   
-  constructor(cmd, x, y, mapid, posp) {
+  constructor(cmd, x, y, mapid, posp, w, h) {
     this.cmd = cmd;
     this.kw = cmd[0];
     this.x = x;
@@ -170,9 +170,15 @@ export class Poi {
     this.mapid = mapid;
     this.posp = posp;
     this.position = 0; // 0..3 = NW,NE,SW,SE
+    this.w = w || 0;
+    this.h = h || 0;
   }
   
   setLocation(x, y) {
-    this.cmd[this.posp] = `@${x},${y}`;
+    if (this.w && this.h) {
+      this.cmd[this.posp] = `@${x},${y},${this.w},${this.h}`;
+    } else {
+      this.cmd[this.posp] = `@${x},${y}`;
+    }
   }
 }

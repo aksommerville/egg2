@@ -336,6 +336,8 @@ export class TileModal {
     this.window.addEventListener("mousemove", this.mouseListener);
     this.window.addEventListener("mouseup", this.mouseListener);
     this.mouseListener(event); // effect the initial change
+    event.preventDefault();
+    event.stopPropagation();
   }
   
   onNav(dx, dy) {

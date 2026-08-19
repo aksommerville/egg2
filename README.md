@@ -82,10 +82,7 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 ## TODO
 
 - [ ] I feel we've outgrown `image_decode` and `image_encode`. There's often need for more detailed analysis at the caller's scope.
-- [x] eggdev minify: "Unspecified error" when importing a nonexistent file. Let's specify.
-- [x] HexEditor incorrectly shows page count of 1 for a 512-byte resource. Should be 2 exactly. ...duhhhh was assigning to `value` instead of `innerText`, page count never worked!
 - [ ] Rendering filtered decals into an offscreen texture, it seems they are not blending; looked like alpha was copying like a color. Worked around it but this does need fixed.
-- [x] editor: Copying a sprite resource created the new one but didn't copy anything. (copy via right-click in sidebar) ...yep, all copies, we had just forgotten to provide `res.serial`.
 - [ ] `eggdev build`: Can we ignore changes to shared_symbols.h for purposes of dirty detection? Rebuilding the whole project when I add something is getting old.
 - - Most games it just doesn't matter, but at the size of bellacopia, it is a thing.
 - - Anything that engages the `FOR_EACH_` macros should rebuild. What if we shlep those off into a separate file? One we build automatically?
@@ -94,18 +91,11 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - - Same behavior with El Cheapo. Tried the 8bitdo SNES and there was just no reaction at all. I guess Gen and ElC are working, and our HID driver is crashing on them somewhere.
 - - It's a damn shame, because in most other ways, Bellacopia runs great on the Macbook.
 - [ ] Badly need both a fullscreen toggle and some command-line option to select a screen. I can't run fullscreen on the big TV :(
-- [x] Editor: New resource modal should check whether the name is already in use -- duplicates are not allowed!
 - [ ] Why does `eggdev run` build for web? It only needs the native executable. A project the size of bellacopia, it does matter.
 - [ ] Consider adding an alignment option in font. Left,center,right.
-- [x] MapEditor: Clicking neighbors repeatedly puts you in the wrong place. Maybe only if the mouse doesn't move between clicks?
-- - This is trickier than it sounds! Clicking neighbor creates a whole new `MapEditor`. We need to set `MapPaint.majorFocus` and possibly trigger `refreshDetailTattle`, but we don't have a mouse event to work from.
-- - No, actually, MapCanvas does get a pointerenter event. Just it discards that event because `canvasBounds` hasn't been set yet.
 - [ ] web: If an input state is nonzero at launch, wait for it to clear. This is a problem when launching via ra4 web; the button that starts the game gets picked up as a keystroke in-game too.
 - [ ] Would it make sense to generate `FOR_EACH_` macros in the res toc for all NS symbols? It's mildly annoying to declare them manually.
-- [ ] MapEditor: Cell position tattle gave incorrect position after resizing the window.
-- [ ] TilesheetEditor: Getting undesirable default mouse actions when dragging in the neighbor mask UI. (tries to drag the preview tile, or select text)
-- [ ] Does MapEditor not show region commands? I'm using them in `xrm`.
-- [ ] ^ Even worse: Region commands drop their width and height when copying with Shift+MovePoi.
+- [ ] Does MapEditor not show region commands? I'm using them in `xrm`. ...got them preserving at least. Rendering will be a whole other thing.
 - [ ] SongEditor: Consider removing the action "Auto end time" and just do it every time without asking.
 - [ ] Editor sidebar: Group resources when too many in a type. Maybe a limit of 100 per bucket? Bellacopia's maps and sprites are getting ridiculous.
 - [ ] ^ Similar bucketting in the Sprites dropdown at new POI.

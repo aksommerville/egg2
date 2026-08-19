@@ -70,7 +70,7 @@ export class MapCanvas {
   buildUi() {
     this.element.innerHTML = "";
     this.dom.spawn(this.element, "CANVAS", ["main"]);
-    this.dom.spawn(this.element, "DIV", ["scroller"],
+    const scroller = this.dom.spawn(this.element, "DIV", ["scroller"],
       { "on-scroll": e => this.onScroll(e) },
       { "on-wheel": e => this.onWheel(e) },
       { "on-pointermove": e => this.onMotion(e) },
@@ -80,6 +80,8 @@ export class MapCanvas {
       { "on-pointerup": e => this.onMouseUp(e) },
       this.dom.spawn(null, "DIV", ["sizer"])
     );
+    this.resizeObserver = new this.window.ResizeObserver(e => this.renderSoon());
+    this.resizeObserver.observe(scroller);
     this.renderSoon();
   }
   
