@@ -331,6 +331,27 @@ static int mf_js_output_LAMBDA(struct sr_encoder *dst,struct eggdev_minify_js *c
   struct mf_node *paramlist=node->childv[0];
   struct mf_node *body=node->childv[1];
   
+  /* Similar to binary operators, we need to examine pop's class.
+   * There's basically three places a lambda would appear:
+   *  1. Function call parameter.
+   *  2. Assignment.
+   *  3. Call.
+   * The first two should take care of themselves.
+   * But we need to address case 3, constructions like: (a=>a+2)(1)
+   * Without that first set of parens, it's: a=>a+2(1)
+   * and that is not even close to what was intended!
+   * We're not going to manage binary operators in general eg: (a=>a+1)*(a=>a+2)
+   * because that doesn't make any sense any way you slice it.
+   */
+  int parens=0;
+  if (node->parent) {
+    if ((node->parent->type==MF_NODE_TYPE_CALL)&&(node->parent->childc>=1)&&(node->parent->childv[0]==node)) {
+      // Pop is CALL, and we're the thing being called. Need parens.
+      if (mf_js_output_token(dst,ctx,"(",1)<0) return -1;
+      parens=1;
+    }
+  }
+  
   /* With just one parameter, do not emit parens.
    * We *do* emit parens for zero params. The optimization steps before us should insert a fake 1-character param if possible.
    * We don't make that decision here because it's a heavy decision (how do we know some identifier we make up isn't being used?).
@@ -343,6 +364,11 @@ static int mf_js_output_LAMBDA(struct sr_encoder *dst,struct eggdev_minify_js *c
   
   if (mf_js_output_token(dst,ctx,"=>",2)<0) return -1;
   if ((err=mf_js_output(dst,ctx,body))<0) return err;
+  
+  // And if we parenthesized the whole thing, close that.
+  if (parens) {
+    if (mf_js_output_token(dst,ctx,")",1)<0) return -1;
+  }
   return 0;
 }
 

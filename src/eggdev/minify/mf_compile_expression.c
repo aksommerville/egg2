@@ -197,6 +197,7 @@ static int mf_js_is_lambda(struct mf_token_reader *reader) {
       return 0;
     }
     if ((token.c==1)&&(token.v[0]==')')) break;
+    if ((token.c==1)&&(token.v[0]=='(')) break;
     if (token.type==MF_TOKEN_TYPE_IDENTIFIER) ;
     else if ((token.c==1)&&(token.v[0]=='(')) ;
     else if ((token.c==1)&&(token.v[0]==',')) ;

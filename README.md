@@ -81,10 +81,11 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
-- [ ] 2026-08-13: Minifier error in justbelow:
+- [x] 2026-08-13: Minifier error in justbelow:
 - - `this.frame = requestAnimationFrame((t) => this.update(t));` became `this[aU]=requestAnimationFrame(aJ=>this[a4](aH))`
 - - There's another `t` at higher scope which became `aH`, I bet that's what confused it.
 - - [x] Can we work around by keeping variable names unique across scopes? ...YES
+- - Fixed at `mg_js_digest.c:mf_rename_all_within()` by stopping descent at functions and lambdas that redeclare this symbol.
 
 - [x] 2026-05-27: Bug report from Kuro re Kleptomania. Tried in Chrome, Firefox, and Opera under Linux and no repro.
 Cannot read properties of null (reading 'createTexture')

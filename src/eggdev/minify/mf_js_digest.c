@@ -242,7 +242,7 @@ static int mf_reduce_member_names(struct eggdev_minify_js *ctx) {
  * We'll replace eligible symbols even if they are already single characters, since they would collide with some other replacement.
  */
  
-static int mf_rename_all_within(struct eggdev_minify_js *ctx,struct mf_node *root,const char *to,int toc,const char *from,int fromc) {
+static int mf_rename_all_within(struct eggdev_minify_js *ctx,struct mf_node *root,const char *to,int toc,const char *from,int fromc,int depth) {
   if ((root->type==MF_NODE_TYPE_VALUE)&&(root->token.type==MF_TOKEN_TYPE_IDENTIFIER)) {
     if (!root->argv[0]&&(root->token.c==fromc)&&!memcmp(root->token.v,from,fromc)) {
   
@@ -298,8 +298,30 @@ static int mf_rename_all_within(struct eggdev_minify_js *ctx,struct mf_node *roo
       root->argv[0]=1;
     }
   }
+  
+  /* When we reach a FUNCTION or LAMBDA node, check whether (from) is declared in its parameters.
+   * That masks the variable we're renaming; any inner references to it are not the same variable.
+   * ie if we find (prev) among the parameters, stop here.
+   * FUNCTION and LAMBDA both take a PARAMLIST as their first child.
+   */
+  if (depth) { // But this rule does not apply to the first scope, the original declaration of this parameter.
+    if ((root->type==MF_NODE_TYPE_FUNCTION)||(root->type==MF_NODE_TYPE_LAMBDA)) {
+      if ((root->childc>=1)&&(root->childv[0]->type==MF_NODE_TYPE_PARAMLIST)) {
+        int i=root->childv[0]->childc;
+        while (i-->0) {
+          struct mf_node *param=root->childv[0]->childv[i];
+          if (param->type!=MF_NODE_TYPE_PARAM) continue;
+          if (param->token.c!=fromc) continue;
+          if (memcmp(param->token.v,from,fromc)) continue;
+          // Masking!
+          return 0;
+        }
+      }
+    }
+  }
+  
   int i=0,err; for (;i<root->childc;i++) {
-    if ((err=mf_rename_all_within(ctx,root->childv[i],to,toc,from,fromc))<0) return err;
+    if ((err=mf_rename_all_within(ctx,root->childv[i],to,toc,from,fromc,depth+1))<0) return err;
   }
   return 0;
 }
@@ -343,7 +365,7 @@ static int mf_rename_variable(struct eggdev_minify_js *ctx,struct mf_node *node)
     if (node->type==MF_NODE_TYPE_FOR3) break;
     node=node->parent;
   }
-  return mf_rename_all_within(ctx,node,nname,nnamec,prev,prevc);
+  return mf_rename_all_within(ctx,node,nname,nnamec,prev,prevc,0);
 }
  
 static int mf_rename_local_symbols(struct eggdev_minify_js *ctx,struct mf_node *node) {
