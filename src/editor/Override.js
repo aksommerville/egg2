@@ -1,5 +1,6 @@
 /* This file exists only to be overridden by clients.
  * You can inject dependencies just like any other class.
+ * From here, most of Egg Editor is reachable eg "./js/Dom.js".
  */
  
 export class Override {

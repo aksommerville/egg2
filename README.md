@@ -77,8 +77,14 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 - [Licence to Illuse](https://github.com/aksommerville/licensetoilluse)
 - [XRM: Extreme Racing Machines](https://github.com/aksommerville/xrm)
 - [Kleptomania](https://github.com/aksommerville/kleptomania)
+- [All Fifty Two](https://github.com/aksommerville/all52)
 
 ## TODO
+
+- [ ] 2026-08-13: Minifier error in justbelow:
+- - `this.frame = requestAnimationFrame((t) => this.update(t));` became `this[aU]=requestAnimationFrame(aJ=>this[a4](aH))`
+- - There's another `t` at higher scope which became `aH`, I bet that's what confused it.
+- - [x] Can we work around by keeping variable names unique across scopes? ...YES
 
 - [x] 2026-05-27: Bug report from Kuro re Kleptomania. Tried in Chrome, Firefox, and Opera under Linux and no repro.
 Cannot read properties of null (reading 'createTexture')
@@ -96,6 +102,8 @@ Video.gl gets assigned at `start()` and we don't check for null.
 >>> Adding a null check and more sensible exception.
 Kuro's exception is consistent with `Canvas.getContext("webgl")` returning null.
 
+- [ ] eggdev minify: "Unspecified error" when importing a nonexistent file. Let's specify.
+- [ ] HexEditor incorrectly shows page count of 1 for a 512-byte resource. Should be 2 exactly.
 - [ ] Rendering filtered decals into an offscreen texture, it seems they are not blending; looked like alpha was copying like a color. Worked around it but this does need fixed.
 - [ ] editor: Copying a sprite resource created the new one but didn't copy anything. (copy via right-click in sidebar)
 - [ ] `eggdev build`: Can we ignore changes to shared_symbols.h for purposes of dirty detection? Rebuilding the whole project when I add something is getting old.
