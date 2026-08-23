@@ -135,11 +135,14 @@ int eggdev_main_run() {
     return -2;
   }
   
-  /* Build, exactly the same as eggdev_main_build().
+  /* Build, exactly the same as eggdev_main_build(), but we're setting a target first.
    */
   if ((err=eggdev_client_set_root(root,-1))<0) return err;
   struct builder builder={0};
-  if ((err=builder_set_root(&builder,root,-1))<0) {
+  if (
+    ((err=builder_set_root(&builder,root,-1))<0)||
+    ((err=builder_add_target(&builder,native_name,native_namec))<0)
+  ) {
     builder_cleanup(&builder);
     return err;
   }

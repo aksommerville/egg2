@@ -17,7 +17,7 @@ static int builder_target_get_string(void *dstpp,struct builder_target *target,c
 /* Add one target by name.
  */
  
-static int builder_add_target(struct builder *builder,const char *name,int namec) {
+int builder_add_target(struct builder *builder,const char *name,int namec) {
   if (builder->targetc>=builder->targeta) {
     int na=builder->targeta+8;
     if (na>INT_MAX/sizeof(struct builder_target)) return -1;

@@ -82,19 +82,22 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 ## TODO
 
 - [ ] I feel we've outgrown `image_decode` and `image_encode`. There's often need for more detailed analysis at the caller's scope.
+- - This means a full rewrite of the `image` unit. Even the PNG codec is kind of hard-wired for RGBA.
 - [ ] Rendering filtered decals into an offscreen texture, it seems they are not blending; looked like alpha was copying like a color. Worked around it but this does need fixed.
 - [ ] `eggdev build`: Can we ignore changes to shared_symbols.h for purposes of dirty detection? Rebuilding the whole project when I add something is getting old.
 - - Most games it just doesn't matter, but at the size of bellacopia, it is a thing.
 - - Anything that engages the `FOR_EACH_` macros should rebuild. What if we shlep those off into a separate file? One we build automatically?
+- - ^ Important and yes, I think that's the right approach. `egg_symtoc.h` should not be implicitly included, and should trigger rebuilds normally.
+- - If we just naively remove `shared_symbols.h` from deps as is, you'd have to manually touch all the files that invoke the `FOR_EACH` macros. Not going to fly.
+- [ ] Would it make sense to generate `FOR_EACH_` macros in the res toc for all NS symbols? It's mildly annoying to declare them manually.
 - [ ] MacBook: Touchpad doesn't work right. Two fingers makes a left click, and right click doesn't seem to be possible.
 - [ ] MacBook: Crashed with no detail after plugging in the Genesis knockoff gamepad. And won't start while it's plugged in.
 - - Same behavior with El Cheapo. Tried the 8bitdo SNES and there was just no reaction at all. I guess Gen and ElC are working, and our HID driver is crashing on them somewhere.
 - - It's a damn shame, because in most other ways, Bellacopia runs great on the Macbook.
 - [ ] Badly need both a fullscreen toggle and some command-line option to select a screen. I can't run fullscreen on the big TV :(
-- [ ] Why does `eggdev run` build for web? It only needs the native executable. A project the size of bellacopia, it does matter.
+- [x] Why does `eggdev run` build for web? It only needs the native executable. A project the size of bellacopia, it does matter. ...we weren't passing target to builder, easy fix.
 - [ ] Consider adding an alignment option in font. Left,center,right.
 - [ ] web: If an input state is nonzero at launch, wait for it to clear. This is a problem when launching via ra4 web; the button that starts the game gets picked up as a keystroke in-game too.
-- [ ] Would it make sense to generate `FOR_EACH_` macros in the res toc for all NS symbols? It's mildly annoying to declare them manually.
 - [ ] Does MapEditor not show region commands? I'm using them in `xrm`. ...got them preserving at least. Rendering will be a whole other thing.
 - [ ] SongEditor: Consider removing the action "Auto end time" and just do it every time without asking.
 - [ ] Editor sidebar: Group resources when too many in a type. Maybe a limit of 100 per bucket? Bellacopia's maps and sprites are getting ridiculous.

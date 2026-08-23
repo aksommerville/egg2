@@ -70,6 +70,10 @@ void builder_cleanup(struct builder *builder);
  */
 int builder_set_root(struct builder *builder,const char *path,int pathc);
 
+/* Do the whole operation.
+ * Caller must populate (root).
+ * Caller may populate (targetv) in advance. If not, we build all available targets.
+ */
 int builder_main(struct builder *builder);
 
 /* Internal use.
@@ -99,6 +103,11 @@ int builder_schedule_compile(struct builder *builder,struct builder_step *step);
 int builder_schedule_datao(struct builder *builder,struct builder_step *step);
 int builder_schedule_mac_icns(struct builder *builder,struct builder_step *step);
 int builder_schedule_mac_nib(struct builder *builder,struct builder_step *step);
+
+/* Add target and look up its config.
+ * We don't care whether the target actually exists, it gets added possibly with blank settings.
+ */
+int builder_add_target(struct builder *builder,const char *name,int namec);
 
 void builder_process_cleanup(struct builder_process *process);
 int builder_begin_command(struct builder *builder,struct builder_step *step,const char *cmd,int cmdc,const void *in,int inc);

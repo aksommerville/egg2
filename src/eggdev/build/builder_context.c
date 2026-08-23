@@ -156,12 +156,13 @@ int builder_main(struct builder *builder) {
   int err;
   if (!builder||(builder->rootc<1)) return -1;
   if (builder->filec) return -1;
-  if (builder->targetc) return -1;
   if (builder->stepc) return -1;
   builder->fileid_next=1;
   if (builder->job_limit<1) builder->job_limit=4;
   
-  if ((err=builder_populate_targets(builder))<0) return err;
+  if (!builder->targetc) {
+    if ((err=builder_populate_targets(builder))<0) return err;
+  }
   if ((err=builder_discover_inputs(builder))<0) return err;
   if ((err=builder_generate_restoc(builder))<0) return err;
   if ((err=builder_infer_outputs(builder))<0) return err;
