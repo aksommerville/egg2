@@ -199,6 +199,8 @@ static int eggdev_argv_kv(const char *k,int kc,const char *v,int vc) {
   if ((kc==5)&&!memcmp(k,"strip",5)) { g.strip=vn; return 0; }
   if ((kc==4)&&!memcmp(k,"rate",4)) { g.rate=vn; return 0; }
   if ((kc==5)&&!memcmp(k,"chanc",5)) { g.chanc=vn; return 0; }
+  if ((kc==13)&&!memcmp(k,"replace-notes",13)) { g.replace_notes=1; return 0; }
+  if ((kc==14)&&!memcmp(k,"replace-voices",14)) { g.replace_voices=1; return 0; }
   
   fprintf(stderr,"%s: Unexpected option '%.*s' = '%.*s'\n",g.exename,kc,k,vc,v);
   return -2;

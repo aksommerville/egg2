@@ -36,6 +36,7 @@ extern struct g {
   int terminate;
   char **argv; // WEAK, entire original command line preserved here for converters' reference.
   int argc;
+  int replace_notes,replace_voices;
   
 // Populated the first time you ask for eggdev_config_key_by_index() or eggdev_config_get():
   struct eggdev_bcfg {
@@ -89,6 +90,7 @@ extern struct g {
 #define EGGDEV_COMMAND_list 10
 #define EGGDEV_COMMAND_run 11
 #define EGGDEV_COMMAND_dump 12
+#define EGGDEV_COMMAND_midtoc 13
 #define EGGDEV_COMMAND_FOR_EACH \
   _(build) \
   _(serve) \
@@ -101,7 +103,8 @@ extern struct g {
   _(unpack) \
   _(list) \
   _(run) \
-  _(dump)
+  _(dump) \
+  _(midtoc)
   
 #define _(tag) int eggdev_main_##tag();
 EGGDEV_COMMAND_FOR_EACH

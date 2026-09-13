@@ -81,6 +81,12 @@ A few simple example projects can be found at [eggsamples](https://github.com/ak
 
 ## TODO
 
+- [ ] Jam comment on All Fifty Two:
+`As for the engine, there is some weirdness going on. Took forever to load and in mac firefox it kept freezing my browser. Took about 2 minutes to load half freezing and half responsive.`.
+Look into it. Web build is a 328 kB download, should take considerably less than forever. I suspect it's a Firefox-Wasm-ARM thing, asked reporter to confirm he's using ARM. ...confirmed: M4
+
+- [ ] Set `EGG_BTN_CD` on detected devices, I guess we're missing that today. Bellacopia wants to depend on it.
+- [ ] Builder: A token "0x" in a cmdlist resource produced this not-so-helpful error: `Expected 2 bytes payload, found 1. (opcode 0x21)`. Should have failed more explicitly at tokenization.
 - [ ] I feel we've outgrown `image_decode` and `image_encode`. There's often need for more detailed analysis at the caller's scope.
 - - This means a full rewrite of the `image` unit. Even the PNG codec is kind of hard-wired for RGBA.
 - [ ] Rendering filtered decals into an offscreen texture, it seems they are not blending; looked like alpha was copying like a color. Worked around it but this does need fixed.

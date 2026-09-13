@@ -113,3 +113,11 @@ Usage: `eggdev dump ROM TYPE:ID`
 
 Convenience to extract one resource from a ROM and dump it to stdout in hexadecimal.
 This is for troubleshooting. If you need more than just seeing the content of one resource, try `unpack` instead.
+
+## midtoc
+
+Usage: `eggdev midtoc [-oFILE] FILE [--replace-notes|--replace-voices]`
+
+With only an input file, dump some details about channels, voicing, duration.
+
+Or provide an output file and one of `--replace-notes` or `--replace-voices` to rewrite the output file in place, copying notes or voices from the input file.
