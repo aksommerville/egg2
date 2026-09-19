@@ -233,6 +233,7 @@ WASM_IMPORT("egg_song_set") void egg_song_set(int songid,int chid,int prop,float
  * Wheel (v) in -8192..8191, the same range as MIDI but signed.
  * Note that buffering interferes with timing. You can't inject events with enough precision to play music.
  * It's for user-driven events, where a few milliseconds here or there would not be noticeable.
+ * Notes without an explicit end time will stop after 20 seconds.
  */
 WASM_IMPORT("egg_song_event_note_on") void egg_song_event_note_on(int songid,int chid,int noteid,int velocity);
 WASM_IMPORT("egg_song_event_note_off") void egg_song_event_note_off(int songid,int chid,int noteid);
