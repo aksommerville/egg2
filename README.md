@@ -112,7 +112,7 @@ Look into it. Web build is a 328 kB download, should take considerably less than
 - - Finish Bellacopia Maleficia, it will have a ridiculous amount of code. If its code:1 is over 2 MB, make the change.
 - - Actually, make the change regardless. One can imagine projects embedding their data instead of using resources, and 4 MB could be too small.
 - [ ] alsafd, pi 4, hdmi audio: Long lead time lost, and playhead is way off. (Cherteau is unplayable, and all games, the lead loss is noticeable)
-- [ ] Editor: Global action to reorder maps, eg for a game like zennoniwa or inversion.
+- [x] Editor: Global action to reorder maps, eg for a game like zennoniwa or inversion.
 - [ ] Revise SDK instruments, after some playing around.
 - [ ] native: Record and playback session.
 - [ ] native: Global config file. Command-line options, and also persist `egg_prefs_set()` here.

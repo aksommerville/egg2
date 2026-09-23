@@ -18,6 +18,7 @@ import { SongEditor } from "./song/SongEditor.js";
 import { StringsEditor } from "./std/StringsEditor.js";
 import { MissingResourcesService } from "./std/MissingResourcesService.js";
 import { WorldMapModal } from "./map/WorldMapModal.js";
+import { ReorderMapsModal } from "./map/ReorderMapsModal.js";
 import { SdkInstrumentsService } from "./song/SdkInstrumentsService.js";
  
 export class Actions {
@@ -37,6 +38,7 @@ export class Actions {
       { name: "launch", label: "Launch", fn: () => this.launchService.launch() },
       { name: "missingResources", label: "Missing Resources...", fn: () => this.missingResourcesService.detectAndReport() },
       { name: "worldMap", label: "World Map...", fn: () => this.dom.spawnModal(WorldMapModal) },
+      { name: "reorderMaps", label: "Reorder Maps...", fn: () => this.dom.spawnModal(ReorderMapsModal) },
       { name: "editSdkInstruments", label: "Edit SDK Instruments...", fn: () => this.sdkInstrumentsService.edit() },
       { name: "editDefaultDrumKit", label: "Edit Default Drum Kit...", fn: () => this.sdkInstrumentsService.editDefaultDrumKit() },
     ];

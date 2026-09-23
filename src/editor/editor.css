@@ -1110,3 +1110,26 @@ input.toggle:checked + label.toggle.light {
 .HarmonicsModal > input { /* both coefc and submit */
   width: 100px;
 }
+
+.ReorderMapsModal .scroller {
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+.ReorderMapsModal .list {
+  list-style-type: none;
+  padding-left: 0;
+}
+.ReorderMapsModal .path {
+  width: 50px;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+.ReorderMapsModal .map {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  border-bottom: 1px solid #888;
+}
+.ReorderMapsModal .thumbnail {
+  max-height: 100px;
+}
